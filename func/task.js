@@ -12,7 +12,7 @@ module.exports = class {
   _Task = {}
 
   constructor(info, job){
-    this.info = info, this.job
+    this.info = info
     this.job = job
   }
 
@@ -22,7 +22,7 @@ module.exports = class {
     if (this.info.type == 'schedule') {
       let timea = this.info.time.split(' ')
       // clog.info(timea)
-      this._Task.time = Number(timea[0])
+      this._Task.time = Number(timea[0]) || 0
       this._Task.repeat = timea[1] ? Number(timea[1]) : 0
       this._Task.random = timea[2] ? Number(timea[2]) : 0
     } else {

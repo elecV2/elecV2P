@@ -19,21 +19,22 @@ if(!fs.existsSync(StoreFolder)) fs.mkdirSync(StoreFolder)
 if(!fs.existsSync(JSFolder)) fs.mkdirSync(JSFolder)
 
 function storeGet(key) {
-  const keyfile = path.join(StoreFolder, key)
-  if (fs.existsSync(keyfile)) {
-    return fs.readFileSync(keyfile, 'utf8')
-  } else {
-    return ''
+  console.notify('get value for', key)
+  if (fs.existsSync(path.join(__dirname, 'Store', key))) {
+    return fs.readFileSync(path.join(__dirname, 'Store', key), 'utf8')
   }
+  return ''
 }
 
-function storePut(key, value) {
-  fs.writeFileSync(path.join(StoreFolder, key), value, 'utf8')
+function storePut(value, key) {
+  fs.writeFileSync(path.join(__dirname, 'Store', key), value, 'utf8')
+  return true
 }
 
 module.exports = function (filename, addContext) {
   const newContext = {
     console: new logger(filename),
+    setTimeout,
     $evData: {},
     $done: (data) => {
       if(data) {
@@ -66,10 +67,11 @@ module.exports = function (filename, addContext) {
           error = err
         }
         if(response) {
+
           let newres = {
             status: response.status,
             headers: response.headers,
-            body: typeof(response.data) == 'object' ? JSON.stringify(response.data) : response.data
+            body: typeof(response.data) == 'object' ? (Buffer.isBuffer(response.data) ? response.data.toString() : JSON.stringify(response.data)) : response.data
           }
           cb(error, newres, newres.body)
         } else {
@@ -95,7 +97,7 @@ module.exports = function (filename, addContext) {
           let newres = {
             status: response.status,
             headers: response.headers,
-            body: typeof(response.data) == 'object' ? JSON.stringify(response.data) : response.data
+            body: typeof(response.data) == 'object' ? (Buffer.isBuffer(response.data) ? response.data.toString() : JSON.stringify(response.data)) : response.data
           }
           cb(error, newres, newres.body)
         } else {
@@ -116,7 +118,7 @@ module.exports = function (filename, addContext) {
             resolve({
               status: response.status,
               headers: response.headers,
-              body: typeof(response.data) == 'object' ? JSON.stringify(response.data) : response.data
+              body: typeof(response.data) == 'object' ? (Buffer.isBuffer(response.data) ? response.data.toString() : JSON.stringify(response.data)) : response.data
             })
           } else {
             resolve({ body: 'no response' })
@@ -128,16 +130,16 @@ module.exports = function (filename, addContext) {
       read: (key)=>{
         return storeGet(key)
       },
-      write: (key, value)=>{
-        storePut(key, value)
+      write: (value, key)=>{
+        storePut(value, key)
       }
     },
     $prefs: {
       valueForKey: (key)=>{
         return storeGet(key)
       },
-      setValueForKey: (key, value)=>{
-        storePut(key, value)
+      setValueForKey: (value, key)=>{
+        storePut(value, key)
       }
     },
     $notification: {
@@ -162,7 +164,7 @@ module.exports = function (filename, addContext) {
   if (addContext && addContext.$request) {
     addContext.$request.headers = addContext.$request.requestOptions.headers
     let reqData = addContext.$request.requestData
-    addContext.$request.body = typeof(reqData) != 'string' ? JSON.stringify(reqData) : reqData
+    addContext.$request.body = typeof(reqData) == 'object' ? (Buffer.isBuffer(reqData) ? reqData.toString() : JSON.stringify(reqData)) : reqData
   }
   if (addContext && addContext.$response) {
     addContext.$response.headers = addContext.$response.header

@@ -4,6 +4,8 @@ backup
 runjs/JSFile/*.js
 runjs/Store
 web/src
-*.config.js
+*config.js
 *test.js
 *.bat
+*.crt
+*.key

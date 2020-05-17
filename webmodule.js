@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const express = require('express')
+const compression = require('compression')
 const formidable = require('formidable')
 
 const { config, init } = require('./runjs/rule.js')
@@ -11,14 +12,17 @@ const { logger } = require('./utils')
 const clog = new logger('webServer')
 // clog.setlevel('error', true)
 
-// 任务信息列表
-const tasklists = fs.existsSync(path.join(__dirname, 'init', 'task.list')) ? JSON.parse(fs.readFileSync(path.join(__dirname, 'init', 'task.list'))) : {}
+// 保存的任务列表
+const tasklists = fs.existsSync(path.join(__dirname, 'runjs/Lists', 'task.list')) ? JSON.parse(fs.readFileSync(path.join(__dirname, 'init', 'task.list'))) : {}
 
-// 运行中的任务列表
+// 可执行任务列表
 const tasks = {}
 
 for(let tid in tasklists) {
   tasks[tid] = new task(tasklists[tid], jobFunc(tasklists[tid].job))
+  if (tasklists[tid].running) {
+    tasks[tid].start()
+  }
 }
 
 function jobFunc(job) {
@@ -44,6 +48,7 @@ function jobFunc(job) {
 
 function webser({ webstPort, proxyPort, webifPort }) {
   const app = express()
+  app.use(compression())
   app.use(express.json())
 
   let oneMonth = 60 * 1000 * 60 * 24 * 30
@@ -218,7 +223,7 @@ function webser({ webstPort, proxyPort, webifPort }) {
         res.end("no such task")
         break
       case "save":
-        fs.writeFileSync(path.join(__dirname, 'init', 'task.list'), JSON.stringify(data))
+        fs.writeFileSync(path.join(__dirname, 'runjs/Lists', 'task.list'), JSON.stringify(data))
         res.end("success saved!")
         break
       default:{
@@ -247,7 +252,7 @@ function webser({ webstPort, proxyPort, webifPort }) {
         break
       case "ePrules":
         let fdata = req.body.data.eplists
-        fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'default.list'), "# elecVProxy rule list\n\n" + fdata.join("\n"))
+        fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'default.list'), "# elecV2P rule list\n\n" + fdata.join("\n"))
 
         clog.info("保存 modify 规则集: " + fdata.length)
         res.end("保存 modify 规则集: " + fdata.length)

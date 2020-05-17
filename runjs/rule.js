@@ -81,12 +81,12 @@ const localResponse = {
   imghtml: {
     statusCode: 200,
     header: { 'Content-Type': 'text/html; charset=utf-8' },
-    body: '<img src="data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="elecV2Proxy"/>'
+    body: '<img src="data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="elecV2P"/>'
   },
   json: {
     statusCode: 200,
     header: { 'Content-Type': 'application/json' },
-    body: '{"data": "elecV2Proxy"}'
+    body: '{"data": "elecV2P"}'
   },
   tinyimg: {
     statusCode: 200,
@@ -104,7 +104,7 @@ module.exports = {
     const $request = requestDetail
 
     let getr = getrules(requestDetail, null, config.reqlists)
-    clog.info("reqlists:" + getr.length)
+    if(getr.length) clog.info("reqlists:", getr.length)
     for(let r of getr) {
       if ("block" === r[2]) {
         clog.info("block - " + r[3])
@@ -164,7 +164,7 @@ module.exports = {
     }
 
     let getr = getrules($request, $response, config.reslists)
-    clog.info("reslists: " + getr.length)
+    if(getr.length) clog.info("reslists:", getr.length)
     for(let r of getr) {
       if (r[2] == "js" || r[2] == 404) {
         Object.assign($response, runJSFile(r[3], {$request, $response}))
