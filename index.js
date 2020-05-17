@@ -3,7 +3,7 @@ const anyproxy = require('./anyproxy.js')
 
 const proxyPort = 8001,    // 代理端口
       webifPort = 8002,    // 代理的所有请求查看端口
-      webstPort = 8004       // 设置页面端口（规则更改，JS 添加等）
+      webstPort = 80       // 设置页面端口（规则更改，JS 添加等）
 
 const aProxyOptions = {
         port: proxyPort,
