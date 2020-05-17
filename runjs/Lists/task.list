@@ -1,0 +1,22 @@
+[{
+  id: 'lwogowo',
+  name: "30s阅读倒计时",
+  type: "schedule",
+  time: 30 999 2,
+  job: {
+    type: 'runjs',
+    target: 'miduRead.js'
+  },
+  running: true
+},
+{
+  id: 'woogwogwk',
+  name: '开始',
+  type: 'cron',
+  time: '0 0 0 * * *',
+  job: {
+    type: 'taskstart',
+    target: 'lwogowo'
+  },
+  running: false
+}]

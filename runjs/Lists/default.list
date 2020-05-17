@@ -1,0 +1,11 @@
+# elecVProxy rule list
+
+host,httpbin,js,0body.js,req
+url,httpbin.org/(get|post),js,0midu.js,res
+host,www.baidu.com,js,0body.js,req
+url,adtest,block,reject,req
+url,adtest,block,tinyimg,req
+useragent,Weibo,js,weibo_ad.js,res
+resstatus,404,js,404.js,res
+host,host.com,ua,iPhone,res
+host,host.com,301,google.com,res
