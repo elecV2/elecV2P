@@ -19,7 +19,7 @@ if(!fs.existsSync(StoreFolder)) fs.mkdirSync(StoreFolder)
 if(!fs.existsSync(JSFolder)) fs.mkdirSync(JSFolder)
 
 function storeGet(key) {
-  console.notify('get value for', key)
+  console.debug('get value for', key)
   if (fs.existsSync(path.join(__dirname, 'Store', key))) {
     return fs.readFileSync(path.join(__dirname, 'Store', key), 'utf8')
   }

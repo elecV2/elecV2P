@@ -17,7 +17,7 @@ let tasklists = {}
 
 if (fs.existsSync(path.join(__dirname, 'runjs/Lists', 'task.list')) && fs.readFileSync(path.join(__dirname, 'runjs/Lists', 'task.list'))) {
   try {
-    tasklists = JSON.parse(readFileSync(path.join(__dirname, 'runjs/Lists', 'task.list')))
+    tasklists = JSON.parse(fs.readFileSync(path.join(__dirname, 'runjs/Lists', 'task.list')))
   } catch {
     tasklists = {}
   }
