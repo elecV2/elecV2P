@@ -13,7 +13,15 @@ const clog = new logger('webServer')
 // clog.setlevel('error', true)
 
 // 保存的任务列表
-const tasklists = fs.existsSync(path.join(__dirname, 'runjs/Lists', 'task.list')) ? JSON.parse(fs.readFileSync(path.join(__dirname, 'runjs/Lists', 'task.list'))) : {}
+let tasklists = {}
+
+if (fs.existsSync(path.join(__dirname, 'runjs/Lists', 'task.list')) && fs.readFileSync(path.join(__dirname, 'runjs/Lists', 'task.list'))) {
+  try {
+    tasklists = JSON.parse(readFileSync(path.join(__dirname, 'runjs/Lists', 'task.list')))
+  } catch {
+    tasklists = {}
+  }
+}
 
 // 可执行任务列表
 const tasks = {}
