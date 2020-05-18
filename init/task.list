@@ -1,1 +1,0 @@
-{"w9AP70KI":{"name":"测试","type":"schedule","job":{"type":"runjs","target":"miduRead.js"},"time":"30 999 3","running":false},"uUXU6NCG":{"name":"开始","type":"cron","job":{"type":"taskstart","target":"w9AP70KI"},"time":"3 0 0 * * *","running":false},"zbbphZYg":{"name":"停止","type":"cron","job":{"type":"taskstop","target":"w9AP70KI"},"time":"6 20 2 * * *","running":false}}

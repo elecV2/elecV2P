@@ -1,4 +1,4 @@
-# elecVProxy rule list
+# elecV2P rule list
 
 host,httpbin,js,0body.js,req
 url,httpbin.org/(get|post),js,0midu.js,res

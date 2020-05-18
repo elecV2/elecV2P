@@ -6,11 +6,6 @@ WORKDIR /usr/local/app
 RUN yarn install --prod
 
 RUN sed -i 's/1024/2048/g' /usr/local/app/node_modules/node-easy-cert/dist/certGenerator.js
-  # && mkdir /root/.anyproxy \
-  # && mkdir /root/.anyproxy/certificates \
-  # && mv /usr/local/app/rootCA/* /root/.anyproxy/certificates
-
-# COPY ./init/certGenerator.js /usr/local/app/node_modules/node-easy-cert/dist/certGenerator.js
 
 EXPOSE 8001 8002 80
 
