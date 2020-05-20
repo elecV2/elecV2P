@@ -5,6 +5,7 @@ const http = require('http')
 const https = require('https')
 
 const logger = require('./logger')
+const feed = require('./feed')
 const { now,wait } = require('./time')
 const string = require('./string')
 
@@ -31,6 +32,7 @@ function downloadfile(durl, dest, cb) {
 
 module.exports = {
   logger,
+  feed,
   now,
   wait,
   downloadfile,

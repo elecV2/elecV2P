@@ -1,4 +1,5 @@
 const { now } = require('./time')
+const Feed = require('./feed')
 
 const levels = {
   error: 0,
@@ -7,7 +8,7 @@ const levels = {
   debug: 3
 }
 
-let globalLevelel = 'info'
+let globalLevel = 'info'
 
 function jsonArgs(args) {
   return [...args].map(arg=>typeof(arg) !== 'string' ? JSON.stringify(arg) : arg)
@@ -43,44 +44,56 @@ module.exports = class {
       this.infohead = alignHead(this._head + ' info')
       this.notifyhead = alignHead(this._head + ' notify')
       this.errorhead = alignHead(this._head + ' error')
-      this.debugheda = alignHead(this._head + ' debug')
+      this.debughead = alignHead(this._head + ' debug')
+      this.rsshead = alignHead(this._head + ' rss')
     } else {
       this.infohead = this._head + ' info'
       this.notifyhead = this._head + ' notify'
       this.errorhead = this._head + ' error'
-      this.debugheda = this._head + ' debug'
+      this.debughead = this._head + ' debug'
+      this.rsshead = this._head + ' rss'
     }
   }
 
   setlevel(level, isglobal=false){
     if (isglobal) {
-      globalLevelel = level
+      this.notify('全局日志级别调整为：', level)
+      globalLevel = level
     } else {
       this._level = level
     }
   }
 
   info(){
-    if (levels[this._level] >= levels['info'] && levels[this._level] <= levels[globalLevelel]) {
+    if (levels[this._level] >= levels['info'] && levels['info'] <= levels[globalLevel]) {
       console.log(`[${ this.infohead }][${ now() }]: ${ jsonArgs(arguments).join(' ') }`)
     }
   }
 
   notify(){
-    if (levels[this._level] >= levels['notify'] && levels[this._level] <= levels[globalLevelel]) {
+    if (levels[this._level] >= levels['notify'] && levels['notify'] <= levels[globalLevel]) {
       console.log(`[${ this.notifyhead }][${ now() }]: ${ jsonArgs(arguments).join(' ') }`)
     }
   }
 
   error(){
-    if (levels[this._level] >= levels['error'] && levels[this._level] <= levels[globalLevelel]) {
+    if (levels[this._level] >= levels['error'] && levels['error'] <= levels[globalLevel]) {
       console.error(`[${ this.errorhead }][${ now() }]: ${ jsonArgs(arguments).join(' ') }`)
     }
   }
 
   debug(){
-    if (levels[this._level] >= levels['debug'] && levels[this._level] <= levels[globalLevelel]) {
-      console.log(`[${ this.debugheda }][${ now() }]: ${ jsonArgs(arguments).join(' ') }`)
+    if (levels[this._level] >= levels['debug'] && levels['debug'] <= levels[globalLevel]) {
+      console.log(`[${ this.debughead }][${ now() }]: ${ jsonArgs(arguments).join(' ') }`)
+    }
+  }
+
+  rss(title, description, url){
+    if (title) {
+      console.log(`[${ this.rsshead }][${ now() }]: ${ title + " " + description }`)
+      Feed.addItem(title, description, url)
+    } else {
+      this.error('RSS 元素添加失败')
     }
   }
 }

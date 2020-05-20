@@ -32,6 +32,10 @@ function storePut(value, key) {
 }
 
 module.exports = function (filename, addContext) {
+  if (!fs.existsSync(path.join(JSFolder, filename))) {
+    console.error(filename, '不存在')
+    return
+  }
   const newContext = {
     console: new logger(filename),
     setTimeout,
@@ -173,7 +177,7 @@ module.exports = function (filename, addContext) {
   const newScript = new vm.Script(fs.readFileSync(path.join(JSFolder, filename), 'utf8'))
 
   try {
-    console.info('runjs: ' + filename)
+    console.info('runjs:', filename)
     newScript.runInNewContext({ ...newContext, ...addContext}, { timeout: timeout_jsrun })
   } catch(error) {
     console.error(error)

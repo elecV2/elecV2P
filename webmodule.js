@@ -4,10 +4,10 @@ const express = require('express')
 const compression = require('compression')
 const formidable = require('formidable')
 
-const { config, init } = require('./runjs/rule.js')
+const { config, init } = require('./runjs/rule')
 const runJSFile = require('./runjs/runJSFile')
 const { task, jsdownload, ...func } = require('./func')
-const { logger } = require('./utils')
+const { logger, feed } = require('./utils')
 
 const clog = new logger('webServer')
 // clog.setlevel('error', true)
@@ -15,7 +15,7 @@ const clog = new logger('webServer')
 // 保存的任务列表
 let tasklists = {}
 
-if (fs.existsSync(path.join(__dirname, 'runjs/Lists', 'task.list')) && fs.readFileSync(path.join(__dirname, 'runjs/Lists', 'task.list'))) {
+if (fs.existsSync(path.join(__dirname, 'runjs/Lists', 'task.list'))) {
   try {
     tasklists = JSON.parse(fs.readFileSync(path.join(__dirname, 'runjs/Lists', 'task.list')))
   } catch {
@@ -67,12 +67,36 @@ function webser({ webstPort, proxyPort, webifPort }) {
     clog.notify("elecV2P manage on port " + webstPort)
   })
 
+  app.get("/feed", (req, res)=>{
+    res.end(feed.xml())
+  })
+
+  app.put("/feed", (req, res)=>{
+    let data = req.body.data
+    switch(req.body.type){
+      case "op":
+        if (data) {
+          feed.open()
+          res.end('feed 已打开')
+        } else {
+          feed.close()
+          res.end('feed 已关闭')
+        }
+        break
+      case "clear":
+        feed.clear()
+        res.end('feed 已清空')
+        break
+      default:{
+        res.end('未知操作')
+      }
+    }
+  })
+
   app.get("/initdata", (req, res)=>{
     res.end(JSON.stringify({
-      ...config,
+      config,
       jslists: fs.readdirSync(path.join(__dirname, 'runjs/JSFile')).sort(),
-      proxyPort,
-      webifPort
     }))
   })
 
@@ -89,17 +113,18 @@ function webser({ webstPort, proxyPort, webifPort }) {
       }
 
       let jsDir = path.join(__dirname, "runjs", "JSFile")
-      if (!fs.existsSync(jsDir)) { fs.mkdir(jsDir) }
 
       if (files.js.length) {
         files.js.forEach(file=>{
+          clog.notify('上传文件：', file.name)
           fs.copyFileSync(file.path, path.join(jsDir, file.name))
         })
       } else {
+        clog.notify('上传文件：', files.js.name)
         fs.copyFileSync(files.js.path, path.join(jsDir, files.js.name))
       }
     })
-    res.write('js uploaded success')
+    res.write('js uploaded success!')
     res.end()
   })
 
@@ -187,6 +212,12 @@ function webser({ webstPort, proxyPort, webifPort }) {
       case "filter":
         res.end(fs.readFileSync(path.join(__dirname, 'runjs', 'Lists', 'filter.list'), 'utf8'))
         break
+      case "port":
+        res.end(JSON.stringify({
+          proxyPort,
+          webifPort
+        }))
+        break
       default: {
         res.end("404")
       }
@@ -207,6 +238,7 @@ function webser({ webstPort, proxyPort, webifPort }) {
         tasklists[data.tid] = data.task
 
         if (tasks[data.tid]) {
+          clog.info('删除原有任务，准备新建')
           tasks[data.tid].stop()
           tasks[data.tid].delete()
         }
@@ -260,7 +292,7 @@ function webser({ webstPort, proxyPort, webifPort }) {
         break
       case "ePrules":
         let fdata = req.body.data.eplists
-        fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'default.list'), "# elecV2P rule list\n\n" + fdata.join("\n"))
+        fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'default.list'), "# elecV2P rules \n\n" + fdata.join("\n"))
 
         clog.info("保存 modify 规则集: " + fdata.length)
         res.end("保存 modify 规则集: " + fdata.length)
