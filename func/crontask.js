@@ -1,7 +1,9 @@
 const cron = require('node-cron')
 
+const { wsSerSend } = require('./websocket')
 const { logger } = require('../utils')
-const clog = new logger('crontask')
+
+const clog = new logger({ head: 'crontask', cb: wsSerSend.logs })
 
 /**
  * 基础格式
@@ -28,7 +30,7 @@ module.exports = class {
   start(){
     if (this.task) {
       clog.log(`设置定时任务 ${this.task.name} 成功，时间：${this.task.time}`)
-      clog.rss(`设置定时任务 ${this.task.name} 成功`, '具体时间：' + this.task.time)
+      
       this.job = cron.schedule(this.task.time, this.job)
       this.task.running = true
     } else {
@@ -39,13 +41,11 @@ module.exports = class {
   stop(){
     if(this.job) this.job.stop()
     clog.log(this.task.name, '已停止')
-    clog.rss(this.task.name, '定时任务已停止')
     this.task.running = false
   }
 
   delete(){
     if(this.job) this.job.destroy()
     clog.log(this.task.name, '已删除')
-    clog.rss(this.task.name, '定时任务已删除')
   }
 }

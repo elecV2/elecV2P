@@ -9,7 +9,7 @@ const feed = require('./feed')
 const { now,wait } = require('./time')
 const string = require('./string')
 
-const clog = new logger('utils')
+const clog = new logger({head: 'utils'})
 
 function downloadfile(durl, dest, cb) {
   let nurl = url.parse(durl)

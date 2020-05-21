@@ -23,6 +23,7 @@ function addItem(title, description, url) {
     description: description || '通知内容',
     url: url || '',
     author: 'elecV2P',
+    date: Date()
   })
 }
 

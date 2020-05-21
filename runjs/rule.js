@@ -5,7 +5,7 @@ const path = require('path')
 const runJSFile = require('./runJSFile')
 const { logger } = require('../utils')
 
-const clog = new logger('elecV2P')
+const clog = new logger({head: 'anyRule'})
 
 const config = {
   reqlists: [],

@@ -1,5 +1,6 @@
 const webstser = require('./webmodule.js')
 const anyproxy = require('./anyproxy.js')
+const { webskPort, webskPath } = require('./func/websocket.js')
 
 const proxyPort = 8001,    // 代理端口
       webifPort = 8002,    // 代理的所有请求查看端口
@@ -16,4 +17,4 @@ const aProxyOptions = {
       
 const proxy = anyproxy(aProxyOptions)
 
-const webst = webstser({webstPort: process.env.PORT || webstPort || 80, proxyPort, webifPort})
+const webst = webstser({ webstPort: process.env.PORT || webstPort || 80, proxyPort, webifPort, webskPort, webskPath })

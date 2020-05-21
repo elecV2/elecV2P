@@ -1,9 +1,9 @@
 const cron = require('./crontask.js')
 const schedule = require('./schedule')
 
-const { logger } = require('../utils')
+const { logger, feed } = require('../utils')
 
-const clog = new logger('task')
+const clog = new logger({head: 'task'})
 
 // 任务类型： cron/schedule
 // 
@@ -35,19 +35,32 @@ module.exports = class {
     if (this.info.type == 'cron') {
       this.task = new cron(this._Task, this.job)
       this.task.start()
+      feed.addItem(`设置定时任务 ${this._Task.name} `, '具体时间：' + this._Task.time)
     } else if (this.info.type == 'schedule') {
       this.task = new schedule(this._Task, this.job)
-      this.task.start()
+      feed.addItem('设置倒计时任务 ' + this._Task.name, '倒计时时间：' + this._Task.time + `${ this._Task.repeat ? '，重复次数：' + this._Task.repeat : '' }` + `${ this._Task.random ? '，随机秒数：' + this._Task.random : '' }`)
+      return new Promise(resolve=>{
+        this.task.start().then(()=>{
+          feed.addItem(this._Task.name + ' 执行完成', '倒计时任务')
+          resolve()
+        })
+      })
     } else {
       clog.error('任务类型仅支持： cron/schedule')
     }
   }
 
   stop(){
-    if(this.task) this.task.stop()
+    if(this.task) {
+      feed.addItem(this._Task.name, '任务已停止')
+      this.task.stop()
+    }
   }
 
   delete(){
-    if(this.task) this.task.delete()
+    if(this.task) {
+      feed.addItem(this._Task.name, '任务已删除')
+      this.task.delete()
+    }
   }
 }

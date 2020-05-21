@@ -4,8 +4,9 @@ const axios = require('axios')
 const path = require('path')
 
 const { logger } = require('../utils')
+const { wsSerSend } = require('../func')
 
-const console = new logger('runJSFile')
+const clog = new logger({ head: 'runJSFile', cb: wsSerSend.logs })
 
 const StoreFolder = path.join(__dirname, 'Store')
 const JSFolder = path.join(__dirname, 'JSFile')
@@ -19,7 +20,7 @@ if(!fs.existsSync(StoreFolder)) fs.mkdirSync(StoreFolder)
 if(!fs.existsSync(JSFolder)) fs.mkdirSync(JSFolder)
 
 function storeGet(key) {
-  console.debug('get value for', key)
+  clog.debug('get value for', key)
   if (fs.existsSync(path.join(__dirname, 'Store', key))) {
     return fs.readFileSync(path.join(__dirname, 'Store', key), 'utf8')
   }
@@ -33,16 +34,16 @@ function storePut(value, key) {
 
 module.exports = function (filename, addContext) {
   if (!fs.existsSync(path.join(JSFolder, filename))) {
-    console.error(filename, '不存在')
+    clog.error(filename, '不存在')
     return
   }
   const newContext = {
-    console: new logger(filename),
+    console: new logger({ head: filename, cb: wsSerSend.logs }),
     setTimeout,
     $evData: {},
     $done: (data) => {
       if(data) {
-        console.debug(filename, '$done data:', data)
+        clog.debug(filename, '$done data:', data)
         newContext.$evData = data
       }
     },
@@ -53,7 +54,7 @@ module.exports = function (filename, addContext) {
         const response = await axios(req)
         cb(response)
       } catch (error) {
-        console.error(error)
+        clog.error(error)
       }
     },
     $httpClient: {
@@ -149,12 +150,12 @@ module.exports = function (filename, addContext) {
     $notification: {
       // Surge 通知，别动 function
       post: function () {
-        console.notify([...arguments].join(' '))
+        clog.notify([...arguments].join(' '))
       }
     },
     $notify: function () {
       // Quantumultx 通知
-      console.notify([...arguments].join(' '))
+      clog.notify([...arguments].join(' '))
     }
   }
 
@@ -177,10 +178,10 @@ module.exports = function (filename, addContext) {
   const newScript = new vm.Script(fs.readFileSync(path.join(JSFolder, filename), 'utf8'))
 
   try {
-    console.info('runjs:', filename)
+    clog.info('runjs:', filename)
     newScript.runInNewContext({ ...newContext, ...addContext}, { timeout: timeout_jsrun })
   } catch(error) {
-    console.error(error)
+    clog.error(error)
   }
 
   return newContext.$evData ? (typeof(newContext.$evData) == "object" ? newContext.$evData : newContext.$evData) : ''

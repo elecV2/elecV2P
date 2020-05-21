@@ -3,7 +3,7 @@ const exec = require('child_process').exec
 
 const { logger } = require('./utils')
 
-const clog = new logger('Anyproxy')
+const clog = new logger({head: 'anyProxy'})
 
 function anyproxy(eoption) {
   if(!proxy.utils.certMgr.ifRootCAFileExists()){
@@ -35,13 +35,13 @@ function anyproxy(eoption) {
       port: webifPort
     },
     // throttle: 1000,
-    wsIntercept: true,
+    wsIntercept: false,
     silent: false
   }
   const proxyServer = new proxy.ProxyServer({...options, ...eoption})
 
   proxyServer.on('ready', ()=>{
-    clog.notify('代理服务器已准备就绪')
+    clog.notify('服务器已准备就绪')
   })
 
   proxyServer.on('error', (e)=>{

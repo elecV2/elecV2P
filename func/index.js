@@ -8,8 +8,9 @@ const homedir = require('os').homedir()
 // 
 const { logger, downloadfile } = require('../utils')
 const task = require('./task')
+const { wsSerSend, webskPort, webskPath } = require('./websocket')
 
-const clog = new logger('Func')
+const clog = new logger({head: 'Func'} )
 
 const crtpath = homedir + '/.anyproxy/certificates'
 const jsfpath = path.join(__dirname, "../runjs/JSFile")
@@ -102,4 +103,4 @@ function filterlist(lists, add=true) {
   return String(mergelists.length - oldlists.length)
 }
 
-module.exports = { task, clearCrt, rootCrtSync, crule, jsdownload, filterlist }
+module.exports = { task, wsSerSend, clearCrt, rootCrtSync, crule, jsdownload, filterlist }

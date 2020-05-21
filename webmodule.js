@@ -6,10 +6,10 @@ const formidable = require('formidable')
 
 const { config, init } = require('./runjs/rule')
 const runJSFile = require('./runjs/runJSFile')
-const { task, jsdownload, ...func } = require('./func')
+const { task, jsdownload, wsSerSend, ...func } = require('./func')
 const { logger, feed } = require('./utils')
 
-const clog = new logger('webServer')
+const clog = new logger({head: 'webServer'})
 // clog.setlevel('error', true)
 
 // 保存的任务列表
@@ -42,11 +42,13 @@ function jobFunc(job) {
     return ()=>{
       tasks[job.target].start()
       tasklists[job.target].running = true
+      wsSerSend.task({tid: job.target, op: 'start'})
     }
   } else if (job.type == 'taskstop') {
     return ()=>{
       tasks[job.target].stop()
       tasklists[job.target].running = false
+      wsSerSend.task({tid: job.target, op: 'stop'})
     }
   } else {
     clog.error('任务类型未知')
@@ -54,7 +56,7 @@ function jobFunc(job) {
   }
 }
 
-function webser({ webstPort, proxyPort, webifPort }) {
+function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
   const app = express()
   app.use(compression())
   app.use(express.json())
@@ -215,7 +217,9 @@ function webser({ webstPort, proxyPort, webifPort }) {
       case "port":
         res.end(JSON.stringify({
           proxyPort,
-          webifPort
+          webifPort,
+          webskPort,
+          webskPath
         }))
         break
       default: {
@@ -238,12 +242,16 @@ function webser({ webstPort, proxyPort, webifPort }) {
         tasklists[data.tid] = data.task
 
         if (tasks[data.tid]) {
-          clog.info('删除原有任务，准备新建')
+          clog.info('删除原有任务，更新数据')
           tasks[data.tid].stop()
           tasks[data.tid].delete()
         }
         tasks[data.tid] = new task(data.task, jobFunc(data.task.job))
-        tasks[data.tid].start()
+        if (data.task.type == 'schedule') {
+          tasks[data.tid].start().then(()=>wsSerSend.task({tid: data.tid, op: 'stop'}))
+        } else {
+          tasks[data.tid].start()
+        }
         res.end("task started!")
         break
       case "stop":
