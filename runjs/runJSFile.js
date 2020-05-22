@@ -3,10 +3,16 @@ const fs = require('fs')
 const axios = require('axios')
 const path = require('path')
 
-const { logger } = require('../utils')
+const { logger, feed } = require('../utils')
 const { wsSerSend } = require('../func')
 
 const clog = new logger({ head: 'runJSFile', cb: wsSerSend.logs })
+
+// 每运行 {numtofeed} 次 JS, 添加一个 Feed item
+const numtofeed = 50
+const runStatus = {
+  times: numtofeed
+}
 
 const StoreFolder = path.join(__dirname, 'Store')
 const JSFolder = path.join(__dirname, 'JSFile')
@@ -180,6 +186,25 @@ module.exports = function (filename, addContext) {
   try {
     clog.info('runjs:', filename)
     newScript.runInNewContext({ ...newContext, ...addContext}, { timeout: timeout_jsrun })
+    if (runStatus[filename]) {
+      runStatus[filename]++
+    } else {
+      runStatus[filename] = 1
+    }
+    runStatus.times--
+
+    clog.debug(runStatus)
+    if (runStatus.times == 0) {
+      let des = []
+      for (let jsname in runStatus) {
+        if (jsname != 'times') {
+          des.push(`${jsname}: ${runStatus[jsname]} 次`)
+          delete runStatus[jsname]
+        }
+      }
+      feed.addItem('运行 JS ' + numtofeed + ' 次啦！', des.join(', '))
+      runStatus.times = numtofeed
+    }
   } catch(error) {
     clog.error(error)
   }

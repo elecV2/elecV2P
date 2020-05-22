@@ -1,7 +1,7 @@
 const ws = require('ws')
 
 const { logger } = require('../utils')
-const clog = new logger({head: 'webSocket'})
+const clog = new logger({head: 'webSocket', level: 'debug'})
 
 const webskPort = 8005
 const webskPath = '/elecV2P'

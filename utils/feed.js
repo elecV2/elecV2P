@@ -21,7 +21,7 @@ function addItem(title, description, url) {
   feed.item({
     title:  title || 'elecV2P notification',
     description: description || '通知内容',
-    url: url || '',
+    url: url || 'https://github.com/elecV2',
     author: 'elecV2P',
     date: Date()
   })

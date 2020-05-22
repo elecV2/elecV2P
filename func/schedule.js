@@ -52,7 +52,7 @@ module.exports = class {
 
           if(this.repeat<this.task.repeat || this.task.repeat>=999) {
             this.repeat++
-            this.start()
+            this.start().then(()=>resolve())
           } else {
             clog.log(this.task.name, '执行完成')
             this.task.running = false

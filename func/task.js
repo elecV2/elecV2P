@@ -40,10 +40,7 @@ module.exports = class {
       this.task = new schedule(this._Task, this.job)
       feed.addItem('设置倒计时任务 ' + this._Task.name, '倒计时时间：' + this._Task.time + `${ this._Task.repeat ? '，重复次数：' + this._Task.repeat : '' }` + `${ this._Task.random ? '，随机秒数：' + this._Task.random : '' }`)
       return new Promise(resolve=>{
-        this.task.start().then(()=>{
-          feed.addItem(this._Task.name + ' 执行完成', '倒计时任务')
-          resolve()
-        })
+        this.task.start().then(()=>resolve())
       })
     } else {
       clog.error('任务类型仅支持： cron/schedule')
@@ -52,14 +49,14 @@ module.exports = class {
 
   stop(){
     if(this.task) {
-      feed.addItem(this._Task.name, '任务已停止')
+      feed.addItem(this._Task.name + ' 已停止', '任务时间：' + this._Task.time)
       this.task.stop()
     }
   }
 
   delete(){
     if(this.task) {
-      feed.addItem(this._Task.name, '任务已删除')
+      feed.addItem(this._Task.name + ' 已删除', '任务时间：' + this._Task.time)
       this.task.delete()
     }
   }

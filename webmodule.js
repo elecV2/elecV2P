@@ -70,6 +70,7 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
   })
 
   app.get("/feed", (req, res)=>{
+    res.set('Content-Type', 'text/xml')
     res.end(feed.xml())
   })
 
@@ -248,7 +249,10 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
         }
         tasks[data.tid] = new task(data.task, jobFunc(data.task.job))
         if (data.task.type == 'schedule') {
-          tasks[data.tid].start().then(()=>wsSerSend.task({tid: data.tid, op: 'stop'}))
+          tasks[data.tid].start().then(()=>{
+            wsSerSend.task({tid: data.tid, op: 'stop'})
+            feed.addItem(data.task.name + ' 执行完成', '倒计时任务')
+          })
         } else {
           tasks[data.tid].start()
         }
