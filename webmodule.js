@@ -4,13 +4,30 @@ const express = require('express')
 const compression = require('compression')
 const formidable = require('formidable')
 
-const { config, init } = require('./runjs/rule')
+const { ruleData, init } = require('./runjs/rule')
 const runJSFile = require('./runjs/runJSFile')
 const { task, jsdownload, wsSerSend, ...func } = require('./func')
 const { logger, feed } = require('./utils')
 
 const clog = new logger({head: 'webServer'})
 // clog.setlevel('error', true)
+
+let config = {
+      glevel: 'info',
+      feedenable: true,
+      iftttid: ''
+    }
+
+if (fs.existsSync(path.join(__dirname, 'config.json'))) {
+  try {
+    config = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json')))
+    feed.config.isclose = !config.feedenable
+    feed.config.iftttid = config.iftttid
+    clog.setlevel(config.glevel, true)
+  } catch {
+    clog.error('config.json 无法解析')
+  }
+}
 
 // 保存的任务列表
 let tasklists = {}
@@ -78,17 +95,19 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     let data = req.body.data
     switch(req.body.type){
       case "op":
-        if (data) {
-          feed.open()
-          res.end('feed 已打开')
-        } else {
-          feed.close()
-          res.end('feed 已关闭')
-        }
+        feed.config.isclose = data
+        clog.notify(`feed 已 ${ data ? '开启' : '关闭' }`)
+        res.end(`feed 已 ${ data ? '开启' : '关闭' }`)
         break
       case "clear":
         feed.clear()
+        clog.notify('feed 已清空')
         res.end('feed 已清空')
+        break
+      case "ifttt":
+        feed.config.iftttid = data
+        clog.notify(`ifttt webhook 功能已 ${ data ? '开启' : '关闭' }`)
+        res.end(`ifttt webhook 功能已 ${ data ? '开启' : '关闭' }`)
         break
       default:{
         res.end('未知操作')
@@ -98,7 +117,7 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
 
   app.get("/initdata", (req, res)=>{
     res.end(JSON.stringify({
-      config,
+      config: ruleData,
       jslists: fs.readdirSync(path.join(__dirname, 'runjs/JSFile')).sort(),
     }))
   })
@@ -175,8 +194,8 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress) 
       + " 保存规则列表")
     if (req.body.subrule || req.body.rewritelists) {
-      config.subrules = req.body.subrule
-      config.rewritelists = req.body.rewritelists
+      ruleData.subrules = req.body.subrule
+      ruleData.rewritelists = req.body.rewritelists
       let file = fs.createWriteStream(path.join(__dirname, 'runjs', 'Lists', 'rewrite.list'))
       file.on('error', (err)=>clog.err(err))
 
@@ -206,6 +225,9 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
   + ` get data ${type}`)
     res.writeHead(200,{ 'Content-Type' : 'text/plain;charset=utf-8' })
     switch (type) {
+      case "config":
+        res.end(JSON.stringify(config))
+        break
       case "useragent":
         res.end(fs.readFileSync(path.join(__dirname, 'runjs', 'Lists', 'useragent.list')))
         break
@@ -225,6 +247,46 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
         break
       default: {
         res.end("404")
+      }
+    }
+  })
+
+  app.put("/data", (req, res)=>{
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " put data " + req.body.type)
+    switch(req.body.type){
+      case "config":
+        fs.writeFileSync(path.join(__dirname, 'config.json'), JSON.stringify(req.body.data))
+        res.end("当前配置 已保存至 config.json")
+        break
+      case "useragent":
+        let oua = JSON.parse(fs.readFileSync(path.join(__dirname, 'runjs', 'Lists', 'useragent.list')))
+        oua.enable = req.body.data.enable
+        fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'useragent.list'), JSON.stringify(oua))
+        res.end(oua.enable?"使用新的 User-Agent: " + oua[oua.enable].name:"取消使用 User-Agent")
+        break
+      case "glevel":
+        try {
+          clog.setlevel(req.body.data, true)
+          res.end('日志级别设置为：' + req.body.data)
+        } catch(e) {
+          res.end('日志级别设置失败 ' + e)
+        }
+        break
+      case "ePrules":
+        let fdata = req.body.data.eplists
+        fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'default.list'), "# elecV2P rules \n\n" + fdata.join("\n"))
+
+        clog.info("保存 modify 规则集: " + fdata.length)
+        res.end("保存 modify 规则集: " + fdata.length)
+        break
+      case "mitmhost":
+        let mhost = req.body.data
+        fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'mitmhost.list'), "[mitmhost]\n" + mhost.join("\n"))
+        res.end("保存 mitmhost : " + mhost.length)
+        init()
+        break
+      default:{
+        res.end("data put error")
       }
     }
   })
@@ -280,44 +342,6 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
         break
       default:{
         res.end("task operation error")
-      }
-    }
-  })
-
-  app.put("/data", (req, res)=>{
-    // clog.info(req.body)
-    switch(req.body.type){
-      case "useragent":
-        let oua = JSON.parse(fs.readFileSync(path.join(__dirname, 'runjs', 'Lists', 'useragent.list')))
-        oua.enable = req.body.data.enable
-        fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'useragent.list'), JSON.stringify(oua))
-        clog.notify("User-Agent 修改")
-        res.end(oua.enable?"使用新的 User-Agent: " + oua[oua.enable].name:"取消使用 User-Agent")
-        break
-      case "glevel":
-        try {
-          clog.setlevel(req.body.data, true)
-          res.end('日志级别设置为：' + req.body.data)
-        } catch(e) {
-          res.end('日志级别设置失败 ' + e)
-        }
-        break
-      case "ePrules":
-        let fdata = req.body.data.eplists
-        fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'default.list'), "# elecV2P rules \n\n" + fdata.join("\n"))
-
-        clog.info("保存 modify 规则集: " + fdata.length)
-        res.end("保存 modify 规则集: " + fdata.length)
-        break
-      case "mitmhost":
-        let mhost = req.body.data
-        fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'mitmhost.list'), "[mitmhost]\n" + mhost.join("\n"))
-        clog.info("保存 mitmhost : " + mhost.length)
-        res.end("保存 mitmhost : " + mhost.length)
-        init()
-        break
-      default:{
-        res.end("data put error")
       }
     }
   })

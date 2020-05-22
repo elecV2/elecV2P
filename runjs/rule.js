@@ -7,13 +7,12 @@ const { logger } = require('../utils')
 
 const clog = new logger({head: 'anyRule'})
 
-const config = {
+const ruleData = {
   reqlists: [],
   reslists: [],
   rewritelists: [],
   uagent: {},
-  adblockflag: false,
-  glevel: 'info'
+  adblockflag: false
 }
 
 if (!fs.existsSync(path.join(__dirname, 'Lists'))) {
@@ -41,54 +40,54 @@ function getrules($request, $response, lists) {
 function init(){
   if (fs.existsSync(path.join(__dirname, 'Lists', "useragent.list"))) {
     try {
-      config.uagent = JSON.parse(fs.readFileSync(path.join(__dirname, 'Lists', "useragent.list"), "utf8"))
+      ruleData.uagent = JSON.parse(fs.readFileSync(path.join(__dirname, 'Lists', "useragent.list"), "utf8"))
     } catch {
-      config.uagent = {}
+      ruleData.uagent = {}
     }
   }
 
-  config.rewritelists = []
-  config.subrules = []
+  ruleData.rewritelists = []
+  ruleData.subrules = []
   if (fs.existsSync(path.join(__dirname, 'Lists', 'rewrite.list'))) {
     fs.readFileSync(path.join(__dirname, 'Lists', 'rewrite.list'), 'utf8').split(/\r|\n/).forEach(l=>{
       if (/^#/.test(l) || l.length<2) return
       let item = l.split(" ")
       if (item.length == 2) {
         if (/js$/.test(item[1])) {
-          config.rewritelists.push([item[0], item[1]])
+          ruleData.rewritelists.push([item[0], item[1]])
         } else if (/^sub/.test(item[0])) {
-          config.subrules.push(item[1])
+          ruleData.subrules.push(item[1])
         }
       }
     })
   }
 
-  config.reqlists = []
-  config.reslists = []
+  ruleData.reqlists = []
+  ruleData.reslists = []
   if (fs.existsSync(path.join(__dirname, 'Lists', 'default.list'))) {
     fs.readFileSync(path.join(__dirname, 'Lists', 'default.list'), 'utf8').split(/\n|\r/).forEach(l=>{
       if (l.length<=8 || /^#/.test(l)) return
       let item = l.split(",")
       if (item.length >= 4) {
         item = item.map(i=>i.trim())
-        if (item[4] == "req") config.reqlists.push(item)
-        else config.reslists.push(item)
+        if (item[4] == "req") ruleData.reqlists.push(item)
+        else ruleData.reslists.push(item)
       }
     })
   }
 
   if (fs.existsSync(path.join(__dirname, 'Lists', 'mitmhost.list'))) {
-    config.host = fs.readFileSync(path.join(__dirname, 'Lists', 'mitmhost.list'), 'utf8').split(/\r|\n/).filter(host=>{
+    ruleData.host = fs.readFileSync(path.join(__dirname, 'Lists', 'mitmhost.list'), 'utf8').split(/\r|\n/).filter(host=>{
       if (/^(\[|#|;)/.test(host) || host.length < 3) {return false}
       return true
     })
   }
 
-  clog.notify(`default 规则 ${ config.reqlists.length + config.reslists.length} 条`)
-  clog.notify(`rewrite 规则 ${ config.rewritelists.length} 条`)
-  clog.notify(`MITM hosts ${config.host.length} 个`)
+  clog.notify(`default 规则 ${ ruleData.reqlists.length + ruleData.reslists.length} 条`)
+  clog.notify(`rewrite 规则 ${ ruleData.rewritelists.length} 条`)
+  clog.notify(`MITM hosts ${ruleData.host.length} 个`)
 
-  return config
+  return ruleData
 }
 init()
 
@@ -118,12 +117,12 @@ const localResponse = {
 module.exports = {
   summary: 'elecV2P rule - customize personal network',
   init,
-  config,
+  ruleData,
   *beforeSendRequest(requestDetail) {
     // console.log(requestDetail.requestOptions)
     const $request = requestDetail
 
-    let getr = getrules(requestDetail, null, config.reqlists)
+    let getr = getrules(requestDetail, null, ruleData.reqlists)
     if(getr.length) clog.info("reqlists:", getr.length)
     for(let r of getr) {
       if ("block" === r[2]) {
@@ -141,7 +140,7 @@ module.exports = {
       }
       if ("ua" == r[2]) {
         const newreqOptions = requestDetail.requestOptions
-        newreqOptions.headers['User-Agent'] = config.uagent[r[3]].header
+        newreqOptions.headers['User-Agent'] = ruleData.uagent[r[3]].header
         clog.info("User-Agent 设置为：" + r[3])
         return {
           requestOptions: newreqOptions
@@ -172,18 +171,18 @@ module.exports = {
     return requestDetail
   },
   *beforeSendResponse(requestDetail, responseDetail) {
-    // clog.info(config.rewritelists.length)
+    // clog.info(ruleData.rewritelists.length)
     const $request = requestDetail
     const $response = responseDetail.response
 
-    for (let r of config.rewritelists) {
+    for (let r of ruleData.rewritelists) {
       if ((new RegExp(r[0])).test($request.url)) {
         Object.assign($response, runJSFile(r[1], { $request, $response }))
         break
       }
     }
 
-    let getr = getrules($request, $response, config.reslists)
+    let getr = getrules($request, $response, ruleData.reslists)
     if(getr.length) clog.info("reslists:", getr.length)
     for(let r of getr) {
       if (r[2] == "js" || r[2] == 404) {
@@ -195,7 +194,7 @@ module.exports = {
   },
   *beforeDealHttpsRequest(requestDetail) {
     let host = requestDetail.host.split(":")[0]
-    if (config.host.indexOf(host) !== -1) {
+    if (ruleData.host.indexOf(host) !== -1) {
       // clog.info(host)
       return true
     }

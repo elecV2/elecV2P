@@ -1,6 +1,9 @@
 const RSS = require('rss')
+const axios = require('axios')
 
-const { now } = require('./time')
+const logger = require('./logger')
+
+const clog = new logger({ head: 'feed', level: 'debug' })
 
 function newFeed({ title, description, site_url, feed_url }) {
   // clog.notify(title, '生成新的 feed')
@@ -16,21 +19,33 @@ function newFeed({ title, description, site_url, feed_url }) {
 }
 let feed = newFeed({})
 
-function addItem(title, description, url) {
-  // clog.info('添加 item', title)
+const config = {
+  isclose: false,
+  iftttid: ''
+}
+
+function addItem(title = 'elecV2P notification', description =  '通知内容', url = 'https://github.com/elecV2/unique/' + new Date().getTime()) {
+  clog.notify('添加 item', title, description)
   feed.item({
-    title:  title || 'elecV2P notification',
-    description: description || '通知内容',
-    url: url || 'https://github.com/elecV2',
+    title,
+    description,
+    url,
+    guid: String(new Date().getTime()),
     author: 'elecV2P',
     date: Date()
   })
+  if (config.iftttid) {
+    clog.notify('ifttt webhook trigger:', title, description)
+    axios.post('https://maker.ifttt.com/trigger/elecV2P/with/key/' + config.iftttid, {value1: title, value2: description, value3: url}).then(res=>{
+      clog.debug(res.data)
+    }).catch(e=>{
+      clog.error(e)
+    })
+  }
 }
 
-let isclose = false
-
 function xml() {
-  if (isclose) {
+  if (config.isclose) {
     return ''
   }
   return feed.xml()
@@ -38,21 +53,13 @@ function xml() {
 
 function clear() {
   feed = newFeed({})
-}
-
-function close() {
-  isclose = true
-}
-
-function open() {
-  isclose = false
+  clog.notify('feed 内容已清空')
 }
 
 module.exports = {
   newFeed,
   addItem,
   xml,
-  clear,
-  close,
-  open
+  config,
+  clear
 }
