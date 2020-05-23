@@ -3,27 +3,32 @@ const fs = require('fs')
 const axios = require('axios')
 const path = require('path')
 
-const { logger, feed } = require('../utils')
+const { logger, feed, now } = require('../utils')
 const { wsSerSend } = require('../func')
 
-const clog = new logger({ head: 'runJSFile', cb: wsSerSend.logs })
-
-// 每运行 {numtofeed} 次 JS, 添加一个 Feed item
-const numtofeed = 50
-const runStatus = {
-  times: numtofeed
-}
+const clog = new logger({ head: 'runJSFile', cb: wsSerSend.logs, level: 'debug' })
+// clog.setlevel('debug', true)
 
 const StoreFolder = path.join(__dirname, 'Store')
 const JSFolder = path.join(__dirname, 'JSFile')
-const timeout_jsrun = 5000
-const timeout_axios = 5000
-
-const SurgeEnable = true      // 兼容 Surge 脚本（默认）
-const QuanxEnable = false     // 兼容 Quanx 脚本
-
 if(!fs.existsSync(StoreFolder)) fs.mkdirSync(StoreFolder)
 if(!fs.existsSync(JSFolder)) fs.mkdirSync(JSFolder)
+
+
+const config = {
+  timeout_jsrun: 5000,
+  timeout_axios: 5000,
+  // 每运行 {numtofeed} 次 JS, 添加一个 Feed item
+  numtofeed: 50,
+
+  SurgeEnable: false,     // 兼容 Surge 脚本
+  QuanxEnable: false,     // 兼容 Quanx 脚本
+}
+
+const runStatus = {
+  start: now(),
+  times: config.numtofeed
+}
 
 function storeGet(key) {
   clog.debug('get value for', key)
@@ -55,7 +60,7 @@ module.exports = function (filename, addContext) {
     },
     $axios: async (req, cb)=>{
       // 普通 axios 请求
-      req.timeout = timeout_axios
+      req.timeout = config.timeout_axios
       try {
         const response = await axios(req)
         cb(response)
@@ -66,7 +71,7 @@ module.exports = function (filename, addContext) {
     $httpClient: {
       // surge http 请求
       get: async (req, cb)=>{
-        req.timeout = timeout_axios
+        req.timeout = config.timeout_axios
         if (req.body) {
           req.data = req.body
         }
@@ -95,7 +100,7 @@ module.exports = function (filename, addContext) {
           url: spu[0],
           headers: req.headers,
           data: req.body || spu[1] || '',
-          timeout: timeout_axios,
+          timeout: config.timeout_axios,
           method: 'post'
         }
         let error, response
@@ -118,13 +123,23 @@ module.exports = function (filename, addContext) {
     },
     $task: {
       // Quantumult X 网络请求
-      fetch: (req)=>{
-        req.timeout = timeout_axios
-        if (req.body) {
-          req.data = req.body
+      fetch: async (req)=>{
+        let newreq = req
+        if (/post/i.test(req.method)) {
+          const spu = req.url.split('?')
+          newreq = {
+            url: spu[0],
+            headers: req.headers,
+            data: req.body || spu[1] || '',
+            method: 'post'
+          }
+        } else if (req.body) {
+          newreq.data = req.body
         }
-        return new Promise(async (resolve, reject) => {
-          const response = await axios(req)
+        newreq.timeout = config.timeout_axios
+        const response = await axios(newreq)
+
+        return new Promise((resolve, reject) => {
           if (response) {
             resolve({
               status: response.status,
@@ -165,10 +180,21 @@ module.exports = function (filename, addContext) {
     }
   }
 
-  if (QuanxEnable == false) {
+  const JsStr = fs.readFileSync(path.join(JSFolder, filename), 'utf8')
+
+  if ((config.SurgeEnable || config.QuanxEnable) == false && /\$httpClient|\$persistentStore|\$notification/.test(JsStr)) {
+    clog.debug(`检测到 ${filename} 为 Surge 脚本，使用 Surge 兼容模式`)
+    config.SurgeEnable = true
+  }
+  if ((config.SurgeEnable || config.QuanxEnable) == false && /\$task|\$prefs|\$notify/.test(JsStr)) {
+    clog.debug(`检测到 ${filename} 为 Quantumult X 脚本，使用 Quantumult X 兼容模式`)
+    config.QuanxEnable = true
+  }
+
+  if (config.QuanxEnable == false) {
     Object.assign(newContext, {$task: undefined, $prefs: undefined, $notify: undefined})
   }
-  if (SurgeEnable == false) {
+  if (config.SurgeEnable == false) {
     Object.assign(newContext, {$httpClient: undefined, $persistentStore: undefined, $notification: undefined})
   }
 
@@ -181,11 +207,11 @@ module.exports = function (filename, addContext) {
     addContext.$response.headers = addContext.$response.header
   }
 
-  const newScript = new vm.Script(fs.readFileSync(path.join(JSFolder, filename), 'utf8'))
+  const newScript = new vm.Script(JsStr)
 
   try {
-    clog.info('runjs:', filename)
-    newScript.runInNewContext({ ...newContext, ...addContext}, { timeout: timeout_jsrun })
+    clog.notify('runjs:', filename)
+    newScript.runInNewContext({ ...newContext, ...addContext}, { timeout: config.timeout_jsrun })
     if (runStatus[filename]) {
       runStatus[filename]++
     } else {
@@ -193,7 +219,7 @@ module.exports = function (filename, addContext) {
     }
     runStatus.times--
 
-    clog.debug(runStatus)
+    clog.debug('JS 脚本运行次数统计：', runStatus)
     if (runStatus.times == 0) {
       let des = []
       for (let jsname in runStatus) {
@@ -202,8 +228,9 @@ module.exports = function (filename, addContext) {
           delete runStatus[jsname]
         }
       }
-      feed.addItem('运行 JS ' + numtofeed + ' 次啦！', des.join(', '))
-      runStatus.times = numtofeed
+      feed.addItem('运行 JS ' + config.numtofeed + ' 次啦！', `从 ${runStatus.start} 开始： ` + des.join(', '))
+      runStatus.times = config.numtofeed
+      runStatus.start = now()
     }
   } catch(error) {
     clog.error(error)

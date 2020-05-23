@@ -91,7 +91,7 @@ module.exports = class {
     let cont = `[${ this.debughead }][${ now() }]: ${ jsonArgs(arguments).join(' ') }`
     if (levels[this._level] >= levels['debug'] && levels['debug'] <= levels[globalLevel]) {
       console.log(cont)
+      if(this._cb) this._cb(cont)
     }
-    if(this._cb) this._cb(cont)
   }
 }
