@@ -223,7 +223,7 @@ module.exports = function (filename, addContext) {
     if (runStatus.times == 0) {
       let des = []
       for (let jsname in runStatus) {
-        if (jsname != 'times') {
+        if (jsname != 'times' && jsname != 'start') {
           des.push(`${jsname}: ${runStatus[jsname]} 次`)
           delete runStatus[jsname]
         }
