@@ -18,9 +18,11 @@ let config = {
       iftttid: ''
     }
 
-if (fs.existsSync(path.join(__dirname, 'config.json'))) {
+let configFile = path.join(__dirname, 'runjs', 'Lists', 'config.json')
+
+if (fs.existsSync(configFile)) {
   try {
-    config = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json')))
+    config = JSON.parse(fs.readFileSync(configFile))
     feed.config.isclose = !config.feedenable
     feed.config.iftttid = config.iftttid
     clog.setlevel(config.glevel, true)
@@ -255,8 +257,8 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " put data " + req.body.type)
     switch(req.body.type){
       case "config":
-        fs.writeFileSync(path.join(__dirname, 'config.json'), JSON.stringify(req.body.data))
-        res.end("当前配置 已保存至 config.json")
+        fs.writeFileSync(configFile, JSON.stringify(req.body.data))
+        res.end("当前配置 已保存至 " + configFile)
         break
       case "useragent":
         let oua = JSON.parse(fs.readFileSync(path.join(__dirname, 'runjs', 'Lists', 'useragent.list')))
