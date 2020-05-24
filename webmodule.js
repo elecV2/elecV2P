@@ -18,7 +18,7 @@ let config = {
       iftttid: ''
     }
 
-let configFile = path.join(__dirname, 'runjs', 'Lists', 'config.json')
+const configFile = path.join(__dirname, 'runjs', 'Lists', 'config.json')
 
 if (fs.existsSync(configFile)) {
   try {

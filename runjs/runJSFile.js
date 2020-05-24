@@ -137,17 +137,23 @@ module.exports = function (filename, addContext) {
           newreq.data = req.body
         }
         newreq.timeout = config.timeout_axios
-        const response = await axios(newreq)
+
+        let error, response
+        try {
+          response = await axios(newreq)
+        } catch (err) {
+          error = err
+        }
 
         return new Promise((resolve, reject) => {
           if (response) {
             resolve({
-              status: response.status,
+              statusCode: response.status,
               headers: response.headers,
               body: typeof(response.data) == 'object' ? (Buffer.isBuffer(response.data) ? response.data.toString() : JSON.stringify(response.data)) : response.data
             })
           } else {
-            resolve({ body: 'no response' })
+            reject({ error })
           }
         })
       }

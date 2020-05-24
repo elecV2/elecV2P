@@ -25,6 +25,7 @@ const config = {
 }
 
 function addItem(title = 'elecV2P notification', description =  '通知内容', url = 'https://github.com/elecV2/unique/' + new Date().getTime()) {
+  if (/test/i.test(title)) return
   clog.notify('添加 item', title, description)
   feed.item({
     title,
