@@ -21,7 +21,7 @@ wss.on('error', e=>{
 })
 
 function wsSend(obj){
-  if (wss && wss.clients.length) {
+  if (wss) {
     if (typeof(obj) == "object") {
       obj = JSON.stringify(obj)
     }

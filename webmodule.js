@@ -305,22 +305,15 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     switch(req.body.op){
       case "start":
         tasklists[data.tid] = data.task
+        tasklists[data.tid].id = data.tid
 
         if (tasks[data.tid]) {
           clog.info('删除原有任务，更新数据')
           tasks[data.tid].stop()
           tasks[data.tid].delete()
         }
-        tasks[data.tid] = new task(data.task, jobFunc(data.task.job))
-        if (data.task.type == 'schedule') {
-          tasks[data.tid].start().then(()=>{
-            tasklists[data.tid].running = false
-            feed.addItem(data.task.name + ' 执行完成', '倒计时任务')
-            wsSerSend.task({tid: data.tid, op: 'stop'})
-          })
-        } else {
-          tasks[data.tid].start()
-        }
+        tasks[data.tid] = new task(tasklists[data.tid], jobFunc(data.task.job))
+        tasks[data.tid].start()
         res.end("task started!")
         break
       case "stop":
@@ -410,6 +403,16 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
       res.end(`filter.list 更新成功`)
     } else {
       res.end("非法请求")
+    }
+  })
+
+  app.get("/logs/:filename", (req, res)=>{
+    res.writeHead(200,{ 'Content-Type' : 'text/plain;charset=utf-8' })
+    let filename = req.params.filename
+    if (fs.existsSync(path.join(__dirname, 'logs', filename))) {
+      res.end(fs.readFileSync(path.join(__dirname, 'logs', filename)))
+    } else {
+      res.end('no logs!')
     }
   })
 

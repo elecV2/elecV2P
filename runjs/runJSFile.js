@@ -3,7 +3,7 @@ const fs = require('fs')
 const axios = require('axios')
 const path = require('path')
 
-const { logger, feed, now } = require('../utils')
+const { logger, feed, now, downloadfile } = require('../utils')
 const { wsSerSend } = require('../func')
 
 const clog = new logger({ head: 'runJSFile', cb: wsSerSend.logs, level: 'debug' })
@@ -18,11 +18,13 @@ if(!fs.existsSync(JSFolder)) fs.mkdirSync(JSFolder)
 const config = {
   timeout_jsrun: 5000,
   timeout_axios: 5000,
-  // 每运行 {numtofeed} 次 JS, 添加一个 Feed item
-  numtofeed: 50,
+  intervals: 86400,       // 远程 JS 更新时间，单位：秒。 默认：一天
+  numtofeed: 50,          // 每运行 {numtofeed} 次 JS, 添加一个 Feed item
+
+  jslogfile: true,        // 是否将 JS 运行日志保存到 logs 文件
 
   SurgeEnable: false,     // 兼容 Surge 脚本
-  QuanxEnable: false,     // 兼容 Quanx 脚本
+  QuanxEnable: false,     // 兼容 Quanx 脚本。都为 false 时，会进行自动判断
 }
 
 const runStatus = {
@@ -43,13 +45,26 @@ function storePut(value, key) {
   return true
 }
 
-module.exports = function (filename, addContext) {
-  if (!fs.existsSync(path.join(JSFolder, filename))) {
+module.exports = async (filename, addContext) => {
+  if (/^https?:/.test(filename)) {
+    var url = filename
+    filename = url.split('/').pop()
+  }
+  let filePath = path.join(__dirname, 'JSFile', filename)
+  if (url && (!fs.existsSync(filePath) || new Date().getTime() - fs.statSync(filePath).mtimeMs > config.intervals*1000)) {
+    try {
+      await downloadfile(url, filePath)
+    } catch(e) {
+      clog.error(e)
+      return
+    }
+  } else if (!fs.existsSync(filePath)) {
     clog.error(filename, '不存在')
     return
   }
+
   const newContext = {
-    console: new logger({ head: filename, cb: wsSerSend.logs }),
+    console: new logger({ head: filename, cb: wsSerSend.logs, file: config.jslogfile ? filename : '' }),
     setTimeout,
     $evData: {},
     $done: (data) => {
@@ -63,7 +78,7 @@ module.exports = function (filename, addContext) {
       req.timeout = config.timeout_axios
       try {
         const response = await axios(req)
-        cb(response)
+        if(cb) cb(response)
       } catch (error) {
         clog.error(error)
       }
@@ -83,15 +98,14 @@ module.exports = function (filename, addContext) {
           error = err
         }
         if(response) {
-
           let newres = {
             status: response.status,
             headers: response.headers,
             body: typeof(response.data) == 'object' ? (Buffer.isBuffer(response.data) ? response.data.toString() : JSON.stringify(response.data)) : response.data
           }
-          cb(error, newres, newres.body)
+          if(cb) cb(error, newres, newres.body)
         } else {
-          cb(error, null, '$httpClient post have no response')
+          if(cb) cb(error, null, '$httpClient post have no response')
         }
       },
       post: async (req, cb)=>{
@@ -115,9 +129,9 @@ module.exports = function (filename, addContext) {
             headers: response.headers,
             body: typeof(response.data) == 'object' ? (Buffer.isBuffer(response.data) ? response.data.toString() : JSON.stringify(response.data)) : response.data
           }
-          cb(error, newres, newres.body)
+          if(cb) cb(error, newres, newres.body)
         } else {
-          cb(error, null, '$httpClient post have no response')
+          if(cb) cb(error, null, '$httpClient post have no response')
         }
       }
     },
@@ -176,13 +190,13 @@ module.exports = function (filename, addContext) {
     },
     $notification: {
       // Surge 通知，别动 function
-      post: function () {
-        clog.notify([...arguments].join(' '))
+      post: (...data) => {
+        clog.notify(data.join(' '))
       }
     },
-    $notify: function () {
+    $notify: (...data) => {
       // Quantumultx 通知
-      clog.notify([...arguments].join(' '))
+      clog.notify(data.join(' '))
     }
   }
 
@@ -242,5 +256,5 @@ module.exports = function (filename, addContext) {
     clog.error(error)
   }
 
-  return newContext.$evData ? (typeof(newContext.$evData) == "object" ? newContext.$evData : newContext.$evData) : ''
+  return newContext.$evData
 }

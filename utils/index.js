@@ -6,17 +6,22 @@ const https = require('https')
 
 const logger = require('./logger')
 const feed = require('./feed')
-const { now,wait } = require('./time')
+const { now, wait } = require('./time')
 const string = require('./string')
 
-const clog = new logger({head: 'utils'})
+const clog = new logger({ head: 'utils' })
 
 function downloadfile(durl, dest, cb) {
   let nurl = url.parse(durl)
   let req = nurl.protocol == "https:"?https:http
-  let file = fs.createWriteStream(dest)
   return new Promise((resolve, reject)=>{
     req.get(durl, (response)=>{
+      if (response.statusCode == 404) {
+        clog.error(durl + ' 404! 文件不存在')
+        reject('404! 文件不存在')
+        return
+      }
+      let file = fs.createWriteStream(dest)
       response.pipe(file)
       file.on('finish', ()=>{
         clog.notify("download: " + durl + " to: " + dest)
