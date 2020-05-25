@@ -21,15 +21,17 @@ wss.on('error', e=>{
 })
 
 function wsSend(obj){
-  if (typeof(obj) == "object") {
-    obj = JSON.stringify(obj)
-  }
-  clog.debug('send client msg:', obj)
-  wss.clients.forEach(client=>{
-    if (client.readyState === ws.OPEN) {
-      client.send(obj)
+  if (wss && wss.clients.length) {
+    if (typeof(obj) == "object") {
+      obj = JSON.stringify(obj)
     }
-  })
+    clog.debug('send client msg:', obj)
+    wss.clients.forEach(client=>{
+      if (client.readyState === ws.OPEN) {
+        client.send(obj)
+      }
+    })
+  }
 }
 
 const wsSerSend = {

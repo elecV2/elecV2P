@@ -1,7 +1,8 @@
 module.exports = {
   now(){
-    let tzoffset = (new Date()).getTimezoneOffset() * 60000
-    return (new Date(Date.now() - tzoffset)).toISOString().replace(/T/, ' ').replace(/\..+/, '')
+    // let tzoffset = (new Date()).getTimezoneOffset() * 60000
+    // return (new Date(Date.now() - tzoffset)).toISOString().replace(/T/, ' ').replace(/\..+/, '')
+    return new Date().toLocaleString('zh', { timeZone: 'Asia/Shanghai' })
   },
   wait(s, show=false, data=null){
     console.log('waiting %s seconds', s)

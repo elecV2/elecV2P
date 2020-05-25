@@ -314,8 +314,9 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
         tasks[data.tid] = new task(data.task, jobFunc(data.task.job))
         if (data.task.type == 'schedule') {
           tasks[data.tid].start().then(()=>{
-            wsSerSend.task({tid: data.tid, op: 'stop'})
+            tasklists[data.tid].running = false
             feed.addItem(data.task.name + ' 执行完成', '倒计时任务')
+            wsSerSend.task({tid: data.tid, op: 'stop'})
           })
         } else {
           tasks[data.tid].start()
