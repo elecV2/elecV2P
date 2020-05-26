@@ -55,7 +55,7 @@ for(let tid in tasklists) {
 function jobFunc(job) {
   if (job.type == 'runjs') {
     return ()=>{
-      runJSFile(job.target)
+      runJSFile(job.target, { cb: wsSerSend.log('tasklog') })
     }
   } else if (job.type == 'taskstart') {
     return ()=>{
@@ -370,12 +370,18 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
   })
 
   app.post("/jsfile", (req, res)=>{
-    if (req.body.jscontent) {
+    if (!req.body.jscontent) {
+      res.end("have no content")
+      return
+    }
+    // res.writeHead(200,{ 'Content-Type' : 'text/plain;charset=utf-8' })
+    if (req.body.jsname == 'totest') {
+      let jsres = runJSFile(req.body.jscontent, { type: 'test' })
+      res.end(typeof(jsres) !== 'string' ? JSON.stringify(jsres) : jsres)
+    } else {
       fs.writeFileSync(path.join(__dirname, 'runjs/JSFile', req.body.jsname), req.body.jscontent)
       clog.notify(`${req.body.jsname} 文件保存成功`)
       res.end(`${req.body.jsname} 文件保存成功`)
-    } else {
-      res.end("nothing have done")
     }
   })
 
@@ -407,12 +413,16 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
   })
 
   app.get("/logs/:filename", (req, res)=>{
-    res.writeHead(200,{ 'Content-Type' : 'text/plain;charset=utf-8' })
     let filename = req.params.filename
     if (fs.existsSync(path.join(__dirname, 'logs', filename))) {
+      res.writeHead(200,{ 'Content-Type' : 'text/plain;charset=utf-8' })
       res.end(fs.readFileSync(path.join(__dirname, 'logs', filename)))
     } else {
-      res.end('no logs!')
+      res.writeHead(200,{ 'Content-Type' : 'text/html;charset=utf-8' })
+      fs.readdirSync(path.join(__dirname, 'logs')).forEach(log=>{
+        res.write('<a href="/logs/' + log + '" >' + log + '</a><br>')
+      })
+      res.end()
     }
   })
 

@@ -3,10 +3,10 @@ const fs = require('fs')
 const axios = require('axios')
 const path = require('path')
 
-const { logger, feed, now, downloadfile } = require('../utils')
+const { logger, feed, now, downloadfileSync } = require('../utils')
 const { wsSerSend } = require('../func')
 
-const clog = new logger({ head: 'runJSFile', cb: wsSerSend.logs, level: 'debug' })
+const clog = new logger({ head: 'runJSFile', level: 'debug' })
 // clog.setlevel('debug', true)
 
 const StoreFolder = path.join(__dirname, 'Store')
@@ -45,32 +45,53 @@ function storePut(value, key) {
   return true
 }
 
-module.exports = async (filename, addContext) => {
-  if (/^https?:/.test(filename)) {
-    var url = filename
-    filename = url.split('/').pop()
-  }
-  let filePath = path.join(__dirname, 'JSFile', filename)
-  if (url && (!fs.existsSync(filePath) || new Date().getTime() - fs.statSync(filePath).mtimeMs > config.intervals*1000)) {
-    try {
-      await downloadfile(url, filePath)
-    } catch(e) {
-      clog.error(e)
+module.exports = (filename, addContext) => {
+  if (addContext && addContext.type == 'test') {
+    var JsStr = filename
+    filename = 'jstest'
+    addContext.console = new logger({ head: filename, cb: wsSerSend.log('jstest') })
+  } else {
+    if (/^https?:/.test(filename)) {
+      var url = filename
+      filename = url.split('/').pop()
+    }
+    let filePath = path.join(__dirname, 'JSFile', filename)
+    if (url && (!fs.existsSync(filePath) || new Date().getTime() - fs.statSync(filePath).mtimeMs > config.intervals*1000)) {
+      try {
+        downloadfileSync(url, filePath)
+      } catch(e) {
+        clog.error(e)
+        return
+      }
+    } else if (!fs.existsSync(filePath)) {
+      clog.error(filename, '不存在')
       return
     }
-  } else if (!fs.existsSync(filePath)) {
-    clog.error(filename, '不存在')
-    return
+
+    var JsStr = fs.readFileSync(path.join(JSFolder, filename), 'utf8')
+  }
+
+  if (addContext) {
+    if (addContext.cb) {
+      addContext.console = new logger({ head: filename, cb: addContext.cb, file: config.jslogfile ? filename : '' })
+    }
+    if (addContext.$request) {
+      addContext.$request.headers = addContext.$request.requestOptions.headers
+      let reqData = addContext.$request.requestData
+      addContext.$request.body = typeof(reqData) == 'object' ? (Buffer.isBuffer(reqData) ? reqData.toString() : JSON.stringify(reqData)) : reqData
+    }
+    if (addContext.$response) {
+      addContext.$response.headers = addContext.$response.header
+    }
   }
 
   const newContext = {
-    console: new logger({ head: filename, cb: wsSerSend.logs, file: config.jslogfile ? filename : '' }),
+    console: addContext.console || new logger({ head: filename, file: config.jslogfile ? filename : '' }),
     setTimeout,
-    $evData: {},
     $done: (data) => {
       if(data) {
-        clog.debug(filename, '$done data:', data)
-        newContext.$evData = data
+        newContext.console.notify('$done:', data)
+        return data
       }
     },
     $axios: async (req, cb)=>{
@@ -189,18 +210,16 @@ module.exports = async (filename, addContext) => {
       }
     },
     $notification: {
-      // Surge 通知，别动 function
+      // Surge 通知
       post: (...data) => {
-        clog.notify(data.join(' '))
+        newContext.console.notify(data.join(' '))
       }
     },
     $notify: (...data) => {
       // Quantumultx 通知
-      clog.notify(data.join(' '))
+      newContext.console.notify(data.join(' '))
     }
   }
-
-  const JsStr = fs.readFileSync(path.join(JSFolder, filename), 'utf8')
 
   if ((config.SurgeEnable || config.QuanxEnable) == false && /\$httpClient|\$persistentStore|\$notification/.test(JsStr)) {
     clog.debug(`检测到 ${filename} 为 Surge 脚本，使用 Surge 兼容模式`)
@@ -218,20 +237,12 @@ module.exports = async (filename, addContext) => {
     Object.assign(newContext, {$httpClient: undefined, $persistentStore: undefined, $notification: undefined})
   }
 
-  if (addContext && addContext.$request) {
-    addContext.$request.headers = addContext.$request.requestOptions.headers
-    let reqData = addContext.$request.requestData
-    addContext.$request.body = typeof(reqData) == 'object' ? (Buffer.isBuffer(reqData) ? reqData.toString() : JSON.stringify(reqData)) : reqData
-  }
-  if (addContext && addContext.$response) {
-    addContext.$response.headers = addContext.$response.header
-  }
-
   const newScript = new vm.Script(JsStr)
 
   try {
     clog.notify('runjs:', filename)
-    newScript.runInNewContext({ ...newContext, ...addContext}, { timeout: config.timeout_jsrun })
+    var fdata = newScript.runInNewContext({ ...newContext, ...addContext}, { displayErrors: true, timeout: config.timeout_jsrun })
+
     if (runStatus[filename]) {
       runStatus[filename]++
     } else {
@@ -253,8 +264,9 @@ module.exports = async (filename, addContext) => {
       runStatus.start = now()
     }
   } catch(error) {
+    var fdata = { error }
     clog.error(error)
   }
 
-  return newContext.$evData
+  return fdata
 }

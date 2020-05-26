@@ -1,6 +1,6 @@
 {
   "name": "elecV2P",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "description": "customize personal network",
   "main": "index.js",
   "author": "elecV2",
@@ -11,7 +11,8 @@
       "runjs/Lists/*",
       "runjs/Store/*",
       "web/*",
-      "*.config.js"
+      "*.config.js",
+      "*test.js"
     ]
   },
   "dependencies": {

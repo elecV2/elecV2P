@@ -36,6 +36,11 @@ function wsSend(obj){
 
 const wsSerSend = {
   // ws.send 转换
+  log(s){
+    return (data)=>{
+      wsSend({type: s, data})
+    }
+  },
   logs(data){
     wsSend({type: 'logs', data})
   },

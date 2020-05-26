@@ -11,6 +11,15 @@ const string = require('./string')
 
 const clog = new logger({ head: 'utils' })
 
+async function downloadfileSync(durl, dest) {
+  try {
+    let sf = await downloadfile(durl, dest)
+    return sf
+  } catch(e) {
+    return e
+  }
+}
+
 function downloadfile(durl, dest, cb) {
   let nurl = url.parse(durl)
   let req = nurl.protocol == "https:"?https:http
@@ -41,5 +50,6 @@ module.exports = {
   now,
   wait,
   downloadfile,
+  downloadfileSync,
   ...string
 }

@@ -2,7 +2,7 @@ const { logger, feed } = require('../utils')
 
 const { wsSerSend } = require('./websocket')
 
-const clog = new logger({ head: 'schedule', level: 'debug', cb: wsSerSend.logs })
+const clog = new logger({ head: 'schedule', level: 'debug', cb: wsSerSend.log('tasklog') })
 
 /**
  * 基础格式
@@ -36,7 +36,7 @@ module.exports = class {
 
   start(){
     // 开始任务
-    clog.log("start schedule task:", this._Task.name, `${this.repeat}/${this._Task.repeat}`)
+    clog.log("start schedule task:", this.task.name, `${this.repeat}/${this._Task.repeat}`)
     this.task.running = true
     if(this._Task.random) {
       let rand = Math.floor(Math.random()*Number(this._Task.random))
