@@ -3,8 +3,8 @@ const url = require('url')
 const path = require('path')
 
 const runJSFile = require('./runJSFile')
-const { logger } = require('../utils')
 
+const { logger } = require('../utils')
 const clog = new logger({head: 'anyRule'})
 
 const ruleData = {
@@ -165,7 +165,6 @@ module.exports = {
         requestDetail.requestData = jsres.body
       } else {
         Object.assign(newreqOptions, jsres)
-        // newreqOptions = { newreqOptions, ...jsres }
       }
     }
     return requestDetail

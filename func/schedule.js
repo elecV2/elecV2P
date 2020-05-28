@@ -1,8 +1,8 @@
 const { logger, feed } = require('../utils')
 
-const { wsSerSend } = require('./websocket')
+const { wsSer } = require('./websocket')
 
-const clog = new logger({ head: 'schedule', level: 'debug', cb: wsSerSend.log('tasklog') })
+const clog = new logger({ head: 'schedule', level: 'debug', cb: wsSer.send.func('tasklog')  })
 
 /**
  * 基础格式
@@ -36,7 +36,7 @@ module.exports = class {
 
   start(){
     // 开始任务
-    clog.log("start schedule task:", this.task.name, `${this.repeat}/${this._Task.repeat}`)
+    clog.log("开始倒计时任务：", this.task.name, `${this.repeat}/${this._Task.repeat}`)
     this.task.running = true
     if(this._Task.random) {
       let rand = Math.floor(Math.random()*Number(this._Task.random))
@@ -62,7 +62,7 @@ module.exports = class {
           clog.log(this.task.name, '执行完成')
           this.task.running = false
           feed.addItem(this.task.name + ' 执行完成', '倒计时任务')
-          if(this.task.id) wsSerSend.task({tid: this.task.id, op: 'stop'})
+          if(this.task.id) wsSer.send({type: 'task', data: {tid: this.task.id, op: 'stop'}})
         }
       }
     }, 1000)

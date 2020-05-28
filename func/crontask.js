@@ -1,9 +1,9 @@
 const cron = require('node-cron')
 
-const { wsSerSend } = require('./websocket')
+const { wsSer } = require('./websocket')
 const { logger } = require('../utils')
 
-const clog = new logger({ head: 'crontask', cb: wsSerSend.log('tasklog') })
+const clog = new logger({ head: 'crontask', cb: wsSer.send.func('tasklog') })
 
 /**
  * 基础格式

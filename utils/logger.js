@@ -37,7 +37,7 @@ function alignHead(head) {
 module.exports = class {
   _head = 'elecV2P'
   _level = 'info'             // error, info, debug
- 
+
   log = this.info
   err = this.error
 
@@ -67,6 +67,10 @@ module.exports = class {
     } else {
       this._level = level
     }
+  }
+
+  setcb(cb){
+    this._cb = cb
   }
 
   info(){

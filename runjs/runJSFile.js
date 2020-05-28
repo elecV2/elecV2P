@@ -4,7 +4,7 @@ const axios = require('axios')
 const path = require('path')
 
 const { logger, feed, now, downloadfileSync } = require('../utils')
-const { wsSerSend } = require('../func')
+const { wsSer } = require('../func')
 
 const clog = new logger({ head: 'runJSFile', level: 'debug' })
 // clog.setlevel('debug', true)
@@ -32,24 +32,10 @@ const runStatus = {
   times: config.numtofeed
 }
 
-function storeGet(key) {
-  clog.debug('get value for', key)
-  if (fs.existsSync(path.join(__dirname, 'Store', key))) {
-    return fs.readFileSync(path.join(__dirname, 'Store', key), 'utf8')
-  }
-  return ''
-}
-
-function storePut(value, key) {
-  fs.writeFileSync(path.join(__dirname, 'Store', key), value, 'utf8')
-  return true
-}
-
 module.exports = (filename, addContext) => {
-  if (addContext && addContext.type == 'test') {
+  if (addContext && addContext.type == 'jstest') {
     var JsStr = filename
     filename = 'jstest'
-    addContext.console = new logger({ head: filename, cb: wsSerSend.log('jstest') })
   } else {
     if (/^https?:/.test(filename)) {
       var url = filename
@@ -71,9 +57,15 @@ module.exports = (filename, addContext) => {
     var JsStr = fs.readFileSync(path.join(JSFolder, filename), 'utf8')
   }
 
+
+  let fconsole = new logger({ head: filename, file: config.jslogfile ? filename : '' })
+
   if (addContext) {
     if (addContext.cb) {
-      addContext.console = new logger({ head: filename, cb: addContext.cb, file: config.jslogfile ? filename : '' })
+      fconsole.setcb(addContext.cb)
+    }
+    if (addContext.type) {
+      fconsole.setcb(wsSer.send.func(addContext.type))
     }
     if (addContext.$request) {
       addContext.$request.headers = addContext.$request.requestOptions.headers
@@ -86,11 +78,11 @@ module.exports = (filename, addContext) => {
   }
 
   const newContext = {
-    console: addContext.console || new logger({ head: filename, file: config.jslogfile ? filename : '' }),
+    console: fconsole,
     setTimeout,
     $done: (data) => {
       if(data) {
-        newContext.console.notify('$done:', data)
+        fconsole.notify('$done:', data)
         return data
       }
     },
@@ -102,6 +94,7 @@ module.exports = (filename, addContext) => {
         if(cb) cb(response)
       } catch (error) {
         clog.error(error)
+        if(cb) cb({error})
       }
     },
     $httpClient: {
@@ -158,7 +151,7 @@ module.exports = (filename, addContext) => {
     },
     $task: {
       // Quantumult X 网络请求
-      fetch: async (req)=>{
+      fetch: async (req, cb)=>{
         let newreq = req
         if (/post/i.test(req.method)) {
           const spu = req.url.split('?')
@@ -182,42 +175,58 @@ module.exports = (filename, addContext) => {
 
         return new Promise((resolve, reject) => {
           if (response) {
-            resolve({
-              statusCode: response.status,
-              headers: response.headers,
-              body: typeof(response.data) == 'object' ? (Buffer.isBuffer(response.data) ? response.data.toString() : JSON.stringify(response.data)) : response.data
-            })
+            let res = {
+                  statusCode: response.status,
+                  headers: response.headers,
+                  body: typeof(response.data) == 'object' ? (Buffer.isBuffer(response.data) ? response.data.toString() : JSON.stringify(response.data)) : response.data
+                }
+            if (cb) cb(res)
+            resolve(res)
           } else {
             reject({ error })
           }
         })
       }
     },
+    $store: {
+      get: (key) => {
+        fconsole.debug('get value for', key)
+        if (fs.existsSync(path.join(__dirname, 'Store', key))) {
+          return fs.readFileSync(path.join(__dirname, 'Store', key), 'utf8')
+        }
+        return ''
+      },
+      put: (value, key) => {
+        fconsole.debug('put value to', key)
+        fs.writeFileSync(path.join(__dirname, 'Store', key), value, 'utf8')
+        return true
+      }
+    },
     $persistentStore: {
       read: (key)=>{
-        return storeGet(key)
+        return newContext.$store.get(key)
       },
       write: (value, key)=>{
-        storePut(value, key)
+        newContext.$store.put(value, key)
       }
     },
     $prefs: {
       valueForKey: (key)=>{
-        return storeGet(key)
+        return newContext.$store.get(key)
       },
       setValueForKey: (value, key)=>{
-        storePut(value, key)
+        newContext.$store.put(value, key)
       }
     },
     $notification: {
       // Surge 通知
       post: (...data) => {
-        newContext.console.notify(data.join(' '))
+        fconsole.notify(data.join(' '))
       }
     },
     $notify: (...data) => {
       // Quantumultx 通知
-      newContext.console.notify(data.join(' '))
+      fconsole.notify(data.join(' '))
     }
   }
 

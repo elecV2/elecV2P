@@ -8,7 +8,7 @@ const homedir = require('os').homedir()
 // 
 const { logger, downloadfile } = require('../utils')
 const task = require('./task')
-const { wsSerSend, webskPort, webskPath } = require('./websocket')
+const { wsSer } = require('./websocket')
 
 const clog = new logger({head: 'Func'} )
 
@@ -103,4 +103,4 @@ function filterlist(lists, add=true) {
   return String(mergelists.length - oldlists.length)
 }
 
-module.exports = { task, wsSerSend, clearCrt, rootCrtSync, crule, jsdownload, filterlist }
+module.exports = { task, wsSer, clearCrt, rootCrtSync, crule, jsdownload, filterlist }

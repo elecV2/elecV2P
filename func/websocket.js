@@ -3,50 +3,66 @@ const ws = require('ws')
 const { logger } = require('../utils')
 const clog = new logger({head: 'webSocket', level: 'debug'})
 
-const webskPort = 8005
-const webskPath = '/elecV2P'
-const wss = new ws.Server({ port: webskPort, path: webskPath })
-clog.notify('websocket on port:', webskPort, 'path:', webskPath)
-
-wss.on('connection', (ws, req)=>{
-  clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'new connection')
-  ws.on('message', msg=>{
+const wsSer = {
+  send(data){
+    wsSend(data)
+  },
+  recv(msg){
     clog.info('receive message:', msg)
-    // wsSerSend('msg from sever' + msg)
-  })
-})
+  }
+}
 
-wss.on('error', e=>{
-  clog.error('websocket error', e)
-})
+wsSer.recv.task = data =>{
+  clog.info('a task message')
+}
 
+wsSer.send.func = type =>{
+  return (data) => {
+    wsSend({type, data})
+  }
+}
+
+let wss
 function wsSend(obj){
+  if (typeof(obj) == "object") {
+    obj = JSON.stringify(obj)
+  }
   if (wss) {
-    if (typeof(obj) == "object") {
-      obj = JSON.stringify(obj)
-    }
     clog.debug('send client msg:', obj)
     wss.clients.forEach(client=>{
       if (client.readyState === ws.OPEN) {
         client.send(obj)
       }
     })
+  } else {
+    clog.info('websocket 已断开，无法发送数据：', obj)
   }
 }
 
-const wsSerSend = {
-  // ws.send 转换
-  log(s){
-    return (data)=>{
-      wsSend({type: s, data})
-    }
-  },
-  logs(data){
-    wsSend({type: 'logs', data})
-  },
-  task(data){
-    wsSend({type: 'task', data})
-  }
+function websocketSer({ port, path }) {
+  wss = new ws.Server({ port, path })
+  clog.notify('websocket on port:', port, 'path:', path)
+  
+  wss.on('connection', (ws, req)=>{
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'new connection')
+    ws.on('message', msg=>{
+      try {
+        var recvdata = JSON.parse(msg)
+      } catch {
+        // clog.info('receive message:', msg)
+      }
+      if (recvdata && recvdata.type && wsSer.recv[recvdata.type]) {
+        wsSer.recv[recvdata.type](recvdata.data)
+      } else {
+        wsSer.recv(msg)
+      }
+      // wsSer.Send('msg from sever' + msg)
+    })
+  })
+
+  wss.on('error', e=>{
+    clog.error('websocket error', e)
+  })
 }
 
-module.exports = { wsSerSend, webskPath, webskPort }
+module.exports = { websocketSer, wsSer }

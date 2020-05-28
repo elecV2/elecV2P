@@ -6,26 +6,26 @@ const formidable = require('formidable')
 
 const { ruleData, init } = require('./runjs/rule')
 const runJSFile = require('./runjs/runJSFile')
-const { task, jsdownload, wsSerSend, ...func } = require('./func')
+const { task, jsdownload, wsSer, ...func } = require('./func')
 const { logger, feed } = require('./utils')
 
 const clog = new logger({head: 'webServer'})
-// clog.setlevel('error', true)
 
 let config = {
       glevel: 'info',
       feedenable: true,
-      iftttid: ''
+      iftttid: '',
+      storemanage: true
     }
 
 const configFile = path.join(__dirname, 'runjs', 'Lists', 'config.json')
 
 if (fs.existsSync(configFile)) {
   try {
-    config = JSON.parse(fs.readFileSync(configFile))
+    config = JSON.parse(fs.readFileSync(configFile), "utf8")
     feed.config.isclose = !config.feedenable
     feed.config.iftttid = config.iftttid
-    clog.setlevel(config.glevel, true)
+    if(config.glevel != 'info') clog.setlevel(config.glevel, true)
   } catch {
     clog.error('config.json 无法解析')
   }
@@ -36,7 +36,7 @@ let tasklists = {}
 
 if (fs.existsSync(path.join(__dirname, 'runjs/Lists', 'task.list'))) {
   try {
-    tasklists = JSON.parse(fs.readFileSync(path.join(__dirname, 'runjs/Lists', 'task.list')))
+    tasklists = JSON.parse(fs.readFileSync(path.join(__dirname, 'runjs/Lists', 'task.list'), "utf8"))
   } catch {
     tasklists = {}
   }
@@ -55,19 +55,19 @@ for(let tid in tasklists) {
 function jobFunc(job) {
   if (job.type == 'runjs') {
     return ()=>{
-      runJSFile(job.target, { cb: wsSerSend.log('tasklog') })
+      runJSFile(job.target, { cb: wsSer.send.func('tasklog') })
     }
   } else if (job.type == 'taskstart') {
     return ()=>{
       tasks[job.target].start()
       tasklists[job.target].running = true
-      wsSerSend.task({tid: job.target, op: 'start'})
+      wsSer.send({type: 'task', data: {tid: job.target, op: 'start'}})
     }
   } else if (job.type == 'taskstop') {
     return ()=>{
       tasks[job.target].stop()
       tasklists[job.target].running = false
-      wsSerSend.task({tid: job.target, op: 'stop'})
+      wsSer.send({type: 'task', data: {tid: job.target, op: 'stop'}})
     }
   } else {
     clog.error('任务类型未知')
@@ -88,6 +88,13 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     clog.notify("elecV2P manage on port " + webstPort)
   })
 
+  app.get("/initdata", (req, res)=>{
+    res.end(JSON.stringify({
+      config: {...ruleData, ...config},
+      jslists: fs.readdirSync(path.join(__dirname, 'runjs/JSFile')).sort(),
+    }))
+  })
+
   app.get("/feed", (req, res)=>{
     res.set('Content-Type', 'text/xml')
     res.end(feed.xml())
@@ -97,6 +104,7 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     let data = req.body.data
     switch(req.body.type){
       case "op":
+        config.feedenable = !data
         feed.config.isclose = data
         clog.notify(`feed 已 ${ data ? '开启' : '关闭' }`)
         res.end(`feed 已 ${ data ? '开启' : '关闭' }`)
@@ -107,6 +115,7 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
         res.end('feed 已清空')
         break
       case "ifttt":
+        config.iftttid = data
         feed.config.iftttid = data
         clog.notify(`ifttt webhook 功能已 ${ data ? '开启' : '关闭' }`)
         res.end(`ifttt webhook 功能已 ${ data ? '开启' : '关闭' }`)
@@ -115,13 +124,6 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
         res.end('未知操作')
       }
     }
-  })
-
-  app.get("/initdata", (req, res)=>{
-    res.end(JSON.stringify({
-      config: ruleData,
-      jslists: fs.readdirSync(path.join(__dirname, 'runjs/JSFile')).sort(),
-    }))
   })
 
   app.post('/uploadjs', (req, res) => {
@@ -231,10 +233,10 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
         res.end(JSON.stringify(config))
         break
       case "useragent":
-        res.end(fs.readFileSync(path.join(__dirname, 'runjs', 'Lists', 'useragent.list')))
+        res.end(fs.readFileSync(path.join(__dirname, 'runjs', 'Lists', 'useragent.list'), "utf8"))
         break
       case "ePrules":
-        res.end(fs.readFileSync(path.join(__dirname, 'runjs', 'Lists', 'default.list')))
+        res.end(fs.readFileSync(path.join(__dirname, 'runjs', 'Lists', 'default.list'), "utf8"))
         break
       case "filter":
         res.end(fs.readFileSync(path.join(__dirname, 'runjs', 'Lists', 'filter.list'), 'utf8'))
@@ -257,17 +259,19 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " put data " + req.body.type)
     switch(req.body.type){
       case "config":
+        config = req.body.data
         fs.writeFileSync(configFile, JSON.stringify(req.body.data))
         res.end("当前配置 已保存至 " + configFile)
         break
       case "useragent":
-        let oua = JSON.parse(fs.readFileSync(path.join(__dirname, 'runjs', 'Lists', 'useragent.list')))
+        let oua = JSON.parse(fs.readFileSync(path.join(__dirname, 'runjs', 'Lists', 'useragent.list'), "utf8"))
         oua.enable = req.body.data.enable
         fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'useragent.list'), JSON.stringify(oua))
         res.end(oua.enable?"使用新的 User-Agent: " + oua[oua.enable].name:"取消使用 User-Agent")
         break
       case "glevel":
         try {
+          config.glevel = req.body.data
           clog.setlevel(req.body.data, true)
           res.end('日志级别设置为：' + req.body.data)
         } catch(e) {
@@ -345,7 +349,7 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
   app.get("/jsfile", (req, res)=>{
     let jsfn = req.query.jsfn
     if (jsfn) {
-      res.end(fs.readFileSync(path.join(__dirname, "runjs/JSFile", jsfn)))
+      res.end(fs.readFileSync(path.join(__dirname, "runjs/JSFile", jsfn), "utf8"))
       clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " read file: " + jsfn)
     } else {
       res.end("404")
@@ -376,7 +380,7 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     }
     // res.writeHead(200,{ 'Content-Type' : 'text/plain;charset=utf-8' })
     if (req.body.jsname == 'totest') {
-      let jsres = runJSFile(req.body.jscontent, { type: 'test' })
+      let jsres = runJSFile(req.body.jscontent, { type: 'jstest' })
       res.end(typeof(jsres) !== 'string' ? JSON.stringify(jsres) : jsres)
     } else {
       fs.writeFileSync(path.join(__dirname, 'runjs/JSFile', req.body.jsname), req.body.jscontent)
@@ -413,16 +417,61 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
   })
 
   app.get("/logs/:filename", (req, res)=>{
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " get logs")
     let filename = req.params.filename
     if (fs.existsSync(path.join(__dirname, 'logs', filename))) {
       res.writeHead(200,{ 'Content-Type' : 'text/plain;charset=utf-8' })
-      res.end(fs.readFileSync(path.join(__dirname, 'logs', filename)))
+      res.end(fs.readFileSync(path.join(__dirname, 'logs', filename), "utf8"))
     } else {
       res.writeHead(200,{ 'Content-Type' : 'text/html;charset=utf-8' })
       fs.readdirSync(path.join(__dirname, 'logs')).forEach(log=>{
         res.write('<a href="/logs/' + log + '" >' + log + '</a><br>')
       })
       res.end()
+    }
+  })
+
+  app.get("/store", (req, res) => {
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " get store data")
+    res.writeHead(200, { 'Content-Type' : 'text/plain;charset=utf-8' })
+    const store = {}
+    fs.readdirSync(path.join(__dirname, 'runjs/Store')).forEach(s=>{
+      store[s] = fs.readFileSync(path.join(__dirname, 'runjs/Store', s), 'utf8')
+    })
+    res.end(JSON.stringify(store))
+  })
+
+  app.put("/store", (req, res) => {
+    let data = req.body.data
+    if (!data) {
+      res.end('no put data!')
+      return
+    }
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress) 
+      + " put store " + req.body.type)
+    switch (req.body.type) {
+      case "save":
+        if (data.key && data.value) {
+          fs.writeFileSync(path.join(__dirname, 'runjs/Store', data.key), data.value)
+          clog.notify(`保存 ${ data.key } 值: ${ data.value }`)
+          res.end(data.key + ' 已保存')
+        } else {
+          res.end('no data to save!')
+        }
+        break
+      case "delete":
+        try {
+          fs.unlinkSync(path.join(__dirname, "runjs/Store", data))
+          clog.notify(data, 'deleted')
+          res.end(data + ' 已删除')
+        } catch(e) {
+          clog.error('delete fail!', e)
+          res.end('delete fail!' + e)
+        }
+        break
+      default:{
+        break
+      }
     }
   })
 
