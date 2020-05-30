@@ -3,6 +3,7 @@ const path = require('path')
 const express = require('express')
 const compression = require('compression')
 const formidable = require('formidable')
+const homedir = require('os').homedir()
 
 const { ruleData, init } = require('./runjs/rule')
 const runJSFile = require('./runjs/runJSFile')
@@ -10,6 +11,8 @@ const { task, jsdownload, wsSer, ...func } = require('./func')
 const { logger, feed } = require('./utils')
 
 const clog = new logger({head: 'webServer'})
+
+const crtpath = homedir + '/.anyproxy/certificates'
 
 let config = {
       glevel: 'info',
@@ -22,7 +25,7 @@ const configFile = path.join(__dirname, 'runjs', 'Lists', 'config.json')
 
 if (fs.existsSync(configFile)) {
   try {
-    config = JSON.parse(fs.readFileSync(configFile), "utf8")
+    Object.assign(config, JSON.parse(fs.readFileSync(configFile), "utf8"))
     feed.config.isclose = !config.feedenable
     feed.config.iftttid = config.iftttid
     if(config.glevel != 'info') clog.setlevel(config.glevel, true)
@@ -55,7 +58,7 @@ for(let tid in tasklists) {
 function jobFunc(job) {
   if (job.type == 'runjs') {
     return ()=>{
-      runJSFile(job.target, { cb: wsSer.send.func('tasklog') })
+      runJSFile(job.target, { type: 'task', cb: wsSer.send.func('tasklog') })
     }
   } else if (job.type == 'taskstart') {
     return ()=>{
@@ -85,7 +88,7 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
   app.use(express.static(__dirname + '/web/dist', { maxAge: oneMonth }))
 
   app.listen(webstPort, ()=>{
-    clog.notify("elecV2P manage on port " + webstPort)
+    clog.notify("elecV2P manage on port", webstPort)
   })
 
   app.get("/initdata", (req, res)=>{
@@ -155,7 +158,14 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
   })
 
   app.get("/crt", (req, res)=>{
-    switch(req.query.op){
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) 
+      , "根证书下载")
+    res.download(crtpath + "/rootCA.crt")
+  })
+
+  app.put("/crt", (req, res)=>{
+    let op = req.body.op
+    switch(op){
       case 'rootsync':
         if(func.rootCrtSync()) {
           res.end('已启用 rootCA 文件夹下根证书')
@@ -167,20 +177,15 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
         func.clearCrt()
         res.end('其他证书已清除')
         break
-      default:{
-        clog.info('no op')
-        res.end('no op')
+      default: {
+        res.end("未知操作")
+        break
       }
     }
-    res.end('done')
   })
 
   app.get("/rest", (req, res)=>{
     switch(req.query.op){
-      case 'ruleinit':
-        let l = init()
-        res.end('启用规则数：' + l.rewritelists.length)
-        break
       case 'upsubrule':
         let url = req.query.url
         let adr = func.crule(url)
@@ -194,20 +199,22 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     res.end('done')
   })
 
-  app.post("/saverule", (req, res)=>{
+  app.post("/rewritelists", (req, res)=>{
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress) 
-      + " 保存规则列表")
+      , "保存规则列表")
     if (req.body.subrule || req.body.rewritelists) {
       ruleData.subrules = req.body.subrule
       ruleData.rewritelists = req.body.rewritelists
       let file = fs.createWriteStream(path.join(__dirname, 'runjs', 'Lists', 'rewrite.list'))
       file.on('error', (err)=>clog.err(err))
 
+      file.write('[sub]\n\r')
       req.body.subrule.forEach(surl=>{
-        file.write("sub " + surl + "\n")
+        file.write("sub " + surl + "\n\r")
       })
+      file.write('\n\r[rewrite]\n\r')
       req.body.rewritelists.forEach(v=>{
-        file.write(v.join(' ') + '\n')
+        file.write(v.join(' ') + '\n\r')
       })
 
       file.on('finish', ()=>{
@@ -280,10 +287,16 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
         break
       case "ePrules":
         let fdata = req.body.data.eplists
-        fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'default.list'), "# elecV2P rules \n\n" + fdata.join("\n"))
+        fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'default.list'), "# elecV2P rules \n\r\n\r" + fdata.join("\n\r"))
 
-        clog.info("保存 modify 规则集: " + fdata.length)
-        res.end("保存 modify 规则集: " + fdata.length)
+        res.end("规则保存成功")
+        ruleData.reqlists = []
+        ruleData.reslists = []
+        fdata.forEach(r=>{
+          if (/req$/.test(r)) ruleData.reqlists.push(r)
+          else ruleData.reslists.push(r)
+        })
+        clog.notify(`default 规则 ${ ruleData.reqlists.length + ruleData.reslists.length} 条`)
         break
       case "mitmhost":
         let mhost = req.body.data

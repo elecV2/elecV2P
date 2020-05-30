@@ -74,6 +74,8 @@ module.exports = (filename, addContext) => {
     }
     if (addContext.$response) {
       addContext.$response.headers = addContext.$response.header
+      let resData = addContext.$response.body
+      addContext.$response.body = typeof(resData) == 'object' ? (Buffer.isBuffer(resData) ? resData.toString() : JSON.stringify(resData)) : resData
     }
   }
 
@@ -92,9 +94,11 @@ module.exports = (filename, addContext) => {
       try {
         const response = await axios(req)
         if(cb) cb(response)
+        return response
       } catch (error) {
-        clog.error(error)
-        if(cb) cb({error})
+        fconsole.error(error)
+        if(cb) cb({ error })
+        return { error }
       }
     },
     $httpClient: {
@@ -194,12 +198,16 @@ module.exports = (filename, addContext) => {
         if (fs.existsSync(path.join(__dirname, 'Store', key))) {
           return fs.readFileSync(path.join(__dirname, 'Store', key), 'utf8')
         }
-        return ''
+        return false
       },
       put: (value, key) => {
         fconsole.debug('put value to', key)
-        fs.writeFileSync(path.join(__dirname, 'Store', key), value, 'utf8')
-        return true
+        try {
+          fs.writeFileSync(path.join(__dirname, 'Store', key), value, 'utf8')
+          return true
+        } catch {
+          return false
+        }
       }
     },
     $persistentStore: {
@@ -207,7 +215,7 @@ module.exports = (filename, addContext) => {
         return newContext.$store.get(key)
       },
       write: (value, key)=>{
-        newContext.$store.put(value, key)
+        return newContext.$store.put(value, key)
       }
     },
     $prefs: {
@@ -215,7 +223,7 @@ module.exports = (filename, addContext) => {
         return newContext.$store.get(key)
       },
       setValueForKey: (value, key)=>{
-        newContext.$store.put(value, key)
+        return newContext.$store.put(value, key)
       }
     },
     $notification: {
@@ -252,25 +260,27 @@ module.exports = (filename, addContext) => {
     clog.notify('runjs:', filename)
     var fdata = newScript.runInNewContext({ ...newContext, ...addContext}, { displayErrors: true, timeout: config.timeout_jsrun })
 
-    if (runStatus[filename]) {
-      runStatus[filename]++
-    } else {
-      runStatus[filename] = 1
-    }
-    runStatus.times--
-
-    clog.debug('JS 脚本运行次数统计：', runStatus)
-    if (runStatus.times == 0) {
-      let des = []
-      for (let jsname in runStatus) {
-        if (jsname != 'times' && jsname != 'start') {
-          des.push(`${jsname}: ${runStatus[jsname]} 次`)
-          delete runStatus[jsname]
-        }
+    if (addContext.type) {
+      if (runStatus[filename]) {
+        runStatus[filename]++
+      } else {
+        runStatus[filename] = 1
       }
-      feed.addItem('运行 JS ' + config.numtofeed + ' 次啦！', `从 ${runStatus.start} 开始： ` + des.join(', '))
-      runStatus.times = config.numtofeed
-      runStatus.start = now()
+      runStatus.times--
+
+      clog.debug('JS 脚本运行次数统计：', runStatus)
+      if (runStatus.times == 0) {
+        let des = []
+        for (let jsname in runStatus) {
+          if (jsname != 'times' && jsname != 'start') {
+            des.push(`${jsname}: ${runStatus[jsname]} 次`)
+            delete runStatus[jsname]
+          }
+        }
+        feed.addItem('运行 JS ' + config.numtofeed + ' 次啦！', `从 ${runStatus.start} 开始： ` + des.join(', '))
+        runStatus.times = config.numtofeed
+        runStatus.start = now()
+      }
     }
   } catch(error) {
     var fdata = { error }

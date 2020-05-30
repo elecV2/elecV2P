@@ -50,13 +50,13 @@ function init(){
   ruleData.subrules = []
   if (fs.existsSync(path.join(__dirname, 'Lists', 'rewrite.list'))) {
     fs.readFileSync(path.join(__dirname, 'Lists', 'rewrite.list'), 'utf8').split(/\r|\n/).forEach(l=>{
-      if (/^#/.test(l) || l.length<2) return
+      if (/^(#|\[)/.test(l) || l.length<2) return
       let item = l.split(" ")
       if (item.length == 2) {
-        if (/js$/.test(item[1])) {
-          ruleData.rewritelists.push([item[0], item[1]])
-        } else if (/^sub/.test(item[0])) {
+        if (/^sub/.test(item[0])) {
           ruleData.subrules.push(item[1])
+        } else if (/js$/.test(item[1])) {
+          ruleData.rewritelists.push([item[0], item[1]])
         }
       }
     })
@@ -66,7 +66,7 @@ function init(){
   ruleData.reslists = []
   if (fs.existsSync(path.join(__dirname, 'Lists', 'default.list'))) {
     fs.readFileSync(path.join(__dirname, 'Lists', 'default.list'), 'utf8').split(/\n|\r/).forEach(l=>{
-      if (l.length<=8 || /^#/.test(l)) return
+      if (l.length<=8 || /^(#|\[)/.test(l)) return
       let item = l.split(",")
       if (item.length >= 4) {
         item = item.map(i=>i.trim())
@@ -170,13 +170,13 @@ module.exports = {
     return requestDetail
   },
   *beforeSendResponse(requestDetail, responseDetail) {
-    // clog.info(ruleData.rewritelists.length)
     const $request = requestDetail
     const $response = responseDetail.response
 
     for (let r of ruleData.rewritelists) {
       if ((new RegExp(r[0])).test($request.url)) {
-        Object.assign($response, runJSFile(r[1], { $request, $response }))
+        let jsres = runJSFile(r[1], { $request, $response })
+        Object.assign($response, jsres.response ? jsres.response : jsres)
         break
       }
     }
@@ -185,7 +185,8 @@ module.exports = {
     if(getr.length) clog.info("reslists:", getr.length)
     for(let r of getr) {
       if (r[2] == "js" || r[2] == 404) {
-        Object.assign($response, runJSFile(r[3], {$request, $response}))
+        let jsres = runJSFile(r[3], { $request, $response })
+        Object.assign($response, jsres ? (jsres.response ? jsres.response : jsres) : {})
       }
     }
 

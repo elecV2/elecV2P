@@ -22,13 +22,13 @@ function clearCrt() {
   // 清空所有证书（除了 rootCA）
   clog.notify('开始清空所有证书（除 rootCA 外）：')
   fs.readdir(crtpath, (err, files) => {
-    if (err) throw err;
+    if (err) clog.error(err)
 
     for (const file of files) {
       if (/^rootCA/.test(file)) continue
       fs.unlink(path.join(crtpath, file), err => {
-        if (err) throw err;
-        else clog.notify("删除证书- " + file)
+        if (err) clog.error(err)
+        else clog.notify("删除证书", file)
       })
     }
   })

@@ -22,7 +22,7 @@ module.exports = class {
     if (task && job) {
       this.task = task
       this.job = job
-      this.repeat = 0
+      this.repeat = 1
 
       let timea = this.task.time.split(' ')
       // clog.info(timea)
