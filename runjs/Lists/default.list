@@ -1,7 +1,7 @@
 # elecV2P rule list
 
 host,httpbin,js,0body.js,req
-url,httpbin.org/(get|post),js,0midu.js,res
+url,httpbin.org/(get|post),js,0json.js,res
 host,www.baidu.com,js,0body.js,req
 url,adtest,block,reject,req
 url,adtest,block,tinyimg,req
