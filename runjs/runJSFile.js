@@ -84,7 +84,7 @@ module.exports = (filename, addContext) => {
     setTimeout,
     $done: (data) => {
       if(data) {
-        fconsole.notify('$done:', data)
+        // fconsole.notify('$done:', data)
         return data
       }
     },

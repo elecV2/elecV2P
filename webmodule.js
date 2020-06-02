@@ -17,8 +17,7 @@ const crtpath = homedir + '/.anyproxy/certificates'
 let config = {
       glevel: 'info',
       feedenable: true,
-      iftttid: '',
-      storemanage: true
+      iftttid: ''
     }
 
 const configFile = path.join(__dirname, 'runjs', 'Lists', 'config.json')
@@ -266,8 +265,9 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " put data " + req.body.type)
     switch(req.body.type){
       case "config":
-        config = req.body.data
-        fs.writeFileSync(configFile, JSON.stringify(req.body.data))
+        Object.assign(config, req.body.data)
+
+        fs.writeFileSync(configFile, JSON.stringify(config))
         res.end("当前配置 已保存至 " + configFile)
         break
       case "useragent":

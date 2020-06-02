@@ -1,6 +1,6 @@
 {
   "name": "elecV2P",
-  "version": "1.3.6",
+  "version": "1.3.7",
   "description": "customize personal network",
   "main": "index.js",
   "author": "elecV2",
@@ -54,6 +54,8 @@
   },
   "nodemonConfig": {
     "ignore": [
+      "logs",
+      "release",
       "runjs/JSFile/*",
       "runjs/Lists/*",
       "runjs/Store/*",
