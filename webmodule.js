@@ -102,6 +102,11 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     res.end(feed.xml())
   })
 
+  app.get("/filter", (req, res)=>{
+    res.set('Content-Type', 'text/plain')
+    res.end(fs.readFileSync(path.join(__dirname, 'runjs', 'Lists', 'filter.list'), 'utf8'))
+  })
+
   app.put("/feed", (req, res)=>{
     let data = req.body.data
     switch(req.body.type){
@@ -246,6 +251,9 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
         break
       case "filter":
         res.end(fs.readFileSync(path.join(__dirname, 'runjs', 'Lists', 'filter.list'), 'utf8'))
+        break
+      case "todolist":
+        res.end(fs.readFileSync(path.join(__dirname, 'Todo.md'), "utf8"))
         break
       case "port":
         res.end(JSON.stringify({
@@ -412,14 +420,14 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
 
   app.post("/filterlist", (req, res)=>{
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress) 
-      + " 修改 filter.list")
+      + " 保存最新 filter.list")
     if (req.body.filterlist) {
       let file = fs.createWriteStream(path.join(__dirname, 'runjs', 'Lists', 'filter.list'))
       file.on('error', (err)=>clog.error(err))
-      file.write("# elecV2Proxy filter.list\n\n")
+      file.write("# elecV2P filter.list\n\n")
       req.body.filterlist.forEach(fr=>{
         if (fr[1] && /^DOMAIN(-SUFFIX)?$/.test(fr[0])) {
-          file.write(fr[0] + "," + fr[1] + ",elecV2Proxy\n")
+          file.write(fr[0] + "," + fr[1] + ",elecV2P\n")
         }
       })
       file.end()
@@ -489,7 +497,7 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
   })
 
   app.get("/test", (req, res)=>{
-    clog.info("do some test")
+    clog.debug("do some test")
     // let lists = 
     // res.end(func.filterlistadd())
   })

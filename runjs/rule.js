@@ -15,6 +15,10 @@ const ruleData = {
   adblockflag: false
 }
 
+const ruleConfig = {
+  mitmall: false
+}
+
 if (!fs.existsSync(path.join(__dirname, 'Lists'))) {
   fs.mkdirSync(path.join(__dirname, 'Lists'))
 }
@@ -83,9 +87,11 @@ function init(){
     })
   }
 
-  clog.notify(`default 规则 ${ ruleData.reqlists.length + ruleData.reslists.length} 条`)
-  clog.notify(`rewrite 规则 ${ ruleData.rewritelists.length} 条`)
-  clog.notify(`MITM hosts ${ruleData.host.length} 个`)
+  if (ruleData.host.indexOf('*') > -1) ruleConfig.mitmall = true
+
+  clog.notify(`default 规则 ${ ruleData.reqlists.length + ruleData.reslists.length } 条`)
+  clog.notify(`rewrite 规则 ${ ruleData.rewritelists.length } 条`)
+  clog.notify(`MITM hosts ${ ruleData.host.length } 个`)
 
   return ruleData
 }
@@ -175,8 +181,9 @@ module.exports = {
 
     for (let r of ruleData.rewritelists) {
       if ((new RegExp(r[0])).test($request.url)) {
+        clog.info('rewrite response:', r[0], r[1])
         let jsres = runJSFile(r[1], { $request, $response })
-        Object.assign($response, jsres.response ? jsres.response : jsres)
+        Object.assign($response, jsres ? (jsres.response ? jsres.response : jsres) : {})
         break
       }
     }
@@ -193,9 +200,9 @@ module.exports = {
     return { response: $response }
   },
   *beforeDealHttpsRequest(requestDetail) {
+    if (ruleConfig.mitmall) return true
     let host = requestDetail.host.split(":")[0]
     if (ruleData.host.indexOf(host) !== -1) {
-      // clog.info(host)
       return true
     }
     return false

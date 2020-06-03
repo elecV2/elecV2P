@@ -1,6 +1,6 @@
 ## 简介
 
-一款基于 anyproxy 的网络工具。
+一款网络工具。 - customize personal network
 
 ### 基础功能
 
@@ -152,5 +152,6 @@ ifttt 通知需先在设置（setting）面板添加 key。目前 ifttt 通知�
 ## 贡献
 
 - [anyproxy](https://github.com/alibaba/anyproxy)
+- [expressjs](https://expressjs.com)
 - [Ant Design Vue](https://www.antdv.com)
 - [node-rss](https://github.com/dylang/node-rss)

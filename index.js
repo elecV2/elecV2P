@@ -5,7 +5,8 @@ const { websocketSer } = require('./func/websocket.js')
 
 const proxyPort = 8001,    // 代理端口
       webifPort = 8002,    // 代理的所有请求查看端口
-      webstPort = 80       // 设置页面端口（规则更改，JS 添加等）
+      webstPort = 80,      // 设置页面端口（规则更改，JS 添加等）
+      webskPort = 8005     // websocket 端口
 
 const aProxyOptions = {
         port: proxyPort,
@@ -13,11 +14,15 @@ const aProxyOptions = {
         webInterface: {
           enable: true,          // 是否打开代理请求查看端口
           port: webifPort
-        }
+        },
+        // throttle: 10000,
+        forceProxyHttps: false,
+        wsIntercept: false,      // 不开启websocket代理
+        silent: false
       }
       
 const wsConfig = {
-  webskPort: 8005,
+  webskPort,
   webskPath: '/elecV2P'
 }
 

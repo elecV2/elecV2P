@@ -63,8 +63,7 @@ module.exports = (filename, addContext) => {
   if (addContext) {
     if (addContext.cb) {
       fconsole.setcb(addContext.cb)
-    }
-    if (addContext.type) {
+    } else if (addContext.type) {
       fconsole.setcb(wsSer.send.func(addContext.type))
     }
     if (addContext.$request) {
