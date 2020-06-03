@@ -21,6 +21,10 @@ module.exports = class {
     this.job = job
   }
 
+  stat(){
+    return this.info.running ? true : false
+  }
+
   start(){
     if (this.info.type == 'cron') {
       this.task = new cron(this.info, this.job)

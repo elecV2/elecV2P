@@ -329,14 +329,14 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     let data = req.body.data
     switch(req.body.op){
       case "start":
-        tasklists[data.tid] = data.task
-        tasklists[data.tid].id = data.tid
-
         if (tasks[data.tid]) {
           clog.info('删除原有任务，更新数据')
-          tasks[data.tid].stop()
+          if (tasks[data.tid].stat()) tasks[data.tid].stop()
           tasks[data.tid].delete()
         }
+
+        tasklists[data.tid] = data.task
+        tasklists[data.tid].id = data.tid
         tasks[data.tid] = new task(tasklists[data.tid], jobFunc(data.task.job))
         tasks[data.tid].start()
         res.end("task started!")

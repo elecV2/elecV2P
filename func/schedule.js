@@ -78,8 +78,9 @@ module.exports = class {
   }
 
   delete(){
+    if (this.temIntval) clearInterval(this.temIntval)
     if (this.task) {
-      clog.log("删除任务：", this.task.name)
+      clog.log("删除倒计时任务：", this.task.name)
       delete this.task
     }
   }

@@ -92,11 +92,23 @@ module.exports = (filename, addContext) => {
       req.timeout = config.timeout_axios
       try {
         const response = await axios(req)
-        if(cb) cb(response)
+        if(cb) {
+          try {
+            cb(response)
+          } catch(error) {
+            fconsole.error('cb error:', error)
+          }
+        }
         return response
       } catch (error) {
         fconsole.error(error)
-        if(cb) cb({ error })
+        if(cb) {
+          try {
+            cb({ error })
+          } catch(error) {
+            fconsole.error('cb error:', error)
+          }
+        }
         return { error }
       }
     },
@@ -120,13 +132,35 @@ module.exports = (filename, addContext) => {
             headers: response.headers,
             body: typeof(response.data) == 'object' ? (Buffer.isBuffer(response.data) ? response.data.toString() : JSON.stringify(response.data)) : response.data
           }
-          if(cb) cb(error, newres, newres.body)
+          if(cb) {
+            try {
+              cb(error, newres, newres.body)
+            } catch(error) {
+              fconsole.error('cb error:', error)
+            }
+          }
         } else {
-          if(cb) cb(error, null, '$httpClient post have no response')
+          if(cb) {
+            try {
+              cb(error, null, "{error: '$httpClient post have no response'}")
+            } catch(error) {
+              fconsole.error('cb error:', error)
+            }
+          }
         }
       },
       post: async (req, cb)=>{
         const spu = req.url.split('?')
+        if (req.headers) {
+          try {
+            req.headers = typeof(req.headers) == 'object' ? req.headers : JSON.parse(req.headers)
+          } catch(e) {
+            fconsole.error('task fetch headers error:', e)
+            req.headers = {}
+          }
+        } else {
+          req.headers = {}
+        }
         const newreq = {
           url: spu[0],
           headers: req.headers,
@@ -146,9 +180,21 @@ module.exports = (filename, addContext) => {
             headers: response.headers,
             body: typeof(response.data) == 'object' ? (Buffer.isBuffer(response.data) ? response.data.toString() : JSON.stringify(response.data)) : response.data
           }
-          if(cb) cb(error, newres, newres.body)
+          if(cb) {
+            try {
+              cb(error, newres, newres.body)
+            } catch(error) {
+              fconsole.error('cb error:', error)
+            }
+          }
         } else {
-          if(cb) cb(error, null, '$httpClient post have no response')
+          if(cb) {
+            try {
+              cb(error, null, "{error: '$httpClient post have no response'}")
+            } catch(error) {
+              fconsole.error('cb error:', error)
+            }
+          }
         }
       }
     },
@@ -156,6 +202,16 @@ module.exports = (filename, addContext) => {
       // Quantumult X 网络请求
       fetch: async (req, cb)=>{
         let newreq = req
+        if (req.headers) {
+          try {
+            req.headers = typeof(req.headers) == 'object' ? req.headers : JSON.parse(req.headers)
+          } catch(e) {
+            fconsole.error('task fetch headers error:', e)
+            req.headers = {}
+          }
+        } else {
+          req.headers = {}
+        }
         if (/post/i.test(req.method)) {
           const spu = req.url.split('?')
           newreq = {
@@ -183,7 +239,13 @@ module.exports = (filename, addContext) => {
                   headers: response.headers,
                   body: typeof(response.data) == 'object' ? (Buffer.isBuffer(response.data) ? response.data.toString() : JSON.stringify(response.data)) : response.data
                 }
-            if (cb) cb(res)
+            if (cb) {
+              try {
+                cb(res)
+              } catch(error) {
+                fconsole.error('task fetch cb error', error)
+              }
+            }
             resolve(res)
           } else {
             reject({ error })
@@ -282,8 +344,14 @@ module.exports = (filename, addContext) => {
       }
     }
   } catch(error) {
-    var fdata = { error }
-    clog.error(error)
+    if (error.stack) {
+      let errmsg = 'line ' + error.stack.match(/evalmachine\.<anonymous>:([0-9]+:[0-9]+)/)[1] + ' error: ' + error.message
+      fconsole.error(errmsg)
+      return { error: errmsg }
+    } else {
+      clog.error(error)
+      return { error }
+    }
   }
 
   return fdata

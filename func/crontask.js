@@ -46,6 +46,9 @@ module.exports = class {
 
   delete(){
     if(this.job) this.job.destroy()
-    clog.log(this.task.name, '已删除')
+    if (this.task) {
+      clog.log("删除定时任务：", this.task.name)
+      delete this.task
+    }
   }
 }
