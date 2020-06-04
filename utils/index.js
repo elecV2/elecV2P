@@ -11,13 +11,11 @@ const string = require('./string')
 
 const clog = new logger({ head: 'utils' })
 
-async function downloadfileSync(durl, dest) {
-  try {
-    let sf = await downloadfile(durl, dest)
-    return sf
-  } catch(e) {
-    return e
+function errStack(error) {
+  if (error && error.stack) {
+    return 'line ' + error.stack.match(/evalmachine\.<anonymous>:([0-9]+:[0-9]+)/)[1] + ' error: ' + error.message
   }
+  return error
 }
 
 function downloadfile(durl, dest, cb) {
@@ -49,7 +47,7 @@ module.exports = {
   feed,
   now,
   wait,
+  errStack,
   downloadfile,
-  downloadfileSync,
   ...string
 }

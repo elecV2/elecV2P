@@ -27,7 +27,7 @@ module.exports = class {
       let timea = this.task.time.split(' ')
       // clog.info(timea)
       this._Task.time = Number(timea[0]) || 0
-      this._Task.repeat = timea[1] ? Number(timea[1]) : 0
+      this._Task.repeat = timea[1] ? Number(timea[1]) : 1
       this._Task.random = timea[2] ? Number(timea[2]) : 0
     } else {
       clog.error('无任务详细信息')

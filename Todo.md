@@ -15,8 +15,8 @@
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
       <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
         - 说明文档 [progressing...]
-        - 通知细分自定义
-        - JS context 分离为 module
+        - runJSFile 任务/请求分离
+        - 通知细分自定义 feed/ifttt 分离/新的IP 连接通知
         - JS Mall/market/store
         - 自签证书自定义生成
         - request 转发到 local port/remote server [progressing..., cancelled]
@@ -27,7 +27,8 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
-      - [ ] task stat
+      - [x] JS context 分离为 module
+      - [x] task stat
       - [x] mitm *
       - [x] 任务 运行 log 返回
       - [x] 客户端 websocket
