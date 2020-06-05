@@ -1,12 +1,22 @@
+const fs = require('fs')
+const path = require('path')
 const proxy = require('anyproxy')
 const exec = require('child_process').exec
+const homedir = require('os').homedir()
 
 const { logger } = require('./utils')
-
 const clog = new logger({head: 'anyProxy'})
 
+const { rootCrtSync } = require('./func')
+
+
 function anyproxy(eoption) {
-  if(!proxy.utils.certMgr.ifRootCAFileExists()){
+  if (eoption.rootCA) {
+    if(!fs.existsSync(homedir + '/.anyproxy')) fs.mkdirSync(homedir + '/.anyproxy')
+    if(!fs.existsSync(homedir + '/.anyproxy/certificates')) fs.mkdirSync(homedir + '/.anyproxy/certificates')
+    rootCrtSync()
+  }
+  if(!proxy.utils.certMgr.ifRootCAFileExists()) {
     proxy.utils.certMgr.generateRootCA((error, keyPath)=>{
       if(!error){
         const certDir = require('path').dirname(keyPath)
@@ -21,8 +31,6 @@ function anyproxy(eoption) {
         clog.err(error)
       }
     })
-  } else {
-    clog.info("使用原有根证书")
   }
 
   const proxyPort = 8001,
@@ -35,6 +43,7 @@ function anyproxy(eoption) {
       port: webifPort
     },
     // throttle: 1000,
+    forceProxyHttps: false,
     wsIntercept: false,
     silent: false
   }

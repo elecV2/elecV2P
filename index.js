@@ -15,10 +15,7 @@ const aProxyOptions = {
           enable: true,          // 是否打开代理请求查看端口
           port: webifPort
         },
-        // throttle: 10000,
-        forceProxyHttps: false,
-        wsIntercept: false,      // 不开启websocket代理
-        silent: false
+        rootCA: true             // 是否自动启动 rootCA 目录下根证书
       }
       
 const wsConfig = {

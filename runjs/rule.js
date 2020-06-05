@@ -121,7 +121,7 @@ const localResponse = {
 }
 
 module.exports = {
-  summary: 'elecV2P rule - customize personal network',
+  summary: 'elecV2P - customize personal network',
   init,
   ruleData,
   *beforeSendRequest(requestDetail) {

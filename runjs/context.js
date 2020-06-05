@@ -1,6 +1,7 @@
 const fs = require('fs')
 const axios = require('axios')
 const path = require('path')
+const qs = require('qs')
 
 const { logger, errStack } = require('../utils')
 
@@ -8,6 +9,32 @@ const clog = new logger({ head: 'context', level: 'debug' })
 
 const config = {
   timeout_axios: 5000
+}
+
+function getHeaders(req) {
+  if (req.headers) {
+    try {
+      return typeof(req.headers) == 'object' ? req.headers : JSON.parse(req.headers)
+    } catch(e) {
+      clog.error('headers error:', errStack(e))
+      return {}
+    }
+  } else {
+    return {}
+  }
+}
+
+function getBody(req) {
+  if (req.body) return req.body
+  if (/\?/.test(req.url)) {
+    const spu = req.url.split('?')
+    if (/json/.test(req.headers["Content-Type"])) {
+      return qs.parse(spu[1])
+    } else {
+      return spu[1]
+    }
+  }
+  return ''
 }
 
 const contextBase = {
@@ -52,16 +79,7 @@ class surgeContext {
   $httpClient = {
     // surge http 请求
     get: (req, cb) => {
-      if (req.headers) {
-        try {
-          req.headers = typeof(req.headers) == 'object' ? req.headers : JSON.parse(req.headers)
-        } catch(e) {
-          this.fconsole.error('post headers error:', errStack(e))
-          req.headers = {}
-        }
-      } else {
-        req.headers = {}
-      }
+      req.headers = getHeaders(req)
       req.timeout = config.timeout_axios
       if (req.body) {
         req.data = req.body
@@ -93,25 +111,13 @@ class surgeContext {
       })
     },
     post: (req, cb) => {
-      if (req.headers) {
-        try {
-          req.headers = typeof(req.headers) == 'object' ? req.headers : JSON.parse(req.headers)
-        } catch(e) {
-          this.fconsole.error('post headers error:', errStack(e))
-          req.headers = {}
-        }
-      } else {
-        req.headers = {}
-      }
-      const spu = req.url.split('?')
-      const newreq = {
-        url: spu[0],
-        headers: req.headers,
-        data: req.body || spu[1] || '',
+      axios({
+        url: req.url,
+        headers: getHeaders(req),
+        data: getBody(req),
         timeout: config.timeout_axios,
         method: 'post'
-      }
-      axios(newreq).then(response=>{
+      }).then(response=>{
         let newres = {
           status: response.status,
           headers: response.headers,
@@ -166,32 +172,14 @@ class quanxContext {
   $task = {
     // Quantumult X 网络请求
     fetch: (req, cb) => {
-      if (req.headers) {
-        try {
-          req.headers = typeof(req.headers) == 'object' ? req.headers : JSON.parse(req.headers)
-        } catch(e) {
-          this.fconsole.error('task fetch headers error:', errStack(e))
-          req.headers = {}
-        }
-      } else {
-        req.headers = {}
-      }
-      let newreq = req
-      if (/post/i.test(req.method)) {
-        const spu = req.url.split('?')
-        newreq = {
-          url: spu[0],
-          headers: req.headers,
-          data: req.body || spu[1] || '',
-          method: 'post'
-        }
-      } else if (req.body) {
-        newreq.data = req.body
-      }
-      newreq.timeout = config.timeout_axios
-
       return new Promise((resolve, reject) => {
-        axios(newreq).then(response=>{
+        axios({
+          url: req.url,
+          headers: getHeaders(req),
+          data: getBody(req),
+          method: req.method || 'get',
+          timeout: config.timeout_axios
+        }).then(response=>{
           let res = {
                 statusCode: response.status,
                 headers: response.headers,

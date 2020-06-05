@@ -4,6 +4,7 @@
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
       <pre style="white-space: pre-line;padding: 6px 1em;text-align: left;">
         - [ ] JS context 添加 feed 通知 $feed
+        - [ ] 部分服务重启
         - [ ] 定时任务 时间合理检测
         - [ ] 定时任务 打开 url
         - [ ] webpack 分包(?)
@@ -27,6 +28,8 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
+      - [x] feed 一定时间内（1 min）合并通知
+      - [x] 自动启用 rootCA 证书
       - [x] JS context 分离为 module
       - [x] task stat
       - [x] mitm *
