@@ -3,9 +3,10 @@ const axios = require('axios')
 const path = require('path')
 const qs = require('qs')
 
-const { logger, errStack } = require('../utils')
-
+const { logger, errStack, feed } = require('../utils')
 const clog = new logger({ head: 'context', level: 'debug' })
+
+const { wsSer } = require('../func')
 
 const config = {
   timeout_axios: 5000
@@ -13,6 +14,7 @@ const config = {
 
 function getHeaders(req) {
   if (req.headers) {
+    delete req.headers['Content-Length']
     try {
       return typeof(req.headers) == 'object' ? req.headers : JSON.parse(req.headers)
     } catch(e) {
@@ -68,6 +70,11 @@ const contextBase = {
         return false
       }
     }
+  },
+  $feed: {
+    push(title, description) {
+      feed.push(title, description)
+    }
   }
 }
 
@@ -79,34 +86,27 @@ class surgeContext {
   $httpClient = {
     // surge http 请求
     get: (req, cb) => {
-      req.headers = getHeaders(req)
-      req.timeout = config.timeout_axios
-      if (req.body) {
-        req.data = req.body
-      }
-      req.method = 'get'
-      axios(req).then(response=>{
+      axios({
+        url: req.url,
+        headers: getHeaders(req),
+        data: getBody(req),
+        timeout: config.timeout_axios,
+        method: 'get'
+      }).then(response=>{
         let newres = {
           status: response.status,
           headers: response.headers,
           body: typeof(response.data) == 'object' ? (Buffer.isBuffer(response.data) ? response.data.toString() : JSON.stringify(response.data)) : response.data
         }
-        if(cb) {
-          try {
-            cb(null, newres, newres.body)
-          } catch(error) {
-            this.fconsole.error('cb error on', errStack(error))
-          }
-        }
+        if(cb) cb(null, newres, newres.body)
       }).catch(error=>{
+        clog.error('httpClient.get error:', error)
         if(cb) {
           try {
             cb(error, null, "{error: '$httpClient.get no response'}")
-          } catch(error) {
-            this.fconsole.error('httpClient.get cb error:', error)
+          } catch(err) {
+            this.fconsole.error('httpClient.get cb error:', errStack(err))
           }
-        } else {
-          clog.error('httpClient.get error:', error)
         }
       })
     },
@@ -123,14 +123,9 @@ class surgeContext {
           headers: response.headers,
           body: typeof(response.data) == 'object' ? (Buffer.isBuffer(response.data) ? response.data.toString() : JSON.stringify(response.data)) : response.data
         }
-        if(cb) {
-          try {
-            cb(null, newres, newres.body)
-          } catch(error) {
-            this.fconsole.error('$httpClient.post cb error on', errStack(error))
-          }
-        }
+        if(cb) cb(null, newres, newres.body)
       }).catch(error=>{
+        clog.error('httpClient.post error:', error)
         if(cb) {
           try {
             cb(error, null, `{ error: ${ error } }`)
@@ -185,17 +180,13 @@ class quanxContext {
                 headers: response.headers,
                 body: typeof(response.data) == 'object' ? (Buffer.isBuffer(response.data) ? response.data.toString() : JSON.stringify(response.data)) : response.data
               }
-          if (cb) {
-            try {
-              cb(res)
-            } catch(error) {
-              this.fconsole.error('task fetch cb error', errStack(error))
-            }
-          }
+          if (cb) cb(res)
           resolve(res)
         }).catch(error=>{
-          clog.error(error)
-          reject({ error })
+          let err = errStack(error)
+          this.fconsole.error(err)
+          if(cb) cb(err)
+          reject({ error: err })
         })
       })
     }
@@ -235,6 +226,13 @@ module.exports = class {
       Object.assign(this.final, new quanxContext({ fconsole: this.final.console }))
     }
     if (addContext) {
+      if (addContext.cb) {
+        this.final.console.setcb(addContext.cb)
+        delete addContext.cb
+      } else if (addContext.type) {
+        this.final.console.setcb(wsSer.send.func(addContext.type))
+        delete addContext.type
+      }
       Object.assign(this.final, addContext)
     }
   }

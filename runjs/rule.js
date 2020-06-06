@@ -120,14 +120,28 @@ const localResponse = {
   }
 }
 
+function formRequest($request) {
+  let reqData = $request.requestData
+  return {
+    ...$request.requestOptions,
+    url: $request.url,
+    body: typeof(reqData) == 'object' ? (Buffer.isBuffer(reqData) ? reqData.toString() : JSON.stringify(reqData)) : reqData,
+  }
+}
+
+function formResponse($response) {
+  let resData = $response.body
+  return {
+    ...$response,
+    body: typeof(resData) == 'object' ? (Buffer.isBuffer(resData) ? resData.toString() : JSON.stringify(resData)) : resData
+  }
+}
+
 module.exports = {
   summary: 'elecV2P - customize personal network',
   init,
   ruleData,
   *beforeSendRequest(requestDetail) {
-    // console.log(requestDetail.requestOptions)
-    const $request = requestDetail
-
     let getr = getrules(requestDetail, null, ruleData.reqlists)
     if(getr.length) clog.info("reqlists:", getr.length)
     for(let r of getr) {
@@ -153,7 +167,7 @@ module.exports = {
         }
       }
       // 通过 JS 文件修改请求体
-      let jsres = runJSFile(r[3], { $request })
+      let jsres = runJSFile(r[3], { $request: formRequest(requestDetail) })
       if (jsres.response) {
         // 直接返回结果，不访问目标网址
         clog.notify('返回结果:', jsres.response)
@@ -181,8 +195,8 @@ module.exports = {
 
     for (let r of ruleData.rewritelists) {
       if ((new RegExp(r[0])).test($request.url)) {
-        clog.info('rewrite response:', r[0], r[1])
-        let jsres = runJSFile(r[1], { $request, $response })
+        clog.info('rewrite rule:', r[0], r[1])
+        let jsres = runJSFile(r[1], { $request: formRequest($request), $response: formresponse($response) })
         Object.assign($response, jsres ? (jsres.response ? jsres.response : jsres) : {})
         break
       }
@@ -192,7 +206,7 @@ module.exports = {
     if(getr.length) clog.info("reslists:", getr.length)
     for(let r of getr) {
       if (r[2] == "js" || r[2] == 404) {
-        let jsres = runJSFile(r[3], { $request, $response })
+        let jsres = runJSFile(r[3], { $request: formRequest($request), $response: formresponse($response) })
         Object.assign($response, jsres ? (jsres.response ? jsres.response : jsres) : {})
       }
     }

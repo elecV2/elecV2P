@@ -10,14 +10,14 @@ const runJSFile = require('./runjs/runJSFile')
 const { task, jsdownload, wsSer, ...func } = require('./func')
 const { logger, feed } = require('./utils')
 
-const clog = new logger({head: 'webServer'})
+const clog = new logger({ head: 'webServer' })
 
 const crtpath = homedir + '/.anyproxy/certificates'
 
 let config = {
       glevel: 'info',
       feedenable: true,
-      iftttid: ''
+      ...feed.config
     }
 
 const configFile = path.join(__dirname, 'runjs', 'Lists', 'config.json')
@@ -127,8 +127,16 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
         clog.notify(`ifttt webhook 功能已 ${ data ? '开启' : '关闭' }`)
         res.end(`ifttt webhook 功能已 ${ data ? '开启' : '关闭' }`)
         break
+      case "merge":
+        feed.config.ismerge = data.feedmerge
+        feed.config.mergetime = data.mergetime
+        feed.config.mergenum = data.mergenum
+        Object.assign(config, feed.config)
+        clog.notify(`feed 通知已 ${ data.feedmerge ? '合并' : '取消合并' }`)
+        res.end(`feed 通知已 ${ data.feedmerge ? '合并' : '取消合并' }`)
+        break
       default:{
-        res.end('未知操作')
+        res.end('feed put 未知操作')
       }
     }
   })
@@ -353,9 +361,8 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
         if(tasks[data.tid]) {
           tasks[data.tid].delete()
           delete tasklists[data.tid]
-          res.end("task deleted!")
         }
-        res.end("no such task")
+        res.end("task deleted!")
         break
       case "save":
         fs.writeFileSync(path.join(__dirname, 'runjs/Lists', 'task.list'), JSON.stringify(data))

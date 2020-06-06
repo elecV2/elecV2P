@@ -6,8 +6,6 @@ const path = require('path')
 const { logger, feed, now, errStack, downloadfile } = require('../utils')
 const clog = new logger({ head: 'runJSFile', level: 'debug' })
 
-const { wsSer } = require('../func')
-
 const context = require('./context')
 
 const StoreFolder = path.join(__dirname, 'Store')
@@ -18,9 +16,9 @@ if(!fs.existsSync(JSFolder)) fs.mkdirSync(JSFolder)
 const config = {
   timeout_jsrun: 5000,
   intervals: 86400,       // 远程 JS 更新时间，单位：秒。 默认：一天
-  numtofeed: 50,          // 每运行 {numtofeed} 次 JS, 添加一个 Feed item
+  numtofeed: 50,          // 每运行 { numtofeed } 次 JS, 添加一个 Feed item
 
-  jslogfile: true,        // 是否将 JS 运行日志保存到 logs 文件
+  jslogfile: true,        // 是否将 JS 运行日志保存到 logs 文件夹
 
   SurgeEnable: false,     // 兼容 Surge 脚本
   QuanxEnable: false,     // 兼容 Quanx 脚本。都为 false 时，会进行自动判断
@@ -31,7 +29,7 @@ const runStatus = {
   times: config.numtofeed
 }
 
-function taskCount(filename) {
+async function taskCount(filename) {
   if (/test/.test(filename)) return
   if (runStatus[filename]) {
     runStatus[filename]++
@@ -59,41 +57,22 @@ function runJS(filename, jscode, addContext) {
   const fconsole = new logger({ head: filename, file: config.jslogfile ? filename : '' })
   const newContext = new context({ fconsole })
 
-  const newScript = new vm.Script(jscode)
-
-  if (config.QuanxEnable == false && (config.SurgeEnable || /\$httpClient|\$persistentStore|\$notification/.test(jscode))) {
-    clog.debug(`检测到 ${filename} 为 Surge 脚本，使用 Surge 兼容模式`)
+  if (config.SurgeEnable || (config.QuanxEnable == false && /\$httpClient|\$persistentStore|\$notification/.test(jscode))) {
+    clog.debug(`${filename} 使用 Surge 兼容模式运行`)
     newContext.add({ surge: true })
-    config.SurgeEnable = true
-  }
-  if (config.SurgeEnable == false && (config.QuanxEnable || /\$task|\$prefs|\$notify/.test(jscode))) {
-    clog.debug(`检测到 ${filename} 为 Quantumult X 脚本，使用 Quantumult X 兼容模式`)
+  } else if (config.QuanxEnable || /\$task|\$prefs|\$notify/.test(jscode)) {
+    clog.debug(`${filename} 使用 Quantumult X 兼容模式运行`)
     newContext.add({ quanx: true })
-    config.QuanxEnable = true
   }
 
   if (addContext) {
-    if (addContext.cb) {
-      newContext.final.console.setcb(addContext.cb)
-    } else if (addContext.type) {
-      newContext.final.console.setcb(wsSer.send.func(addContext.type))
-    }
-    if (addContext.$request) {
-      addContext.$request.headers = addContext.$request.requestOptions.headers
-      let reqData = addContext.$request.requestData
-      addContext.$request.body = typeof(reqData) == 'object' ? (Buffer.isBuffer(reqData) ? reqData.toString() : JSON.stringify(reqData)) : reqData
-    }
-    if (addContext.$response) {
-      addContext.$response.headers = addContext.$response.header
-      let resData = addContext.$response.body
-      addContext.$response.body = typeof(resData) == 'object' ? (Buffer.isBuffer(resData) ? resData.toString() : JSON.stringify(resData)) : resData
-    }
-    if (addContext.type) taskCount(filename)
     newContext.add({ addContext })
+    if (addContext.type) taskCount(filename)
   }
 
   try {
     clog.notify('runjs:', filename)
+    const newScript = new vm.Script(jscode)
     return newScript.runInNewContext(newContext.final, { displayErrors: true, timeout: config.timeout_jsrun })
   } catch(error) {
     let errmsg = errStack(error)
@@ -112,7 +91,7 @@ module.exports = (filename, addContext) => {
         downloadfile(url, filePath).then(()=>{
           resolve(runJS(filename, fs.readFileSync(filePath), addContext))
         }).catch(error=>{
-          clog.error('运行', url, '出现错误，请尝试下载到服务器再运行')
+          clog.error('运行', url, '出现错误，请尝试下载到服务器再运行', errStack(error))
           reject(error)
         })
       })
