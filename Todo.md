@@ -3,12 +3,11 @@
     <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
       <pre style="white-space: pre-line;padding: 6px 1em;text-align: left;">
-        - [ ] 部分服务重启
-        - [ ] 定时任务 时间合理检测
-        - [ ] 定时任务 打开 url
-        - [ ] webpack 分包(?)
+        - [ ] webmodules task 移动到 task
         - [ ] lists 合理性检测
         - [ ] lists 订阅
+        - [ ] 网页添加 doc 链接
+        - [ ] webpack 分包(?)
       </pre>
     </div>
     <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
@@ -17,6 +16,8 @@
         - 说明文档 [progressing...]
         - runJSFile 任务/请求分离
         - 通知细分自定义 feed/ifttt 分离/新的IP 连接通知
+        - $HOLD. hold返回结果到前端页面进行编辑
+        - package/module (main.json/js/lists) 同目录 Store
         - JS Mall/market/store
         - 自签证书自定义生成
         - anyproxy 替换，使用其他库或原生代码，增强可定制性
@@ -26,6 +27,9 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
+      - [x] random repeat
+      - [x] 定时任务 时间合理检测
+      - [x] mitm host 子域名通配符（*）
       - [x] JS context 添加 feed 通知 $feed
       - [x] feed 一定时间内（1 min）合并通知
       - [x] 自动启用 rootCA 证书

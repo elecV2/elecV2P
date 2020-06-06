@@ -9,7 +9,7 @@ const clog = new logger({ head: 'schedule', level: 'debug', cb: wsSer.send.func(
  * taskinfo = {
     name: "任务名称",
     type: "schedule",
-    time: "30 999 2",
+    time: "30 999 2 3",
     running: true
   }
   job: function(),
@@ -25,12 +25,12 @@ module.exports = class {
       this.repeat = 1
 
       let timea = this.task.time.split(' ')
-      // clog.info(timea)
+      let randomrepeat = timea[3] ? Math.floor(Math.random()*Number(timea[3])) : 0
       this._Task.time = Number(timea[0]) || 0
-      this._Task.repeat = timea[1] ? Number(timea[1]) : 1
+      this._Task.repeat = timea[1] ? Number(timea[1]) + randomrepeat : 1
       this._Task.random = timea[2] ? Number(timea[2]) : 0
     } else {
-      clog.error('无任务详细信息')
+      clog.error('倒计时任务无详细信息')
     }
   }
 

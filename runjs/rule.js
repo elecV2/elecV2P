@@ -11,12 +11,9 @@ const ruleData = {
   reqlists: [],
   reslists: [],
   rewritelists: [],
+  mitmhost: [],
   uagent: {},
   adblockflag: false
-}
-
-const ruleConfig = {
-  mitmall: false
 }
 
 if (!fs.existsSync(path.join(__dirname, 'Lists'))) {
@@ -81,17 +78,15 @@ function init(){
   }
 
   if (fs.existsSync(path.join(__dirname, 'Lists', 'mitmhost.list'))) {
-    ruleData.host = fs.readFileSync(path.join(__dirname, 'Lists', 'mitmhost.list'), 'utf8').split(/\r|\n/).filter(host=>{
+    ruleData.mitmhost = fs.readFileSync(path.join(__dirname, 'Lists', 'mitmhost.list'), 'utf8').split(/\r|\n/).filter(host=>{
       if (/^(\[|#|;)/.test(host) || host.length < 3) {return false}
       return true
     })
   }
 
-  if (ruleData.host.indexOf('*') > -1) ruleConfig.mitmall = true
-
   clog.notify(`default 规则 ${ ruleData.reqlists.length + ruleData.reslists.length } 条`)
   clog.notify(`rewrite 规则 ${ ruleData.rewritelists.length } 条`)
-  clog.notify(`MITM hosts ${ ruleData.host.length } 个`)
+  clog.notify(`MITM hosts ${ ruleData.mitmhost.length } 个`)
 
   return ruleData
 }
@@ -214,11 +209,11 @@ module.exports = {
     return { response: $response }
   },
   *beforeDealHttpsRequest(requestDetail) {
-    if (ruleConfig.mitmall) return true
     let host = requestDetail.host.split(":")[0]
-    if (ruleData.host.indexOf(host) !== -1) {
+    if (ruleData.mitmhost.indexOf(host) !== -1) {
       return true
+    } else {
+      return ruleData.mitmhost.filter(h=>(/^\*/.test(h) && new RegExp('.' + h + '$').test(host))).length ? true : false
     }
-    return false
   }
 }

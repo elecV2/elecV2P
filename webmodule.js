@@ -318,7 +318,8 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
         let mhost = req.body.data
         fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'mitmhost.list'), "[mitmhost]\n" + mhost.join("\n"))
         res.end("保存 mitmhost : " + mhost.length)
-        init()
+        ruleData.mitmhost = mhost
+        // init()
         break
       default:{
         res.end("data put error")
@@ -337,6 +338,7 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     let data = req.body.data
     switch(req.body.op){
       case "start":
+        
         if (tasks[data.tid]) {
           clog.info('删除原有任务，更新数据')
           if (tasks[data.tid].stat()) tasks[data.tid].stop()

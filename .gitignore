@@ -1,11 +1,1 @@
 node_modules
-release
-backup
-runjs/JSFile/*.js
-runjs/Store
-web/src
-*config.js
-*test.js
-*.bat
-*.crt
-*.key
