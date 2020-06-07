@@ -56,8 +56,8 @@ function push(title, description, url){
 function addItem(title = 'elecV2P notification', description =  '通知内容', url = 'https://github.com/elecV2/elecV2P/' + new Date().getTime()) {
   if (/test/.test(title)) return
   if (config.ismerge) {
+    mergefeed.content.push(title + ' - ' + now() + '\n' + description + '\n')
     if (mergefeed.setTime) {
-      mergefeed.content.push(title + ' - ' + now() + '\n' + description + '\n')
       if (mergefeed.content.length >= config.mergenum) {
         push('elecV2P 合并通知 ' + mergefeed.content.length, mergefeed.content.join('\n'))
         clearTimeout(mergefeed.setTime)

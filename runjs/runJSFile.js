@@ -66,8 +66,8 @@ function runJS(filename, jscode, addContext) {
   }
 
   if (addContext) {
-    newContext.add({ addContext })
     if (addContext.type) taskCount(filename)
+    newContext.add({ addContext })
   }
 
   try {
