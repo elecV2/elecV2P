@@ -191,7 +191,7 @@ module.exports = {
     for (let r of ruleData.rewritelists) {
       if ((new RegExp(r[0])).test($request.url)) {
         clog.info('rewrite rule:', r[0], r[1])
-        let jsres = runJSFile(r[1], { $request: formRequest($request), $response: formresponse($response) })
+        let jsres = runJSFile(r[1], { $request: formRequest($request), $response: formResponse($response) })
         Object.assign($response, jsres ? (jsres.response ? jsres.response : jsres) : {})
         break
       }
@@ -201,7 +201,7 @@ module.exports = {
     if(getr.length) clog.info("reslists:", getr.length)
     for(let r of getr) {
       if (r[2] == "js" || r[2] == 404) {
-        let jsres = runJSFile(r[3], { $request: formRequest($request), $response: formresponse($response) })
+        let jsres = runJSFile(r[3], { $request: formRequest($request), $response: formResponse($response) })
         Object.assign($response, jsres ? (jsres.response ? jsres.response : jsres) : {})
       }
     }
