@@ -45,10 +45,12 @@ function websocketSer({ port, path }) {
   
   wss.on('connection', (ws, req)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'new connection')
+    let interval = setInterval(()=>{wsSend({ ping: 'ping' })}, 50e3)
     ws.on('message', msg=>{
       try {
         var recvdata = JSON.parse(msg)
       } catch {
+        var recvdata = msg
         // clog.info('receive message:', msg)
       }
       if (recvdata && recvdata.type && wsSer.recv[recvdata.type]) {
@@ -56,9 +58,14 @@ function websocketSer({ port, path }) {
       } else {
         wsSer.recv(msg)
       }
-      // wsSer.Send('msg from sever' + msg)
+    })
+
+    ws.on("close", ev=>{
+      clearInterval(interval)
+      clog.info('disconnected SOCKET - PORT : ' + port + ', reason: ' + ev.code)
     })
   })
+
 
   wss.on('error', e=>{
     clog.error('websocket error', e)

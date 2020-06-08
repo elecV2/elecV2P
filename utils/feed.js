@@ -45,7 +45,7 @@ function push(title, description, url){
   })
   if (config.iftttid) {
     clog.notify('ifttt webhook trigger:', title, description)
-    axios.post('https://maker.ifttt.com/trigger/elecV2P/with/key/' + config.iftttid, {value1: title, value2: description, value3: url}).then(res=>{
+    axios.post('https://maker.ifttt.com/trigger/elecV2P/with/key/' + config.iftttid, { value1: title, value2: description, value3: url }).then(res=>{
       clog.debug(res.data)
     }).catch(e=>{
       clog.error(e)
@@ -66,7 +66,7 @@ function addItem(title = 'elecV2P notification', description =  '通知内容', 
       }
     } else {
       mergefeed.setTime = setTimeout(()=>{
-        push('elecV2P 合并通知 ' + mergefeed.content.length, mergefeed.content.join('\n'))
+        push('elecV2P 合并通知 ' + mergefeed.content.length, mergefeed.content.join('\n'), 'https://github.com/elecV2/elecV2P')
         delete mergefeed.setTime
         mergefeed.content = []
       }, config.mergetime*1000)

@@ -5,9 +5,9 @@ const compression = require('compression')
 const formidable = require('formidable')
 const homedir = require('os').homedir()
 
+const { task, tasks, tasklists, jobFunc, jsdownload, wsSer, ...func } = require('./func')
 const { ruleData, init } = require('./runjs/rule')
-const runJSFile = require('./runjs/runJSFile')
-const { task, jsdownload, wsSer, ...func } = require('./func')
+const { runJSFile } = require('./runjs/runJSFile')
 const { logger, feed } = require('./utils')
 
 const clog = new logger({ head: 'webServer' })
@@ -30,50 +30,6 @@ if (fs.existsSync(configFile)) {
     if(config.glevel != 'info') clog.setlevel(config.glevel, true)
   } catch {
     clog.error('config.json 无法解析')
-  }
-}
-
-// 保存的任务列表
-let tasklists = {}
-
-if (fs.existsSync(path.join(__dirname, 'runjs/Lists', 'task.list'))) {
-  try {
-    tasklists = JSON.parse(fs.readFileSync(path.join(__dirname, 'runjs/Lists', 'task.list'), "utf8"))
-  } catch {
-    tasklists = {}
-  }
-}
-
-// 可执行任务列表
-const tasks = {}
-
-for(let tid in tasklists) {
-  tasks[tid] = new task(tasklists[tid], jobFunc(tasklists[tid].job))
-  if (tasklists[tid].running) {
-    tasks[tid].start()
-  }
-}
-
-function jobFunc(job) {
-  if (job.type == 'runjs') {
-    return ()=>{
-      runJSFile(job.target, { type: 'task', cb: wsSer.send.func('tasklog') })
-    }
-  } else if (job.type == 'taskstart') {
-    return ()=>{
-      tasks[job.target].start()
-      tasklists[job.target].running = true
-      wsSer.send({type: 'task', data: {tid: job.target, op: 'start'}})
-    }
-  } else if (job.type == 'taskstop') {
-    return ()=>{
-      tasks[job.target].stop()
-      tasklists[job.target].running = false
-      wsSer.send({type: 'task', data: {tid: job.target, op: 'stop'}})
-    }
-  } else {
-    clog.error('任务类型未知')
-    return false
   }
 }
 
@@ -316,7 +272,8 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
         break
       case "mitmhost":
         let mhost = req.body.data
-        fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'mitmhost.list'), "[mitmhost]\n" + mhost.join("\n"))
+        mhost = mhost.filter(host=>host.length>2)
+        fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'mitmhost.list'), "[mitmhost]\n\n" + mhost.join("\n"))
         res.end("保存 mitmhost : " + mhost.length)
         ruleData.mitmhost = mhost
         // init()
@@ -338,7 +295,6 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     let data = req.body.data
     switch(req.body.op){
       case "start":
-        
         if (tasks[data.tid]) {
           clog.info('删除原有任务，更新数据')
           if (tasks[data.tid].stat()) tasks[data.tid].stop()
@@ -420,11 +376,11 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
   })
 
   app.delete("/jsfile", (req, res)=>{
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "delete js file " + req.body.jsfn)
     let jsfn = req.body.jsfn
-    clog.notify("delete js file " + req.body.jsfn)
-    if (jsfn) fs.unlinkSync(path.join(__dirname, "runjs/JSFile/" + jsfn))
+    if (jsfn) fs.unlinkSync(path.join(__dirname, "runjs/JSFile", jsfn))
     else clog.error("delete js file error")
-    res.end(jsfn)
+    res.end(jsfn + ' is deleted!')
   })
 
   app.post("/filterlist", (req, res)=>{
@@ -458,6 +414,24 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
         res.write('<a href="/logs/' + log + '" >' + log + '</a><br>')
       })
       res.end()
+    }
+  })
+
+  app.delete("/logs", (req, res)=>{
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "delete log file " + req.body.name)
+    let name = req.body.name
+    if (name == 'all') {
+      fs.readdirSync(path.join(__dirname, 'logs')).forEach(file=>{
+        clog.info('delete log file:', file)
+        fs.unlinkSync(path.join(__dirname, 'logs', file))
+      })
+      res.end('所有 log 文件已删除')
+    } else if(fs.existsSync(path.join(__dirname, 'logs', name))){
+      clog.info('delete log file', name)
+      fs.unlinkSync(path.join(__dirname, 'logs', name))
+      res.end(name, '已删除')
+    } else {
+      res.end('log 文件不存在')
     }
   })
 

@@ -2,10 +2,10 @@ const fs = require('fs')
 const url = require('url')
 const path = require('path')
 
-const runJSFile = require('./runJSFile')
+const { runJSFile } = require('./runJSFile')
 
 const { logger } = require('../utils')
-const clog = new logger({head: 'anyRule'})
+const clog = new logger({ head: 'anyRule' })
 
 const ruleData = {
   reqlists: [],
@@ -79,7 +79,9 @@ function init(){
 
   if (fs.existsSync(path.join(__dirname, 'Lists', 'mitmhost.list'))) {
     ruleData.mitmhost = fs.readFileSync(path.join(__dirname, 'Lists', 'mitmhost.list'), 'utf8').split(/\r|\n/).filter(host=>{
-      if (/^(\[|#|;)/.test(host) || host.length < 3) {return false}
+      if (/^(\[|#|;)/.test(host) || host.length < 3) {
+        return false
+      }
       return true
     })
   }

@@ -81,7 +81,7 @@ function runJS(filename, jscode, addContext) {
   }
 }
 
-module.exports = (filename, addContext) => {
+function runJSFile(filename, addContext) {
   if (/^https?:/.test(filename)) {
     var url = filename
     filename = url.split('/').pop()
@@ -112,3 +112,5 @@ module.exports = (filename, addContext) => {
 
   return runJS(filename, JsStr, addContext)
 }
+
+module.exports = { runJSFile }
