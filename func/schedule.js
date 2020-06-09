@@ -1,4 +1,4 @@
-const { logger, feed } = require('../utils')
+const { logger, feedAddItem } = require('../utils')
 
 const { wsSer } = require('./websocket')
 
@@ -61,7 +61,7 @@ module.exports = class {
         } else {
           clog.log(this.task.name, '执行完成')
           this.task.running = false
-          feed.addItem(this.task.name + ' 执行完成', '倒计时任务')
+          feedAddItem(this.task.name + ' 执行完成', '倒计时任务')
           if(this.task.id) wsSer.send({type: 'task', data: {tid: this.task.id, op: 'stop'}})
         }
       }

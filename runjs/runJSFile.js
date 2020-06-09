@@ -13,7 +13,7 @@ const JSFolder = path.join(__dirname, 'JSFile')
 if(!fs.existsSync(StoreFolder)) fs.mkdirSync(StoreFolder)
 if(!fs.existsSync(JSFolder)) fs.mkdirSync(JSFolder)
 
-const config = {
+const CONFIG_RUNJS = {
   timeout_jsrun: 5000,
   intervals: 86400,       // 远程 JS 更新时间，单位：秒。 默认：一天
   numtofeed: 50,          // 每运行 { numtofeed } 次 JS, 添加一个 Feed item
@@ -26,7 +26,7 @@ const config = {
 
 const runStatus = {
   start: now(),
-  times: config.numtofeed
+  times: CONFIG_RUNJS.numtofeed
 }
 
 async function taskCount(filename) {
@@ -47,20 +47,20 @@ async function taskCount(filename) {
         delete runStatus[jsname]
       }
     }
-    feed.addItem('运行 JS ' + config.numtofeed + ' 次啦！', `从 ${runStatus.start} 开始： ` + des.join(', '))
-    runStatus.times = config.numtofeed
+    feed.addItem('运行 JS ' + CONFIG_RUNJS.numtofeed + ' 次啦！', `从 ${runStatus.start} 开始： ` + des.join(', '))
+    runStatus.times = CONFIG_RUNJS.numtofeed
     runStatus.start = now()
   }
 }
 
 function runJS(filename, jscode, addContext) {
-  const fconsole = new logger({ head: filename, file: config.jslogfile ? filename : '' })
+  const fconsole = new logger({ head: filename, file: CONFIG_RUNJS.jslogfile ? filename : '' })
   const newContext = new context({ fconsole })
 
-  if (config.SurgeEnable || (config.QuanxEnable == false && /\$httpClient|\$persistentStore|\$notification/.test(jscode))) {
+  if (CONFIG_RUNJS.SurgeEnable || (CONFIG_RUNJS.QuanxEnable == false && /\$httpClient|\$persistentStore|\$notification/.test(jscode))) {
     clog.debug(`${filename} 使用 Surge 兼容模式运行`)
     newContext.add({ surge: true })
-  } else if (config.QuanxEnable || /\$task|\$prefs|\$notify/.test(jscode)) {
+  } else if (CONFIG_RUNJS.QuanxEnable || /\$task|\$prefs|\$notify/.test(jscode)) {
     clog.debug(`${filename} 使用 Quantumult X 兼容模式运行`)
     newContext.add({ quanx: true })
   }
@@ -73,7 +73,7 @@ function runJS(filename, jscode, addContext) {
   try {
     clog.notify('runjs:', filename)
     const newScript = new vm.Script(jscode)
-    return newScript.runInNewContext(newContext.final, { displayErrors: true, timeout: config.timeout_jsrun })
+    return newScript.runInNewContext(newContext.final, { displayErrors: true, timeout: CONFIG_RUNJS.timeout_jsrun })
   } catch(error) {
     let errmsg = errStack(error)
     fconsole.error(errmsg)
@@ -86,7 +86,7 @@ function runJSFile(filename, addContext) {
     var url = filename
     filename = url.split('/').pop()
     let filePath = path.join(__dirname, 'JSFile', filename)
-    if (!fs.existsSync(filePath) || new Date().getTime() - fs.statSync(filePath).mtimeMs > config.intervals*1000) {
+    if (!fs.existsSync(filePath) || new Date().getTime() - fs.statSync(filePath).mtimeMs > CONFIG_RUNJS.intervals*1000) {
       return new Promise((resolve, reject)=>{
         downloadfile(url, filePath).then(()=>{
           resolve(runJS(filename, fs.readFileSync(filePath), addContext))

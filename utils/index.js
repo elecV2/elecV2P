@@ -44,10 +44,10 @@ function downloadfile(durl, dest, cb) {
 
 module.exports = {
   logger,
-  feed,
   now,
   wait,
   errStack,
   downloadfile,
+  ...feed,
   ...string
 }

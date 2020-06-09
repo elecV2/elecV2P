@@ -7,92 +7,90 @@ const { runJSFile } = require('./runJSFile')
 const { logger } = require('../utils')
 const clog = new logger({ head: 'anyRule' })
 
-const ruleData = {
-  reqlists: [],
-  reslists: [],
-  rewritelists: [],
-  mitmhost: [],
-  uagent: {},
-  adblockflag: false
-}
-
-if (!fs.existsSync(path.join(__dirname, 'Lists'))) {
-  fs.mkdirSync(path.join(__dirname, 'Lists'))
-}
-
-function getrules($request, $response, lists) {
-  const $req = $request.requestOptions
-
-  const urlObj = url.parse($request.url)
-  let matchstr = {
-    ip: urlObj.hostname,
-    url: $request.url,
-    host: urlObj.hostname,
-    reqmethod: $req.method,
-    reqbody: $request.requestData,
-    useragent: $req.headers["User-Agent"],
-    resstatus: $response?$response.statusCode:"",
-    restype: $response?$response.header["Content-Type"]:"",
-    resbody: $response?$response.body:""
-  }
-  return lists.filter(l=>{ return (new RegExp(l[1])).test(matchstr[l[0]]) })
-}
-
-function init(){
+function getUserAgent() {
+  let uagent = {}
   if (fs.existsSync(path.join(__dirname, 'Lists', "useragent.list"))) {
     try {
-      ruleData.uagent = JSON.parse(fs.readFileSync(path.join(__dirname, 'Lists', "useragent.list"), "utf8"))
-    } catch {
-      ruleData.uagent = {}
+      uagent = JSON.parse(fs.readFileSync(path.join(__dirname, 'Lists', "useragent.list"), "utf8"))
+    } catch(e) {
+      clog.error('User-Agent 获取失败')
     }
   }
+  return { uagent }
+}
 
-  ruleData.rewritelists = []
-  ruleData.subrules = []
+function getRewriteList() {
+  let subrules = []
+  let rewritelists = []
   if (fs.existsSync(path.join(__dirname, 'Lists', 'rewrite.list'))) {
     fs.readFileSync(path.join(__dirname, 'Lists', 'rewrite.list'), 'utf8').split(/\r|\n/).forEach(l=>{
       if (/^(#|\[)/.test(l) || l.length<2) return
       let item = l.split(" ")
       if (item.length == 2) {
         if (/^sub/.test(item[0])) {
-          ruleData.subrules.push(item[1])
+          subrules.push(item[1])
         } else if (/js$/.test(item[1])) {
-          ruleData.rewritelists.push([item[0], item[1]])
+          rewritelists.push([item[0], item[1]])
         }
       }
     })
   }
 
-  ruleData.reqlists = []
-  ruleData.reslists = []
+  return { subrules, rewritelists }
+}
+
+function getRulesList(){
+  let reqlists = []
+  let reslists = []
   if (fs.existsSync(path.join(__dirname, 'Lists', 'default.list'))) {
     fs.readFileSync(path.join(__dirname, 'Lists', 'default.list'), 'utf8').split(/\n|\r/).forEach(l=>{
       if (l.length<=8 || /^(#|\[)/.test(l)) return
       let item = l.split(",")
       if (item.length >= 4) {
         item = item.map(i=>i.trim())
-        if (item[4] == "req") ruleData.reqlists.push(item)
-        else ruleData.reslists.push(item)
+        if (item[4] == "req") reqlists.push(item)
+        else reslists.push(item)
       }
     })
   }
+  return { reqlists, reslists }
+}
 
+function getMitmhost() {
+  let mitmhost = []
   if (fs.existsSync(path.join(__dirname, 'Lists', 'mitmhost.list'))) {
-    ruleData.mitmhost = fs.readFileSync(path.join(__dirname, 'Lists', 'mitmhost.list'), 'utf8').split(/\r|\n/).filter(host=>{
+    mitmhost = fs.readFileSync(path.join(__dirname, 'Lists', 'mitmhost.list'), 'utf8').split(/\r|\n/).filter(host=>{
       if (/^(\[|#|;)/.test(host) || host.length < 3) {
         return false
       }
       return true
     })
   }
-
-  clog.notify(`default 规则 ${ ruleData.reqlists.length + ruleData.reslists.length } 条`)
-  clog.notify(`rewrite 规则 ${ ruleData.rewritelists.length } 条`)
-  clog.notify(`MITM hosts ${ ruleData.mitmhost.length } 个`)
-
-  return ruleData
+  return { mitmhost }
 }
-init()
+
+function init(){
+  if (!fs.existsSync(path.join(__dirname, 'Lists'))) {
+    fs.mkdirSync(path.join(__dirname, 'Lists'))
+    clog.notify('暂无规则，新建 Lists 文件夹')
+    return {}
+  }
+
+  let config = {
+      ...getRulesList(),
+      ...getRewriteList(),
+      ...getMitmhost(),
+      ...getUserAgent()
+    }
+
+  clog.notify(`default 规则 ${ config.reqlists.length + config.reslists.length } 条`)
+  clog.notify(`rewrite 规则 ${ config.rewritelists.length } 条`)
+  clog.notify(`MITM hosts ${ config.mitmhost.length } 个`)
+
+  return config
+}
+
+const CONFIG_RULE = init()
 
 const localResponse = {
   reject: {
@@ -117,6 +115,24 @@ const localResponse = {
   }
 }
 
+function getrules($request, $response, lists) {
+  const $req = $request.requestOptions
+
+  const urlObj = url.parse($request.url)
+  let matchstr = {
+    ip: urlObj.hostname,
+    url: $request.url,
+    host: urlObj.hostname,
+    reqmethod: $req.method,
+    reqbody: $request.requestData,
+    useragent: $req.headers["User-Agent"],
+    resstatus: $response?$response.statusCode:"",
+    restype: $response?$response.header["Content-Type"]:"",
+    resbody: $response?$response.body:""
+  }
+  return lists.filter(l=>{ return (new RegExp(l[1])).test(matchstr[l[0]]) })
+}
+
 function formRequest($request) {
   let reqData = $request.requestData
   return {
@@ -137,9 +153,9 @@ function formResponse($response) {
 module.exports = {
   summary: 'elecV2P - customize personal network',
   init,
-  ruleData,
+  CONFIG_RULE,
   *beforeSendRequest(requestDetail) {
-    let getr = getrules(requestDetail, null, ruleData.reqlists)
+    let getr = getrules(requestDetail, null, CONFIG_RULE.reqlists)
     if(getr.length) clog.info("reqlists:", getr.length)
     for(let r of getr) {
       if ("block" === r[2]) {
@@ -157,7 +173,7 @@ module.exports = {
       }
       if ("ua" == r[2]) {
         const newreqOptions = requestDetail.requestOptions
-        newreqOptions.headers['User-Agent'] = ruleData.uagent[r[3]].header
+        newreqOptions.headers['User-Agent'] = CONFIG_RULE.uagent[r[3]].header
         clog.info("User-Agent 设置为：" + r[3])
         return {
           requestOptions: newreqOptions
@@ -190,7 +206,7 @@ module.exports = {
     const $request = requestDetail
     const $response = responseDetail.response
 
-    for (let r of ruleData.rewritelists) {
+    for (let r of CONFIG_RULE.rewritelists) {
       if ((new RegExp(r[0])).test($request.url)) {
         clog.info('rewrite rule:', r[0], r[1])
         let jsres = runJSFile(r[1], { $request: formRequest($request), $response: formResponse($response) })
@@ -199,7 +215,7 @@ module.exports = {
       }
     }
 
-    let getr = getrules($request, $response, ruleData.reslists)
+    let getr = getrules($request, $response, CONFIG_RULE.reslists)
     if(getr.length) clog.info("reslists:", getr.length)
     for(let r of getr) {
       if (r[2] == "js" || r[2] == 404) {
@@ -212,10 +228,10 @@ module.exports = {
   },
   *beforeDealHttpsRequest(requestDetail) {
     let host = requestDetail.host.split(":")[0]
-    if (ruleData.mitmhost.indexOf(host) !== -1) {
+    if (CONFIG_RULE.mitmhost.indexOf(host) !== -1) {
       return true
     } else {
-      return ruleData.mitmhost.filter(h=>(/^\*/.test(h) && new RegExp('.' + h + '$').test(host))).length ? true : false
+      return (CONFIG_RULE.mitmhost.filter(h=>(/^\*/.test(h) && new RegExp('.' + h + '$').test(host))).length ? true : false)
     }
   }
 }

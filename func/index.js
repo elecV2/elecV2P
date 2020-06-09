@@ -7,7 +7,7 @@ const homedir = require('os').homedir()
 // const exec = require('child_process').exec
 // 
 const { logger, downloadfile } = require('../utils')
-const { task, tasks, tasklists, jobFunc } = require('./task')
+const { Task, TASKS_WORKER, TASKS_INFO, jobFunc } = require('./task')
 const { wsSer } = require('./websocket')
 
 const clog = new logger({head: 'Func'} )
@@ -103,4 +103,4 @@ function filterlist(lists, add=true) {
   return String(mergelists.length - oldlists.length)
 }
 
-module.exports = { task, tasks, tasklists, jobFunc, wsSer, clearCrt, rootCrtSync, crule, jsdownload, filterlist }
+module.exports = { Task, TASKS_WORKER, TASKS_INFO, jobFunc, wsSer, clearCrt, rootCrtSync, crule, jsdownload, filterlist }

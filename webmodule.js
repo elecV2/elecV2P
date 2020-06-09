@@ -5,42 +5,39 @@ const compression = require('compression')
 const formidable = require('formidable')
 const homedir = require('os').homedir()
 
-const { task, tasks, tasklists, jobFunc, jsdownload, wsSer, ...func } = require('./func')
-const { ruleData, init } = require('./runjs/rule')
-const { runJSFile } = require('./runjs/runJSFile')
-const { logger, feed } = require('./utils')
+const { logger, CONFIG_FEED, feedXml, feedClear } = require('./utils')
+const { Task, TASKS_WORKER, TASKS_INFO, jobFunc, jsdownload, wsSer, ...func } = require('./func')
+const { CONFIG_RULE, runJSFile, jslists } = require('./runjs')
 
 const clog = new logger({ head: 'webServer' })
 
-const crtpath = homedir + '/.anyproxy/certificates'
-
-let config = {
-      glevel: 'info',
-      feedenable: true,
-      ...feed.config
-    }
-
-const configFile = path.join(__dirname, 'runjs', 'Lists', 'config.json')
-
-if (fs.existsSync(configFile)) {
-  try {
-    Object.assign(config, JSON.parse(fs.readFileSync(configFile), "utf8"))
-    feed.config.isclose = !config.feedenable
-    feed.config.iftttid = config.iftttid
-    if(config.glevel != 'info') clog.setlevel(config.glevel, true)
-  } catch {
-    clog.error('config.json 无法解析')
+const CONFIG = function() {
+  // config 初始化
+  let config = {
+    path: path.join(__dirname, 'runjs', 'Lists', 'config.json'),
+    gloglevel: 'info',
+    CONFIG_FEED,
   }
-}
+  if (fs.existsSync(config.path)) {
+    try {
+      Object.assign(config, JSON.parse(fs.readFileSync(config.path), "utf8"))
+      if(config.gloglevel != 'info') clog.setlevel(config.gloglevel, true)
+    } catch(e) {
+      clog.error(path, '配置文件无法解析', e)
+    }
+  }
+
+  return config
+}();
 
 function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
   const app = express()
   app.use(compression())
   app.use(express.json())
 
-  let oneMonth = 60 * 1000 * 60 * 24 * 30
+  let onemonth = 60 * 1000 * 60 * 24 * 30                // 页面缓存时间
 
-  app.use(express.static(__dirname + '/web/dist', { maxAge: oneMonth }))
+  app.use(express.static(__dirname + '/web/dist', { maxAge: onemonth }))
 
   app.listen(webstPort, ()=>{
     clog.notify("elecV2P manage on port", webstPort)
@@ -48,14 +45,14 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
 
   app.get("/initdata", (req, res)=>{
     res.end(JSON.stringify({
-      config: {...ruleData, ...config},
-      jslists: fs.readdirSync(path.join(__dirname, 'runjs/JSFile')).sort(),
+      config: CONFIG,
+      jslists,
     }))
   })
 
   app.get("/feed", (req, res)=>{
     res.set('Content-Type', 'text/xml')
-    res.end(feed.xml())
+    res.end(feedXml())
   })
 
   app.get("/filter", (req, res)=>{
@@ -67,27 +64,24 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     let data = req.body.data
     switch(req.body.type){
       case "op":
-        config.feedenable = !data
-        feed.config.isclose = data
+        CONFIG_FEED.enable = data
         clog.notify(`feed 已 ${ data ? '开启' : '关闭' }`)
         res.end(`feed 已 ${ data ? '开启' : '关闭' }`)
         break
       case "clear":
-        feed.clear()
+        feedClear()
         clog.notify('feed 已清空')
         res.end('feed 已清空')
         break
       case "ifttt":
-        config.iftttid = data
-        feed.config.iftttid = data
+        CONFIG_FEED.iftttid = data
         clog.notify(`ifttt webhook 功能已 ${ data ? '开启' : '关闭' }`)
         res.end(`ifttt webhook 功能已 ${ data ? '开启' : '关闭' }`)
         break
       case "merge":
-        feed.config.ismerge = data.feedmerge
-        feed.config.mergetime = data.mergetime
-        feed.config.mergenum = data.mergenum
-        Object.assign(config, feed.config)
+        CONFIG_FEED.ismerge = data.feedmerge
+        CONFIG_FEED.mergetime = data.mergetime
+        CONFIG_FEED.mergenum = data.mergenum
         clog.notify(`feed 通知已 ${ data.feedmerge ? '合并' : '取消合并' }`)
         res.end(`feed 通知已 ${ data.feedmerge ? '合并' : '取消合并' }`)
         break
@@ -128,7 +122,7 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
   app.get("/crt", (req, res)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) 
       , "根证书下载")
-    res.download(crtpath + "/rootCA.crt")
+    res.download(homedir + '/.anyproxy/certificates/rootCA.crt')
   })
 
   app.put("/crt", (req, res)=>{
@@ -169,30 +163,29 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
 
   app.post("/rewritelists", (req, res)=>{
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress) 
-      , "保存规则列表")
+      , "保存 rewrite 规则列表")
     if (req.body.subrule || req.body.rewritelists) {
-      ruleData.subrules = req.body.subrule
-      ruleData.rewritelists = req.body.rewritelists
+      CONFIG_RULE.subrules = req.body.subrule
+      CONFIG_RULE.rewritelists = req.body.rewritelists
       let file = fs.createWriteStream(path.join(__dirname, 'runjs', 'Lists', 'rewrite.list'))
       file.on('error', (err)=>clog.err(err))
 
-      file.write('[sub]\n\r')
+      file.write('[sub]\n')
       req.body.subrule.forEach(surl=>{
-        file.write("sub " + surl + "\n\r")
+        file.write("sub " + surl + "\n")
       })
-      file.write('\n\r[rewrite]\n\r')
+      file.write('\n[rewrite]\n')
       req.body.rewritelists.forEach(v=>{
-        file.write(v.join(' ') + '\n\r')
+        file.write(v.join(' ') + '\n')
       })
 
-      file.on('finish', ()=>{
-        file.close(()=>{
-          init()
-        })
-      })
+      // file.on('finish', ()=>{
+      //   file.close(()=>{
+      //   })
+      // })
 
       file.end()
-      res.end(`规则列表更新成功`)
+      res.end(`rewrite 规则列表更新成功`)
     } else {
       res.end("非法请求")
     }
@@ -205,13 +198,27 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     res.writeHead(200,{ 'Content-Type' : 'text/plain;charset=utf-8' })
     switch (type) {
       case "config":
-        res.end(JSON.stringify(config))
+        res.end(JSON.stringify(CONFIG))
         break
       case "useragent":
         res.end(fs.readFileSync(path.join(__dirname, 'runjs', 'Lists', 'useragent.list'), "utf8"))
         break
-      case "ePrules":
-        res.end(fs.readFileSync(path.join(__dirname, 'runjs', 'Lists', 'default.list'), "utf8"))
+      case "rules":
+        res.end(JSON.stringify({
+          eplists: [...CONFIG_RULE.reqlists, ...CONFIG_RULE.reslists],
+          uagent: CONFIG_RULE.uagent
+        }))
+        break
+      case "rewritelists":
+        res.end(JSON.stringify({
+          rewritelists: CONFIG_RULE.rewritelists,
+          subrules: CONFIG_RULE.subrules
+        }))
+        break
+      case "mitmhost":
+        res.end(JSON.stringify({
+          mitmhost: CONFIG_RULE.mitmhost,
+        }))
         break
       case "filter":
         res.end(fs.readFileSync(path.join(__dirname, 'runjs', 'Lists', 'filter.list'), 'utf8'))
@@ -219,12 +226,20 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
       case "todolist":
         res.end(fs.readFileSync(path.join(__dirname, 'Todo.md'), "utf8"))
         break
-      case "port":
+      case "websk":
+        res.end(JSON.stringify({
+          webskPort,
+          webskPath,
+        }))
+        break
+      case "overview":
         res.end(JSON.stringify({
           proxyPort,
           webifPort,
-          webskPort,
-          webskPath
+          ruleslen: CONFIG_RULE.reqlists.length + CONFIG_RULE.reslists.length,
+          rewriteslen: CONFIG_RULE.rewritelists.length,
+          jslistslen: jslists.length,
+          mitmhostlen: CONFIG_RULE.mitmhost.length
         }))
         break
       default: {
@@ -237,10 +252,10 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " put data " + req.body.type)
     switch(req.body.type){
       case "config":
-        Object.assign(config, req.body.data)
+        Object.assign(CONFIG, req.body.data)
 
-        fs.writeFileSync(configFile, JSON.stringify(config))
-        res.end("当前配置 已保存至 " + configFile)
+        fs.writeFileSync(CONFIG.path, JSON.stringify(CONFIG))
+        res.end("当前配置 已保存至 " + CONFIG.path)
         break
       case "useragent":
         let oua = JSON.parse(fs.readFileSync(path.join(__dirname, 'runjs', 'Lists', 'useragent.list'), "utf8"))
@@ -248,35 +263,34 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
         fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'useragent.list'), JSON.stringify(oua))
         res.end(oua.enable?"使用新的 User-Agent: " + oua[oua.enable].name:"取消使用 User-Agent")
         break
-      case "glevel":
+      case "gloglevel":
         try {
-          config.glevel = req.body.data
-          clog.setlevel(req.body.data, true)
-          res.end('日志级别设置为：' + req.body.data)
+          CONFIG.gloglevel = req.body.data
+          clog.setlevel(CONFIG.gloglevel, true)
+          res.end('日志级别设置为：' + CONFIG.gloglevel)
         } catch(e) {
           res.end('日志级别设置失败 ' + e)
         }
         break
-      case "ePrules":
+      case "rules":
         let fdata = req.body.data.eplists
-        fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'default.list'), "# elecV2P rules \n\r\n\r" + fdata.join("\n\r"))
+        fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'default.list'), "# elecV2P rules \n\n" + fdata.join("\n"))
 
         res.end("规则保存成功")
-        ruleData.reqlists = []
-        ruleData.reslists = []
+        CONFIG_RULE.reqlists = []
+        CONFIG_RULE.reslists = []
         fdata.forEach(r=>{
-          if (/req$/.test(r)) ruleData.reqlists.push(r)
-          else ruleData.reslists.push(r)
+          if (/req$/.test(r)) CONFIG_RULE.reqlists.push(r)
+          else CONFIG_RULE.reslists.push(r)
         })
-        clog.notify(`default 规则 ${ ruleData.reqlists.length + ruleData.reslists.length} 条`)
+        clog.notify(`default 规则 ${ CONFIG_RULE.reqlists.length + CONFIG_RULE.reslists.length} 条`)
         break
       case "mitmhost":
         let mhost = req.body.data
         mhost = mhost.filter(host=>host.length>2)
         fs.writeFileSync(path.join(__dirname, 'runjs', 'Lists', 'mitmhost.list'), "[mitmhost]\n\n" + mhost.join("\n"))
         res.end("保存 mitmhost : " + mhost.length)
-        ruleData.mitmhost = mhost
-        // init()
+        CONFIG_RULE.mitmhost = mhost
         break
       default:{
         res.end("data put error")
@@ -287,7 +301,7 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
   app.get("/task", (req, res)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) 
   + ` get task lists`)
-    res.end(JSON.stringify(tasklists))
+    res.end(JSON.stringify(TASKS_INFO))
   })
 
   app.put("/task", (req, res)=>{
@@ -295,30 +309,29 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     let data = req.body.data
     switch(req.body.op){
       case "start":
-        if (tasks[data.tid]) {
+        if (TASKS_WORKER[data.tid]) {
           clog.info('删除原有任务，更新数据')
-          if (tasks[data.tid].stat()) tasks[data.tid].stop()
-          tasks[data.tid].delete()
+          if (TASKS_WORKER[data.tid].stat()) TASKS_WORKER[data.tid].stop()
+          TASKS_WORKER[data.tid].delete()
         }
 
-        tasklists[data.tid] = data.task
-        tasklists[data.tid].id = data.tid
-        tasks[data.tid] = new task(tasklists[data.tid], jobFunc(data.task.job))
-        tasks[data.tid].start()
-        res.end("task started!")
+        TASKS_INFO[data.tid] = data.task
+        TASKS_INFO[data.tid].id = data.tid
+        TASKS_WORKER[data.tid] = new Task(TASKS_INFO[data.tid], jobFunc(data.task.job))
+        TASKS_WORKER[data.tid].start()
+        res.end('task: ' + data.task.name + ' started!')
         break
       case "stop":
-        if(tasks[data.tid]) {
-          tasks[data.tid].stop()
-          tasklists[data.tid].running = false
+        if(TASKS_WORKER[data.tid]) {
+          TASKS_WORKER[data.tid].stop()
           res.end("task stopped!")
         }
         res.end("no such task")
         break
       case "delete":
-        if(tasks[data.tid]) {
-          tasks[data.tid].delete()
-          delete tasklists[data.tid]
+        if(TASKS_WORKER[data.tid]) {
+          TASKS_WORKER[data.tid].delete()
+          delete TASKS_INFO[data.tid]
         }
         res.end("task deleted!")
         break
@@ -378,8 +391,12 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
   app.delete("/jsfile", (req, res)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "delete js file " + req.body.jsfn)
     let jsfn = req.body.jsfn
-    if (jsfn) fs.unlinkSync(path.join(__dirname, "runjs/JSFile", jsfn))
-    else clog.error("delete js file error")
+    if (jsfn) {
+      fs.unlinkSync(path.join(__dirname, "runjs/JSFile", jsfn))
+      jslists.splice(jslists.indexOf(jsfn), 1)
+    } else {
+      clog.error("delete js file error")
+    }
     res.end(jsfn + ' is deleted!')
   })
 

@@ -1,7 +1,6 @@
-
-const webstser = require('./webmodule.js')
-const anyproxy = require('./anyproxy.js')
-const { websocketSer } = require('./func/websocket.js')
+const webstser = require('./webmodule')
+const anyproxy = require('./anyproxy')
+const { websocketSer } = require('./func/websocket')
 
 const proxyPort = 8001,    // 代理端口
       webifPort = 8002,    // 代理的所有请求查看端口
@@ -18,13 +17,13 @@ const aProxyOptions = {
         rootCA: true             // 是否自动启动 rootCA 目录下根证书
       }
       
-const wsConfig = {
+const CONFIG_WS = {
   webskPort,
   webskPath: '/elecV2P'
 }
 
 const proxy = anyproxy(aProxyOptions)
 
-const webst = webstser({ webstPort: process.env.PORT || webstPort || 80, proxyPort, webifPort, webskPort: wsConfig.webskPort, webskPath: wsConfig.webskPath })
+const webst = webstser({ webstPort: process.env.PORT || webstPort || 80, proxyPort, webifPort, webskPort: CONFIG_WS.webskPort, webskPath: CONFIG_WS.webskPath })
 
-const wsser = websocketSer({ port: wsConfig.webskPort, path: wsConfig.webskPath })
+const wsser = websocketSer({ port: CONFIG_WS.webskPort, path: CONFIG_WS.webskPath })

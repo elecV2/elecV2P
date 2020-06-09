@@ -62,7 +62,7 @@ function websocketSer({ port, path }) {
 
     ws.on("close", ev=>{
       clearInterval(interval)
-      clog.info('disconnected SOCKET - PORT : ' + port + ', reason: ' + ev.code)
+      clog.info('disconnected SOCKET - PORT : ' + port + ', reason: ' + ev)
     })
   })
 
