@@ -12,9 +12,14 @@ const string = require('./string')
 const clog = new logger({ head: 'utils' })
 
 function errStack(error) {
-  if (error && error.stack) {
-    return 'line ' + error.stack.match(/evalmachine\.<anonymous>:([0-9]+:[0-9]+)/)[1] + ' error: ' + error.message
+  if (!error) return
+  if (error.stack) {
+    let errline = error.stack.match(/evalmachine\.<anonymous>:([0-9]+(:[0-9]+)?)/)
+    if (errline && errline[1]) {
+      return 'line ' + errline[1] + ' error: ' + error.message
+    }
   }
+  if (error.message) return error.message
   return error
 }
 

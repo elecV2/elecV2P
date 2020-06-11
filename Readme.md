@@ -99,13 +99,13 @@ docker-compose up -d
 
 ### rules - 网络请求修改规则
 
-![rules](https://raw.githubusercontent.com/elecV2/elecV2P/master/res/rules.png)
+![rules](https://raw.githubusercontent.com/elecV2/elecV2P-dei/master/docs/res/rules.png)
 
 详见 [docs/rules.md](https://github.com/elecV2/elecV2P-dei/tree/master/docs/03-rules.md) （龟速完成中）
 
 ## 定时任务
 
-![task](https://raw.githubusercontent.com/elecV2/elecV2P/master/res/task.png)
+![task](https://raw.githubusercontent.com/elecV2/elecV2P-dei/master/docs/res/task.png)
 
 目前支持两种定时方式：
 - 倒计时 schedule
@@ -115,9 +115,9 @@ docker-compose up -d
 
 - 倒计时 30 999 3 2  (以空格分开的四个数字，后三项可省略)
 
-        30（秒）    |     999（次）   |      3（秒）         |       2（次）       
-:-----------------: | :-------------: | :------------------: | :------------------:
-   基础倒计时时间   | 重复次数（可选）| 增加随机时间（可选） | 增加随机重复次数（可选）  
+    30（秒）    |     999（次）   |      3（秒）         |       2（次）       
+:-------------: | :-------------: | :------------------: | :------------------:
+ 基础倒计时时间 | 重复次数（可选）| 增加随机时间（可选） | 增加随机重复次数（可选）  
 
 *当重复次数大于等于 **999** 时，无限循环。*
 
@@ -127,9 +127,9 @@ docker-compose up -d
 
 时间格式：* * * * * * （五/六位 cron 时间格式）
 
-    * (0-59)   |  * (0-59)  |  * (0-23)  |  * (1-12)  |  * (1-31)  |  * (0-7)      
-:------------: | :--------: | :--------: | :--------: | :--------: | :---------:
-   秒（可选）  |    分      |    小时    |      月    |     日     |    星期
+  * (0-59)   |  * (0-59)  |  * (0-23)  |  * (1-12)  |  * (1-31)  |  * (0-7)      
+:----------: | :--------: | :--------: | :--------: | :--------: | :---------:
+  秒（可选） |    分      |    小时    |      月    |     日     |    星期
 
 
 ### 可执行任务类型

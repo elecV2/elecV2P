@@ -2,8 +2,8 @@ const RSS = require('rss')
 const axios = require('axios')
 
 const { now } = require('./time')
-const logger = require('./logger')
 
+const logger = require('./logger')
 const clog = new logger({ head: 'feed', level: 'debug' })
 
 function feedNew({ title, description, site_url, feed_url }) {

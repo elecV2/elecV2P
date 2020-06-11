@@ -21,6 +21,7 @@ const CONFIG = function() {
   if (fs.existsSync(config.path)) {
     try {
       Object.assign(config, JSON.parse(fs.readFileSync(config.path), "utf8"))
+      Object.assign(CONFIG_FEED, config.CONFIG_FEED)
       if(config.gloglevel != 'info') clog.setlevel(config.gloglevel, true)
     } catch(e) {
       clog.error(path, '配置文件无法解析', e)
@@ -238,7 +239,7 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     switch(req.body.type){
       case "config":
         Object.assign(CONFIG, req.body.data)
-
+        Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
         fs.writeFileSync(CONFIG.path, JSON.stringify(CONFIG))
         res.end("当前配置 已保存至 " + CONFIG.path)
         break
