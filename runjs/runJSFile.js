@@ -6,6 +6,7 @@ const path = require('path')
 const { logger, feedAddItem, now, errStack, downloadfile } = require('../utils')
 const clog = new logger({ head: 'runJSFile', level: 'debug' })
 
+const { wsSer } = require('../func/websocket')
 const context = require('./context')
 
 const StoreFolder = path.join(__dirname, 'Store')
@@ -39,10 +40,10 @@ async function taskCount(filename) {
   runstatus.times--
 
   clog.debug('JS 脚本运行次数统计：', runstatus)
-  if (runstatus.times == 0) {
+  if (runstatus.times === 0) {
     let des = []
     for (let jsname in runstatus) {
-      if (jsname != 'times' && jsname != 'start') {
+      if (jsname !== 'times' && jsname !== 'start') {
         des.push(`${jsname}: ${runstatus[jsname]} 次`)
         delete runstatus[jsname]
       }
@@ -54,10 +55,21 @@ async function taskCount(filename) {
 }
 
 function runJS(filename, jscode, addContext) {
-  const fconsole = new logger({ head: filename, file: CONFIG_RUNJS.jslogfile ? filename : '' })
+  let cb = ''
+  if (addContext) {
+    if (addContext.type) taskCount(filename)
+    if (addContext.cb) {
+      cb = addContext.cb
+      delete addContext.cb
+    } else if (addContext.type) {
+      cb = wsSer.send.func(addContext.type)
+    }
+    delete addContext.type
+  }
+  const fconsole = new logger({ head: filename, file: CONFIG_RUNJS.jslogfile ? filename : '', cb })
   const newContext = new context({ fconsole })
 
-  if (CONFIG_RUNJS.SurgeEnable || (CONFIG_RUNJS.QuanxEnable == false && /\$httpClient|\$persistentStore|\$notification/.test(jscode))) {
+  if (CONFIG_RUNJS.SurgeEnable || (CONFIG_RUNJS.QuanxEnable === false && /\$httpClient|\$persistentStore|\$notification/.test(jscode))) {
     clog.debug(`${filename} 使用 Surge 兼容模式运行`)
     newContext.add({ surge: true })
   } else if (CONFIG_RUNJS.QuanxEnable || /\$task|\$prefs|\$notify/.test(jscode)) {
@@ -65,10 +77,7 @@ function runJS(filename, jscode, addContext) {
     newContext.add({ quanx: true })
   }
 
-  if (addContext) {
-    if (addContext.type) taskCount(filename)
-    newContext.add({ addContext })
-  }
+  if (Object.keys(addContext).length) newContext.add({ addContext })
 
   try {
     clog.notify('runjs:', filename)
@@ -98,7 +107,7 @@ function runJSFile(filename, addContext) {
     }
   }
 
-  if (addContext && addContext.type == 'jstest') {
+  if (addContext && addContext.type === 'jstest') {
     var JsStr = filename
     filename = 'jstest'
   } else {

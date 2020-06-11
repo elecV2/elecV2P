@@ -3,10 +3,8 @@ const axios = require('axios')
 const path = require('path')
 const qs = require('qs')
 
-const { logger, errStack, feed } = require('../utils')
+const { logger, errStack, feedPush } = require('../utils')
 const clog = new logger({ head: 'context', level: 'debug' })
-
-const { wsSer } = require('../func')
 
 const config = {
   timeout_axios: 5000
@@ -72,8 +70,8 @@ const contextBase = {
     }
   },
   $feed: {
-    push(title, description) {
-      feed.push(title, description)
+    push(title, description, url) {
+      feedPush(title, description, url)
     }
   }
 }
@@ -213,7 +211,7 @@ class quanxContext {
 }
 
 module.exports = class {
-  final = {...contextBase}
+  final = { ...contextBase }
 
   constructor({ fconsole }){
     this.final.console = fconsole || clog
@@ -226,13 +224,6 @@ module.exports = class {
       Object.assign(this.final, new quanxContext({ fconsole: this.final.console }))
     }
     if (addContext) {
-      if (addContext.cb) {
-        this.final.console.setcb(addContext.cb)
-        delete addContext.cb
-      } else if (addContext.type) {
-        this.final.console.setcb(wsSer.send.func(addContext.type))
-        delete addContext.type
-      }
       Object.assign(this.final, addContext)
     }
   }

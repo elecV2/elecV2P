@@ -4,6 +4,7 @@
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
       <pre style="white-space: pre-line;padding: 6px 1em;text-align: left;">
         - [ ] 任务 exec 类型
+        - [ ] content-length 计算
         - [ ] feed class 化
         - [ ] lists 合理性检测
         - [ ] lists 订阅

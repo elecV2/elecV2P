@@ -6,9 +6,9 @@ const https = require('https')
 const homedir = require('os').homedir()
 // const exec = require('child_process').exec
 // 
+
 const { logger, downloadfile } = require('../utils')
 const { Task, TASKS_WORKER, TASKS_INFO, jobFunc } = require('./task')
-const { wsSer } = require('./websocket')
 
 const clog = new logger({head: 'Func'} )
 
@@ -47,41 +47,6 @@ function rootCrtSync() {
   }
 }
 
-function crule(ourl){
-  // 更新
-  let frule = []
-  let nurl = url.parse(ourl)
-  let req = nurl.protocol == "https:"?https:http
-  req.get(ourl, (res)=>{
-    let str = ""
-    res.on('data', (chunk)=>{
-      str += chunk;
-    })
-    res.on("end", ()=>{
-      let newfilterlist=["# 以下规则来自 " + ourl + " hostname"]
-      str.split(/\n|\r/).forEach(l=>{
-        if (/^hostname/.test(l)) {
-          l.replace(/ /g, "").split("=").slice(-1)[0].split(",").forEach(host=>{
-            if (/^\*\./.test(host)) newfilterlist.push("DOMAIN-SUFFIX," + host.replace("*.", "") + ",elecV2P")
-            else if (/\*/.test(host)) return
-            else newfilterlist.push("DOMAIN," + host + ",elecV2P")
-          })
-        }
-        if (/^#/.test(l) || l.length<2) return
-        let item = l.split(" ")
-        if (item.length == 4 && /js$/.test(item[3])) {
-          if (/^http/.test(item[3])) {
-            jsdownload(item[3])
-          }
-          frule.push([item[0], item[3]])
-        }
-      })
-      clog.info(`新增规则 ${frule.length} 条，filter.list 增加域名 ${ filterlist(newfilterlist) } 个`)
-    })
-  })
-  return frule.length
-}
-
 async function jsdownload(jsurl, name){
   let jsname = name || jsurl.split("/").pop()
   let dest = await downloadfile(jsurl, path.join(jsfpath, jsname))
@@ -91,16 +56,4 @@ async function jsdownload(jsurl, name){
   return 'js download fail!'
 }
 
-function filterlist(lists, add=true) {
-  let flist = path.join(__dirname, "../runjs/filter.list"), oldlists=[], mergelists=[]
-  if (add) {
-    oldlists = fs.readFileSync(flist, 'utf8').split(/\n|\r/)
-    mergelists = Array.from(new Set([...oldlists, ...lists]))
-  } else {
-    mergelists = lists
-  }
-  fs.writeFileSync(flist, mergelists.join("\n"))
-  return String(mergelists.length - oldlists.length)
-}
-
-module.exports = { Task, TASKS_WORKER, TASKS_INFO, jobFunc, wsSer, clearCrt, rootCrtSync, crule, jsdownload, filterlist }
+module.exports = { Task, TASKS_WORKER, TASKS_INFO, jobFunc, clearCrt, rootCrtSync, jsdownload }

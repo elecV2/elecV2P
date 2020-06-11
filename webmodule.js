@@ -6,8 +6,8 @@ const formidable = require('formidable')
 const homedir = require('os').homedir()
 
 const { logger, CONFIG_FEED, feedXml, feedClear } = require('./utils')
-const { Task, TASKS_WORKER, TASKS_INFO, jobFunc, jsdownload, wsSer, ...func } = require('./func')
-const { CONFIG_RULE, runJSFile, jslists } = require('./runjs')
+const { Task, TASKS_WORKER, TASKS_INFO, jobFunc, jsdownload, rootCrtSync, clearCrt } = require('./func')
+const { CONFIG_RULE, runJSFile, JSLISTS } = require('./runjs')
 
 const clog = new logger({ head: 'webServer' })
 
@@ -46,7 +46,7 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
   app.get("/initdata", (req, res)=>{
     res.end(JSON.stringify({
       config: CONFIG,
-      jslists,
+      jslists: JSLISTS,
     }))
   })
 
@@ -129,14 +129,14 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     let op = req.body.op
     switch(op){
       case 'rootsync':
-        if(func.rootCrtSync()) {
+        if(rootCrtSync()) {
           res.end('已启用 rootCA 文件夹下根证书')
         } else {
           res.end('rootCA 目录下无根证书，请先放置再同步')
         }
         break
       case 'clearcrt':
-        func.clearCrt()
+        clearCrt()
         res.end('其他证书已清除')
         break
       default: {
@@ -144,21 +144,6 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
         break
       }
     }
-  })
-
-  app.get("/rest", (req, res)=>{
-    switch(req.query.op){
-      case 'upsubrule':
-        let url = req.query.url
-        let adr = func.crule(url)
-        res.end('upsubrule success!' + adr)
-        break
-      default:{
-        clog.info('no op')
-        res.end('no op')
-      }
-    }
-    res.end('done')
   })
 
   app.post("/rewritelists", (req, res)=>{
@@ -238,7 +223,7 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
           webifPort,
           ruleslen: CONFIG_RULE.reqlists.length + CONFIG_RULE.reslists.length,
           rewriteslen: CONFIG_RULE.rewritelists.length,
-          jslistslen: jslists.length,
+          jslistslen: JSLISTS.length,
           mitmhostlen: CONFIG_RULE.mitmhost.length
         }))
         break
@@ -398,7 +383,7 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     let jsfn = req.body.jsfn
     if (jsfn) {
       fs.unlinkSync(path.join(__dirname, "runjs/JSFile", jsfn))
-      jslists.splice(jslists.indexOf(jsfn), 1)
+      JSLISTS.splice(JSLISTS.indexOf(jsfn), 1)
     } else {
       clog.error("delete js file error")
     }
@@ -504,8 +489,6 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
 
   app.get("/test", (req, res)=>{
     clog.debug("do some test")
-    // let lists = 
-    // res.end(func.filterlistadd())
   })
 
   app.use((req, res, next) => {

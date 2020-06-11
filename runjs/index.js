@@ -4,6 +4,6 @@ const path = require('path')
 const rule = require('./rule')
 const runJSFile = require('./runJSFile')
 
-const jslists = fs.readdirSync(path.join(__dirname, 'JSFile')).sort()
+const JSLISTS = fs.readdirSync(path.join(__dirname, 'JSFile')).sort()
 
-module.exports = { ...rule, ...runJSFile, jslists }
+module.exports = { ...rule, ...runJSFile, JSLISTS }

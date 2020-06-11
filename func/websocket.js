@@ -12,11 +12,11 @@ const wsSer = {
   }
 }
 
-wsSer.recv.task = data =>{
+wsSer.recv.task = data => {
   clog.info('a task message')
 }
 
-wsSer.send.func = type =>{
+wsSer.send.func = type => {
   return (data) => {
     wsSend({type, data})
   }
