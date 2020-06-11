@@ -3,6 +3,11 @@ const ws = require('ws')
 const { logger } = require('../utils')
 const clog = new logger({head: 'webSocket', level: 'debug'})
 
+const CONFIG_WS = {
+  webskPort: 8005,
+  webskPath: '/elecV2P'
+}
+
 const wsSer = {
   send(data){
     wsSend(data)
@@ -35,7 +40,7 @@ function wsSend(obj){
       }
     })
   } else {
-    clog.info('websocket 已断开，无法发送数据：', obj)
+    // clog.info('websocket 已断开，无法发送数据：', obj)
   }
 }
 
@@ -72,4 +77,4 @@ function websocketSer({ port, path }) {
   })
 }
 
-module.exports = { websocketSer, wsSer }
+module.exports = { websocketSer, wsSer, CONFIG_WS }

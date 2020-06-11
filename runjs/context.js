@@ -6,25 +6,24 @@ const qs = require('qs')
 const { logger, errStack, feedPush } = require('../utils')
 const clog = new logger({ head: 'context', level: 'debug' })
 
-const config = {
+const CONFIG_CONTEXT = {
   timeout_axios: 5000
 }
 
 function getHeaders(req) {
   if (req.headers) {
+    // delete Content-Length 能解决部分问题，也可能引入新的 bug（待观察）
     delete req.headers['Content-Length']
     try {
       return typeof(req.headers) == 'object' ? req.headers : JSON.parse(req.headers)
     } catch(e) {
-      clog.error('headers error:', errStack(e))
-      return {}
+      clog.error('req headers error:', errStack(e))
     }
-  } else {
-    return {}
-  }
+  } 
+  return {}
 }
 
-function getBody(req) {
+function getReqBody(req) {
   if (req.body) return req.body
   if (/\?/.test(req.url)) {
     const spu = req.url.split('?')
@@ -34,14 +33,18 @@ function getBody(req) {
       return spu[1]
     }
   }
-  return ''
+  return null
+}
+
+function getResBody(body) {
+  return typeof(body) == 'object' ? (Buffer.isBuffer(body) ? body.toString() : JSON.stringify(body)) : body
 }
 
 const contextBase = {
   setTimeout,
   $axios(req) {
     // 普通 axios 请求
-    req.timeout = config.timeout_axios
+    req.timeout = CONFIG_CONTEXT.timeout_axios
     return new Promise((resolve, reject)=>{
       axios(req).then(response=>{
         resolve(response)
@@ -87,14 +90,14 @@ class surgeContext {
       axios({
         url: req.url,
         headers: getHeaders(req),
-        data: getBody(req),
-        timeout: config.timeout_axios,
+        data: getReqBody(req),
+        timeout: CONFIG_CONTEXT.timeout_axios,
         method: 'get'
       }).then(response=>{
         let newres = {
           status: response.status,
           headers: response.headers,
-          body: typeof(response.data) == 'object' ? (Buffer.isBuffer(response.data) ? response.data.toString() : JSON.stringify(response.data)) : response.data
+          body: getResBody(response.data)
         }
         if(cb) cb(null, newres, newres.body)
       }).catch(error=>{
@@ -112,14 +115,14 @@ class surgeContext {
       axios({
         url: req.url,
         headers: getHeaders(req),
-        data: getBody(req),
-        timeout: config.timeout_axios,
+        data: getReqBody(req),
+        timeout: CONFIG_CONTEXT.timeout_axios,
         method: 'post'
       }).then(response=>{
         let newres = {
           status: response.status,
           headers: response.headers,
-          body: typeof(response.data) == 'object' ? (Buffer.isBuffer(response.data) ? response.data.toString() : JSON.stringify(response.data)) : response.data
+          body: getResBody(response.data)
         }
         if(cb) cb(null, newres, newres.body)
       }).catch(error=>{
@@ -169,14 +172,14 @@ class quanxContext {
         axios({
           url: req.url,
           headers: getHeaders(req),
-          data: getBody(req),
+          data: getReqBody(req),
           method: req.method || 'get',
-          timeout: config.timeout_axios
+          timeout: CONFIG_CONTEXT.timeout_axios
         }).then(response=>{
           let res = {
                 statusCode: response.status,
                 headers: response.headers,
-                body: typeof(response.data) == 'object' ? (Buffer.isBuffer(response.data) ? response.data.toString() : JSON.stringify(response.data)) : response.data
+                body: getResBody(response.data)
               }
           if (cb) cb(res)
           resolve(res)

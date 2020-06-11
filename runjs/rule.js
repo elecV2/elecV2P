@@ -133,20 +133,22 @@ function getrules($request, $response, lists) {
   return lists.filter(l=>{ return (new RegExp(l[1])).test(matchstr[l[0]]) })
 }
 
+function formBody(body) {
+  return typeof(body) == 'object' ? (Buffer.isBuffer(body) ? body.toString() : JSON.stringify(body)) : body
+}
+
 function formRequest($request) {
-  let reqData = $request.requestData
   return {
     ...$request.requestOptions,
     url: $request.url,
-    body: typeof(reqData) == 'object' ? (Buffer.isBuffer(reqData) ? reqData.toString() : JSON.stringify(reqData)) : reqData,
+    body: formBody($request.requestData),
   }
 }
 
 function formResponse($response) {
-  let resData = $response.body
   return {
     ...$response,
-    body: typeof(resData) == 'object' ? (Buffer.isBuffer(resData) ? resData.toString() : JSON.stringify(resData)) : resData
+    body: formBody($response.body)
   }
 }
 

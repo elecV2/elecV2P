@@ -4,7 +4,7 @@
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
       <pre style="white-space: pre-line;padding: 6px 1em;text-align: left;">
         - [ ] 任务 exec 类型
-        - [ ] content-length 计算
+        - [ ] js 远程运行/token  :/runjs?token=2223sdd&filename=test.js
         - [ ] feed class 化
         - [ ] lists 合理性检测
         - [ ] lists 订阅
@@ -30,6 +30,8 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
+      - [x] 任务初始化 ifttt 不通知的问题
+      - [x] webmodule.js 拆分
       - [x] 代码规范化初步（尽力了）
       - [x] vue websocket 移动到最上层
       - [x] 清除 logs 部分/全部
