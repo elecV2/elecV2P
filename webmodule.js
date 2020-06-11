@@ -348,8 +348,13 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
   app.get("/jsfile", (req, res)=>{
     let jsfn = req.query.jsfn
     if (jsfn) {
-      res.end(fs.readFileSync(path.join(__dirname, "runjs/JSFile", jsfn), "utf8"))
-      clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " read file: " + jsfn)
+      let jspath = path.join(__dirname, "runjs/JSFile", jsfn)
+      if (fs.existsSync(jspath)) {
+        res.end(fs.readFileSync(jspath, "utf8"))
+        clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " read file: " + jsfn)
+      } else {
+        res.end(jsfn + ' 文件不存在')
+      }
     } else {
       res.end("404")
     }
@@ -427,6 +432,7 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
       res.end(fs.readFileSync(path.join(__dirname, 'logs', filename), "utf8"))
     } else {
       res.writeHead(200,{ 'Content-Type' : 'text/html;charset=utf-8' })
+      res.write('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
       fs.readdirSync(path.join(__dirname, 'logs')).forEach(log=>{
         res.write('<a href="/logs/' + log + '" >' + log + '</a><br>')
       })
@@ -446,7 +452,7 @@ function webser({ webstPort, proxyPort, webifPort, webskPort, webskPath }) {
     } else if(fs.existsSync(path.join(__dirname, 'logs', name))){
       clog.info('delete log file', name)
       fs.unlinkSync(path.join(__dirname, 'logs', name))
-      res.end(name, '已删除')
+      res.end(name + ' 已删除')
     } else {
       res.end('log 文件不存在')
     }

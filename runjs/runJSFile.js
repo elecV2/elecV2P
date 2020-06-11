@@ -3,7 +3,7 @@ const fs = require('fs')
 const axios = require('axios')
 const path = require('path')
 
-const { logger, feed, now, errStack, downloadfile } = require('../utils')
+const { logger, feedAddItem, now, errStack, downloadfile } = require('../utils')
 const clog = new logger({ head: 'runJSFile', level: 'debug' })
 
 const context = require('./context')
@@ -24,32 +24,32 @@ const CONFIG_RUNJS = {
   QuanxEnable: false,     // 兼容 Quanx 脚本。都为 false 时，会进行自动判断
 }
 
-const runStatus = {
+const runstatus = {
   start: now(),
   times: CONFIG_RUNJS.numtofeed
 }
 
 async function taskCount(filename) {
   if (/test/.test(filename)) return
-  if (runStatus[filename]) {
-    runStatus[filename]++
+  if (runstatus[filename]) {
+    runstatus[filename]++
   } else {
-    runStatus[filename] = 1
+    runstatus[filename] = 1
   }
-  runStatus.times--
+  runstatus.times--
 
-  clog.debug('JS 脚本运行次数统计：', runStatus)
-  if (runStatus.times == 0) {
+  clog.debug('JS 脚本运行次数统计：', runstatus)
+  if (runstatus.times == 0) {
     let des = []
-    for (let jsname in runStatus) {
+    for (let jsname in runstatus) {
       if (jsname != 'times' && jsname != 'start') {
-        des.push(`${jsname}: ${runStatus[jsname]} 次`)
-        delete runStatus[jsname]
+        des.push(`${jsname}: ${runstatus[jsname]} 次`)
+        delete runstatus[jsname]
       }
     }
-    feed.addItem('运行 JS ' + CONFIG_RUNJS.numtofeed + ' 次啦！', `从 ${runStatus.start} 开始： ` + des.join(', '))
-    runStatus.times = CONFIG_RUNJS.numtofeed
-    runStatus.start = now()
+    feedAddItem('运行 JS ' + CONFIG_RUNJS.numtofeed + ' 次啦！', `从 ${runstatus.start} 开始： ` + des.join(', '))
+    runstatus.times = CONFIG_RUNJS.numtofeed
+    runstatus.start = now()
   }
 }
 
