@@ -230,7 +230,6 @@ module.exports = {
   },
   *beforeDealHttpsRequest(requestDetail) {
     let host = requestDetail.host.split(":")[0]
-    console.log(CONFIG_RULE.mitmhost, host)
     if (CONFIG_RULE.mitmhost.indexOf(host) !== -1) {
       return true
     } else {

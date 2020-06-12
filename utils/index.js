@@ -47,12 +47,22 @@ function downloadfile(durl, dest, cb) {
   })
 }
 
+function bIsUrl(url){
+  try {
+    new URL(url)
+    return true
+  } catch {
+    return false
+  }
+}
+
 module.exports = {
   logger,
   now,
   wait,
   errStack,
   downloadfile,
+  bIsUrl,
   ...feed,
   ...string
 }

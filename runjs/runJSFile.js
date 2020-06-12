@@ -55,9 +55,12 @@ async function taskCount(filename) {
 }
 
 function runJS(filename, jscode, addContext) {
+  clog.notify(addContext.type, 'runjs:', filename)
   let cb = ''
   if (addContext) {
-    if (addContext.type) taskCount(filename)
+    if (addContext.type) {
+      taskCount(filename)
+    }
     if (addContext.cb) {
       cb = addContext.cb
       delete addContext.cb
@@ -80,7 +83,6 @@ function runJS(filename, jscode, addContext) {
   if (Object.keys(addContext).length) newContext.add({ addContext })
 
   try {
-    clog.notify('runjs:', filename)
     const newScript = new vm.Script(jscode)
     return newScript.runInNewContext(newContext.final, { displayErrors: true, timeout: CONFIG_RUNJS.timeout_jsrun })
   } catch(error) {
