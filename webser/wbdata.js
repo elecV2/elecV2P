@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 
-const { logger, CONFIG_FEED } = require('../utils')
+const { logger } = require('../utils')
 const clog = new logger({ head: 'wbdata' })
 
 const { CONFIG_WS } = require('../func/websocket')
@@ -14,9 +14,6 @@ module.exports = (app, proxyPort, webifPort) => {
   + ` get data ${type}`)
     res.writeHead(200,{ 'Content-Type' : 'text/plain;charset=utf-8' })
     switch (type) {
-      case "config":
-        res.end(JSON.stringify(CONFIG))
-        break
       case "rules":
         res.end(JSON.stringify({
           eplists: [...CONFIG_RULE.reqlists, ...CONFIG_RULE.reslists],
@@ -65,21 +62,6 @@ module.exports = (app, proxyPort, webifPort) => {
   app.put("/data", (req, res)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " put data " + req.body.type)
     switch(req.body.type){
-      case "config":
-        Object.assign(CONFIG, req.body.data)
-        Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
-        fs.writeFileSync(CONFIG.path, JSON.stringify(CONFIG))
-        res.end("当前配置 已保存至 " + CONFIG.path)
-        break
-      case "gloglevel":
-        try {
-          CONFIG.gloglevel = req.body.data
-          clog.setlevel(CONFIG.gloglevel, true)
-          res.end('日志级别设置为：' + CONFIG.gloglevel)
-        } catch(e) {
-          res.end('日志级别设置失败 ' + e)
-        }
-        break
       case "rules":
         let fdata = req.body.data.eplists
         fs.writeFileSync(path.join(__dirname, '../runjs', 'Lists', 'default.list'), "# elecV2P rules \n\n" + fdata.join("\n"))

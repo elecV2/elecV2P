@@ -7,7 +7,6 @@
         - [ ] feed class 化
         - [ ] lists 合理性检测
         - [ ] lists 订阅
-        - [ ] 网页添加 doc 链接
         - [ ] webpack 分包(?)
       </pre>
     </div>
@@ -15,9 +14,7 @@
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
       <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
         - 说明文档 [progressing...]
-        - 代码规范化（尽量） [progressing...]
         - tg bot
-        - runJSFile 任务/请求分离
         - 通知细分自定义 feed/ifttt 分离/新的IP 连接通知
         - $HOLD. hold返回结果到前端页面进行编辑
         - package/module (main.json/js/lists) 同目录 Store
@@ -30,7 +27,10 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
-      - [x] js 远程运行/token  :/runjs?token=2223sdd&filename=test.js
+      - [x] 远程 runjs token 设置
+      - [X] (P)代码规范化（尽量） [done?, progressing...]
+      - [x] 网页添加 docs 链接
+      - [x] js 远程运行/token  :/runjs?token=2223sdd&fn=test.js
       - [x] task time 默认值自动调整
       - [x] web #tag 直达
       - [x] 任务初始化 ifttt 不通知的问题

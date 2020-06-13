@@ -2,24 +2,22 @@ const fs = require('fs')
 const path = require('path')
 const formidable = require('formidable')
 
-const { logger, bIsUrl } = require('../utils')
+const { logger, bIsUrl, downloadfile } = require('../utils')
 const clog = new logger({ head: 'wbjsfile' })
 
-const { jsdownload } = require('../func')
 const { runJSFile, JSLISTS } = require('../runjs')
 
 const { wsSer, CONFIG_WS } = require('../func/websocket')
 
 const CONFIG_JSFILE = {
   path: path.join(__dirname, "../runjs/JSFile"),
-  token: 'a8c259b2-67fe-4c64-8700-7bfdf1f55cb3'       // 远程运行 JS token（建议修改）
 }
 
 wsSer.recv.wbrun = fn => {
   runJSFile(fn, { type: 'wbrun', cb: wsSer.send.func('wbrun') })
 }
 
-module.exports = app=>{
+const wbjsfile = (app, CONFIG) => {
   app.get("/jsfile", (req, res)=>{
     let jsfn = req.query.jsfn
     if (jsfn) {
@@ -36,7 +34,11 @@ module.exports = app=>{
 
   app.get("/runjs", (req, res)=>{
     let fn = req.query.fn
-    if (req.query.token !== CONFIG_JSFILE.token) {
+    if (!CONFIG.wbrtoken) {
+      res.end('服务器端未设置 token, 无法运行 JS')
+      return
+    }
+    if (req.query.token !== CONFIG.wbrtoken) {
       res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
       res.end('token 无效')
     } else if (!/^http(.*)\.js$/.test(fn) && !bIsUrl(fn) && !fs.existsSync(path.join(CONFIG_JSFILE.path, fn))) {
@@ -78,10 +80,11 @@ module.exports = app=>{
     let op = req.body.op
     switch(op){
       case 'jsdownload':
-        jsdownload(req.body.url, req.body.name).then(jsl=>{
-          res.end(jsl)
+        downloadfile(req.body.url, path.join(CONFIG_JSFILE.path, req.body.name)).then(jsl=>{
+          res.end('文件已下载至：' + jsl)
+          JSLISTS.push(req.body.name)
         }).catch(e=>{
-          res.end('jsdownload fail!')
+          res.end(req.body.name + ' 下载错误!')
         })
         break
       default: {
@@ -103,6 +106,7 @@ module.exports = app=>{
       fs.writeFileSync(path.join(CONFIG_JSFILE.path, req.body.jsname), req.body.jscontent)
       clog.notify(`${req.body.jsname} 文件保存成功`)
       res.end(`${req.body.jsname} 文件保存成功`)
+      JSLISTS.push(req.body.jsname)
     }
   })
 
@@ -134,12 +138,17 @@ module.exports = app=>{
         files.js.forEach(file=>{
           clog.notify('上传文件：', file.name)
           fs.copyFileSync(file.path, path.join(CONFIG_JSFILE.path, file.name))
+          JSLISTS.push(file.name)
         })
       } else {
         clog.notify('上传文件：', files.js.name)
         fs.copyFileSync(files.js.path, path.join(CONFIG_JSFILE.path, files.js.name))
+        JSLISTS.push(files.js.name)
       }
     })
     res.end('js uploaded success!')
   })
 }
+
+
+module.exports = wbjsfile

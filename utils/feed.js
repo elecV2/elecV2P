@@ -6,6 +6,14 @@ const { now } = require('./time')
 const logger = require('./logger')
 const clog = new logger({ head: 'feed', level: 'debug' })
 
+const CONFIG_FEED = {
+  enable: true,              // 关闭/开启 feed
+  iftttid: '',               // 关闭/开启 ifttt 通知
+  ismerge: true,             // 是否合并一定时间内的通知
+  mergetime: 60,             // 合并多少时间内的通知，单位：秒
+  mergenum: 10,              // 最大合并通知条数。与合并时间，先满足先执行
+}
+
 function feedNew({ title, description, site_url, feed_url }) {
   // clog.notify(title, '生成新的 feed')
   return new RSS({
@@ -19,14 +27,6 @@ function feedNew({ title, description, site_url, feed_url }) {
   })
 }
 let feed = feedNew({})
-
-const CONFIG_FEED = {
-  enable: true,              // 关闭/开启 feed
-  iftttid: '',               // 关闭/开启 ifttt 通知
-  ismerge: true,             // 是否合并一定时间内的通知
-  mergetime: 60,             // 合并多少时间内的通知，单位：秒
-  mergenum: 10,              // 最大合并通知条数。与合并时间，先满足先执行
-}
 
 function iftttPush(title, description, url) {
   if (CONFIG_FEED.iftttid) {
