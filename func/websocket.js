@@ -4,11 +4,13 @@ const { logger, nStatus } = require('../utils')
 const clog = new logger({head: 'webSocket', level: 'debug'})
 
 const CONFIG_WS = {
+  $wss: '',
   webskPort: 8005,
   webskPath: '/elecV2P'
 }
 
 const wsSer = {
+  // 服务器 websocket 发送/接收 数据
   send(data){
     wsSend(data)
   },
@@ -27,14 +29,13 @@ wsSer.recv.task = data => {
   clog.info('a task message')
 }
 
-let wss
 function wsSend(obj){
   if (typeof(obj) == "object") {
     obj = JSON.stringify(obj)
   }
-  if (wss) {
+  if (CONFIG_WS.$wss) {
     clog.debug('send client msg:', obj)
-    wss.clients.forEach(client=>{
+    CONFIG_WS.$wss.clients.forEach(client=>{
       if (client.readyState === ws.OPEN) {
         client.send(obj)
       }
@@ -45,14 +46,16 @@ function wsSend(obj){
 }
 
 function websocketSer({ port, path }) {
-  wss = new ws.Server({ port, path })
+  CONFIG_WS.$wss = new ws.Server({ port, path })
   clog.notify('websocket on port:', port, 'path:', path)
   
-  wss.on('connection', (ws, req)=>{
+  CONFIG_WS.$wss.on('connection', (ws, req)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'new connection')
+    
     let interval = setInterval(()=>{
-      wsSend({ type: 'elecV2Pstatus', data: nStatus() })
+      wsSend({ type: 'elecV2Pstatus', data: { clients: CONFIG_WS.$wss.clients.size, memoryusage: nStatus() }})
     }, 2e3)
+
     ws.on('message', msg=>{
       try {
         var recvdata = JSON.parse(msg)
@@ -73,8 +76,7 @@ function websocketSer({ port, path }) {
     })
   })
 
-
-  wss.on('error', e=>{
+  CONFIG_WS.$wss.on('error', e=>{
     clog.error('websocket error', e)
   })
 }

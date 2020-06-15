@@ -1,13 +1,16 @@
 const fs = require('fs')
 const path = require('path')
 const nodecron = require('node-cron')
+const exec = require('child_process').exec
+const iconv = require('iconv-lite')
+iconv.skipDecodeWarning = true
 
 const cron = require('./crontask.js')
 const schedule = require('./schedule')
 const { wsSer } = require('./websocket')
 const { runJSFile } = require('../runjs/runJSFile')
 
-const { logger, feedAddItem } = require('../utils')
+const { logger, feedAddItem, errStack } = require('../utils')
 const clog = new logger({ head: 'task', cb: wsSer.send.func('tasklog') })
 
 // 任务类型： cron/schedule
@@ -26,16 +29,16 @@ function bIsValid(info) {
     clog.error('无任务名')
     return false
   }
-  if (info.type != 'schedule' && info.type != 'cron') {
+  if (!/cron|schedule|exec/.test(info.type)) {
     clog.error(info.name + ' 非法任务类型： ' + info.type)
     return false
   }
-  if (info.type == 'cron' && !nodecron.validate(info.time)) {
+  if (info.type === 'cron' && !nodecron.validate(info.time)) {
     clog.error(info.time + ' 不符合 cron 时间格式')
     return false
   }
   let ftime = info.time.split(' ')
-  if (info.type == 'schedule' && ftime.filter(t=>/^\d+$/.test(t)).length !== ftime.length ) {
+  if (info.type === 'schedule' && ftime.filter(t=>/^\d+$/.test(t)).length !== ftime.length ) {
     clog.error(info.time + ' 不符合 schedule 时间格式')
     return false
   }
@@ -54,11 +57,11 @@ class Task {
 
   start(){
     if (!bIsValid(this.info)) return
-    if (this.info.type == 'cron') {
+    if (this.info.type === 'cron') {
       this.task = new cron(this.info, this.job)
       this.task.start()
       feedAddItem(`设置定时任务 ${this.info.name} `, '具体时间：' + this.info.time)
-    } else if (this.info.type == 'schedule') {
+    } else if (this.info.type === 'schedule') {
       this.task = new schedule(this.info, this.job)
       this.task.start()
       feedAddItem('设置倒计时任务 ' + this.info.name, '倒计时时间：' + this.info.time)
@@ -106,21 +109,30 @@ const taskInit = function() {
 
 function jobFunc(job) {
   // 任务信息转化为可执行函数
-  if (job.type == 'runjs') {
+  if (job.type === 'runjs') {
     return ()=>{
       runJSFile(job.target, { type: 'task', cb: wsSer.send.func('tasklog') })
     }
-  } else if (job.type == 'taskstart') {
+  } else if (job.type === 'taskstart') {
     return ()=>{
       TASKS_WORKER[job.target].start()
       TASKS_INFO[job.target].running = true
       wsSer.send({type: 'task', data: {tid: job.target, op: 'start'}})
     }
-  } else if (job.type == 'taskstop') {
+  } else if (job.type === 'taskstop') {
     return ()=>{
       TASKS_WORKER[job.target].stop()
       TASKS_INFO[job.target].running = false
       wsSer.send({type: 'task', data: {tid: job.target, op: 'stop'}})
+    }
+  } else if (job.type === 'exec') {
+    return ()=>{
+      exec(job.target, { encoding: 'buffer' }, function(error, stdout, stderr) {
+        let execlog = new logger({ head: 'exectask', cb: wsSer.send.func('tasklog') })
+        if (stderr && stderr.toString().length > 1) execlog.error(stderr)
+        if (stdout) execlog.info(iconv.decode(stdout, 'cp936'))
+        if (error) execlog.error(errStack(error))
+      })
     }
   } else {
     clog.error('任务类型未知')

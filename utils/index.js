@@ -57,7 +57,11 @@ function bIsUrl(url){
 }
 
 function nStatus() {
-  return process.memoryUsage()
+  let musage = process.memoryUsage()
+  for (let key in musage) {
+    musage[key] = Math.round(musage[key]/10000) / 100 + ' MB'
+  }
+  return musage
 }
 
 module.exports = {

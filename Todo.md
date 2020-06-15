@@ -3,26 +3,22 @@
     <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
       <pre style="white-space: pre-line;padding: 6px 1em;text-align: left;">
-        - [ ] 任务 exec 类型
         - [ ] // @require  nodejs module
-        - [ ] websocket 延时加载问题
-        - [ ] feed class 化
         - [ ] lists 合理性检测
         - [ ] lists 订阅
-        - [ ] webpack 分包(?)
       </pre>
     </div>
     <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
       <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
         - 说明文档 [progressing...]
-        - overview 显示当前服务器内存使用
         - tg bot
         - 通知细分自定义 feed/ifttt 分离/新的IP 连接通知
         - $HOLD. hold返回结果到前端页面进行编辑
         - package/module (main.json/js/lists) 同目录 Store
         - JS Mall/market/store
         - 自签证书自定义生成
+        - webpack 分包(?)
         - anyproxy 替换，使用其他库或原生代码，增强可定制性
       </pre>
     </div>
@@ -30,6 +26,10 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
+      - [x] 任务 exec 类型
+      - [X] (P)overview 显示 precess 内存使用
+      - [x] websocket 自动重连
+      - [x] websocket 延时加载问题
       - [x] initdata 整理
       - [x] 远程 runjs token 设置
       - [X] (P)代码规范化（尽量） [done?, progressing...]
