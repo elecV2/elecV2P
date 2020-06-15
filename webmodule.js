@@ -29,7 +29,7 @@ const CONFIG = function() {
 
 const { JSLISTS } = require('./runjs')
 
-const { wbfeed, wbcrt, wbjsfile, wbtask, wblogs, wbstore, wbdata, wblist } = require('./webser')
+const { wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist } = require('./webser')
 
 function webser({ webstPort, proxyPort, webifPort }) {
   const app = express()
@@ -44,58 +44,10 @@ function webser({ webstPort, proxyPort, webifPort }) {
     clog.notify("elecV2P manage on port", webstPort)
   })
 
-  app.get("/initdata", (req, res)=>{
-    res.end(JSON.stringify({
-      config: CONFIG,
-      jslists: JSLISTS,
-    }))
-  })
-
-  app.get("/config", (req, res)=>{
-    res.end(JSON.stringify({
-      gloglevel: CONFIG.gloglevel,
-      feedenable: CONFIG_FEED.enable,
-      iftttid: CONFIG_FEED.iftttid,
-      feedmerge: CONFIG_FEED.ismerge,
-      mergetime: CONFIG_FEED.mergetime,
-      mergenum: CONFIG_FEED.mergenum,
-      wbrtoken: CONFIG.wbrtoken,
-    }))
-  })
-
-  app.put("/config", (req, res)=>{
-    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " put config " + req.body.type)
-    switch(req.body.type){
-      case "config":
-        Object.assign(CONFIG, req.body.data)
-        Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
-        fs.writeFileSync(CONFIG.path, JSON.stringify(CONFIG))
-        res.end("当前配置 已保存至 " + CONFIG.path)
-        break
-      case "gloglevel":
-        try {
-          CONFIG.gloglevel = req.body.data
-          clog.setlevel(CONFIG.gloglevel, true)
-          res.end('日志级别设置为：' + CONFIG.gloglevel)
-        } catch(e) {
-          res.end('日志级别设置失败 ' + e)
-          clog.error('日志级别设置失败 ' + e)
-        }
-        break
-      case "wbrtoken":
-        CONFIG.wbrtoken = req.body.data
-        clog.info('web runjs token 设置为：', CONFIG.wbrtoken)
-        res.end('设置成功')
-        break
-      default:{
-        res.end("data put error")
-      }
-    }
-  })
-
+  wbconfig(app, CONFIG)
   wbfeed(app)
   wbcrt(app)
-  wbjsfile(app, CONFIG)
+  wbjs(app, CONFIG)
   wbtask(app)
   wblogs(app)
   wbstore(app)

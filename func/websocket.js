@@ -1,6 +1,6 @@
 const ws = require('ws')
 
-const { logger } = require('../utils')
+const { logger, nStatus } = require('../utils')
 const clog = new logger({head: 'webSocket', level: 'debug'})
 
 const CONFIG_WS = {
@@ -50,7 +50,9 @@ function websocketSer({ port, path }) {
   
   wss.on('connection', (ws, req)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'new connection')
-    let interval = setInterval(()=>{wsSend({ ping: 'ping' })}, 50e3)
+    let interval = setInterval(()=>{
+      wsSend({ type: 'elecV2Pstatus', data: nStatus() })
+    }, 2e3)
     ws.on('message', msg=>{
       try {
         var recvdata = JSON.parse(msg)

@@ -11,7 +11,7 @@ module.exports = app=>{
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " get logs")
     let filename = req.params.filename
     if (filename === 'all') {
-      res.writeHead(200,{ 'Content-Type': 'text/html;charset=utf-8' })
+      res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })
       res.write('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
       let logs = fs.readdirSync(LOGSPATH)
       res.write(`<title>elecV2P logs - ${logs.length}</title>`)
@@ -20,9 +20,10 @@ module.exports = app=>{
       })
       res.end()
     } else if (fs.existsSync(path.join(LOGSPATH, filename))) {
-      res.writeHead(200,{ 'Content-Type' : 'text/plain;charset=utf-8' })
+      res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
       res.end(fs.readFileSync(path.join(LOGSPATH, filename), "utf8"))
     } else {
+      res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
       res.end(`404: ${filename} 文件不存在`)
     }
   })

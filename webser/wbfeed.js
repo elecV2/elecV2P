@@ -1,7 +1,7 @@
 const { logger, CONFIG_FEED, feedXml, feedClear } = require('../utils')
 const clog = new logger({ head: 'wbfeed' })
 
-module.exports = app=>{
+module.exports = app => {
   app.get("/feed", (req, res)=>{
     res.set('Content-Type', 'text/xml')
     res.end(feedXml())
@@ -29,8 +29,8 @@ module.exports = app=>{
         CONFIG_FEED.ismerge = data.feedmerge
         CONFIG_FEED.mergetime = data.mergetime
         CONFIG_FEED.mergenum = data.mergenum
-        clog.notify(`feed 通知已 ${ data.feedmerge ? '合并' : '取消合并' }`)
-        res.end(`feed 通知已 ${ data.feedmerge ? '合并' : '取消合并' }`)
+        clog.notify(`feed 通知合并功能已 ${ data.feedmerge ? '开启' : '取消' }`)
+        res.end(`feed 通知合并功能已 ${ data.feedmerge ? '开启' : '取消' }`)
         break
       default:{
         res.end('feed put 未知操作')

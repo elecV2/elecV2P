@@ -56,6 +56,10 @@ function bIsUrl(url){
   }
 }
 
+function nStatus() {
+  return process.memoryUsage()
+}
+
 module.exports = {
   logger,
   now,
@@ -63,6 +67,7 @@ module.exports = {
   errStack,
   downloadfile,
   bIsUrl,
+  nStatus,
   ...feed,
   ...string
 }

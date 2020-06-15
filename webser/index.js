@@ -1,10 +1,11 @@
 const wbfeed = require('./wbfeed')
 const wbcrt = require('./wbcrt')
-const wbjsfile = require('./wbjsfile')
+const wbjs = require('./wbjs')
 const wbtask = require('./wbtask')
 const wblogs = require('./wblogs')
 const wbstore = require('./wbstore')
 const wbdata = require('./wbdata')
 const wblist = require('./wblist')
+const wbconfig = require('./wbconfig')
 
-module.exports = { wbfeed, wbcrt, wbjsfile, wbtask, wblogs, wbstore, wbdata, wblist }
+module.exports = { wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist }

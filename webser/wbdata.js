@@ -7,6 +7,8 @@ const clog = new logger({ head: 'wbdata' })
 const { CONFIG_WS } = require('../func/websocket')
 const { CONFIG_RULE, JSLISTS } = require('../runjs')
 
+const StoreFolder = path.join(__dirname, '../runjs/Store')
+
 module.exports = (app, proxyPort, webifPort) => {
   app.get("/data", (req, res)=>{
     let type = req.query.type
@@ -17,13 +19,15 @@ module.exports = (app, proxyPort, webifPort) => {
       case "rules":
         res.end(JSON.stringify({
           eplists: [...CONFIG_RULE.reqlists, ...CONFIG_RULE.reslists],
-          uagent: CONFIG_RULE.uagent
+          uagent: CONFIG_RULE.uagent,
+          jslists: JSLISTS
         }))
         break
       case "rewritelists":
         res.end(JSON.stringify({
           rewritelists: CONFIG_RULE.rewritelists,
-          subrules: CONFIG_RULE.subrules
+          subrules: CONFIG_RULE.subrules,
+          jslists: JSLISTS
         }))
         break
       case "mitmhost":
