@@ -220,11 +220,24 @@ module.exports = class {
     this.final.console = fconsole || clog
   }
 
-  add({ surge, quanx, addContext }){
+  add({ surge, quanx, addContext, $require }){
     if (surge) {
+      this.final.console.debug('启用 surge 兼容模式')
       Object.assign(this.final, new surgeContext({ fconsole: this.final.console }))
     } else if (quanx) {
+      this.final.console.debug('启用 quanx 兼容模式')
       Object.assign(this.final, new quanxContext({ fconsole: this.final.console }))
+    }
+    if ($require) {
+      if (typeof $require === 'string') {
+        this.final.console.debug('require module', $require)
+        this.final[$require] = require($require)
+      } else {
+        $require.forEach(rq=>{
+          this.final.console.debug('require module', rq)
+          this.final[rq] = require(rq)
+        })
+      }
     }
     if (addContext) {
       Object.assign(this.final, addContext)

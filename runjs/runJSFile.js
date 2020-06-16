@@ -80,6 +80,16 @@ function runJS(filename, jscode, addContext) {
     newContext.add({ quanx: true })
   }
 
+  if (/\/\/ @require +/.test(jscode)) {
+    try {
+      [...jscode.matchAll(/\/\/ @require +(.+)/g)].forEach(rq=>{
+        rq[1].split(',').forEach(r=>newContext.add({ $require: r.trim() }))
+      })
+    } catch(e) {
+      fconsole.error('@require error', errStack(e))
+    }
+  }
+
   if (Object.keys(addContext).length) newContext.add({ addContext })
 
   try {

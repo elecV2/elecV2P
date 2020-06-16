@@ -59,7 +59,7 @@ function bIsUrl(url){
 function nStatus() {
   let musage = process.memoryUsage()
   for (let key in musage) {
-    musage[key] = Math.round(musage[key]/10000) / 100 + ' MB'
+    musage[key] = (Math.round(musage[key]/10000) / 100).toFixed(2) + ' MB'
   }
   return musage
 }

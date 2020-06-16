@@ -21,7 +21,7 @@ function feedNew({ title, description, site_url, feed_url }) {
     description: description || 'elecV2P 运行记录通知',
     site_url: site_url || 'https://github.com/elecV2',
     feed_url: feed_url || 'https://github.com/elecV2',
-    docs: 'https://github.com/elecV2',
+    docs: 'https://github.com/elecV2/elecV2P',
     language: 'zh-CN',
     ttl: 10
   })
@@ -61,19 +61,20 @@ function feedAddItem(title = 'elecV2P notification', description =  '通知内�
   if (/test/.test(title)) return
   if (CONFIG_FEED.ismerge) {
     mergefeed.content.push(title + ' - ' + now() + '\n' + description + '\n')
-    if (mergefeed.setTime) {
-      if (mergefeed.content.length >= CONFIG_FEED.mergenum) {
-        feedPush('elecV2P 合并通知 ' + mergefeed.content.length, mergefeed.content.join('\n'))
-        clearTimeout(mergefeed.setTime)
-        delete mergefeed.setTime
-        mergefeed.content = []
-      }
-    } else {
+    if (!mergefeed.setTime) {
       mergefeed.setTime = setTimeout(()=>{
-        feedPush('elecV2P 合并通知 ' + mergefeed.content.length, mergefeed.content.join('\n'), 'https://github.com/elecV2/elecV2P')
+        feedPush('elecV2P 合并通知 ' + mergefeed.content.length, mergefeed.content.join('\n'), url)
         delete mergefeed.setTime
         mergefeed.content = []
       }, CONFIG_FEED.mergetime*1000)
+    }
+    if (mergefeed.content.length >= CONFIG_FEED.mergenum) {
+      feedPush('elecV2P 合并通知 ' + mergefeed.content.length, mergefeed.content.join('\n'), url)
+      if (mergefeed.setTime) {
+        clearTimeout(mergefeed.setTime)
+        mergefeed.setTime
+      }
+      mergefeed.content = []
     }
   } else {
     feedPush(title, description, url)
