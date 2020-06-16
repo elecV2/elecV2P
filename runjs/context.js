@@ -6,6 +6,8 @@ const qs = require('qs')
 const { logger, errStack, feedPush } = require('../utils')
 const clog = new logger({ head: 'context', level: 'debug' })
 
+const exec = require('../func/exec')
+
 const CONFIG_CONTEXT = {
   timeout_axios: 5000
 }
@@ -42,18 +44,7 @@ function getResBody(body) {
 
 const contextBase = {
   setTimeout,
-  $axios(req) {
-    // 普通 axios 请求
-    req.timeout = CONFIG_CONTEXT.timeout_axios
-    return new Promise((resolve, reject)=>{
-      axios(req).then(response=>{
-        resolve(response)
-      }).catch(error=>{
-        clog.error('$axios error on', error)
-        reject(error)
-      })
-    })
-  },
+  $axios: axios,
   $store: {
     get(key) {
       clog.debug('get value for', key)
@@ -76,7 +67,8 @@ const contextBase = {
     push(title, description, url) {
       feedPush(title, description, url)
     }
-  }
+  },
+  $exec: exec
 }
 
 class surgeContext {

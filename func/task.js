@@ -1,12 +1,10 @@
 const fs = require('fs')
 const path = require('path')
 const nodecron = require('node-cron')
-const exec = require('child_process').exec
-const iconv = require('iconv-lite')
-iconv.skipDecodeWarning = true
 
 const cron = require('./crontask.js')
 const schedule = require('./schedule')
+const exec = require('./exec')
 const { wsSer } = require('./websocket')
 const { runJSFile } = require('../runjs/runJSFile')
 
@@ -127,11 +125,10 @@ function jobFunc(job) {
     }
   } else if (job.type === 'exec') {
     return ()=>{
-      exec(job.target, { encoding: 'buffer' }, function(error, stdout, stderr) {
-        let execlog = new logger({ head: 'exectask', cb: wsSer.send.func('tasklog') })
-        if (stderr && stderr.toString().length > 1) execlog.error(stderr)
-        if (stdout) execlog.info(iconv.decode(stdout, 'cp936'))
-        if (error) execlog.error(errStack(error))
+      exec(job.target, (error, stdout, stderr) => {
+        if (error) clog.error(error)
+        if (stderr) clog.info(stderr)
+        if (stdout) clog.info(stdout)
       })
     }
   } else {
