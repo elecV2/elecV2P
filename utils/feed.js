@@ -58,7 +58,7 @@ function feedPush(title, description, url) {
 const mergefeed = {
   content: [],               // 合并通知的内容
   push(){
-    feedPush('elecV2P 合并通知 ' + this.content.length, this.content.join('\n'), url)
+    feedPush('elecV2P 合并通知 ' + this.content.length, this.content.join('\n'))
     this.content = []
     this.timefulled = false
     if (this.setTime) {
