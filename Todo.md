@@ -3,7 +3,7 @@
     <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
       <pre style="white-space: pre-line;padding: 6px 1em;text-align: left;">
-        - [ ] task.md(exec)
+        - [ ] 服务器端 websocket 优化(setInterval)
         - [ ] lists 合理性检测
         - [ ] lists 订阅
       </pre>
@@ -26,6 +26,11 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
+      - [x] webws 终极优化
+      - [x] setting.vue feed 优化
+      - [x] task.md(exec)
+      - [x] webws connecting 细节优化
+      - [x] webrecv 优化 基本完成
       - [x] context @exec
       - [x] reconnect 逻辑优化
       - [x] exec task cb

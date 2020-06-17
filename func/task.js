@@ -8,7 +8,7 @@ const exec = require('./exec')
 const { wsSer } = require('./websocket')
 const { runJSFile } = require('../runjs/runJSFile')
 
-const { logger, feedAddItem, errStack } = require('../utils')
+const { logger, feedAddItem } = require('../utils')
 const clog = new logger({ head: 'task', cb: wsSer.send.func('tasklog') })
 
 // 任务类型： cron/schedule
@@ -103,7 +103,7 @@ const taskInit = function() {
       TASKS_WORKER[tid].start()
     }
   }
-}()
+}();
 
 function jobFunc(job) {
   // 任务信息转化为可执行函数

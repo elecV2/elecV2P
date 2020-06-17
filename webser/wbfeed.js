@@ -17,7 +17,6 @@ module.exports = app => {
         break
       case "clear":
         feedClear()
-        clog.notify('feed 已清空')
         res.end('feed 已清空')
         break
       case "ifttt":
@@ -26,11 +25,9 @@ module.exports = app => {
         res.end(`ifttt webhook 功能已 ${ data ? '开启' : '关闭' }`)
         break
       case "merge":
-        CONFIG_FEED.ismerge = data.feedmerge
-        CONFIG_FEED.mergetime = data.mergetime
-        CONFIG_FEED.mergenum = data.mergenum
-        clog.notify(`feed 通知合并功能已 ${ data.feedmerge ? '开启' : '取消' }`)
-        res.end(`feed 通知合并功能已 ${ data.feedmerge ? '开启' : '取消' }`)
+        Object.assign(CONFIG_FEED, data)
+        clog.notify(`feed 通知合并功能已 ${ data.enable ? '开启' : '取消' }`)
+        res.end(`feed 通知合并功能已 ${ data.enable ? '开启' : '取消' }`)
         break
       default:{
         res.end('feed put 未知操作')

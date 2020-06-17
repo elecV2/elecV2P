@@ -7,7 +7,7 @@ const clog = new logger({ head: 'execfunc' })
 
 module.exports = (command, cb) => {
   clog.info('exec 命令', command, '执行中')
-  exec(command, { encoding: 'buffer' }, function(error, stdout, stderr) {
+  exec(command, { encoding: 'buffer', timeout: 5000 }, function(error, stdout, stderr) {
     if (stderr && stderr.toString().length > 1) {
       stderr = stderr.toString()
       clog.error(stderr)

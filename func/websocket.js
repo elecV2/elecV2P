@@ -29,19 +29,21 @@ wsSer.recv.task = data => {
   clog.info('a task message')
 }
 
-function wsSend(obj){
-  if (typeof(obj) == "object") {
-    obj = JSON.stringify(obj)
+function wsSend(data, target){
+  if (typeof(data) == "object") {
+    data = JSON.stringify(data)
   }
   if (CONFIG_WS.$wss) {
-    clog.debug('send client msg:', obj)
+    clog.debug('send client msg:', data)
     CONFIG_WS.$wss.clients.forEach(client=>{
-      if (client.readyState === ws.OPEN) {
-        client.send(obj)
+      if (target) {
+        if (client === target) client.send(data)
+      } else if (client.readyState === ws.OPEN) {
+        client.send(data)
       }
     })
   } else {
-    // clog.info('websocket 已断开，无法发送数据：', obj)
+    // clog.info('websocket 已断开，无法发送数据：', data)
   }
 }
 
@@ -50,11 +52,12 @@ function websocketSer({ port, path }) {
   clog.notify('websocket on port:', port, 'path:', path)
   
   CONFIG_WS.$wss.on('connection', (ws, req)=>{
-    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'new connection')
+    const clientip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
+    clog.notify(clientip, 'new connection')
     
-    let interval = setInterval(()=>{
+    const elecV2Pstatus = setInterval(()=>{
       wsSend({ type: 'elecV2Pstatus', data: { clients: CONFIG_WS.$wss.clients.size, memoryusage: nStatus() }})
-    }, 2e3)
+    }, 3e3)
 
     ws.on('message', msg=>{
       try {
@@ -71,8 +74,8 @@ function websocketSer({ port, path }) {
     })
 
     ws.on("close", ev=>{
-      clearInterval(interval)
-      clog.info('disconnected SOCKET - PORT : ' + port + ', reason: ' + ev)
+      clearInterval(elecV2Pstatus)
+      clog.info(clientip, 'disconnected', 'reason: ' + ev)
     })
   })
 

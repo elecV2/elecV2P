@@ -136,6 +136,7 @@ docker-compose up -d
 
 - 运行 JS
 - 开始/停止 其他定时任务
+- exec 命令。相关命令参考： [child_process_exec](https://nodejs.org/api/child_process.html#child_process_child_process_exec_command_options_callback)
 
 ## 通知
 

@@ -1,3 +1,5 @@
+const fs = require('fs')
+
 const { logger, CONFIG_FEED } = require('../utils')
 const clog = new logger({ head: 'wbconfig' })
 
@@ -8,11 +10,7 @@ module.exports = (app, CONFIG) => {
       case 'setting':
         res.end(JSON.stringify({
           gloglevel: CONFIG.gloglevel,
-          feedenable: CONFIG_FEED.enable,
-          iftttid: CONFIG_FEED.iftttid,
-          feedmerge: CONFIG_FEED.ismerge,
-          mergetime: CONFIG_FEED.mergetime,
-          mergenum: CONFIG_FEED.mergenum,
+          CONFIG_FEED,
           wbrtoken: CONFIG.wbrtoken,
         }))
         break
