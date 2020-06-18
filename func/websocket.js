@@ -16,6 +16,20 @@ const wsSer = {
   },
   recv(msg){
     clog.info('receive message:', msg)
+  },
+  status: {
+    send() {
+      if (this.intval) return
+      this.intval = setInterval(()=>{
+        if (CONFIG_WS.$wss) wsSend({ type: 'elecV2Pstatus', data: { clients: CONFIG_WS.$wss.clients.size, memoryusage: nStatus() }})
+      }, 3e3)
+    },
+    stop() {
+      if (this.intval) {
+        clearInterval(this.intval)
+        delete this.intval
+      }
+    }
   }
 }
 
@@ -43,7 +57,7 @@ function wsSend(data, target){
       }
     })
   } else {
-    // clog.info('websocket 已断开，无法发送数据：', data)
+    clog.debug('websocket 暂未连接，无法发送数据：', data)
   }
 }
 
@@ -54,17 +68,14 @@ function websocketSer({ port, path }) {
   CONFIG_WS.$wss.on('connection', (ws, req)=>{
     const clientip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
     clog.notify(clientip, 'new connection')
-    
-    const elecV2Pstatus = setInterval(()=>{
-      wsSend({ type: 'elecV2Pstatus', data: { clients: CONFIG_WS.$wss.clients.size, memoryusage: nStatus() }})
-    }, 3e3)
+
+    wsSer.status.send()
 
     ws.on('message', msg=>{
       try {
         var recvdata = JSON.parse(msg)
       } catch {
         var recvdata = msg
-        // clog.info('receive message:', msg)
       }
       if (recvdata && recvdata.type && wsSer.recv[recvdata.type]) {
         wsSer.recv[recvdata.type](recvdata.data)
@@ -74,7 +85,7 @@ function websocketSer({ port, path }) {
     })
 
     ws.on("close", ev=>{
-      clearInterval(elecV2Pstatus)
+      wsSer.status.stop()
       clog.info(clientip, 'disconnected', 'reason: ' + ev)
     })
   })

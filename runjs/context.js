@@ -43,6 +43,7 @@ function getResBody(body) {
 }
 
 const contextBase = {
+  __dirname: process.cwd(),
   setTimeout,
   $axios: axios,
   $store: {
