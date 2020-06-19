@@ -32,9 +32,13 @@ let feed = feedNew({})
 
 function iftttPush(title, description, url) {
   if (CONFIG_FEED.iftttid) {
+    const body = {};
+    [...arguments].forEach((arg, ind)=>{
+      body['value' + (ind + 1)] = arg
+    });
     clog.notify('ifttt webhook trigger:', title, description)
-    axios.post('https://maker.ifttt.com/trigger/elecV2P/with/key/' + CONFIG_FEED.iftttid, { value1: title, value2: description, value3: url }).then(res=>{
-      clog.debug(res.data)
+    axios.post('https://maker.ifttt.com/trigger/elecV2P/with/key/' + CONFIG_FEED.iftttid, body).then(res=>{
+      clog.debug('iftttPush result:', res.data)
     }).catch(e=>{
       clog.error(e)
     })
@@ -101,4 +105,4 @@ function feedClear() {
   clog.notify('feed 内容已清空')
 }
 
-module.exports = { CONFIG_FEED, feedAddItem, feedPush, feedXml, feedClear }
+module.exports = { CONFIG_FEED, feedAddItem, iftttPush, feedPush, feedXml, feedClear }

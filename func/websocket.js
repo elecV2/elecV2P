@@ -22,6 +22,7 @@ const wsSer = {
       if (this.intval) return
       this.intval = setInterval(()=>{
         if (CONFIG_WS.$wss) wsSend({ type: 'elecV2Pstatus', data: { clients: CONFIG_WS.$wss.clients.size, memoryusage: nStatus() }})
+        else this.stop()
       }, 3e3)
     },
     stop() {
@@ -85,7 +86,7 @@ function websocketSer({ port, path }) {
     })
 
     ws.on("close", ev=>{
-      wsSer.status.stop()
+      if(!CONFIG_WS.$wss.clients || CONFIG_WS.$wss.clients.size <= 0) wsSer.status.stop()
       clog.info(clientip, 'disconnected', 'reason: ' + ev)
     })
   })

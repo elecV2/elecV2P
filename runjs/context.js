@@ -3,7 +3,7 @@ const axios = require('axios')
 const path = require('path')
 const qs = require('qs')
 
-const { logger, errStack, feedPush } = require('../utils')
+const { logger, errStack, feedPush, iftttPush, store } = require('../utils')
 const clog = new logger({ head: 'context', level: 'debug' })
 
 const exec = require('../func/exec')
@@ -42,34 +42,43 @@ function getResBody(body) {
   return typeof(body) == 'object' ? (Buffer.isBuffer(body) ? body.toString() : JSON.stringify(body)) : body
 }
 
-const contextBase = {
-  __dirname: process.cwd(),
-  setTimeout,
-  $axios: axios,
-  $store: {
-    get(key) {
-      clog.debug('get value for', key)
-      if (fs.existsSync(path.join(__dirname, 'Store', key))) {
-        return fs.readFileSync(path.join(__dirname, 'Store', key), 'utf8')
-      }
-      return false
+class contextBase {
+  constructor({ fconsole }){
+    this.console = fconsole || clog
+  }
+
+  __dirname = process.cwd()
+  setTimeout = setTimeout
+  setInterval = setInterval
+  $axios = axios
+  $exec = exec
+  $store = {
+    get: (key) => {
+      this.console.debug('get value for', key)
+      store.get(key)
     },
-    put(value, key) {
-      clog.debug('put value to', key)
-      try {
-        fs.writeFileSync(path.join(__dirname, 'Store', key), value, 'utf8')
-        return true
-      } catch {
-        return false
-      }
+    put: (value, key) => {
+      this.console.debug('get value for', key)
+      store.put(value, key)
+    },
+    delete: (key) => {
+      if(store.delete(key)) this.console.notify('delete store key:', key)
+      else this.console.error('fail!', key, '可能并不存在')
     }
-  },
-  $feed: {
+  }
+  $feed = {
     push(title, description, url) {
       feedPush(title, description, url)
+    },
+    ifttt(title, description, url) {
+      iftttPush(title, description, url)
     }
-  },
-  $exec: exec
+  }
+  $done = (data) => {
+    this.console.debug('$done:', data)
+    this.$result = data ? typeof(data) === 'object' ? data : { body: data } : {}
+    return this.$result
+  }
 }
 
 class surgeContext {
@@ -132,10 +141,10 @@ class surgeContext {
   }
   $persistentStore = {
     read(key) {
-      return contextBase.$store.get(key)
+      return store.get(key, this.fconsole.debug)
     },
     write(value, key){
-      return contextBase.$store.put(value, key)
+      return store.put(value, key, this.fconsole.debug)
     }
   }
   $notification = {
@@ -143,13 +152,6 @@ class surgeContext {
     post: (...data) => {
       this.fconsole.notify(data.join(' '))
     }
-  }
-  $done = (data) => {
-    if(data) {
-      // this.fconsole.notify('$done:', data)
-      return typeof(data) == 'object' ? data : { body: data }
-    } 
-    return {}
   }
 }
 
@@ -187,30 +189,21 @@ class quanxContext {
   }
   $prefs = {
     valueForKey(key) {
-      return contextBase.$store.get(key)
+      return store.get(key, this.fconsole.debug)
     },
     setValueForKey(value, key) {
-      return contextBase.$store.put(value, key)
+      return store.put(value, key, this.fconsole.debug)
     }
   }
   $notify = (...data)=>{
     // Quantumultx 通知
     this.fconsole.notify(data.join(' '))
   }
-  $done = (data)=>{
-    if(data) {
-      // this.fconsole.notify('$done:', data)
-      return typeof(data) == 'object' ? data : { body: data }
-    } 
-    return {}
-  }
 }
 
 module.exports = class {
-  final = { ...contextBase }
-
   constructor({ fconsole }){
-    this.final.console = fconsole || clog
+    this.final = new contextBase({ fconsole })
   }
 
   add({ surge, quanx, addContext, $require }){
@@ -222,15 +215,8 @@ module.exports = class {
       Object.assign(this.final, new quanxContext({ fconsole: this.final.console }))
     }
     if ($require) {
-      if (typeof $require === 'string') {
-        this.final.console.debug('require module', $require)
-        this.final[$require] = require($require)
-      } else {
-        $require.forEach(rq=>{
-          this.final.console.debug('require module', rq)
-          this.final[rq] = require(rq)
-        })
-      }
+      this.final.console.debug('require module', $require)
+      this.final[$require] = require($require)
     }
     if (addContext) {
       Object.assign(this.final, addContext)

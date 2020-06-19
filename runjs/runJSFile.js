@@ -70,35 +70,35 @@ function runJS(filename, jscode, addContext) {
     delete addContext.type
   }
   const fconsole = new logger({ head: filename, file: CONFIG_RUNJS.jslogfile ? filename : '', cb })
-  const newContext = new context({ fconsole })
+  const CONTEXT = new context({ fconsole })
 
   if (CONFIG_RUNJS.SurgeEnable || (CONFIG_RUNJS.QuanxEnable === false && /\$httpClient|\$persistentStore|\$notification/.test(jscode))) {
     clog.debug(`${filename} 使用 Surge 兼容模式运行`)
-    newContext.add({ surge: true })
+    CONTEXT.add({ surge: true })
   } else if (CONFIG_RUNJS.QuanxEnable || /\$task|\$prefs|\$notify/.test(jscode)) {
     clog.debug(`${filename} 使用 Quantumult X 兼容模式运行`)
-    newContext.add({ quanx: true })
+    CONTEXT.add({ quanx: true })
   }
 
   if (/\/\/ @require +/.test(jscode)) {
     try {
       [...jscode.matchAll(/\/\/ @require +(.+)/g)].forEach(rq=>{
-        rq[1].split(',').forEach(r=>newContext.add({ $require: r.trim() }))
+        rq[1].split(',').forEach(r=>CONTEXT.add({ $require: r.trim() }))
       })
     } catch(e) {
       fconsole.error('@require error', errStack(e))
     }
   }
 
-  if (Object.keys(addContext).length) newContext.add({ addContext })
+  if (Object.keys(addContext).length) CONTEXT.add({ addContext })
 
   try {
-    const newScript = new vm.Script(jscode)
-    return newScript.runInNewContext(newContext.final, { displayErrors: true, timeout: CONFIG_RUNJS.timeout_jsrun })
+    const result = vm.runInNewContext(jscode, CONTEXT.final, { displayErrors: true, timeout: CONFIG_RUNJS.timeout_jsrun })
+    return CONTEXT.final.$result || result
   } catch(error) {
-    let errmsg = errStack(error)
-    fconsole.error(errmsg)
-    return { error: errmsg }
+    error = errStack(error)
+    fconsole.error(error)
+    return { error }
   }
 }
 
@@ -112,7 +112,8 @@ function runJSFile(filename, addContext) {
         downloadfile(url, filePath).then(()=>{
           resolve(runJS(filename, fs.readFileSync(filePath), addContext))
         }).catch(error=>{
-          clog.error('运行', url, '出现错误，请尝试下载到服务器再运行', errStack(error))
+          error = errStack(error)
+          clog.error('运行', url, '出现错误，请尝试下载到服务器再运行', error)
           reject(error)
         })
       })

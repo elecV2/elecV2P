@@ -11,9 +11,10 @@ const string = require('./string')
 
 const clog = new logger({ head: 'utils' })
 
-function errStack(error) {
+function errStack(error, stack = false) {
   if (!error) return
   if (error.stack) {
+    if (stack) return error.stack
     let errline = error.stack.match(/evalmachine\.<anonymous>:([0-9]+(:[0-9]+)?)/)
     if (errline && errline[1]) {
       return 'line ' + errline[1] + ' error: ' + error.message
@@ -64,6 +65,36 @@ function nStatus() {
   return musage
 }
 
+const store = {
+  path: path.join(__dirname, '../runjs/Store'),
+  get(key) {
+    clog.debug('get value for', key)
+    if (fs.existsSync(path.join(this.path, key))) {
+      return fs.readFileSync(path.join(this.path, key), 'utf8')
+    }
+    return false
+  },
+  put(value, key) {
+    clog.debug('put value to', key)
+    try {
+      fs.writeFileSync(path.join(this.path, key), value, 'utf8')
+      return true
+    } catch {
+      return false
+    }
+  },
+  delete(key) {
+    clog.debug('delete store key:', key)
+    try {
+      fs.unlinkSync(path.join(this.path, key))
+      return true
+    } catch(e) {
+      clog.error(errStack(e, true))
+      return false
+    }
+  }
+}
+
 module.exports = {
   logger,
   now,
@@ -72,6 +103,7 @@ module.exports = {
   downloadfile,
   bIsUrl,
   nStatus,
+  store,
   ...feed,
   ...string
 }
