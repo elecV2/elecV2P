@@ -1,6 +1,6 @@
 const fs = require('fs')
 
-const { logger, CONFIG_FEED } = require('../utils')
+const { logger, setGlog, CONFIG_FEED } = require('../utils')
 const clog = new logger({ head: 'wbconfig' })
 
 module.exports = (app, CONFIG) => {
@@ -31,11 +31,12 @@ module.exports = (app, CONFIG) => {
       case "gloglevel":
         try {
           CONFIG.gloglevel = req.body.data
-          clog.setlevel(CONFIG.gloglevel, true)
-          res.end('日志级别设置为：' + CONFIG.gloglevel)
+          setGlog(CONFIG.gloglevel)
+          clog.notify('全局日志级别设置为：' + CONFIG.gloglevel)
+          res.end('设置成功')
         } catch(e) {
-          res.end('日志级别设置失败 ' + e)
-          clog.error('日志级别设置失败 ' + e)
+          res.end('全局日志级别设置失败 ' + e)
+          clog.error('全局日志级别设置失败 ' + e)
         }
         break
       case "wbrtoken":

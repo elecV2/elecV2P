@@ -125,10 +125,8 @@ function jobFunc(job) {
     }
   } else if (job.type === 'exec') {
     return ()=>{
-      exec(job.target, (error, stdout, stderr) => {
-        if (error) clog.error(error)
-        if (stderr) clog.info(stderr)
-        if (stdout) clog.info(stdout)
+      exec(job.target, data => {
+        clog.info(data)
       })
     }
   } else {

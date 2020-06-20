@@ -5,23 +5,23 @@ iconv.skipDecodeWarning = true
 const { logger, errStack } = require('../utils')
 const clog = new logger({ head: 'execfunc' })
 
-module.exports = (command, cb) => {
-  clog.info('exec 命令', command, '执行中')
-  exec(command, { encoding: 'buffer', timeout: 5000 }, function(error, stdout, stderr) {
-    if (stderr && stderr.toString().length > 1) {
-      stderr = stderr.toString()
-      clog.error(stderr)
-    } else {
-      stderr = null
-    }
-    if (error) {
-      error = errStack(error)
-      clog.error(error)
-    }
-    if (stdout) {
-      stdout = iconv.decode(stdout, 'cp936')
-      clog.info(stdout)
-    }
-    if (cb) cb(error, stdout, stderr)
+function execFunc(command, cb) {
+  clog.info('开始执行 exec 命令', command)
+  const childexec = exec(command, { encoding: 'buffer', timeout: 60*1000 })
+
+  childexec.stdout.on('data', data=>{
+    data = iconv.decode(data, 'cp936')
+    if (cb) cb(data)
+    else clog.info(data)
+  })
+
+  childexec.stderr.on('data', data=>{
+    clog.error(data.toString())
+  })
+
+  childexec.on('exit', data=>{
+    clog.notify(command, 'finished', data.toString)
   })
 }
+
+module.exports = execFunc

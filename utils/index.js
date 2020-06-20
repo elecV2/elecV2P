@@ -4,9 +4,9 @@ const path = require('path')
 const http = require('http')
 const https = require('https')
 
-const logger = require('./logger')
-const feed = require('./feed')
+const { logger, setGlog } = require('./logger')
 const { now, wait } = require('./time')
+const feed = require('./feed')
 const string = require('./string')
 
 const clog = new logger({ head: 'utils' })
@@ -97,6 +97,7 @@ const store = {
 
 module.exports = {
   logger,
+  setGlog,
   now,
   wait,
   errStack,

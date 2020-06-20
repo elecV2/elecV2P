@@ -5,8 +5,9 @@
       <pre style="white-space: pre-line;padding: 6px 1em;text-align: left;">
         - [ ] websocket clientID
         - [ ] webrunjs to webhook
-        - [ ] exec to promise
         - [ ] lists 合理性检测
+        - [ ] 订阅更新 log
+        - [ ] 订阅更新 单个添加
         - [ ] lists 订阅
       </pre>
     </div>
@@ -14,6 +15,7 @@
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
       <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
         - 说明文档 [progressing...]
+        - mini terminal
         - tg bot 日志查看/删除 feed通知 远程JS 任务开始/暂停
         - $HOLD. hold返回结果到前端页面进行编辑
         - mongoDB 或者 其他 nosql 数据保存
@@ -29,6 +31,11 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
+      - [x] 说明文档前 备注更新日期和版本
+      - [x] logger 日志调整取消
+      - [x] logger 全局日志调整分离
+      - [x] exec stream 同步/片断 输出
+      - [x] exec to ondata
       - [x] contextBase class 化
       - [x] feed.ifttt
       - [x] store delete

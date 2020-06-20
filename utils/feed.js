@@ -3,7 +3,7 @@ const axios = require('axios')
 
 const { now } = require('./time')
 
-const logger = require('./logger')
+const { logger } = require('./logger')
 const clog = new logger({ head: 'feed', level: 'debug' })
 
 const CONFIG_FEED = {

@@ -5,14 +5,15 @@ const { now } = require('./time')
 const logFolder = path.join(__dirname, '../logs')
 if(!fs.existsSync(logFolder)) fs.mkdirSync(logFolder)
 
-const levels = {
-  error: 0,
-  notify: 1,
-  info: 2,
-  debug: 3
+const CONFIG_LOG = {
+  levels: {
+    error: 0,
+    notify: 1,
+    info: 2,
+    debug: 3
+  },
+  globalLevel: 'info'
 }
-
-let globalLevel = 'info'
 
 function jsonArgs(args) {
   return [...args].map(arg=>typeof(arg) !== 'string' ? JSON.stringify(arg) : arg)
@@ -34,16 +35,20 @@ function alignHead(head) {
   }
 }
 
-module.exports = class {
+function setGlog(level) {
+  CONFIG_LOG.globalLevel = level
+}
+
+class logger {
   _head = 'elecV2P'
-  _level = 'info'             // error, info, debug
+  _level = 'info'
 
   log = this.info
   err = this.error
 
   constructor({ head, level, isalignHead, cb, file }) {
     if(head) this._head = head
-    if(levels.hasOwnProperty(level)) this._level = level
+    if(CONFIG_LOG.levels.hasOwnProperty(level)) this._level = level
     if(cb) this._cb = cb
     if(file) this._file = /\.log/.test(file) ? file : file + '.log'
 
@@ -60,22 +65,13 @@ module.exports = class {
     }
   }
 
-  setlevel(level, isglobal=false){
-    if (isglobal) {
-      this.notify('全局日志级别调整为：', level)
-      globalLevel = level
-    } else {
-      this._level = level
-    }
-  }
-
   setcb(cb){
     this._cb = cb
   }
 
   info(){
     let cont = `[${ this.infohead }][${ now() }]: ${ jsonArgs(arguments).join(' ') }`
-    if (levels[this._level] >= levels['info'] && levels['info'] <= levels[globalLevel]) {
+    if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['info'] && CONFIG_LOG.levels['info'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
       console.log(cont)
     }
     if(this._cb) this._cb(cont)
@@ -84,7 +80,7 @@ module.exports = class {
 
   notify(){
     let cont = `[${ this.notifyhead }][${ now() }]: ${ jsonArgs(arguments).join(' ') }`
-    if (levels[this._level] >= levels['notify'] && levels['notify'] <= levels[globalLevel]) {
+    if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['notify'] && CONFIG_LOG.levels['notify'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
       console.log(cont)
     }
     if(this._cb) this._cb(cont)
@@ -93,7 +89,7 @@ module.exports = class {
 
   error(){
     let cont = `[${ this.errorhead }][${ now() }]: ${ jsonArgs(arguments).join(' ') }`
-    if (levels[this._level] >= levels['error'] && levels['error'] <= levels[globalLevel]) {
+    if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['error'] && CONFIG_LOG.levels['error'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
       console.error(cont)
     }
     if(this._cb) this._cb(cont)
@@ -103,7 +99,7 @@ module.exports = class {
 
   debug(){
     let cont = `[${ this.debughead }][${ now() }]: ${ jsonArgs(arguments).join(' ') }`
-    if (levels[this._level] >= levels['debug'] && levels['debug'] <= levels[globalLevel]) {
+    if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['debug'] && CONFIG_LOG.levels['debug'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
       console.log(cont)
       if(this._cb) this._cb(cont)
       if(this._file) this.file(this._file, cont)
@@ -116,3 +112,5 @@ module.exports = class {
     })
   }
 }
+
+module.exports = { logger, setGlog }

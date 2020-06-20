@@ -1,7 +1,7 @@
 const ws = require('ws')
 
 const { logger, nStatus } = require('../utils')
-const clog = new logger({ head: 'webSocket', level: 'info' })
+const clog = new logger({ head: 'webSocket', level: 'debug' })
 
 const CONFIG_WS = {
   $wss: '',
