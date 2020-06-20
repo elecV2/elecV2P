@@ -46,7 +46,7 @@ async function taskCount(filename) {
   if (runstatus.times === 0) {
     let des = []
     for (let jsname in runstatus.detail) {
-      des.push(`${jsname}: ${runstatus[jsname]} 次`)
+      des.push(`${jsname}: ${runstatus.detail[jsname]} 次`)
     }
     runstatus.detail = {}
     feedAddItem('运行 JS ' + CONFIG_RUNJS.numtofeed + ' 次啦！', `从 ${runstatus.start} 开始： ` + des.join(', '))
