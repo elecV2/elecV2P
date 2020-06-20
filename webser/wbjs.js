@@ -89,7 +89,7 @@ const wbjs = (app, CONFIG) => {
       case 'jsdownload':
         downloadfile(req.body.url, path.join(CONFIG_JSFILE.path, req.body.name)).then(jsl=>{
           res.end('文件已下载至：' + jsl)
-          JSLISTS.push(req.body.name)
+          if (JSLISTS.indexOf(req.body.name) === -1) JSLISTS.push(req.body.name)
         }).catch(e=>{
           res.end(req.body.name + ' 下载错误!')
         })
@@ -113,7 +113,7 @@ const wbjs = (app, CONFIG) => {
       fs.writeFileSync(path.join(CONFIG_JSFILE.path, req.body.jsname), req.body.jscontent)
       clog.notify(`${req.body.jsname} 文件保存成功`)
       res.end(`${req.body.jsname} 文件保存成功`)
-      JSLISTS.push(req.body.jsname)
+      if (JSLISTS.indexOf(req.body.jsname) === -1) JSLISTS.push(req.body.jsname)
     }
   })
 
@@ -145,12 +145,12 @@ const wbjs = (app, CONFIG) => {
         files.js.forEach(file=>{
           clog.notify('上传文件：', file.name)
           fs.copyFileSync(file.path, path.join(CONFIG_JSFILE.path, file.name))
-          JSLISTS.push(file.name)
+          if (JSLISTS.indexOf(file.name) === -1) JSLISTS.push(file.name)
         })
       } else {
         clog.notify('上传文件：', files.js.name)
         fs.copyFileSync(files.js.path, path.join(CONFIG_JSFILE.path, files.js.name))
-        JSLISTS.push(files.js.name)
+        if (JSLISTS.indexOf(files.js.name) === -1) JSLISTS.push(files.js.name)
       }
     })
     res.end('js uploaded success!')

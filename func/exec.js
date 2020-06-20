@@ -5,9 +5,12 @@ iconv.skipDecodeWarning = true
 const { logger, errStack } = require('../utils')
 const clog = new logger({ head: 'execfunc' })
 
-function execFunc(command, cb) {
+function execFunc(command, { cwd, env, timeout, cb }) {
   clog.info('开始执行 exec 命令', command)
-  const childexec = exec(command, { encoding: 'buffer', timeout: 60*1000 })
+  const childexec = exec(command, {
+    encoding: 'buffer',
+    timeout: timeout || 60*1000
+  })
 
   childexec.stdout.on('data', data=>{
     data = iconv.decode(data, 'cp936')

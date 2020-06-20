@@ -125,8 +125,10 @@ function jobFunc(job) {
     }
   } else if (job.type === 'exec') {
     return ()=>{
-      exec(job.target, data => {
-        clog.info(data)
+      exec(job.target, {
+        cb: data => {
+          clog.info(data)
+        }
       })
     }
   } else {

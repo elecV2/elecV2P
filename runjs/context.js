@@ -141,10 +141,10 @@ class surgeContext {
   }
   $persistentStore = {
     read(key) {
-      return store.get(key, this.fconsole.debug)
+      return store.get(key)
     },
     write(value, key){
-      return store.put(value, key, this.fconsole.debug)
+      return store.put(value, key)
     }
   }
   $notification = {
@@ -189,10 +189,10 @@ class quanxContext {
   }
   $prefs = {
     valueForKey(key) {
-      return store.get(key, this.fconsole.debug)
+      return store.get(key)
     },
     setValueForKey(value, key) {
-      return store.put(value, key, this.fconsole.debug)
+      return store.put(value, key)
     }
   }
   $notify = (...data)=>{

@@ -27,27 +27,28 @@ const CONFIG_RUNJS = {
 
 const runstatus = {
   start: now(),
-  times: CONFIG_RUNJS.numtofeed
+  times: CONFIG_RUNJS.numtofeed,
+  detail: {},
+  total: 0
 }
 
 async function taskCount(filename) {
   if (/test/.test(filename)) return
-  if (runstatus[filename]) {
-    runstatus[filename]++
+  if (runstatus.detail[filename]) {
+    runstatus.detail[filename]++
   } else {
-    runstatus[filename] = 1
+    runstatus.detail[filename] = 1
   }
+  runstatus.total++
   runstatus.times--
 
   clog.debug('JS 脚本运行次数统计：', runstatus)
   if (runstatus.times === 0) {
     let des = []
-    for (let jsname in runstatus) {
-      if (jsname !== 'times' && jsname !== 'start') {
-        des.push(`${jsname}: ${runstatus[jsname]} 次`)
-        delete runstatus[jsname]
-      }
+    for (let jsname in runstatus.detail) {
+      des.push(`${jsname}: ${runstatus[jsname]} 次`)
     }
+    runstatus.detail = {}
     feedAddItem('运行 JS ' + CONFIG_RUNJS.numtofeed + ' 次啦！', `从 ${runstatus.start} 开始： ` + des.join(', '))
     runstatus.times = CONFIG_RUNJS.numtofeed
     runstatus.start = now()
@@ -96,9 +97,8 @@ function runJS(filename, jscode, addContext) {
     const result = vm.runInNewContext(jscode, CONTEXT.final, { displayErrors: true, timeout: CONFIG_RUNJS.timeout_jsrun })
     return CONTEXT.final.$result || result
   } catch(error) {
-    error = errStack(error)
-    fconsole.error(error)
-    return { error }
+    fconsole.error(errStack(error, true))
+    return { error: errStack(error) }
   }
 }
 
