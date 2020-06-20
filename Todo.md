@@ -4,12 +4,10 @@
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
       <pre style="white-space: pre-line;padding: 6px 1em;text-align: left;">
         - [ ] websocket clientID
-        - [ ] jslists get/put/sort
         - [ ] exec cd cwd
+        - [ ] js editor
         - [ ] webrunjs to webhook
         - [ ] lists 合理性检测
-        - [ ] 订阅更新 log
-        - [ ] 订阅更新 单个添加
         - [ ] lists 订阅
       </pre>
     </div>
@@ -21,6 +19,7 @@
         - tg bot 日志查看/删除 feed通知 远程JS 任务开始/暂停
         - $HOLD. hold返回结果到前端页面进行编辑
         - mongoDB 或者 其他 nosql 数据保存
+        - 正则匹配优化
         - package/module (main.json/js/lists) 同目录 Store
         - JS Mall/market/store
         - 自签证书自定义生成
@@ -33,6 +32,7 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
+      - [x] 订阅更新 单个添加
       - [x] JSLISTS push 重复的问题
       - [x] 说明文档前 备注更新日期和版本
       - [x] logger 日志调整取消

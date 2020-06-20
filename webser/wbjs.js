@@ -91,7 +91,7 @@ const wbjs = (app, CONFIG) => {
           res.end('文件已下载至：' + jsl)
           if (JSLISTS.indexOf(req.body.name) === -1) JSLISTS.push(req.body.name)
         }).catch(e=>{
-          res.end(req.body.name + ' 下载错误!')
+          res.end(req.body.name + ' 下载错误!' + e)
         })
         break
       default: {

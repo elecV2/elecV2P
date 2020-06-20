@@ -1,4 +1,6 @@
-const exec = require('child_process').exec
+const child_process = require('child_process')
+const { exec } = child_process
+
 const iconv = require('iconv-lite')
 iconv.skipDecodeWarning = true
 
@@ -7,10 +9,14 @@ const clog = new logger({ head: 'execfunc' })
 
 function execFunc(command, { cwd, env, timeout, cb }) {
   clog.info('开始执行 exec 命令', command)
-  const childexec = exec(command, {
+  const option = {
     encoding: 'buffer',
     timeout: timeout || 60*1000
-  })
+  }
+  if (cwd) option.cwd = cwd
+  if (env) option.env = env
+
+  const childexec = exec(command, option)
 
   childexec.stdout.on('data', data=>{
     data = iconv.decode(data, 'cp936')

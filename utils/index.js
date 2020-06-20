@@ -1,8 +1,7 @@
 const fs = require('fs')
 const url = require('url')
 const path = require('path')
-const http = require('http')
-const https = require('https')
+const axios = require('axios')
 
 const { logger, setGlog } = require('./logger')
 const { now, wait } = require('./time')
@@ -24,26 +23,27 @@ function errStack(error, stack = false) {
   return error
 }
 
-function downloadfile(durl, dest, cb) {
-  let nurl = url.parse(durl)
-  let req = nurl.protocol == "https:"?https:http
+function downloadfile(durl, dest) {
   return new Promise((resolve, reject)=>{
-    req.get(durl, (response)=>{
-      if (response.statusCode == 404) {
+    axios({
+      url: durl,
+      responseType: 'stream'
+    }).then(response=>{
+      if (response.status == 404) {
         clog.error(durl + ' 404! 文件不存在')
         reject('404! 文件不存在')
         return
       }
       let file = fs.createWriteStream(dest)
-      response.pipe(file)
+      response.data.pipe(file)
       file.on('finish', ()=>{
         clog.notify("download: " + durl + " to: " + dest)
-        file.close(cb)
+        file.close()
         resolve(dest)
       })
-    }).on('error', e=>{
+    }).catch(e=>{
       clog.error('download fail!', e)
-      reject('download fail')
+      reject('download fail' + errStack(e))
     })
   })
 }

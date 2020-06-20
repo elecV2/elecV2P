@@ -105,8 +105,9 @@ class surgeContext {
       }).catch(error=>{
         clog.error('httpClient.get error:', error)
         if(cb) {
+          error = errStack(error)
           try {
-            cb(error, null, "{error: '$httpClient.get no response'}")
+            cb(error, null, `{error: '${error}'}`)
           } catch(err) {
             this.fconsole.error('httpClient.get cb error:', errStack(err))
           }
@@ -130,8 +131,9 @@ class surgeContext {
       }).catch(error=>{
         clog.error('httpClient.post error:', error)
         if(cb) {
+          error = errStack(error)
           try {
-            cb(error, null, `{ error: ${ error } }`)
+            cb(error, null, `{ error: '${ error }' }`)
           } catch(error) {
             this.fconsole.error(errStack(error))
           }
@@ -179,10 +181,10 @@ class quanxContext {
           if (cb) cb(res)
           resolve(res)
         }).catch(error=>{
-          let err = errStack(error)
-          this.fconsole.error(err)
-          if(cb) cb(err)
-          reject({ error: err })
+          error = errStack(error)
+          this.fconsole.error(error)
+          if(cb) cb(error)
+          reject({ error })
         })
       })
     }
