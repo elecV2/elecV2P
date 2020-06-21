@@ -3,19 +3,16 @@
     <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
       <pre style="white-space: pre-line;padding: 6px 1em;text-align: left;">
-        - [ ] websocket clientID
-        - [ ] exec cd cwd
-        - [ ] js editor
         - [ ] webrunjs to webhook
-        - [ ] lists 合理性检测
-        - [ ] lists 订阅
+        - [ ] minishell history
+        - [ ] js editor
       </pre>
     </div>
     <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
       <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
         - 说明文档 [progressing...]
-        - mini terminal
+        - 内存使用优化 [progressing...]
         - tg bot 日志查看/删除 feed通知 远程JS 任务开始/暂停
         - $HOLD. hold返回结果到前端页面进行编辑
         - mongoDB 或者 其他 nosql 数据保存
@@ -32,6 +29,13 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
+      - [x] shell cd
+      - [x] websocket clientID(euid)
+      - [X] (P)mini shell 1.0
+      - [ ] lists 订阅（订个锤子，用 JS 和定时任务代替）
+      - [x] exec cwd
+      - [x] recver muti
+      - [x] config_port 整理
       - [x] runstatus 修复
       - [x] 订阅更新 单个添加
       - [x] JSLISTS push 重复的问题

@@ -7,9 +7,7 @@ const clog = new logger({ head: 'wbdata' })
 const { CONFIG_WS } = require('../func/websocket')
 const { CONFIG_RULE, JSLISTS } = require('../runjs')
 
-const StoreFolder = path.join(__dirname, '../runjs/Store')
-
-module.exports = (app, proxyPort, webifPort) => {
+module.exports = (app, CONFIG_Port) => {
   app.get("/data", (req, res)=>{
     let type = req.query.type
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress) 
@@ -49,8 +47,8 @@ module.exports = (app, proxyPort, webifPort) => {
         break
       case "overview":
         res.end(JSON.stringify({
-          proxyPort,
-          webifPort,
+          proxyPort: CONFIG_Port.proxy,
+          webifPort: CONFIG_Port.webif,
           ruleslen: CONFIG_RULE.reqlists.length + CONFIG_RULE.reslists.length,
           rewriteslen: CONFIG_RULE.rewritelists.length,
           jslistslen: JSLISTS.length,

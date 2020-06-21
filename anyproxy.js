@@ -1,20 +1,16 @@
 const fs = require('fs')
-const path = require('path')
 const proxy = require('anyproxy')
 const exec = require('child_process').exec
-const homedir = require('os').homedir()
 
 const { logger } = require('./utils')
-const clog = new logger({head: 'anyProxy'})
-
-const { rootCrtSync } = require('./func')
-
+const clog = new logger({ head: 'anyproxy' })
 
 function anyproxy(eoption) {
   if (eoption.rootCA) {
+    const homedir = require('os').homedir()
     if(!fs.existsSync(homedir + '/.anyproxy')) fs.mkdirSync(homedir + '/.anyproxy')
     if(!fs.existsSync(homedir + '/.anyproxy/certificates')) fs.mkdirSync(homedir + '/.anyproxy/certificates')
-    rootCrtSync()
+    require('./func').rootCrtSync()
   }
   if(!proxy.utils.certMgr.ifRootCAFileExists()) {
     proxy.utils.certMgr.generateRootCA((error, keyPath)=>{
@@ -33,14 +29,11 @@ function anyproxy(eoption) {
     })
   }
 
-  const proxyPort = 8001,
-        webifPort = 8002
-
   const options = {
-    port: proxyPort,
+    port: 8001,
     webInterface: {
       enable: true,
-      port: webifPort
+      port: 8002
     },
     // throttle: 1000,
     forceProxyHttps: false,
@@ -56,8 +49,6 @@ function anyproxy(eoption) {
   proxyServer.on('error', (e)=>{
     clog.err(e)
   })
-
-  proxyServer.start()
 
   return proxyServer
 }

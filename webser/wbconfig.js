@@ -12,6 +12,7 @@ module.exports = (app, CONFIG) => {
           gloglevel: CONFIG.gloglevel,
           CONFIG_FEED,
           wbrtoken: CONFIG.wbrtoken,
+          minishell: CONFIG.minishell || false
         }))
         break
       default:

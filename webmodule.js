@@ -27,11 +27,9 @@ const CONFIG = function() {
   return config
 }();
 
-const { JSLISTS } = require('./runjs')
-
 const { wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist } = require('./webser')
 
-function webser({ webstPort, proxyPort, webifPort }) {
+function webser(CONFIG_Port) {
   const app = express()
   app.use(compression())
   app.use(express.json())
@@ -40,6 +38,7 @@ function webser({ webstPort, proxyPort, webifPort }) {
 
   app.use(express.static(__dirname + '/web/dist', { maxAge: ONEMONTH }))
 
+  const webstPort = process.env.PORT || CONFIG_Port.webst || 80
   app.listen(webstPort, ()=>{
     clog.notify("elecV2P manage on port", webstPort)
   })
@@ -51,15 +50,13 @@ function webser({ webstPort, proxyPort, webifPort }) {
   wbtask(app)
   wblogs(app)
   wbstore(app)
-  wbdata(app, proxyPort, webifPort)
+  wbdata(app, CONFIG_Port)
   wblist(app)
 
   app.use((req, res, next) => {
     res.end("404")
     next()
   })
-
-  return app
 }
 
 module.exports = webser

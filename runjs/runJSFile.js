@@ -9,10 +9,12 @@ const clog = new logger({ head: 'runJSFile', level: 'debug' })
 const { wsSer } = require('../func/websocket')
 const context = require('./context')
 
-const StoreFolder = path.join(__dirname, 'Store')
-const JSFolder = path.join(__dirname, 'JSFile')
-if(!fs.existsSync(StoreFolder)) fs.mkdirSync(StoreFolder)
-if(!fs.existsSync(JSFolder)) fs.mkdirSync(JSFolder)
+;(()=>{
+  const StoreFolder = path.join(__dirname, 'Store')
+  const JSFolder = path.join(__dirname, 'JSFile')
+  if(!fs.existsSync(StoreFolder)) fs.mkdirSync(StoreFolder)
+  if(!fs.existsSync(JSFolder)) fs.mkdirSync(JSFolder)
+})();
 
 const CONFIG_RUNJS = {
   timeout_jsrun: 5000,

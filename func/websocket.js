@@ -1,10 +1,8 @@
 const ws = require('ws')
-
-const { logger, nStatus } = require('../utils')
+const { logger, nStatus, euid } = require('../utils')
 const clog = new logger({ head: 'webSocket', level: 'debug' })
 
 const CONFIG_WS = {
-  $wss: '',
   webskPort: 8005,
   webskPath: '/elecV2P'
 }
@@ -40,10 +38,6 @@ wsSer.send.func = type => {
   }
 }
 
-wsSer.recv.task = data => {
-  clog.info('a task message')
-}
-
 function wsSend(data, target){
   if (typeof(data) == "object") {
     data = JSON.stringify(data)
@@ -52,7 +46,7 @@ function wsSend(data, target){
     clog.debug('send client msg:', data)
     CONFIG_WS.$wss.clients.forEach(client=>{
       if (target) {
-        if (client === target) client.send(data)
+        if (client.id === target) client.send(data)
       } else if (client.readyState === ws.OPEN) {
         client.send(data)
       }
@@ -70,18 +64,24 @@ function websocketSer({ port, path }) {
     const clientip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
     clog.notify(clientip, 'new connection')
 
+    // 初始化 ID
+    ws.id = euid()
+    ws.send(JSON.stringify({ type: 'euid', data: ws.id }))
+
+    // 发送当前服务器内存使用状态
     wsSer.status.send()
 
-    ws.on('message', msg=>{
+    ws.on('message', msg => {
       try {
         var recvdata = JSON.parse(msg)
       } catch {
         var recvdata = msg
       }
-      if (recvdata && recvdata.type && wsSer.recv[recvdata.type]) {
+      if (recvdata.type && wsSer.recv[recvdata.type]) {
+        // 检查是否设置了特定数据处理函数
         wsSer.recv[recvdata.type](recvdata.data)
       } else {
-        wsSer.recv(msg)
+        wsSer.recv(recvdata)
       }
     })
 
