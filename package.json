@@ -62,7 +62,6 @@
       "runjs/Lists/*",
       "runjs/Store/*",
       "web/*",
-      "*.config.js",
       "*test.js"
     ]
   }
