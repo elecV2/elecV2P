@@ -1,8 +1,7 @@
 const fs = require('fs')
 const path = require('path')
-const homedir = require('os').homedir()
 
-const crtpath = homedir + '/.anyproxy/certificates'
+const crtpath = require('os').homedir() + '/.anyproxy/certificates'
 const rootCApath = path.join(__dirname, "../rootCA")
 
 const { logger } = require('../utils')
