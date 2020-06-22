@@ -4,8 +4,7 @@
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
       <pre style="white-space: pre-line;padding: 6px 1em;text-align: left;">
         - [ ] webrunjs to webhook
-        - [ ] minishell history
-        - [ ] js editor
+        - [ ] websocket 逻辑
       </pre>
     </div>
     <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
@@ -16,6 +15,7 @@
         - tg bot 日志查看/删除 feed通知 远程JS 任务开始/暂停
         - $HOLD. hold返回结果到前端页面进行编辑
         - mongoDB 或者 其他 nosql 数据保存
+        - js editor
         - 正则匹配优化
         - package/module (main.json/js/lists) 同目录 Store
         - JS Mall/market/store
@@ -29,6 +29,9 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
+      - [x] websocket recver readystatus
+      - [x] websocket reconncet ready 重载
+      - [x] minishell history
       - [x] shell cd
       - [x] websocket clientID(euid)
       - [X] (P)mini shell 1.0

@@ -3,7 +3,7 @@ const path = require('path')
 const express = require('express')
 const compression = require('compression')
 
-const { logger, CONFIG_FEED } = require('./utils')
+const { logger, CONFIG_FEED, errStack } = require('./utils')
 const clog = new logger({ head: 'webServer' })
 
 const CONFIG = function() {
@@ -20,7 +20,7 @@ const CONFIG = function() {
       Object.assign(CONFIG_FEED, config.CONFIG_FEED)
       if(config.gloglevel != 'info') clog.setlevel(config.gloglevel, true)
     } catch(e) {
-      clog.error(path, '配置文件无法解析', e)
+      clog.error(config.path, '配置文件无法解析', errStack(e))
     }
   }
 
