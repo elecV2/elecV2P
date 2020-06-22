@@ -3,11 +3,6 @@ const ws = require('ws')
 const { logger, nStatus, euid } = require('../utils')
 const clog = new logger({ head: 'webSocket', level: 'debug' })
 
-const CONFIG_WS = {
-  webskPort: 8005,
-  webskPath: '/elecV2P'
-}
-
 // 服务器 websocket 发送/接收 数据
 const wsSer = {
   recverlists: [],       // 客户端 recverlists
@@ -21,7 +16,7 @@ const wsSer = {
     send() {
       if (this.intval) return
       this.intval = setInterval(()=>{
-        if (CONFIG_WS.$wss) wsSend({ type: 'elecV2Pstatus', data: { clients: CONFIG_WS.$wss.clients.size, memoryusage: nStatus() }})
+        if (wsSer.$wss) wsSend({ type: 'elecV2Pstatus', data: { clients: wsSer.$wss.clients.size, memoryusage: nStatus() }})
         else this.stop()
       }, 3e3)
     },
@@ -53,9 +48,9 @@ function wsSend(data, target){
     }
     data = JSON.stringify(data)
   }
-  if (CONFIG_WS.$wss) {
+  if (wsSer.$wss) {
     clog.debug('send client msg:', data)
-    CONFIG_WS.$wss.clients.forEach(client=>{
+    wsSer.$wss.clients.forEach(client=>{
       if (target) {
         if (client.id === target) client.send(data)
       } else if (client.readyState === ws.OPEN) {
@@ -67,11 +62,11 @@ function wsSend(data, target){
   }
 }
 
-function websocketSer({ port, path }) {
-  CONFIG_WS.$wss = new ws.Server({ port, path })
-  clog.notify('websocket on port:', port, 'path:', path)
+function websocketSer({ server, path }) {
+  wsSer.$wss = new ws.Server({ server, path })
+  clog.notify('websocket on path:', path)
   
-  CONFIG_WS.$wss.on('connection', (ws, req)=>{
+  wsSer.$wss.on('connection', (ws, req)=>{
     ws.ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
     clog.notify(ws.ip, 'new connection')
 
@@ -98,7 +93,7 @@ function websocketSer({ port, path }) {
 
     ws.on("close", ev=>{
       clog.info(ws.ip, 'disconnected', 'reason: ' + ev)
-      if(!CONFIG_WS.$wss.clients || CONFIG_WS.$wss.clients.size <= 0) {
+      if(!wsSer.$wss.clients || wsSer.$wss.clients.size <= 0) {
         clog.notify('all clients disconnected now')
         wsSer.status.stop()
         wsSer.recverlists = []
@@ -106,9 +101,9 @@ function websocketSer({ port, path }) {
     })
   })
 
-  CONFIG_WS.$wss.on('error', e=>{
+  wsSer.$wss.on('error', e=>{
     clog.error('websocket error', e)
   })
 }
 
-module.exports = { websocketSer, wsSer, CONFIG_WS }
+module.exports = { websocketSer, wsSer }

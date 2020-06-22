@@ -1,6 +1,5 @@
 const webstser = require('./webmodule')
 const anyproxy = require('./anyproxy')
-const { websocketSer, CONFIG_WS } = require('./func/websocket')
 
 const CONFIG_Port = {
   proxy: 8001,    // 代理端口
@@ -22,5 +21,3 @@ const proxy = anyproxy(aProxyOptions)
 proxy.start()
 
 webstser(CONFIG_Port)
-
-websocketSer({ port: CONFIG_WS.webskPort, path: CONFIG_WS.webskPath })

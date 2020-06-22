@@ -35,7 +35,7 @@ function getKeysAndCert(serialNumber) {
 ### docker
 
 ``` sh
-docker run --restart=always -d --name elecv2p -p 80:80 -p 8001:8001 -p 8002:8002 -p 8005:8005 elecv2/elecv2p
+docker run --restart=always -d --name elecv2p -p 80:80 -p 8001:8001 -p 8002:8002 elecv2/elecv2p
 ```
 
 ### docker-compose （推荐）
@@ -53,7 +53,6 @@ services:
       - "8100:80"
       - "8101:8001"
       - "8102:8002"
-      - "8005:8005"
     volumes:
       - "/elecv2p/JSFile:/usr/local/app/runjs/JSFile"
       - "/elecv2p/Lists:/usr/local/app/runjs/Lists"
@@ -71,8 +70,6 @@ docker-compose up -d
 - 80：    软件主界面。添加规则/JS 文件管理/定时任务管理/MITM 证书 等
 - 8001：  anyproxy 代理端口
 - 8002：  anyproxy 连接查看
-- 8005：  websocket 通信
-
 
 ## 使用说明
 

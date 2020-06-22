@@ -4,7 +4,6 @@ const path = require('path')
 const { logger } = require('../utils')
 const clog = new logger({ head: 'wbdata' })
 
-const { CONFIG_WS } = require('../func/websocket')
 const { CONFIG_RULE, JSLISTS } = require('../runjs')
 
 module.exports = (app, CONFIG_Port) => {
@@ -38,12 +37,6 @@ module.exports = (app, CONFIG_Port) => {
         break
       case "todolist":
         res.end(fs.readFileSync(path.join(__dirname, '../Todo.md'), "utf8"))
-        break
-      case "websk":
-        res.end(JSON.stringify({
-          webskPort: CONFIG_WS.webskPort,
-          webskPath: CONFIG_WS.webskPath,
-        }))
         break
       case "overview":
         res.end(JSON.stringify({

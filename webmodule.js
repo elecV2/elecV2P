@@ -1,5 +1,3 @@
-const fs = require('fs')
-const path = require('path')
 const express = require('express')
 const compression = require('compression')
 
@@ -8,7 +6,10 @@ const clog = new logger({ head: 'webServer' })
 
 const CONFIG = function() {
   // config 初始化
-  let config = {
+  const fs = require('fs')
+  const path = require('path')
+
+  const config = {
     path: path.join(__dirname, 'runjs', 'Lists', 'config.json'),
     gloglevel: 'info',
     wbrtoken: 'a8c259b2-67fe-4c64-8700-7bfdf1f55cb3',    // 远程运行 JS token（建议修改）
@@ -38,11 +39,6 @@ function webser(CONFIG_Port) {
 
   app.use(express.static(__dirname + '/web/dist', { maxAge: ONEMONTH }))
 
-  const webstPort = process.env.PORT || CONFIG_Port.webst || 80
-  app.listen(webstPort, ()=>{
-    clog.notify("elecV2P manage on port", webstPort)
-  })
-
   wbconfig(app, CONFIG)
   wbfeed(app)
   wbcrt(app)
@@ -57,6 +53,18 @@ function webser(CONFIG_Port) {
     res.end("404")
     next()
   })
+
+  const http = require('http')
+  const server = http.createServer(app)
+
+  const webstPort = process.env.PORT || CONFIG_Port.webst || 80
+
+  server.listen(webstPort, ()=>{
+    clog.notify("elecV2P manage on port", webstPort)
+  })
+
+  const { websocketSer } = require('./func/websocket')
+  websocketSer({ server, path: '/elecV2P' })
 }
 
 module.exports = webser
