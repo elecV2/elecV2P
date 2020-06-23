@@ -93,6 +93,12 @@ function runJS(filename, jscode, addContext) {
     }
   }
 
+  const inTime = jscode.match(/setTimeout|setInterval/g)
+  if (inTime) {
+    if (inTime.indexOf('setTimeout') > -1) CONTEXT.final.setTimeout = setTimeout
+    if (inTime.indexOf('setInterval') > -1) CONTEXT.final.setInterval = setInterval
+  }
+
   if (Object.keys(addContext).length) CONTEXT.add({ addContext })
 
   try {

@@ -16,7 +16,7 @@ const CONFIG_LOG = {
 }
 
 function jsonArgs(args) {
-  return [...args].map(arg=>typeof(arg) !== 'string' ? JSON.stringify(arg) : arg)
+  return [...args].map(arg=>typeof(arg) === 'object' ? (Buffer.isBuffer(arg) ? arg.toString() : JSON.stringify(arg)) : arg)
 }
 
 function alignHead(head) {

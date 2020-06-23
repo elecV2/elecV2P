@@ -1,6 +1,6 @@
 {
   "name": "elecV2P",
-  "version": "1.8.2",
+  "version": "1.8.4",
   "description": "customize personal network",
   "main": "index.js",
   "author": "elecV2",
@@ -18,7 +18,6 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "ant-design-vue": "^1.5.4",
     "anyproxy": "^4.1.0",
     "axios": "^0.19.2",
     "child_process": "^1.0.2",
@@ -30,6 +29,7 @@
   "devDependencies": {
     "@babel/core": "^7.4.5",
     "@babel/preset-env": "^7.4.5",
+    "ant-design-vue": "^1.5.4",
     "autoprefixer": "^9.6.0",
     "babel-eslint": "^10.0.1",
     "babel-loader": "^8.0.6",

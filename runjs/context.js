@@ -39,17 +39,15 @@ function getReqBody(req) {
 }
 
 function getResBody(body) {
-  return typeof(body) == 'object' ? (Buffer.isBuffer(body) ? body.toString() : JSON.stringify(body)) : body
+  return typeof(body) === 'object' ? (Buffer.isBuffer(body) ? body.toString() : JSON.stringify(body)) : body
 }
 
 class contextBase {
-  constructor({ fconsole }){
-    this.console = fconsole || clog
+  constructor({ fconsole = clog }){
+    this.console = fconsole
   }
 
   __dirname = process.cwd()
-  setTimeout = setTimeout
-  setInterval = setInterval
   $axios = axios
   $exec = exec
   $store = {
@@ -82,8 +80,8 @@ class contextBase {
 }
 
 class surgeContext {
-  constructor({ fconsole }){
-    this.fconsole = fconsole || clog
+  constructor({ fconsole = clog }){
+    this.fconsole = fconsole 
   }
 
   $httpClient = {
@@ -158,8 +156,8 @@ class surgeContext {
 }
 
 class quanxContext {
-  constructor({ fconsole }){
-    this.fconsole = fconsole || clog
+  constructor({ fconsole = clog }){
+    this.fconsole = fconsole
   }
 
   $task = {
@@ -204,7 +202,7 @@ class quanxContext {
 }
 
 module.exports = class {
-  constructor({ fconsole }){
+  constructor({ fconsole = clog }){
     this.final = new contextBase({ fconsole })
   }
 

@@ -16,16 +16,16 @@ const CONFIG_FEED = {
   andor: false,              // 上面两项的逻辑。 true: 同时满足，false: 满足任一项
 }
 
-function feedNew({ title, description, site_url, feed_url }) {
+function feedNew({ title = 'elecV2P notification', description = 'elecV2P 运行记录通知', ttl = 10 }) {
   // clog.notify(title, '生成新的 feed')
   return new RSS({
-    title: title || 'elecV2P notification',
-    description: description || 'elecV2P 运行记录通知',
+    title,
+    description,
     site_url: CONFIG_FEED.homepage,
-    feed_url: CONFIG_FEED.homepage,
+    feed_url: CONFIG_FEED.homepage + '/feed',
     docs: 'https://github.com/elecV2/elecV2P-dei/tree/master/docs/07-feed&notify.md',
     language: 'zh-CN',
-    ttl: 10
+    ttl,
   })
 }
 let feed = feedNew({})
