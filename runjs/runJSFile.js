@@ -34,6 +34,11 @@ const runstatus = {
   total: 0
 }
 
+/**
+ * JS 运行统计
+ * @param  {string} filename JS 文件名
+ * @return {none}          
+ */
 async function taskCount(filename) {
   if (/test/.test(filename)) return
   if (runstatus.detail[filename]) {
@@ -43,6 +48,11 @@ async function taskCount(filename) {
   }
   runstatus.total++
   runstatus.times--
+
+  wsSer.send({
+    type: 'jsrunstatus',
+    data: { total: runstatus.total, detail: runstatus.detail }
+  })
 
   clog.debug('JS 脚本运行次数统计：', runstatus)
   if (runstatus.times === 0) {
@@ -57,6 +67,13 @@ async function taskCount(filename) {
   }
 }
 
+/**
+ * JS 执行函数
+ * @param  {string} filename   JS 文件名
+ * @param  {string} jscode     JS 执行代码
+ * @param  {object} addContext 附加环境变量 context
+ * @return {string/object}     JS 执行结果
+ */
 function runJS(filename, jscode, addContext) {
   clog.notify(addContext.type, 'runjs:', filename)
   let cb = ''
@@ -110,6 +127,12 @@ function runJS(filename, jscode, addContext) {
   }
 }
 
+/**
+ * exports 函数
+ * @param     {string}    filename      文件名。当 addContext.type = jstest 时为 jscode
+ * @param     {object}    addContext    附加环境变量 context
+ * @return    {string/object}           runJS() 的结果
+ */
 function runJSFile(filename, addContext) {
   if (/^https?:/.test(filename)) {
     var url = filename

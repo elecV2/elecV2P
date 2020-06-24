@@ -59,7 +59,7 @@ module.exports = (app, CONFIG_Port) => {
     switch(req.body.type){
       case "rules":
         let fdata = req.body.data.eplists
-        fs.writeFileSync(path.join(__dirname, '../runjs', 'Lists', 'default.list'), "# elecV2P rules \n\n" + fdata.join("\n"))
+        fs.writeFileSync(path.join(__dirname, '../runjs', 'Lists', 'default.list'), "[elecV2P rules]\n" + fdata.join("\n"))
 
         res.end("规则保存成功")
         CONFIG_RULE.reqlists = []

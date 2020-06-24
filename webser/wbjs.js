@@ -7,14 +7,14 @@ const clog = new logger({ head: 'wbjs' })
 
 const { runJSFile, JSLISTS } = require('../runjs')
 
-const { wsSer, CONFIG_WS } = require('../func/websocket')
+const { wsSer } = require('../func/websocket')
 
 const CONFIG_JSFILE = {
   path: path.join(__dirname, "../runjs/JSFile"),
 }
 
 wsSer.recv.wbrun = fn => {
-  runJSFile(fn, { type: 'wbrun', cb: wsSer.send.func('wbrun') })
+  runJSFile(fn, { type: 'wbrun' })
 }
 
 const wbjs = (app, CONFIG) => {
@@ -56,11 +56,10 @@ const wbjs = (app, CONFIG) => {
       res.write('<style>li {list-style: none;white-space: pre-wrap;}</style>')
       res.write(`
         <script>
-          const wsprotocol = location.protocol == 'https:' ? 'wss://' : 'ws://'
-          const port = /\\.\\d+$/.test(location.hostname) ? ':${CONFIG_WS.webskPort}' : ''
-          const wsSer = wsprotocol + location.hostname + port + '${CONFIG_WS.webskPath}'
+          const wsSer = location.origin.replace('http', 'ws') + '/elecV2P'
           const ws = new WebSocket(wsSer)
           ws.onopen = ()=>{
+            ws.send(JSON.stringify({ type: 'ready', data: 'wbrun' }))
             ws.send(JSON.stringify({ type: 'wbrun', data: '${fn}' }))
           }
           ws.onmessage = msg => {

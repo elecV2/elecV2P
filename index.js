@@ -1,10 +1,7 @@
-const webstser = require('./webmodule')
-const anyproxy = require('./anyproxy')
-
 const CONFIG_Port = {
-  proxy: 8001,    // 代理端口
-  webif: 8002,    // 代理的所有请求查看端口
-  webst: 80       // 设置页面端口（规则更改，JS 添加等）
+  proxy: 8001,    // anyproxy 代理端口
+  webif: 8002,    // 网络请求查看端口
+  webst: 80       // 主页面端口
 }
 
 const aProxyOptions = {
@@ -17,6 +14,9 @@ const aProxyOptions = {
         rootCA: true             // 是否自动启动 rootCA 目录下根证书
       }
       
+const anyproxy = require('./anyproxy')
+const webstser = require('./webmodule')
+
 const proxy = anyproxy(aProxyOptions)
 proxy.start()
 
