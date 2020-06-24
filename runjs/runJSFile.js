@@ -103,7 +103,9 @@ function runJS(filename, jscode, addContext) {
   if (/\/\/ @require +/.test(jscode)) {
     try {
       [...jscode.matchAll(/\/\/ @require +(.+)/g)].forEach(rq=>{
-        rq[1].split(',').forEach(r=>CONTEXT.add({ $require: r.trim() }))
+        rq[1].split(',').forEach(r=>{
+          CONTEXT.add({ $require: r.trim().replace(/^('|"|`)|('|"|`)$/g, '') })
+        })
       })
     } catch(e) {
       fconsole.error('@require error', errStack(e))

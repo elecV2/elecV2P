@@ -34,8 +34,9 @@ module.exports = app=>{
         if(TASKS_WORKER[data.tid]) {
           TASKS_WORKER[data.tid].stop()
           res.end("task stopped!")
+        } else {
+          res.end("no such task")
         }
-        res.end("no such task")
         break
       case "delete":
         if(TASKS_WORKER[data.tid]) {

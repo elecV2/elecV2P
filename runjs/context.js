@@ -216,7 +216,11 @@ module.exports = class {
     }
     if ($require) {
       this.final.console.debug('require module', $require)
-      this.final[$require] = require($require)
+      if (/^\.\//.test($require)) {
+        this.final[$require.split('/').pop().replace(/\.js$/, '')] = require(path.join(__dirname, 'JSFile', $require))
+      } else {
+        this.final[$require] = require($require)
+      }
     }
     if (addContext) {
       Object.assign(this.final, addContext)

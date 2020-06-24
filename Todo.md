@@ -5,7 +5,7 @@
       <pre style="white-space: pre-line;padding: 6px 1em;text-align: left;">
         - [ ] webrunjs to webhook
         - [ ] setting homepage
-        - [ ] linux exec 部分乱码
+        - [ ] websocket 断开 status 显示
       </pre>
     </div>
     <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
@@ -30,6 +30,8 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
+      - [x] require './xxx'
+      - [x] 停止任务 出错 fixed
       - [x] 初始 lists/jsfile 添加
       - [x] overview jsrunstatus
       - [x] $request/$response 测试运行 错误提醒
