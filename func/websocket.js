@@ -11,20 +11,21 @@ const wsSer = {
   },
   recv(msg, ip){
     clog.info('receive message from:', ip, msg)
+  }
+}
+
+const wsobs = {
+  send() {
+    if (this.intval) return
+    this.intval = setInterval(()=>{
+      if (this.WSS) wsSend({ type: 'elecV2Pstatus', data: { clients: this.WSS.clients.size, memoryusage: nStatus() }})
+      else this.stop()
+    }, 3e3)
   },
-  status: {
-    send() {
-      if (this.intval) return
-      this.intval = setInterval(()=>{
-        if (wsSer.$wss) wsSend({ type: 'elecV2Pstatus', data: { clients: wsSer.$wss.clients.size, memoryusage: nStatus() }})
-        else this.stop()
-      }, 3e3)
-    },
-    stop() {
-      if (this.intval) {
-        clearInterval(this.intval)
-        delete this.intval
-      }
+  stop() {
+    if (this.intval) {
+      clearInterval(this.intval)
+      delete this.intval
     }
   }
 }
@@ -37,7 +38,7 @@ wsSer.send.func = type => {
 
 wsSer.recv.ready = recver => {
   // 客户端 recver 准备接收数据
-  wsSer.recverlists.push(recver)
+  if (wsSer.recverlists.indexOf(recver) < 0) wsSer.recverlists.push(recver)
 }
 
 function wsSend(data, target){
@@ -48,9 +49,9 @@ function wsSend(data, target){
     }
     data = JSON.stringify(data)
   }
-  if (wsSer.$wss) {
+  if (wsobs.WSS) {
     clog.debug('send client msg:', data)
-    wsSer.$wss.clients.forEach(client=>{
+    wsobs.WSS.clients.forEach(client=>{
       if (target) {
         if (client.id === target) client.send(data)
       } else if (client.readyState === ws.OPEN) {
@@ -63,10 +64,10 @@ function wsSend(data, target){
 }
 
 function websocketSer({ server, path }) {
-  wsSer.$wss = new ws.Server({ server, path })
+  wsobs.WSS = new ws.Server({ server, path })
   clog.notify('websocket on path:', path)
   
-  wsSer.$wss.on('connection', (ws, req)=>{
+  wsobs.WSS.on('connection', (ws, req)=>{
     ws.ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
     clog.notify(ws.ip, 'new connection')
 
@@ -75,7 +76,7 @@ function websocketSer({ server, path }) {
     ws.send(JSON.stringify({ type: 'euid', data: ws.id }))
 
     // 发送当前服务器内存使用状态
-    wsSer.status.send()
+    wsobs.send()
 
     ws.on('message', (msg, req) => {
       try {
@@ -93,15 +94,15 @@ function websocketSer({ server, path }) {
 
     ws.on("close", ev=>{
       clog.info(ws.ip, 'disconnected', 'reason: ' + ev)
-      if(!wsSer.$wss.clients || wsSer.$wss.clients.size <= 0) {
+      if(!wsobs.WSS.clients || wsobs.WSS.clients.size <= 0) {
         clog.notify('all clients disconnected now')
-        wsSer.status.stop()
+        wsobs.stop()
         wsSer.recverlists = []
       }
     })
   })
 
-  wsSer.$wss.on('error', e=>{
+  wsobs.WSS.on('error', e=>{
     clog.error('websocket error', e)
   })
 }
