@@ -40,6 +40,7 @@ const wbjs = (app, CONFIG) => {
   })
 
   app.get("/webhook", (req, res)=>{
+    let fn = req.query.fn
     if (!CONFIG.wbrtoken) {
       res.end('服务器端未设置 token, 无法运行 JS')
       return
@@ -50,7 +51,6 @@ const wbjs = (app, CONFIG) => {
       return
     }
     if (req.query.type === 'runjs') {
-      let fn = req.query.fn
       if (!/^http(.*)\.js$/.test(fn) && !bIsUrl(fn) && !fs.existsSync(path.join(CONFIG_JSFILE.path, fn))) {
         res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
         res.end(fn + ' 不存在')
