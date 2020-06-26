@@ -9,6 +9,7 @@ module.exports = (app, CONFIG) => {
     switch(req.query.type){
       case 'setting':
         res.end(JSON.stringify({
+          homepage: CONFIG.homepage,
           gloglevel: CONFIG.gloglevel,
           CONFIG_FEED,
           wbrtoken: CONFIG.wbrtoken,
@@ -25,9 +26,16 @@ module.exports = (app, CONFIG) => {
     switch(req.body.type){
       case "config":
         Object.assign(CONFIG, req.body.data)
+        CONFIG_FEED.homepage = CONFIG.homepage
         Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
         fs.writeFileSync(CONFIG.path, JSON.stringify(CONFIG))
         res.end("当前配置 已保存至 " + CONFIG.path)
+        break
+      case "homepage":
+        let homepage = req.body.data.replace(/\/$/, '')
+        CONFIG.homepage = homepage
+        CONFIG_FEED.homepage = homepage
+        res.end('主页设置成功')
         break
       case "gloglevel":
         try {

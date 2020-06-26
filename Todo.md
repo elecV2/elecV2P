@@ -3,8 +3,7 @@
     <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
       <pre style="white-space: pre-line;padding: 6px 1em;text-align: left;">
-        - [ ] webrunjs to webhook
-        - [ ] setting homepage
+        - [ ] webhook start/stop task
       </pre>
     </div>
     <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
@@ -17,7 +16,6 @@
         - mongoDB 或者 其他 nosql 数据保存
         - text editor
         - 正则匹配优化
-        - package/module (main.json/js/lists) 同目录 Store
         - JS Mall/market/store
         - 自签证书自定义生成
         - webpack 分包(?)
@@ -29,6 +27,10 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
+      - [x] webhook deletelogs/get status
+      - [x] mitm 开启/关闭 全部
+      - [x] webrunjs to webhook
+      - [x] setting homepage
       - [x] websocket 断开 status 显示
       - [x] JS 文件列表刷新
       - [x] require './xxx'

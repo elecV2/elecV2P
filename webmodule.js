@@ -28,7 +28,7 @@ const CONFIG = function() {
   return config
 }();
 
-const { wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist } = require('./webser')
+const { wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook } = require('./webser')
 
 function webser(CONFIG_Port) {
   const app = express()
@@ -48,6 +48,7 @@ function webser(CONFIG_Port) {
   wbstore(app)
   wbdata(app, CONFIG_Port)
   wblist(app)
+  wbhook(app, CONFIG)
 
   app.use((req, res, next) => {
     res.end("404")

@@ -2,8 +2,8 @@ const fs = require('fs')
 const path = require('path')
 const formidable = require('formidable')
 
-const { logger, bIsUrl, downloadfile } = require('../utils')
-const clog = new logger({ head: 'wbjs' })
+const { logger, downloadfile } = require('../utils')
+const clog = new logger({ head: 'wbjsfile' })
 
 const { runJSFile, JSLISTS } = require('../runjs')
 
@@ -17,7 +17,7 @@ wsSer.recv.wbrun = fn => {
   runJSFile(fn, { type: 'wbrun' })
 }
 
-const wbjs = (app, CONFIG) => {
+module.exports = (app, CONFIG) => {
   app.get("/jsfile", (req, res)=>{
     let jsfn = req.query.jsfn
     if (jsfn) {
@@ -37,55 +37,6 @@ const wbjs = (app, CONFIG) => {
       storemanage: CONFIG.storemanage,
       jslists: JSLISTS.sort(),
     }))
-  })
-
-  app.get("/webhook", (req, res)=>{
-    if (!CONFIG.wbrtoken) {
-      res.end('服务器端未设置 token, 无法运行 JS')
-      return
-    }
-    if (req.query.token !== CONFIG.wbrtoken) {
-      res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
-      res.end('token 无效')
-      return
-    }
-    if (req.query.type === 'runjs') {
-      let fn = req.query.fn
-      if (!/^http(.*)\.js$/.test(fn) && !bIsUrl(fn) && !fs.existsSync(path.join(CONFIG_JSFILE.path, fn))) {
-        res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
-        res.end(fn + ' 不存在')
-      } else {
-        res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })
-        res.write('<style>li {list-style: none;white-space: pre-wrap;}</style>')
-        res.write(`
-          <script>
-            const wsSer = location.origin.replace('http', 'ws') + '/elecV2P'
-            const ws = new WebSocket(wsSer)
-            ws.onopen = ()=>{
-              ws.send(JSON.stringify({ type: 'ready', data: 'wbrun' }))
-              ws.send(JSON.stringify({ type: 'wbrun', data: '${fn}' }))
-            }
-            ws.onmessage = msg => {
-              let data = JSON.parse(msg.data)
-              if (data.type === 'wbrun') {
-                document.body.insertAdjacentHTML('afterbegin', '<li>' + data.data + '</li>')
-              }
-            }
-            ws.onclose = close => {
-              console.error("WebSocket closed", close)
-              document.body.insertAdjacentHTML('afterbegin', 'WebSocket closed, 无法获取 JS 运行日志，请在服务器端查看 JS 运行结果')
-            }
-            ws.onerror = error => {
-              console.error('WebSocket error', error)
-              document.body.insertAdjacentHTML('afterbegin', 'WebSocket error, 无法获取 JS 运行日志，请在服务器端查看 JS 运行结果')
-            }
-          </script>
-        `)
-        res.end()
-      }
-    } else {
-      res.end('no type set')
-    }
   })
 
   app.put("/jsfile", (req, res)=>{
@@ -161,6 +112,3 @@ const wbjs = (app, CONFIG) => {
     res.end('js uploaded success!')
   })
 }
-
-
-module.exports = wbjs

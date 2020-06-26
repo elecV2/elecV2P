@@ -29,7 +29,8 @@ module.exports = (app, CONFIG_Port) => {
         break
       case "mitmhost":
         res.end(JSON.stringify({
-          mitmhost: CONFIG_RULE.mitmhost,
+          host: CONFIG_RULE.mitmhost,
+          type: CONFIG_RULE.mitmtype
         }))
         break
       case "filter":
@@ -76,6 +77,14 @@ module.exports = (app, CONFIG_Port) => {
         fs.writeFileSync(path.join(__dirname, '../runjs', 'Lists', 'mitmhost.list'), "[mitmhost]\n\n" + mhost.join("\n"))
         res.end("保存 mitmhost : " + mhost.length)
         CONFIG_RULE.mitmhost = mhost
+        break
+      case "mitmtype":
+        let mtype = req.body.data
+        CONFIG_RULE.mitmtype = mtype
+        if (mtype === 'all') clog.notify('MITM 设置为全局模式')
+        else if (mtype === 'none') clog.notify('MITM 已关闭')
+        else clog.notify('MITM 设置为按列表域名解析模式')
+        res.end('设置成功')
         break
       default:{
         res.end("data put error")

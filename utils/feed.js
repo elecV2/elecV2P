@@ -45,8 +45,8 @@ function iftttPush(title, description, url) {
   }
 }
 
-function feedPush(title, description, url) {
-  if (!title || !description) return
+function feedPush(title, description, url = CONFIG_FEED.homepage + '/feed/?new=' + new Date().getTime()) {
+  if (!(title && description)) return
   clog.notify('添加 item', title, description)
   feed.item({
     title,
@@ -72,7 +72,7 @@ const mergefeed = {
   }
 }
 
-function feedAddItem(title = 'elecV2P notification', description =  '通知内容', url = CONFIG_FEED.homepage + '/?new=' + new Date().getTime()) {
+function feedAddItem(title = 'elecV2P notification', description =  '通知内容', url = CONFIG_FEED.homepage + '/feed/?new=' + new Date().getTime()) {
   if (/test/.test(title)) return
   if (CONFIG_FEED.ismerge) {
     mergefeed.content.push(title + ' - ' + now() + '\n' + description + '\n')

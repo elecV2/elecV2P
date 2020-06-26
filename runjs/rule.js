@@ -1,5 +1,4 @@
 const fs = require('fs')
-const url = require('url')
 const path = require('path')
 
 const { runJSFile } = require('./runJSFile')
@@ -77,6 +76,7 @@ function init(){
   }
 
   let config = {
+      mitmtype: 'list',
       ...getRulesList(),
       ...getRewriteList(),
       ...getMitmhost(),
@@ -118,7 +118,7 @@ const localResponse = {
 function getrules($request, $response, lists) {
   const $req = $request.requestOptions
 
-  const urlObj = url.parse($request.url)
+  const urlObj = new URL($request.url)
   let matchstr = {
     ip: urlObj.hostname,
     url: $request.url,
@@ -229,6 +229,9 @@ module.exports = {
     return { response: $response }
   },
   *beforeDealHttpsRequest(requestDetail) {
+    if (CONFIG_RULE.mitmtype === 'all') return true
+    if (CONFIG_RULE.mitmtype === 'none') return false
+    
     let host = requestDetail.host.split(":")[0]
     if (CONFIG_RULE.mitmhost.indexOf(host) !== -1) {
       return true
