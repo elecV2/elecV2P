@@ -112,10 +112,12 @@ function runJS(filename, jscode, addContext) {
     }
   }
 
-  const inTime = jscode.match(/setTimeout|setInterval/g)
+  const inTime = jscode.match(/setTimeout|setInterval|clearInterval|clearTimeout/g)
   if (inTime) {
     if (inTime.indexOf('setTimeout') > -1) CONTEXT.final.setTimeout = setTimeout
     if (inTime.indexOf('setInterval') > -1) CONTEXT.final.setInterval = setInterval
+    if (inTime.indexOf('clearTimeout') > -1) CONTEXT.final.clearTimeout = clearTimeout
+    if (inTime.indexOf('clearInterval') > -1) CONTEXT.final.clearInterval = clearInterval
   }
 
   if (Object.keys(addContext).length) CONTEXT.add({ addContext })
