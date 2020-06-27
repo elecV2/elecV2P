@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const formidable = require('formidable')
 
-const { logger, downloadfile } = require('../utils')
+const { logger, downloadfile, errStack } = require('../utils')
 const clog = new logger({ head: 'wbjsfile' })
 
 const { runJSFile, JSLISTS } = require('../runjs')
@@ -93,10 +93,11 @@ module.exports = (app, CONFIG) => {
     jsfile.multiples = true
     jsfile.parse(req, (err, fields, files) => {
       if (err) {
-        clog.error('Error', err)
-        throw err
+        clog.error('Error', errStack(err))
+        // throw err
       }
 
+      if (!files.js) return
       if (files.js.length) {
         files.js.forEach(file=>{
           clog.notify('上传文件：', file.name)
