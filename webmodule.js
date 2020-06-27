@@ -1,7 +1,7 @@
 const express = require('express')
 const compression = require('compression')
 
-const { logger, CONFIG_FEED, errStack } = require('./utils')
+const { logger, CONFIG_FEED, errStack, isJson, setGlog } = require('./utils')
 const clog = new logger({ head: 'webServer' })
 
 const CONFIG = function() {
@@ -17,9 +17,12 @@ const CONFIG = function() {
   }
   if (fs.existsSync(config.path)) {
     try {
-      Object.assign(config, JSON.parse(fs.readFileSync(config.path), "utf8"))
-      Object.assign(CONFIG_FEED, config.CONFIG_FEED)
-      if(config.gloglevel != 'info') clog.setlevel(config.gloglevel, true)
+      let saveconfig = fs.readFileSync(config.path, "utf8")
+      if (isJson(saveconfig)) {
+        Object.assign(config, JSON.parse(saveconfig))
+        Object.assign(CONFIG_FEED, config.CONFIG_FEED)
+      }
+      if (config.gloglevel != 'info') setGlog(config.gloglevel)
     } catch(e) {
       clog.error(config.path, '配置文件无法解析', errStack(e))
     }

@@ -13,6 +13,8 @@
 
 ## 安装/install
 
+*建议在本地运行。网络部署，风险自负*
+
 ### nodejs （不推荐）
 
 ``` sh
@@ -62,8 +64,6 @@ services:
 ``` sh
 docker-compose up -d
 ```
-
-*建议在本地运行（旁路由/软路由 等）*
 
 ## 端口说明
 
@@ -135,7 +135,7 @@ docker-compose up -d
 
 - 运行 JS
 - 开始/停止 其他定时任务
-- exec 命令。相关命令参考： [child_process_exec](https://nodejs.org/api/child_process.html#child_process_child_process_exec_command_options_callback)
+- exec 命令。参考： [child_process_exec](https://nodejs.org/api/child_process.html#child_process_child_process_exec_command_options_callback)
 
 ## 通知
 
@@ -156,7 +156,7 @@ ifttt 通知需先在设置（setting）面板添加 key。目前 ifttt 通知�
 
 ### 简单声明
 
-该项目仅用于学习交流，任何使用一切后果自负。
+*该项目仅用于学习交流，任何使用，风险自负。*
 
 ## 贡献
 

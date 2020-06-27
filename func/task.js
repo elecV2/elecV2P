@@ -8,7 +8,7 @@ const exec = require('./exec')
 const { wsSer } = require('./websocket')
 const { runJSFile } = require('../runjs/runJSFile')
 
-const { logger, feedAddItem } = require('../utils')
+const { logger, feedAddItem, isJson } = require('../utils')
 const clog = new logger({ head: 'task', cb: wsSer.send.func('tasklog') })
 
 // 任务类型： cron/schedule
@@ -91,9 +91,10 @@ const taskInit = function() {
   // 初始化任务列表
   if (fs.existsSync(path.join(__dirname, '../runjs/Lists', 'task.list'))) {
     try {
-      Object.assign(TASKS_INFO, JSON.parse(fs.readFileSync(path.join(__dirname, '../runjs/Lists', 'task.list'), "utf8")))
+      let tasklist = fs.readFileSync(path.join(__dirname, '../runjs/Lists', 'task.list'), "utf8")
+      if (isJson(tasklist)) Object.assign(TASKS_INFO, JSON.parse(tasklist))
     } catch(e) {
-      clog.error(e)
+      clog.error(e.stack)
     }
   }
 

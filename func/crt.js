@@ -31,7 +31,7 @@ function rootCrtSync() {
     fs.copyFileSync(rootCApath + "/rootCA.key", crtpath + "/rootCA.key")
     return true
   } else {
-    clog.info('rootCA 目录下无相关证书')
+    clog.info('rootCA 目录下无根证书，将自动生成新的证书')
     return false
   }
 }

@@ -1,4 +1,11 @@
-
+function isJson(str) {
+  try {
+    JSON.parse(str)
+    return true
+  } catch {
+    return false
+  }
+}
 
 function euid(len = 8) {
   // 获取一个随机字符，默认长度为 8, 可自定义
@@ -13,4 +20,5 @@ function euid(len = 8) {
 
 module.exports = {
   euid,
+  isJson
 }

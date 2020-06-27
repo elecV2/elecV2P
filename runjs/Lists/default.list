@@ -2,7 +2,7 @@
 host,www.baidu.com,js,0body.js,req
 url,adtest,block,reject,req
 url,adtest/(get|post),block,tinyimg,req
-url,httpbin.org,js,0tampermonkey.js,res
+url,httpbin.org,js,0json.js,res
 useragent,Weibo,js,weibo_ad.js,res
 resstatus,404,js,404.js,res
 host,host.com,ua,iPhone,res
