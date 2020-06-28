@@ -5,7 +5,8 @@ WORKDIR /usr/local/app
 
 RUN yarn install --prod
 
-RUN sed -i 's/1024/2048/g' /usr/local/app/node_modules/node-easy-cert/dist/certGenerator.js
+RUN sed -i 's/1024/2048/g' /usr/local/app/node_modules/node-easy-cert/dist/certGenerator.js \
+    && chmod -R 777 /usr/local/app
 
 EXPOSE 8001 8002 80
 
