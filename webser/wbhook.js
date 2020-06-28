@@ -1,6 +1,8 @@
 const fs = require('fs')
 const path = require('path')
 
+const { TASKS_WORKER, TASKS_INFO } = require('../func')
+
 const { logger, nStatus, bIsUrl } = require('../utils')
 const clog = new logger({ head: 'wbhook' })
 
@@ -74,6 +76,42 @@ module.exports = (app, CONFIG) => {
       }
     } else if (req.query.type === 'status') {
       res.end(JSON.stringify(nStatus()))
+    } else if (req.query.type === 'taskinfo') {
+      res.writeHead(200, { 'Content-Type': 'application/json;charset=utf-8' })
+      for (let tid in TASKS_INFO) {
+        if (TASKS_INFO[tid].name === req.query.tn) {
+          res.end(JSON.stringify(TASKS_INFO[tid]))
+          break
+        }
+      }
+    } else if (req.query.type === 'taskstart') {
+      res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
+      for (let tid in TASKS_INFO) {
+        if (TASKS_INFO[tid].name === req.query.tn && TASKS_WORKER[tid]) {
+          if (TASKS_INFO[tid].running === false) {
+            TASKS_WORKER[tid].start()
+            res.end(TASKS_INFO[tid].name + ' 开始运行，任务内容： ' + JSON.stringify(TASKS_INFO[tid]))
+          } else {
+            res.end(req.query.tn + ' 任务正在运行中，任务内容： ' + JSON.stringify(TASKS_INFO[tid]))
+          }
+          return
+        }
+      }
+      res.end(req.query.tn + ' 任务不存在')
+    } else if (req.query.type === 'taskstop') {
+      res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
+      for (let tid in TASKS_INFO) {
+        if (TASKS_INFO[tid].name === req.query.tn && TASKS_WORKER[tid]) {
+          if (TASKS_INFO[tid].running === true) {
+            TASKS_WORKER[tid].stop()
+            res.end('停止任务 ' + TASKS_INFO[tid].name + '，任务内容： ' + JSON.stringify(TASKS_INFO[tid]))
+          } else {
+            res.end(req.query.tn + ' 任务已停止，任务内容： ' + JSON.stringify(TASKS_INFO[tid]))
+          }
+          return
+        }
+      }
+      res.end(req.query.tn + ' 任务不存在')
     } else {
       res.end('wrong webhook type')
     }

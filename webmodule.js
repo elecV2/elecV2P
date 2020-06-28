@@ -12,7 +12,7 @@ const CONFIG = function() {
   const config = {
     path: path.join(__dirname, 'runjs', 'Lists', 'config.json'),
     gloglevel: 'info',
-    wbrtoken: 'a8c259b2-67fe-4c64-8700-7bfdf1f55cb3',    // 远程运行 JS token（建议修改）
+    wbrtoken: 'a8c259b2-67fe-4c64-8700-7bfdf1f55cb3',    // webhook token（建议修改）
     CONFIG_FEED,
   }
   if (fs.existsSync(config.path)) {
