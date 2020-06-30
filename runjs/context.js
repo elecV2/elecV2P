@@ -17,7 +17,7 @@ function getHeaders(req) {
     // delete Content-Length 能解决部分问题，也可能引入新的 bug（待观察）
     delete req.headers['Content-Length']
     try {
-      return typeof(req.headers) == 'object' ? req.headers : JSON.parse(req.headers)
+      return typeof(req.headers) === 'object' ? req.headers : JSON.parse(req.headers)
     } catch(e) {
       clog.error('req headers error:', errStack(e))
     }
@@ -40,6 +40,23 @@ function getReqBody(req) {
 
 function getResBody(body) {
   return typeof(body) === 'object' ? (Buffer.isBuffer(body) ? body.toString() : JSON.stringify(body)) : body
+}
+
+function getReq(req, method) {
+  if (typeof(req) === 'object') {
+    return {
+        url: req.url,
+        headers: getHeaders(req),
+        data: getReqBody(req),
+        timeout: CONFIG_CONTEXT.timeout_axios,
+        method: req.method || method || 'get'
+      }
+  }
+  return {
+    url: encodeURI(req),
+    timeout: CONFIG_CONTEXT.timeout_axios,
+    method: 'get'
+  }
 }
 
 class contextBase {
@@ -87,13 +104,7 @@ class surgeContext {
   $httpClient = {
     // surge http 请求
     get: (req, cb) => {
-      axios({
-        url: req.url,
-        headers: getHeaders(req),
-        data: getReqBody(req),
-        timeout: CONFIG_CONTEXT.timeout_axios,
-        method: 'get'
-      }).then(response=>{
+      axios(getReq(req)).then(response=>{
         let newres = {
           status: response.status,
           headers: response.headers,
@@ -113,13 +124,7 @@ class surgeContext {
       })
     },
     post: (req, cb) => {
-      axios({
-        url: req.url,
-        headers: getHeaders(req),
-        data: getReqBody(req),
-        timeout: CONFIG_CONTEXT.timeout_axios,
-        method: 'post'
-      }).then(response=>{
+      axios(getReq(req, 'post')).then(response=>{
         let newres = {
           status: response.status,
           headers: response.headers,
@@ -164,13 +169,7 @@ class quanxContext {
     // Quantumult X 网络请求
     fetch: (req, cb) => {
       return new Promise((resolve, reject) => {
-        axios({
-          url: req.url,
-          headers: getHeaders(req),
-          data: getReqBody(req),
-          method: req.method || 'get',
-          timeout: CONFIG_CONTEXT.timeout_axios
-        }).then(response=>{
+        axios(getReq(req)).then(response=>{
           let res = {
                 statusCode: response.status,
                 headers: response.headers,
