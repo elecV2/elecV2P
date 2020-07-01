@@ -4,7 +4,7 @@
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
       <pre style="white-space: pre-line;padding: 6px 1em;text-align: left;">
         - [ ] $hold web ui
-        - [ ] $hold 初测试
+        - [ ] 通过 JS 管理定时任务 $task.add/start/stop
       </pre>
     </div>
     <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
@@ -26,6 +26,9 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
+      - [x] $hold 初测试
+      - [x] cfilter 优化
+      - [x] 任务列表 运行/总数
       - [x] context req 优化
       - [x] webhook start/stop task
       - [x] webhook task info

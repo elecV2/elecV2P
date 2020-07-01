@@ -74,7 +74,7 @@ module.exports = (app, CONFIG_Port) => {
       case "mitmhost":
         let mhost = req.body.data
         mhost = mhost.filter(host=>host.length>2)
-        fs.writeFileSync(path.join(__dirname, '../runjs', 'Lists', 'mitmhost.list'), "[mitmhost]\n\n" + mhost.join("\n"))
+        fs.writeFileSync(path.join(__dirname, '../runjs', 'Lists', 'mitmhost.list'), "[mitmhost]\n" + mhost.join("\n"))
         res.end("保存 mitmhost : " + mhost.length)
         CONFIG_RULE.mitmhost = mhost
         break

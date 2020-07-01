@@ -56,12 +56,12 @@ wsSer.recv.shell = command => {
 
 /**
  * exec 执行函数
- * @param  {string} command         具体指令
- * @param  {string} options.cwd     当前工作目录
- * @param  {string} options.env     env
- * @param  {number} options.timeout timeout，单位：秒
- * @param  {function} options.cb    回调函数，接收参数为 stdout 的数据
- * @param  {boolean} options.logout  是否输出执行日志
+ * @param  {string}    command          具体指令
+ * @param  {string}    options.cwd      当前工作目录
+ * @param  {string}    options.env      env
+ * @param  {number}    options.timeout  timeout，单位：秒
+ * @param  {function}  options.cb       回调函数，接收参数为 stdout 的数据
+ * @param  {boolean}   options.logout   是否输出执行日志
  * @return {none}                 
  */
 function execFunc(command, { cwd, env, timeout = CONFIG_exec.timeout, cb, logout = true }) {
@@ -96,6 +96,6 @@ function execFunc(command, { cwd, env, timeout = CONFIG_exec.timeout, cb, logout
 }
 
 // windows 平台编码转换
-if (/^win/.test(process.platform)) execFunc('CHCP 65001', { logout: false })
+// if (/^win/.test(process.platform)) execFunc('CHCP 65001', { logout: false })
 
 module.exports = execFunc

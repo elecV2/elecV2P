@@ -9,54 +9,54 @@ const clog = new logger({ head: 'context', level: 'debug' })
 const exec = require('../func/exec')
 
 const CONFIG_CONTEXT = {
-  timeout_axios: 5000
+  timeout_axios: 5000            // axios 网络请求超时时间。单位：毫秒
 }
 
-function getHeaders(req) {
-  if (req.headers) {
-    // delete Content-Length 能解决部分问题，也可能引入新的 bug（待观察）
-    delete req.headers['Content-Length']
-    try {
-      return typeof(req.headers) === 'object' ? req.headers : JSON.parse(req.headers)
-    } catch(e) {
-      clog.error('req headers error:', errStack(e))
+const formReq = {
+  getHeaders(req) {
+    if (req.headers) {
+      // delete Content-Length 能解决部分问题，也可能引入新的 bug（待观察）
+      delete req.headers['Content-Length']
+      try {
+        return typeof(req.headers) === 'object' ? req.headers : JSON.parse(req.headers)
+      } catch(e) {
+        clog.error('req headers error:', errStack(e))
+      }
+    } 
+    return {}
+  },
+  getBody(req) {
+    if (req.body) return req.body
+    if (/\?/.test(req.url)) {
+      const spu = req.url.split('?')
+      if (/json/.test(req.headers["Content-Type"])) {
+        return qs.parse(spu[1])
+      } else {
+        return spu[1]
+      }
     }
-  } 
-  return {}
-}
-
-function getReqBody(req) {
-  if (req.body) return req.body
-  if (/\?/.test(req.url)) {
-    const spu = req.url.split('?')
-    if (/json/.test(req.headers["Content-Type"])) {
-      return qs.parse(spu[1])
-    } else {
-      return spu[1]
+    return null
+  },
+  uest(req, method) {
+    if (typeof(req) === 'object') {
+      return {
+        url: encodeURI(req.url),
+        headers: this.getHeaders(req),
+        data: this.getBody(req),
+        timeout: req.timeout || CONFIG_CONTEXT.timeout_axios,
+        method: req.method || method || 'get'
+      }
+    }
+    return {
+      url: encodeURI(req),
+      timeout: req.timeout || CONFIG_CONTEXT.timeout_axios,
+      method: method || 'get'
     }
   }
-  return null
 }
 
 function getResBody(body) {
   return typeof(body) === 'object' ? (Buffer.isBuffer(body) ? body.toString() : JSON.stringify(body)) : body
-}
-
-function getReq(req, method) {
-  if (typeof(req) === 'object') {
-    return {
-        url: req.url,
-        headers: getHeaders(req),
-        data: getReqBody(req),
-        timeout: CONFIG_CONTEXT.timeout_axios,
-        method: req.method || method || 'get'
-      }
-  }
-  return {
-    url: encodeURI(req),
-    timeout: CONFIG_CONTEXT.timeout_axios,
-    method: 'get'
-  }
 }
 
 class contextBase {
@@ -70,11 +70,11 @@ class contextBase {
   $store = {
     get: (key) => {
       this.console.debug('get value for', key)
-      store.get(key)
+      return store.get(key)
     },
     put: (value, key) => {
       this.console.debug('get value for', key)
-      store.put(value, key)
+      return store.put(value, key)
     },
     delete: (key) => {
       if(store.delete(key)) this.console.notify('delete store key:', key)
@@ -102,9 +102,8 @@ class surgeContext {
   }
 
   $httpClient = {
-    // surge http 请求
     get: (req, cb) => {
-      axios(getReq(req)).then(response=>{
+      axios(formReq.uest(req)).then(response=>{
         let newres = {
           status: response.status,
           headers: response.headers,
@@ -124,7 +123,7 @@ class surgeContext {
       })
     },
     post: (req, cb) => {
-      axios(getReq(req, 'post')).then(response=>{
+      axios(formReq.uest(req, 'post')).then(response=>{
         let newres = {
           status: response.status,
           headers: response.headers,
@@ -153,7 +152,6 @@ class surgeContext {
     }
   }
   $notification = {
-    // Surge 通知
     post: (...data) => {
       this.fconsole.notify(data.join(' '))
     }
@@ -166,10 +164,9 @@ class quanxContext {
   }
 
   $task = {
-    // Quantumult X 网络请求
     fetch: (req, cb) => {
       return new Promise((resolve, reject) => {
-        axios(getReq(req)).then(response=>{
+        axios(formReq.uest(req)).then(response=>{
           let res = {
                 statusCode: response.status,
                 headers: response.headers,
@@ -195,7 +192,6 @@ class quanxContext {
     }
   }
   $notify = (...data)=>{
-    // Quantumultx 通知
     this.fconsole.notify(data.join(' '))
   }
 }
