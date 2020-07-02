@@ -18,7 +18,7 @@ const context = require('./context')
 
 const CONFIG_RUNJS = {
   timeout_jsrun: 5000,
-  intervals: 86400,       // 远程 JS 更新时间，单位：秒。 默认：一天
+  intervals: 86400,       // 远程 JS 更新时间，单位：秒。 默认：86400(一天)
   numtofeed: 50,          // 每运行 { numtofeed } 次 JS, 添加一个 Feed item
 
   jslogfile: true,        // 是否将 JS 运行日志保存到 logs 文件夹

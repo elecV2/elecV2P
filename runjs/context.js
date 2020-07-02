@@ -9,27 +9,30 @@ const clog = new logger({ head: 'context', level: 'debug' })
 const exec = require('../func/exec')
 
 const CONFIG_CONTEXT = {
-  timeout_axios: 5000            // axios 网络请求超时时间。单位：毫秒
+  axios_timeout: 5000,            // axios 网络请求超时时间。单位：毫秒
+  axios_usagent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1'  // 通用 User-Agent. 关闭： false
 }
 
 const formReq = {
   getHeaders(req) {
+    let newheaders = {}
     if (req.headers) {
-      // delete Content-Length 能解决部分问题，也可能引入新的 bug（待观察）
-      delete req.headers['Content-Length']
       try {
-        return typeof(req.headers) === 'object' ? req.headers : JSON.parse(req.headers)
+        newheaders = typeof(req.headers) === 'object' ? req.headers : JSON.parse(req.headers)
       } catch(e) {
         clog.error('req headers error:', errStack(e))
       }
-    } 
-    return {}
+      delete newheaders['Content-Length']
+    }
+    if (!newheaders['User-Agent']) newheaders['User-Agent'] = CONFIG_CONTEXT.axios_usagent
+    return newheaders
   },
   getBody(req) {
     if (req.body) return req.body
-    if (/\?/.test(req.url)) {
-      const spu = req.url.split('?')
-      if (/json/.test(req.headers["Content-Type"])) {
+    let url = req.url || req
+    if (/\?/.test(url)) {
+      const spu = url.split('?')
+      if (req.headers && /json/.test(req.headers["Content-Type"])) {
         return qs.parse(spu[1])
       } else {
         return spu[1]
@@ -38,19 +41,12 @@ const formReq = {
     return null
   },
   uest(req, method) {
-    if (typeof(req) === 'object') {
-      return {
-        url: encodeURI(req.url),
-        headers: this.getHeaders(req),
-        data: this.getBody(req),
-        timeout: req.timeout || CONFIG_CONTEXT.timeout_axios,
-        method: req.method || method || 'get'
-      }
-    }
     return {
-      url: encodeURI(req),
-      timeout: req.timeout || CONFIG_CONTEXT.timeout_axios,
-      method: method || 'get'
+      url: encodeURI(req.url || req),
+      headers: this.getHeaders(req),
+      data: this.getBody(req),
+      timeout: req.timeout || CONFIG_CONTEXT.axios_timeout,
+      method: req.method || method || 'get'
     }
   }
 }
