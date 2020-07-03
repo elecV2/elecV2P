@@ -1,6 +1,5 @@
 const vm = require('vm')
 const fs = require('fs')
-const axios = require('axios')
 const path = require('path')
 
 const { logger, feedAddItem, now, errStack, downloadfile } = require('../utils')
@@ -157,7 +156,7 @@ function runJSFile(filename, addContext) {
 
   if (addContext && addContext.type === 'jstest') {
     var JsStr = filename
-    filename = 'jstest'
+    filename = 'testrun.js'
   } else {
     let filePath = path.join(__dirname, 'JSFile', filename)
     if (!fs.existsSync(filePath)) {

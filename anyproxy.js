@@ -1,30 +1,21 @@
 const fs = require('fs')
-const proxy = require('anyproxy')
-const exec = require('child_process').exec
 
 const { logger } = require('./utils')
 const clog = new logger({ head: 'anyproxy' })
 
 function anyproxy(eoption) {
+  const proxy = require('anyproxy')
+
   if (eoption.rootCA) {
-    const homedir = require('os').homedir()
-    if(!fs.existsSync(homedir + '/.anyproxy')) fs.mkdirSync(homedir + '/.anyproxy')
-    if(!fs.existsSync(homedir + '/.anyproxy/certificates')) fs.mkdirSync(homedir + '/.anyproxy/certificates')
     require('./func').rootCrtSync()
   }
+
   if(!proxy.utils.certMgr.ifRootCAFileExists()) {
     proxy.utils.certMgr.generateRootCA((error, keyPath)=>{
-      if(!error){
-        const certDir = require('path').dirname(keyPath)
-        clog.notify('准备生成新的根证书: ' + certDir)
-        const isWin = /^win/.test(process.platform)
-        if(isWin){
-          exec('start .', {cwd: certDir})
-        } else {
-          exec('open .', {cwd: certDir})
-        }
+      if(error){
+        clog.error(error)
       } else {
-        clog.err(error)
+        clog.notify('新的根证书已生成', keyPath, '安装并信任后，MITM 才能正常工作')
       }
     })
   }

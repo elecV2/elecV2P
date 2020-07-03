@@ -2,30 +2,39 @@
   <div style="width: 50%;margin: 0 12px;">
     <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
-      <pre style="white-space: pre-line;padding: 6px 1em;text-align: left;">
-        - [ ] $hold web ui
+      <pre style="white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
         - [ ] 通过 JS 管理定时任务 $task.add/start/stop
+        - [ ] webhook 添加定时任务
+        - [ ] $hold 添加 header(转文本编辑)
+        - [ ] rules 规则合法性检测
       </pre>
     </div>
     <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
-      <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
+      <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
         - 说明文档 [progressing...]
-        - 内存使用优化 [progressing...]
-        - $HOLD. hold返回结果到前端页面进行编辑
         - tg bot 日志删除 feed通知 远程JS 任务开始/暂停
         - axios 封装
         - mongoDB 或者 其他 nosql 数据保存
         - 自签证书自定义生成
         - webpack 分包(?)
         - 多语言 [一个可能永远不填的坑...]
-        - anyproxy 替换，使用其他库或原生代码，增强可定制性
+        - anyproxy 替换，使用其他库或原生代码，增强可定制性 [cancel?]
       </pre>
     </div>
   </div>
-  <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px;">
+  <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 640px; overflow: hidden auto;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
-    <pre style="margin-bottom: 0;white-space: pre-line;padding: 6px 1em;text-align: left;">
+    <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
+      - [x] hold_label 调整
+      - [x] $HOLD overflow/header delete/url
+      - [X] (P) $HOLD. hold返回结果到前端页面进行编辑
+      - [x] tg bot 日志查看
+      - [x] $hold timeout/req
+      - [x] default list 添加 hold
+      - [x] $hold web ui/title
+      - [X] (P)内存使用优化 [progressing..., done.了吧..]
+      - [x] wbstore 统一
       - [x] axios header 默认 user-agent
       - [x] $hold 初测试
       - [x] cfilter 优化

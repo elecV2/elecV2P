@@ -16,16 +16,12 @@ const CONFIG = function() {
     CONFIG_FEED,
   }
   if (fs.existsSync(config.path)) {
-    try {
-      let saveconfig = fs.readFileSync(config.path, "utf8")
-      if (isJson(saveconfig)) {
-        Object.assign(config, JSON.parse(saveconfig))
-        Object.assign(CONFIG_FEED, config.CONFIG_FEED)
-      }
-      if (config.gloglevel != 'info') setGlog(config.gloglevel)
-    } catch(e) {
-      clog.error(config.path, '配置文件无法解析', errStack(e))
+    let saveconfig = fs.readFileSync(config.path, "utf8")
+    if (isJson(saveconfig)) {
+      Object.assign(config, JSON.parse(saveconfig))
+      Object.assign(CONFIG_FEED, config.CONFIG_FEED)
     }
+    if (config.gloglevel != 'info') setGlog(config.gloglevel)
   }
 
   return config
@@ -33,7 +29,7 @@ const CONFIG = function() {
 
 const { wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook } = require('./webser')
 
-function webser(CONFIG_Port) {
+module.exports = (CONFIG_Port) => {
   const app = express()
   app.use(compression())
   app.use(express.json())
@@ -70,5 +66,3 @@ function webser(CONFIG_Port) {
   const { websocketSer } = require('./func/websocket')
   websocketSer({ server, path: '/elecV2P' })
 }
-
-module.exports = webser

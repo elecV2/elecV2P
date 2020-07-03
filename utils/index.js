@@ -1,5 +1,4 @@
 const fs = require('fs')
-const url = require('url')
 const path = require('path')
 const axios = require('axios')
 
@@ -72,16 +71,16 @@ const store = {
     if (fs.existsSync(path.join(this.path, key))) {
       return fs.readFileSync(path.join(this.path, key), 'utf8')
     }
-    return false
+    return undefined
   },
   put(value, key) {
     clog.debug('put value to', key)
-    try {
+    if (key && value) {
       fs.writeFileSync(path.join(this.path, key), value, 'utf8')
       return true
-    } catch {
-      return false
-    }
+    } 
+    clog.notify('store put error: no key or value')
+    return false
   },
   delete(key) {
     clog.debug('delete store key:', key)
@@ -92,6 +91,13 @@ const store = {
       clog.error(errStack(e, true))
       return false
     }
+  },
+  all() {
+    const storedata = {}
+    fs.readdirSync(this.path).forEach(s=>{
+      storedata[s] = fs.readFileSync(path.join(this.path, s), 'utf8')
+    })
+    return storedata
   }
 }
 

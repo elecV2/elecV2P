@@ -13,6 +13,7 @@ const CONFIG_JSFILE = {
   path: path.join(__dirname, "../runjs/JSFile"),
 }
 
+// webhook runjs
 wsSer.recv.wbrun = fn => {
   runJSFile(fn, { type: 'wbrun' })
 }
@@ -62,7 +63,7 @@ module.exports = (app, CONFIG) => {
       res.end("have no content")
       return
     }
-    if (req.body.jsname == 'totest') {
+    if (req.body.jsname === 'totest') {
       let jsres = runJSFile(req.body.jscontent, { type: 'jstest' })
       res.end(typeof(jsres) !== 'string' ? JSON.stringify(jsres) : jsres)
     } else {

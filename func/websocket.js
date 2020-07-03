@@ -103,6 +103,7 @@ function websocketSer({ server, path }) {
   })
 
   wsobs.WSS.on('error', e=>{
+    wsobs.WSS = null
     clog.error('websocket error', e)
   })
 }
