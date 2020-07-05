@@ -36,7 +36,7 @@ module.exports = (app, CONFIG) => {
   app.get("/jsmanage", (req, res)=>{
     res.end(JSON.stringify({
       storemanage: CONFIG.storemanage,
-      jslists: JSLISTS.sort(),
+      jslists: JSLISTS,
     }))
   })
 

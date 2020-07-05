@@ -16,7 +16,7 @@ const context = require('./context')
 })();
 
 const CONFIG_RUNJS = {
-  timeout_jsrun: 5000,
+  timeout_jsrun: 5000,    // JS 运行时间。单位：毫秒
   intervals: 86400,       // 远程 JS 更新时间，单位：秒。 默认：86400(一天)
   numtofeed: 50,          // 每运行 { numtofeed } 次 JS, 添加一个 Feed item
 
@@ -126,7 +126,7 @@ function runJS(filename, jscode, addContext) {
     return CONTEXT.final.$result || result
   } catch(error) {
     fconsole.error(errStack(error, true))
-    return { error: errStack(error) }
+    return { body: errStack(error) }
   }
 }
 
@@ -144,10 +144,10 @@ function runJSFile(filename, addContext) {
     if (!fs.existsSync(filePath) || new Date().getTime() - fs.statSync(filePath).mtimeMs > CONFIG_RUNJS.intervals*1000) {
       return new Promise((resolve, reject)=>{
         downloadfile(url, filePath).then(()=>{
-          resolve(runJS(filename, fs.readFileSync(filePath), addContext))
+          resolve(runJS(filename, fs.readFileSync(filePath, 'utf8'), addContext))
         }).catch(error=>{
           error = errStack(error)
-          clog.error('运行', url, '出现错误，请尝试下载到服务器再运行', error)
+          clog.error('运行', url, '出现错误', error)
           reject(error)
         })
       })

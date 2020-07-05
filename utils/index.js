@@ -41,8 +41,9 @@ function downloadfile(durl, dest) {
         resolve(dest)
       })
     }).catch(e=>{
-      clog.error('download fail!', e)
-      reject('download fail' + errStack(e))
+      e = errStack(e)
+      clog.error(durl, 'download fail!', e)
+      reject('download fail! ' + e)
     })
   })
 }

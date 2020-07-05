@@ -129,7 +129,13 @@ function getrules($request, $response, lists) {
     restype: $response?$response.header["Content-Type"]:"",
     resbody: $response?$response.body:""
   }
-  return lists.filter(l=>{ return (new RegExp(l[1])).test(matchstr[l[0]]) })
+  for (let mr of lists) {
+    if ((new RegExp(mr[1])).test(matchstr[mr[0]])) {
+      clog.info("match rule:", mr.join(','))
+      return mr
+    }
+  }
+  return false
 }
 
 function formBody(body) {
@@ -155,90 +161,97 @@ module.exports = {
   summary: 'elecV2P - customize personal network',
   CONFIG_RULE,
   *beforeSendRequest(requestDetail) {
-    let getr = getrules(requestDetail, null, CONFIG_RULE.reqlists)
-    if(getr.length) clog.info("match request modify rules:", getr.length)
-    for(let r of getr) {
-      if (r[2] === 'hold') {
-        if (wsSer.recverlists.length === 0) {
-          clog.notify('no websocket connected, skip $HOLD rule')
-          return requestDetail
+    let matchreq = getrules(requestDetail, null, CONFIG_RULE.reqlists)
+    if (!matchreq) return requestDetail
+    if (matchreq[2] === 'hold') {
+      if (wsSer.recverlists.length === 0) {
+        clog.notify('no websocket connected, skip $HOLD rule')
+        return requestDetail
+      }
+      wsSer.send({
+        type: 'hold',
+        data: {
+          title: matchreq[0] + ' - ' + matchreq[1] + ' (request)',
+          request: {
+            method: requestDetail.requestOptions.method,
+            hostname: requestDetail.requestOptions.hostname,
+            port: requestDetail.requestOptions.port,
+            path: requestDetail.requestOptions.path
+          },
+          header: requestDetail.requestOptions.headers,
+          body: requestDetail.requestData.toString()
         }
-        wsSer.send({
-          type: 'hold',
-          data: {
-            title: r[0] + ' - ' + r[1] + ' (request)',
-            request: {
-              method: requestDetail.requestOptions.method,
-              hostname: requestDetail.requestOptions.hostname,
-              port: requestDetail.requestOptions.port,
-              path: requestDetail.requestOptions.path
-            },
-            header: requestDetail.requestOptions.headers,
-            body: requestDetail.requestData.toString()
-          }
-        })
-        clog.notify('waiting $HOLD request results')
-        return new Promise((resolve, reject) => {
-          wsSer.recv.hold = res => {
-            wsSer.recv.hold = null
-            requestDetail.requestOptions.headers = res.header
-            requestDetail.requestData = res.body
-            if (res.request) Object.assign(requestDetail.requestOptions, res.request)
-            clog.notify('request $HOLD done')
-            resolve(requestDetail)
-          }
+      })
+      clog.notify('waiting $HOLD request results')
+      return new Promise((resolve, reject) => {
+        wsSer.recv.hold = res => {
+          wsSer.recv.hold = null
+          requestDetail.requestOptions.headers = res.header
+          requestDetail.requestData = res.body
+          if (res.request) Object.assign(requestDetail.requestOptions, res.request)
+          clog.notify('request $HOLD done')
+          resolve(requestDetail)
+        }
 
-          if (Number(r[3]) > 0) {
-            setTimeout(()=>{
-              wsSer.recv.hold = null
-              wsSer.send({ type: 'hold', data: 'over' })
-              clog.notify('$HOLD timeout, continue with orignal data')
-              resolve(requestDetail)
-            }, Number(r[3]) * 1000)
-          }
-        })
-      }
-      if ("block" === r[2]) {
-        clog.info("block - " + r[3])
-        return { response: localResponse[r[3]] }
-      }
-      if (/^(30.)$/.test(r[2])) {
-        clog.info(r[2], "重定向至", r[3])
-        return {
-          response: {
-            statusCode: r[2],
-            header: { Location: r[3] }
-          }
+        if (Number(matchreq[3]) > 0) {
+          setTimeout(()=>{
+            wsSer.recv.hold = null
+            wsSer.send({ type: 'hold', data: 'over' })
+            clog.notify('$HOLD timeout, continue with orignal data')
+            resolve(requestDetail)
+          }, Number(matchreq[3]) * 1000)
         }
-      }
-      if ("ua" === r[2]) {
-        requestDetail.requestOptions.headers['User-Agent'] = CONFIG_RULE.uagent[r[3]].header
-        clog.info("User-Agent 设置为：" + CONFIG_RULE.uagent[r[3]])
-        continue
-      }
-      // 通过 JS 文件修改请求体
-      if ('js' === r[2] ) {
-        let jsres = runJSFile(r[3], { $request: formRequest(requestDetail) })
-        if (jsres.response) {
-          // 直接返回结果，不访问目标网址
-          clog.notify('返回结果:', jsres.response)
-          return { 
-            response: Object.assign(localResponse.reject, jsres.response) 
-          }
-        }
-        // 请求信息修改
-        if (jsres["User-Agent"]) {
-          clog.notify("User-Agent 设置为: " + jsres["User-Agent"])
-          requestDetail.requestOptions.headers["User-Agent"] = jsres["User-Agent"]
-        } else if (jsres.body) {
-          clog.notify("body changed")
-          requestDetail.requestData = jsres.body
-        } else {
-          Object.assign(requestDetail.requestOptions, jsres)
+      })
+    }
+    if ("block" === matchreq[2]) {
+      clog.info("block - " + matchreq[3])
+      return { response: localResponse[matchreq[3]] }
+    }
+    if (/^(30.)$/.test(matchreq[2])) {
+      clog.info(matchreq[2], "重定向至", matchreq[3])
+      return {
+        response: {
+          statusCode: matchreq[2],
+          header: { Location: matchreq[3] }
         }
       }
     }
-    return requestDetail
+    // 通过 JS 文件修改请求体
+    if ('js' === matchreq[2] ) {
+      return new Promise(async (resolve, reject)=>{
+        let jsres = runJSFile(matchreq[3], { $request: formRequest(requestDetail) })
+        if (jsres instanceof Promise) {
+          jsres = await jsres.catch(()=>{
+            resolve(requestDetail)
+          })
+        }
+        if (jsres) {
+          if (jsres.response) {
+            // 直接返回结果，不访问目标网址
+            clog.notify('返回结果:', jsres.response)
+            resolve({ 
+              response: Object.assign(localResponse.reject, jsres.response) 
+            })
+          }
+          // 请求信息修改
+          if (jsres["User-Agent"]) {
+            clog.notify("User-Agent 设置为: " + jsres["User-Agent"])
+            requestDetail.requestOptions.headers["User-Agent"] = jsres["User-Agent"]
+          } else if (jsres.body) {
+            clog.notify("request body changed")
+            requestDetail.requestData = jsres.body
+          } else {
+            Object.assign(requestDetail.requestOptions, jsres)
+          }
+        }
+        resolve(requestDetail)
+      })
+    }
+    if ("ua" === matchreq[2]) {
+      requestDetail.requestOptions.headers['User-Agent'] = CONFIG_RULE.uagent[matchreq[3]].header
+      clog.info("User-Agent 设置为：" + CONFIG_RULE.uagent[matchreq[3]])
+      return requestDetail
+    }
   },
   *beforeSendResponse(requestDetail, responseDetail) {
     const $request = requestDetail
@@ -247,64 +260,78 @@ module.exports = {
     for (let r of CONFIG_RULE.rewritelists) {
       if ((new RegExp(r[0])).test($request.url)) {
         clog.info('match rewrite rules:', r[0], r[1])
-        let jsres = runJSFile(r[1], { $request: formRequest($request), $response: formResponse($response) })
-        Object.assign($response, jsres ? (jsres.response ? jsres.response : jsres) : {})
-        break
-      }
-    }
-
-    let getr = getrules($request, $response, CONFIG_RULE.reslists)
-    if (getr.length) clog.info("match response modify rules:", getr.length)
-    for (let r of getr) {
-      if (r[2] === 'hold') {
-        if (wsSer.recverlists.length === 0) {
-          clog.notify('no websocket connected, skip $HOLD rule')
-          return { response: $response }
-        }
-        wsSer.send({
-          type: 'hold',
-          data: {
-            title: r[0] + ' - ' + r[1] + ' (response)',
-            header: $response.header,
-            body: $response.body.toString()
-          }
-        })
-        clog.notify('waiting $HOLD response results')
-        return new Promise((resolve, reject) => {
-          wsSer.recv.hold = res => {
-            wsSer.recv.hold = null
-            Object.assign($response, res)
-            clog.notify('response $HOLD done')
-            resolve({ response: $response })
-          }
-
-          if (Number(r[3]) > 0) {
-            setTimeout(()=>{
-              wsSer.recv.hold = null
-              wsSer.send({ type: 'hold', data: 'over' })
-              clog.notify('$HOLD timeout, continue with orignal data')
+        return new Promise(async (resolve, reject)=>{
+          let jsres = runJSFile(r[1], { $request: formRequest($request), $response: formResponse($response) })
+          if (jsres instanceof Promise) {
+            jsres = await jsres.catch(()=>{
               resolve({ response: $response })
-            }, Number(r[3]) * 1000)
+            })
           }
+          Object.assign($response, jsres ? (jsres.response ? jsres.response : jsres) : {})
+          resolve({ response: $response })
         })
-      } else if ("block" === r[2]) {
-        clog.info("block - " + r[3])
-        return { response: localResponse[r[3]] }
-      } else if (/^(30.)$/.test(r[2])) {
-        clog.info(r[2], "重定向至", r[3])
-        return {
-          response: {
-            statusCode: r[2],
-            header: { Location: r[3] }
-          }
-        }
-      } else if (r[2] === "js") {
-        let jsres = runJSFile(r[3], { $request: formRequest($request), $response: formResponse($response) })
-        Object.assign($response, jsres ? (jsres.response ? jsres.response : jsres) : {})
       }
     }
 
-    return { response: $response }
+    let matchres = getrules($request, $response, CONFIG_RULE.reslists)
+    if (!matchres) return { response: $response }
+    if (matchres[2] === 'hold') {
+      if (wsSer.recverlists.length === 0) {
+        clog.notify('no websocket connected, skip $HOLD rule')
+        return { response: $response }
+      }
+      wsSer.send({
+        type: 'hold',
+        data: {
+          title: matchres[0] + ' - ' + matchres[1] + ' (response)',
+          header: $response.header,
+          body: $response.body.toString()
+        }
+      })
+      clog.notify('waiting $HOLD response results')
+      return new Promise((resolve, reject) => {
+        wsSer.recv.hold = res => {
+          wsSer.recv.hold = null
+          Object.assign($response, res)
+          clog.notify('response $HOLD done')
+          resolve({ response: $response })
+        }
+
+        if (Number(matchres[3]) > 0) {
+          setTimeout(()=>{
+            wsSer.recv.hold = null
+            wsSer.send({ type: 'hold', data: 'over' })
+            clog.notify('$HOLD timeout, continue with orignal data')
+            resolve({ response: $response })
+          }, Number(matchres[3]) * 1000)
+        }
+      })
+    }
+    if ("block" === matchres[2]) {
+      clog.info("block - " + matchres[3])
+      return { response: localResponse[matchres[3]] }
+    }
+    if (/^(30.)$/.test(matchres[2])) {
+      clog.info(matchres[2], "重定向至", matchres[3])
+      return {
+        response: {
+          statusCode: matchres[2],
+          header: { Location: matchres[3] }
+        }
+      }
+    }
+    if (matchres[2] === "js") {
+      return new Promise(async (resolve, reject)=>{
+        let jsres = runJSFile(matchres[3], { $request: formRequest($request), $response: formResponse($response) })
+        if (jsres instanceof Promise) {
+          jsres = await jsres.catch(()=>{
+            resolve({ response: $response })
+          })
+        }
+        Object.assign($response, jsres ? (jsres.response ? jsres.response : jsres) : {})
+        resolve({ response: $response })
+      })
+    }
   },
   *beforeDealHttpsRequest(requestDetail) {
     if (CONFIG_RULE.mitmtype === 'all') return true
