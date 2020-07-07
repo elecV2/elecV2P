@@ -6,14 +6,28 @@ const clog = new logger({ head: 'wblist' })
 
 const { CONFIG_RULE } = require('../runjs')
 
-module.exports = app=>{
+function getList(name) {
+  let listpath = path.join(__dirname, '../runjs', 'Lists', name)
+  if (fs.existsSync(listpath)) {
+    return fs.readFileSync(listpath, 'utf8')
+  }
+  return name + ' 文件不存在'
+}
+
+module.exports = app => {
+  const LISTPATH = path.join(__dirname, '../runjs', 'Lists')
+
+  app.get("/filter", (req, res)=>{
+    res.end(getList('filter.list'))
+  })
+  
   app.post("/rewritelists", (req, res)=>{
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress) 
       , "保存 rewrite 规则列表")
     if (req.body.subrule || req.body.rewritelists) {
       CONFIG_RULE.subrules = req.body.subrule
       CONFIG_RULE.rewritelists = req.body.rewritelists
-      let file = fs.createWriteStream(path.join(__dirname, '../runjs', 'Lists', 'rewrite.list'))
+      let file = fs.createWriteStream(path.join(LISTPATH, 'rewrite.list'))
       file.on('error', (err)=>clog.err(err))
 
       file.write('[sub]\n')
@@ -36,7 +50,7 @@ module.exports = app=>{
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress) 
       + " 保存最新 filter.list")
     if (req.body.filterlist) {
-      let file = fs.createWriteStream(path.join(__dirname, '../runjs', 'Lists', 'filter.list'))
+      let file = fs.createWriteStream(path.join(LISTPATH, 'filter.list'))
       file.on('error', (err)=>clog.error(err))
       file.write("[elecV2P filter.list]\n")
       req.body.filterlist.forEach(fr=>{

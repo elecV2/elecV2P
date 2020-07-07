@@ -2,7 +2,7 @@ const vm = require('vm')
 const fs = require('fs')
 const path = require('path')
 
-const { logger, feedAddItem, now, errStack, downloadfile } = require('../utils')
+const { logger, feedAddItem, now, errStack, downloadfile, isJson } = require('../utils')
 const clog = new logger({ head: 'runJSFile', level: 'debug' })
 
 const { wsSer } = require('../func/websocket')
@@ -123,7 +123,8 @@ function runJS(filename, jscode, addContext) {
 
   try {
     const result = vm.runInNewContext(jscode, CONTEXT.final, { displayErrors: true, timeout: CONFIG_RUNJS.timeout_jsrun })
-    return CONTEXT.final.$result || result
+    if (CONTEXT.final.$result) return CONTEXT.final.$result
+    return (typeof result === 'object' && !isJson(result)) ? null : result
   } catch(error) {
     fconsole.error(errStack(error, true))
     return { body: errStack(error) }

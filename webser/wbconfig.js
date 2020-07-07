@@ -28,7 +28,7 @@ module.exports = (app, CONFIG) => {
         Object.assign(CONFIG, req.body.data)
         CONFIG_FEED.homepage = CONFIG.homepage
         Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
-        fs.writeFileSync(CONFIG.path, JSON.stringify(CONFIG))
+        fs.writeFileSync(CONFIG.path, JSON.stringify(CONFIG, null, 2))
         res.end("当前配置 已保存至 " + CONFIG.path)
         break
       case "homepage":

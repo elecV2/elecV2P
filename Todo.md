@@ -4,7 +4,6 @@
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
       <pre style="white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
         - [ ] 通过 JS 管理定时任务 $task.add/start/stop
-        - [ ] webhook 添加定时任务
         - [ ] rules 规则合法性检测
         - [ ] 设置：JS 更新时间
       </pre>
@@ -26,6 +25,8 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 640px; overflow: hidden auto;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
+      - [x] JS 运行优化
+      - [x] tg bot status
       - [x] 取消多规则匹配
       - [x] 远程 JS
       - [x] $hold 添加 header(转文本编辑)
