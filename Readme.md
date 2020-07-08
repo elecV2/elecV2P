@@ -1,6 +1,6 @@
 ## 简介
 
-一款网络工具。 - customize personal network
+一款不止于 MITM 的网络工具。 - customize personal network
 
 ### 基础功能
 
@@ -8,7 +8,7 @@
 - MITM（需安装证书）
 - JS 脚本运行
 - 定时任务（倒计时/cron 定时）
-- 定时任务通知
+- FEED/IFTTT 通知
 
 ## 安装/install
 

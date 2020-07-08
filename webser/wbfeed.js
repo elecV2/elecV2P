@@ -3,11 +3,13 @@ const clog = new logger({ head: 'wbfeed' })
 
 module.exports = app => {
   app.get("/feed", (req, res)=>{
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get feed")
     res.set('Content-Type', 'text/xml')
     res.end(feedXml())
   })
 
   app.put("/feed", (req, res)=>{
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "put feed")
     let data = req.body.data
     switch(req.body.type){
       case "op":

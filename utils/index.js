@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const axios = require('axios')
 
-const { logger, setGlog } = require('./logger')
+const { logger, setGlog, LOGFILE } = require('./logger')
 const { now, wait } = require('./time')
 const feed = require('./feed')
 const string = require('./string')
@@ -105,6 +105,7 @@ const store = {
 module.exports = {
   logger,
   setGlog,
+  LOGFILE,
   now,
   wait,
   errStack,

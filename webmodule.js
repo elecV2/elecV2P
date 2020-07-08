@@ -1,6 +1,8 @@
 const express = require('express')
 const compression = require('compression')
 
+const { CONFIG_RUNJS } = require('./runjs/runJSFile')
+
 const { logger, CONFIG_FEED, errStack, isJson, setGlog } = require('./utils')
 const clog = new logger({ head: 'webServer' })
 
@@ -13,13 +15,13 @@ const CONFIG = function() {
     path: path.join(__dirname, 'runjs', 'Lists', 'config.json'),
     gloglevel: 'info',
     wbrtoken: 'a8c259b2-67fe-4c64-8700-7bfdf1f55cb3',    // webhook token（建议修改）
-    CONFIG_FEED,
   }
   if (fs.existsSync(config.path)) {
     let saveconfig = fs.readFileSync(config.path, "utf8")
     if (isJson(saveconfig)) {
       Object.assign(config, JSON.parse(saveconfig))
       Object.assign(CONFIG_FEED, config.CONFIG_FEED)
+      Object.assign(CONFIG_RUNJS, config.CONFIG_RUNJS)
     }
     if (config.gloglevel != 'info') setGlog(config.gloglevel)
   }

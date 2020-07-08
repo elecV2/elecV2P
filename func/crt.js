@@ -2,7 +2,6 @@ const fs = require('fs')
 const path = require('path')
 
 const crtpath = require('os').homedir() + '/.anyproxy/certificates'
-const rootCApath = path.join(__dirname, "../rootCA")
 
 const { logger } = require('../utils')
 const clog = new logger({ head: 'crtFunc' })
@@ -25,6 +24,7 @@ function clearCrt() {
 
 function rootCrtSync() {
   // 同步用户根证书和系统根证书
+  const rootCApath = path.join(__dirname, "../rootCA")
   if (fs.existsSync(path.join(rootCApath, "rootCA.crt")) && fs.existsSync(path.join(rootCApath, "rootCA.key"))) {
     clog.notify('启用 rootCA 文件夹下根证书')
     fs.copyFileSync(rootCApath + "/rootCA.crt", crtpath + "/rootCA.crt")

@@ -5,22 +5,16 @@ const formidable = require('formidable')
 const { logger, downloadfile, errStack } = require('../utils')
 const clog = new logger({ head: 'wbjsfile' })
 
-const { runJSFile, JSLISTS } = require('../runjs')
-
-const { wsSer } = require('../func/websocket')
+const { runJSFile, JSLISTS, CONFIG_RUNJS } = require('../runjs')
 
 const CONFIG_JSFILE = {
   path: path.join(__dirname, "../runjs/JSFile"),
 }
 
-// webhook runjs
-wsSer.recv.wbrun = fn => {
-  runJSFile(fn, { type: 'wbrun' })
-}
-
 module.exports = (app, CONFIG) => {
   app.get("/jsfile", (req, res)=>{
     let jsfn = req.query.jsfn
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get js file", jsfn)
     if (jsfn) {
       if (fs.existsSync(path.join(CONFIG_JSFILE.path, jsfn))) {
         res.end(fs.readFileSync(path.join(CONFIG_JSFILE.path, jsfn), "utf8"))
@@ -34,13 +28,25 @@ module.exports = (app, CONFIG) => {
   })
 
   app.get("/jsmanage", (req, res)=>{
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get js manage data")
     res.end(JSON.stringify({
       storemanage: CONFIG.storemanage,
       jslists: JSLISTS,
     }))
   })
 
+  app.put("/runjsconfig", (req, res)=>{
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "put runjsconfig")
+    try {
+      Object.assign(CONFIG_RUNJS, req.body.data)
+      res.end(`RUNJS 相关设置修改成功`)
+    } catch {
+      res.end('RUNJS 相关设置修改失败')
+    }
+  })
+
   app.put("/jsfile", (req, res)=>{
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "put js file")
     let op = req.body.op
     switch(op){
       case 'jsdownload':
@@ -59,6 +65,7 @@ module.exports = (app, CONFIG) => {
   })
 
   app.post("/jsfile", (req, res)=>{
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "post js file")
     if (!req.body.jscontent) {
       res.end("have no content")
       return
@@ -87,6 +94,7 @@ module.exports = (app, CONFIG) => {
   })
 
   app.post('/uploadjs', (req, res) => {
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "正在上传 JS 文件")
     // js文件上传
     var jsfile = new formidable.IncomingForm()
     jsfile.maxFieldsSize = 2 * 1024 * 1024 //限制为最大2M

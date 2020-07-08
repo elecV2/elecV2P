@@ -5,15 +5,15 @@
       <pre style="white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
         - [ ] 通过 JS 管理定时任务 $task.add/start/stop
         - [ ] rules 规则合法性检测
-        - [ ] 设置：JS 更新时间
+        - [ ] webhook ws 重复问题
+        - [ ] websocket recv null
       </pre>
     </div>
     <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
       <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
         - 说明文档 [progressing...]
-        - tg bot 日志删除 feed通知 远程JS 任务开始/暂停
-        - axios 封装
+        - TGbot 日志删除 远程JS 任务列表
         - mongoDB 或者 其他 nosql 数据保存
         - 自签证书自定义生成
         - webpack 分包(?)
@@ -25,6 +25,9 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 640px; overflow: hidden auto;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
+      - [x] logger 优化
+      - [x] web UI 优化
+      - [x] RUNJS 相关设置
       - [x] JS 运行优化
       - [x] tg bot status
       - [x] 取消多规则匹配

@@ -9,6 +9,11 @@ const { wsSer } = require('../func/websocket')
 const context = require('./context')
 
 ;(()=>{
+  // webhook runjs
+  wsSer.recv.wbrun = fn => {
+    runJSFile(fn, { type: 'wbrun' })
+  }
+  
   const StoreFolder = path.join(__dirname, 'Store')
   const JSFolder = path.join(__dirname, 'JSFile')
   if(!fs.existsSync(StoreFolder)) fs.mkdirSync(StoreFolder)
@@ -17,8 +22,8 @@ const context = require('./context')
 
 const CONFIG_RUNJS = {
   timeout_jsrun: 5000,    // JS 运行时间。单位：毫秒
-  intervals: 86400,       // 远程 JS 更新时间，单位：秒。 默认：86400(一天)
-  numtofeed: 50,          // 每运行 { numtofeed } 次 JS, 添加一个 Feed item
+  intervals: 86400,       // 远程 JS 更新时间，单位：秒。 默认：86400(一天)。0: 有则不更新
+  numtofeed: 50,          // 每运行 { numtofeed } 次 JS, 添加一个 Feed item。0: 不通知
 
   jslogfile: true,        // 是否将 JS 运行日志保存到 logs 文件夹
 
@@ -39,7 +44,7 @@ const runstatus = {
  * @return {none}          
  */
 async function taskCount(filename) {
-  if (/test/.test(filename)) return
+  if (/test/.test(filename) || CONFIG_RUNJS.numtofeed === 0) return
   if (runstatus.detail[filename]) {
     runstatus.detail[filename]++
   } else {
@@ -88,7 +93,7 @@ function runJS(filename, jscode, addContext) {
     }
     delete addContext.type
   }
-  const fconsole = new logger({ head: filename, file: CONFIG_RUNJS.jslogfile ? filename : '', cb })
+  const fconsole = new logger({ head: filename, file: CONFIG_RUNJS.jslogfile ? filename : false, cb })
   const CONTEXT = new context({ fconsole })
 
   if (CONFIG_RUNJS.SurgeEnable || (CONFIG_RUNJS.QuanxEnable === false && /\$httpClient|\$persistentStore|\$notification/.test(jscode))) {
@@ -142,7 +147,7 @@ function runJSFile(filename, addContext) {
     var url = filename
     filename = url.split('/').pop()
     let filePath = path.join(__dirname, 'JSFile', filename)
-    if (!fs.existsSync(filePath) || new Date().getTime() - fs.statSync(filePath).mtimeMs > CONFIG_RUNJS.intervals*1000) {
+    if (!fs.existsSync(filePath) || (CONFIG_RUNJS.intervals > 0 && new Date().getTime() - fs.statSync(filePath).mtimeMs > CONFIG_RUNJS.intervals*1000)) {
       return new Promise((resolve, reject)=>{
         downloadfile(url, filePath).then(()=>{
           resolve(runJS(filename, fs.readFileSync(filePath, 'utf8'), addContext))
@@ -170,4 +175,4 @@ function runJSFile(filename, addContext) {
   return runJS(filename, JsStr, addContext)
 }
 
-module.exports = { runJSFile }
+module.exports = { runJSFile, CONFIG_RUNJS }
