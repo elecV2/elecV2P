@@ -25,12 +25,12 @@ module.exports = (app, CONFIG) => {
           const wsSer = location.origin.replace('http', 'ws') + '/elecV2P'
           const ws = new WebSocket(wsSer)
           ws.onopen = ()=>{
-            ws.send(JSON.stringify({ type: 'ready', data: 'wbrun' }))
-            ws.send(JSON.stringify({ type: 'wbrun', data: '${fn}' }))
+            ws.send(JSON.stringify({ type: 'ready', data: 'webhook' }))
+            ws.send(JSON.stringify({ type: 'webhook', data: '${fn}' }))
           }
           ws.onmessage = msg => {
             let data = JSON.parse(msg.data)
-            if (data.type === 'wbrun') {
+            if (data.type === 'webhook') {
               document.body.insertAdjacentHTML('afterbegin', '<li>' + data.data + '</li>')
             }
           }
@@ -59,16 +59,17 @@ module.exports = (app, CONFIG) => {
     } else if (req.query.type === 'taskinfo') {
       const tn = req.query.tn
       clog.info(clientip, 'get taskinfo', tn)
-      res.writeHead(200, { 'Content-Type': 'application/json;charset=utf-8' })
+      res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
       if (tn === 'all') {
-        res.end(JSON.stringify(TASKS_INFO))
+        res.end(JSON.stringify(TASKS_INFO, null, 2))
       } else {
         for (let tid in TASKS_INFO) {
           if (TASKS_INFO[tid].name === tn) {
-            res.end(JSON.stringify(TASKS_INFO[tid]))
+            res.end(JSON.stringify(TASKS_INFO[tid], null, 2))
             return
           }
         }
+        res.end(JSON.stringify({error: 'no task' + tn}))
       }
     } else if (req.query.type === 'taskstart') {
       clog.notify(clientip, 'start task', req.query.tn)

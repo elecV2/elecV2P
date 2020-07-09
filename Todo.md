@@ -4,17 +4,14 @@
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
       <pre style="white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
         - [ ] 通过 JS 管理定时任务 $task.add/start/stop
-        - [ ] rules 规则合法性检测
-        - [ ] webhook ws 重复问题
-        - [ ] websocket recv null
+        - [ ] minishell 上传/下载文件
+        - [ ] filter list 添加 IP-CIDR
       </pre>
     </div>
     <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
       <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
         - 说明文档 [progressing...]
-        - TGbot 日志删除 远程JS 任务列表
-        - mongoDB 或者 其他 nosql 数据保存
         - 自签证书自定义生成
         - webpack 分包(?)
         - 多语言 [一个可能永远不填的坑...]
@@ -25,6 +22,9 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 640px; overflow: hidden auto;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
+      - [ ] (cancelled)mongoDB 或者 其他 nosql 数据保存
+      - [X] (P)TGbot 日志删除 远程JS 任务列表
+      - [x] minishell onmessage
       - [x] logger 优化
       - [x] web UI 优化
       - [x] RUNJS 相关设置

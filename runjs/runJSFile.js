@@ -10,8 +10,8 @@ const context = require('./context')
 
 ;(()=>{
   // webhook runjs
-  wsSer.recv.wbrun = fn => {
-    runJSFile(fn, { type: 'wbrun' })
+  wsSer.recv.webhook = fn => {
+    runJSFile(fn, { type: 'webhook' })
   }
   
   const StoreFolder = path.join(__dirname, 'Store')

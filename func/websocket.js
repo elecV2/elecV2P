@@ -73,7 +73,7 @@ function websocketSer({ server, path }) {
 
     // 初始化 ID
     ws.id = euid()
-    ws.send(JSON.stringify({ type: 'euid', data: ws.id }))
+    // ws.send(JSON.stringify({ type: 'euid', data: ws.id }))
 
     // 发送当前服务器内存使用状态
     wsobs.send()

@@ -42,14 +42,20 @@ wsSer.recv.shell = command => {
     let cwd = path.join(CONFIG_exec.shellcwd, command.replace('cd ', ''))
     if(fs.existsSync(cwd)) {
       CONFIG_exec.shellcwd = cwd
-      wsSer.send({ type: 'cwd', data: CONFIG_exec.shellcwd })
+      wsSer.send({
+        type: 'minishell',
+        data: {
+          type: 'cwd',
+          data: CONFIG_exec.shellcwd
+        }
+      })
     } else {
-      wsSer.send({ type: 'shelllogs', data: cwd + ' 不存在' })
+      wsSer.send({ type: 'minishell', data: cwd + ' 不存在' })
     }
   } else {
     execFunc(command, {
       cwd: CONFIG_exec.shellcwd,
-      cb: data => wsSer.send({ type: 'shelllogs', data })
+      cb: data => wsSer.send({ type: 'minishell', data })
     })
   }
 }
@@ -86,7 +92,7 @@ function execFunc(command, { cwd, env, timeout = CONFIG_exec.timeout, cb, logout
     childexec.stderr.on('data', data => {
       data = data.toString()
       clog.error(data)
-      wsSer.send({ type: 'shelllogs', data })
+      wsSer.send({ type: 'minishell', data })
     })
 
     childexec.on('exit', ()=>{
