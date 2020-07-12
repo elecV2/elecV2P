@@ -29,25 +29,25 @@ module.exports = class {
 
   start(){
     if (this.task) {
-      clog.log(`设置定时任务 ${this.task.name} 成功，时间：${this.task.time}`)
+      clog.log(`start cron task ${this.task.name}, time: ${this.task.time}`)
       
       this.job = cron.schedule(this.task.time, this.job)
       this.task.running = true
     } else {
-      clog.error('请添加任务内容')
+      clog.error('no taskinfo')
     }
   }
 
   stop(){
     if(this.job) this.job.stop()
-    clog.log(this.task.name, '已停止')
+    clog.log(this.task.name, 'stopped')
     this.task.running = false
   }
 
   delete(){
     if(this.job) this.job.destroy()
     if (this.task) {
-      clog.log("删除定时任务：", this.task.name)
+      clog.log("delete cron task:", this.task.name)
       delete this.task
     }
   }

@@ -3,7 +3,7 @@ const path = require('path')
 const { exec } = require('child_process')
 
 const { logger } = require('../utils')
-const clog = new logger({ head: 'execFunc' })
+const clog = new logger({ head: 'funcExec', level: 'debug' })
 
 const { wsSer } = require('./websocket')
 
@@ -50,7 +50,7 @@ wsSer.recv.shell = command => {
         }
       })
     } else {
-      wsSer.send({ type: 'minishell', data: cwd + ' 不存在' })
+      wsSer.send({ type: 'minishell', data: cwd + ' dont exist' })
     }
   } else {
     execFunc(command, {
@@ -82,11 +82,11 @@ function execFunc(command, { cwd, env, timeout = CONFIG_exec.timeout, cb, logout
   const childexec = exec(command, option)
 
   if (logout) {
-    clog.notify('开始执行命令', command)
+    clog.notify('start run command:', command)
 
     childexec.stdout.on('data', data => {
+      clog.info(data.toString())
       if (cb) cb(data.toString())
-      else clog.info(data.toString())
     })
 
     childexec.stderr.on('data', data => {

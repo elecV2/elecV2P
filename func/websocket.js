@@ -43,7 +43,7 @@ wsSer.recv.ready = recver => {
 
 function wsSend(data, target){
   if (typeof(data) == "object") {
-    if (wsSer.recverlists.indexOf(data.type) < 0) {
+    if (wsSer.recverlists.indexOf('minishell') === -1 && wsSer.recverlists.indexOf(data.type) === -1) {
       clog.debug('client recver', data.type, 'no ready yet')
       return
     }

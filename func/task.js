@@ -9,7 +9,7 @@ const { wsSer } = require('./websocket')
 const { runJSFile } = require('../runjs/runJSFile')
 
 const { logger, feedAddItem, isJson } = require('../utils')
-const clog = new logger({ head: 'task', cb: wsSer.send.func('tasklog') })
+const clog = new logger({ head: 'funcTask', cb: wsSer.send.func('tasklog'), file: 'funcTask' })
 
 // 任务类型： cron/schedule
 // 基础格式： 
@@ -24,20 +24,20 @@ const clog = new logger({ head: 'task', cb: wsSer.send.func('tasklog') })
 function bIsValid(info) {
   // 任务合法性检测
   if (!info.name) {
-    clog.error('无任务名')
+    clog.error('no task name')
     return false
   }
   if (!/cron|schedule|exec/.test(info.type)) {
-    clog.error(info.name + ' 非法任务类型： ' + info.type)
+    clog.error(info.name, 'unknow task type', info.type)
     return false
   }
   if (info.type === 'cron' && !nodecron.validate(info.time)) {
-    clog.error(info.time + ' 不符合 cron 时间格式')
+    clog.error(info.time, 'wrong cron time format')
     return false
   }
   let ftime = info.time.split(' ')
   if (info.type === 'schedule' && ftime.filter(t=>/^\d+$/.test(t)).length !== ftime.length ) {
-    clog.error(info.time + ' 不符合 schedule 时间格式')
+    clog.error(info.time, 'wrong schedule time format')
     return false
   }
   return true
@@ -54,30 +54,30 @@ class Task {
   }
 
   start(){
-    if (!bIsValid(this.info)) return
+    if (!bIsValid(this.info)) return false
     if (this.info.type === 'cron') {
       this.task = new cron(this.info, this.job)
       this.task.start()
-      feedAddItem(`设置定时任务 ${this.info.name} `, '具体时间：' + this.info.time)
+      feedAddItem(`start crontask ${this.info.name} `, 'time: ' + this.info.time)
     } else if (this.info.type === 'schedule') {
       this.task = new schedule(this.info, this.job)
       this.task.start()
-      feedAddItem('设置倒计时任务 ' + this.info.name, '倒计时时间：' + this.info.time)
+      feedAddItem('start scheduletask' + this.info.name, 'time: ' + this.info.time)
     } else {
-      clog.error('任务类型仅支持： cron/schedule')
+      clog.error('task type only support: cron/schedule')
     }
   }
 
   stop(){
     if(this.task) {
-      feedAddItem(this.info.name + ' 已停止', '任务时间：' + this.info.time)
+      feedAddItem(this.info.name + ' stopped', 'time: ' + this.info.time)
       this.task.stop()
     }
   }
 
   delete(){
     if(this.task) {
-      feedAddItem(this.info.name + ' 已删除', '任务时间：' + this.info.time)
+      feedAddItem(this.info.name + ' deleted', 'time: ' + this.info.time)
       this.task.delete()
     }
   }
@@ -110,32 +110,37 @@ function jobFunc(job) {
   // 任务信息转化为可执行函数
   if (job.type === 'runjs') {
     return ()=>{
+      clog.notify('runjs', job.target)
       runJSFile(job.target, { type: 'task', cb: wsSer.send.func('tasklog') })
     }
   } else if (job.type === 'taskstart') {
     return ()=>{
+      clog.notify('start task', TASKS_INFO[job.target].name)
       TASKS_WORKER[job.target].start()
       TASKS_INFO[job.target].running = true
       wsSer.send({type: 'task', data: {tid: job.target, op: 'start'}})
     }
   } else if (job.type === 'taskstop') {
     return ()=>{
+      clog.notify('stop task', TASKS_INFO[job.target].name)
       TASKS_WORKER[job.target].stop()
       TASKS_INFO[job.target].running = false
       wsSer.send({type: 'task', data: {tid: job.target, op: 'stop'}})
     }
   } else if (job.type === 'exec') {
     return ()=>{
+      clog.notify('run exec cammand', job.target)
       exec(job.target, {
         cb: data => {
-          clog.info(data)
+          const execlog = new logger({ head: 'taskExec', cb: wsSer.send.func('tasklog'), file: 'taskExec' })
+          execlog.info(data)
         }
       })
     }
   } else {
-    clog.error('任务类型未知')
+    clog.error('unknow job type')
     return false
   }
 }
 
-module.exports = { Task, TASKS_WORKER, TASKS_INFO, jobFunc }
+module.exports = { Task, TASKS_WORKER, TASKS_INFO, jobFunc, bIsValid }

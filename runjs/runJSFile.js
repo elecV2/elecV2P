@@ -6,7 +6,7 @@ const { logger, feedAddItem, now, errStack, downloadfile, isJson } = require('..
 const clog = new logger({ head: 'runJSFile', level: 'debug' })
 
 const { wsSer } = require('../func/websocket')
-const context = require('./context')
+const { context } = require('./context')
 
 ;(()=>{
   // webhook runjs
@@ -148,6 +148,7 @@ function runJSFile(filename, addContext) {
     filename = url.split('/').pop()
     let filePath = path.join(__dirname, 'JSFile', filename)
     if (!fs.existsSync(filePath) || (CONFIG_RUNJS.intervals > 0 && new Date().getTime() - fs.statSync(filePath).mtimeMs > CONFIG_RUNJS.intervals*1000)) {
+      clog.info('准备下载', filename, '...')
       return new Promise((resolve, reject)=>{
         downloadfile(url, filePath).then(()=>{
           resolve(runJS(filename, fs.readFileSync(filePath, 'utf8'), addContext))

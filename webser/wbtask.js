@@ -6,7 +6,7 @@ const { Task, TASKS_WORKER, TASKS_INFO, jobFunc } = require('../func')
 const { logger } = require('../utils')
 const clog = new logger({ head: 'wbtask' })
 
-module.exports = app=>{
+module.exports = app => {
   app.get("/task", (req, res)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) 
   + ` get task lists`)

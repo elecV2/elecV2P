@@ -54,7 +54,7 @@ module.exports = app => {
       file.on('error', (err)=>clog.error(err))
       file.write("[elecV2P filter.list]\n")
       req.body.filterlist.forEach(fr=>{
-        if (fr[1] && /^DOMAIN(-SUFFIX)?$/.test(fr[0])) {
+        if (fr[1] && /^(DOMAIN(-SUFFIX)?|IP-CIDR)$/.test(fr[0])) {
           file.write(fr[0] + "," + fr[1] + ",elecV2P\n")
         }
       })
