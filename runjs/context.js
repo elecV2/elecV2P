@@ -7,7 +7,6 @@ const { logger, errStack, feedPush, iftttPush, store, euid } = require('../utils
 const clog = new logger({ head: 'context', level: 'debug' })
 
 const exec = require('../func/exec')
-// const { Task, TASKS_WORKER, TASKS_INFO, jobFunc, exec, bIsValid } = require('../func')
 
 const CONFIG_CONTEXT = {
   axios_timeout: 5000,            // axios 网络请求超时时间。单位：毫秒
@@ -91,36 +90,6 @@ class contextBase {
     this.$result = data ? typeof(data) === 'object' ? data : { body: data } : {}
     return this.$result
   }
-  // $task = {
-  //   add(info){
-  //     if (bIsValid(info)) {
-  //       let newtid = euid()
-  //       TASKS_INFO[newtid] = info
-  //       // TASKS_INFO[newtid].id = newtid
-  //       // TASKS_WORKER[newtid] = new Task(TASKS_INFO[newtid], jobFunc(info.job))
-  //       this.console.notify('成功添加任务', info.name)
-  //       return newtid
-  //     }
-  //     this.console.notify('添加任务失败')
-  //     return false
-  //   },
-  //   start(tid){
-  //     if (TASKS_WORKER[tid]) {
-  //       TASKS_WORKER[tid].start()
-  //       this.console.notify('开始任务', TASKS_INFO[tid].name, '时间：', TASKS_INFO[tid].time)
-  //     } else {
-  //       this.console.error('任务不存在')
-  //     }
-  //   },
-  //   stop(tid){
-  //     if (TASKS_WORKER[tid]) {
-  //       TASKS_WORKER[tid].stop()
-  //       this.console.notify('停止任务', TASKS_INFO[tid].name)
-  //     } else {
-  //       this.console.error('任务不存在')
-  //     }
-  //   }
-  // }
 }
 
 class surgeContext {

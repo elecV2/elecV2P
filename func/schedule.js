@@ -52,17 +52,17 @@ module.exports = class {
         if(this.countdown % step == 0) clog.debug(this.task.name, "countdown: ", this.countdown)
       } else {
         clearInterval(this.temIntval)
-        clog.log("开始执行任务", this.task.name)
+        clog.log("start run", this.task.name, 'job')
+        clog.debug('如果任务中有异步函数，要等异步函数具体执行时才能看到结果')
         this.job()
 
-        if(this.repeat<this._Task.repeat || this._Task.repeat>=999) {
+        if (this.repeat < this._Task.repeat || this._Task.repeat >= 999) {
           this.repeat++
           this.start()
         } else {
           this.task.running = false
-          clog.log(this.task.name, 'finished')
+          clog.log('schedule task:', this.task.name, 'finished')
           feedAddItem('schedule task ' + this.task.name + ' finished', 'time: ' + this.task.time)
-          clog.debug('如果任务中有异步函数，可能要等异步函数执行时才能看到结果')
           if(this.task.id) wsSer.send({type: 'task', data: {tid: this.task.id, op: 'stop'}})
         }
       }

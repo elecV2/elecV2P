@@ -148,7 +148,7 @@ function runJSFile(filename, addContext) {
     filename = url.split('/').pop()
     let filePath = path.join(__dirname, 'JSFile', filename)
     if (!fs.existsSync(filePath) || (CONFIG_RUNJS.intervals > 0 && new Date().getTime() - fs.statSync(filePath).mtimeMs > CONFIG_RUNJS.intervals*1000)) {
-      clog.info('准备下载', filename, '...')
+      clog.info('ready to download JS file', filename, '...')
       return new Promise((resolve, reject)=>{
         downloadfile(url, filePath).then(()=>{
           resolve(runJS(filename, fs.readFileSync(filePath, 'utf8'), addContext))

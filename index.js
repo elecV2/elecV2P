@@ -14,10 +14,9 @@ const aProxyOptions = {
         rootCA: true             // 是否自动启动 rootCA 目录下根证书
       }
       
-const anyproxy = require('./anyproxy')
 const webstser = require('./webmodule')
+webstser(CONFIG_Port)
 
+const anyproxy = require('./anyproxy')
 const proxy = anyproxy(aProxyOptions)
 proxy.start()
-
-webstser(CONFIG_Port)

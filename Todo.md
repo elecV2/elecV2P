@@ -3,15 +3,14 @@
     <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
       <pre style="white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
-        - [ ] JS 管理定时任务 $task.add/start/stop
         - [ ] minishell 上传/下载文件
+        - [ ] $HOLD request reject(cancel)
       </pre>
     </div>
     <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
       <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
         - 说明文档 [progressing...]
-        - 自签证书自定义生成
         - webpack 分包(?)
         - 多语言 [一个可能永远不填的坑..., start ready...]
         - anyproxy 替换，使用其他库或原生代码，增强可定制性 [cancel?]
@@ -21,6 +20,8 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
+      - [X] (P)自签证书自定义生成 1.0
+      - [ ] (cancelled)JS 管理定时任务 $task.add/start/stop
       - [x] task run log
       - [x] filter list 添加 IP-CIDR
       - [ ] (cancelled)mongoDB 或者 其他 nosql 数据保存

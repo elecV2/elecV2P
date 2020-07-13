@@ -1,15 +1,19 @@
+const fs = require('fs')
+const path = require('path')
+const http = require('http')
 const express = require('express')
 const compression = require('compression')
 
 const { CONFIG_RUNJS } = require('./runjs/runJSFile')
+const { websocketSer } = require('./func/websocket')
 
 const { logger, CONFIG_FEED, errStack, isJson, setGlog } = require('./utils')
 const clog = new logger({ head: 'webServer' })
 
+const { wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook } = require('./webser')
+
 const CONFIG = function() {
   // config 初始化
-  const fs = require('fs')
-  const path = require('path')
 
   const config = {
     path: path.join(__dirname, 'runjs', 'Lists', 'config.json'),
@@ -28,8 +32,6 @@ const CONFIG = function() {
 
   return config
 }();
-
-const { wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook } = require('./webser')
 
 module.exports = (CONFIG_Port) => {
   const app = express()
@@ -56,7 +58,6 @@ module.exports = (CONFIG_Port) => {
     next()
   })
 
-  const http = require('http')
   const server = http.createServer(app)
 
   const webstPort = process.env.PORT || CONFIG_Port.webst || 80
@@ -65,6 +66,5 @@ module.exports = (CONFIG_Port) => {
     clog.notify("elecV2P manage on port", webstPort)
   })
 
-  const { websocketSer } = require('./func/websocket')
   websocketSer({ server, path: '/elecV2P' })
 }

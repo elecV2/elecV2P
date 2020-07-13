@@ -1,10 +1,10 @@
 const { logger } = require('../utils')
 const clog = new logger({ head: 'wbcrt' })
 
-const { rootCrtSync, clearCrt } = require('../func')
+const { rootCrtSync, clearCrt, newRootCrt } = require('../func')
 const homedir = require('os').homedir()
 
-module.exports = app=>{
+module.exports = app => {
   app.get("/crt", (req, res)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) 
       , "根证书下载")
@@ -14,6 +14,12 @@ module.exports = app=>{
   app.put("/crt", (req, res)=>{
     let op = req.body.op
     switch(op){
+      case 'new':
+        newRootCrt(req.body.data, (error, keyPath)=>{
+          if (error) res.end('失败! ' + error)
+          else res.end('新的根证书已生成: ' + keyPath)
+        })
+        break
       case 'rootsync':
         if(rootCrtSync()) {
           res.end('已启用 rootCA 文件夹下根证书')
