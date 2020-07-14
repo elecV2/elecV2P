@@ -57,50 +57,55 @@ module.exports = (app, CONFIG) => {
       clog.info(clientip, 'get sever status')
       res.end(JSON.stringify(nStatus()))
     } else if (req.query.type === 'taskinfo') {
-      const tn = req.query.tn
-      clog.info(clientip, 'get taskinfo', tn)
+      const tid = req.query.tid
+      clog.info(clientip, 'get taskinfo', tid)
       res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
-      if (tn === 'all') {
-        res.end(JSON.stringify(TASKS_INFO, null, 2))
-      } else {
+      if (tid === 'all') {
+        let status = {
+          total: 0,
+          running: 0
+        }
         for (let tid in TASKS_INFO) {
-          if (TASKS_INFO[tid].name === tn) {
-            res.end(JSON.stringify(TASKS_INFO[tid], null, 2))
-            return
-          }
+          status.total++
+          if (TASKS_INFO[tid].running) status.running++
+          res.write(tid + ', ' + TASKS_INFO[tid].name + ', ' + TASKS_INFO[tid].time + ', ' + TASKS_INFO[tid].running + '\n')
         }
-        res.end(JSON.stringify({error: 'no task' + tn}))
-      }
+        res.end(status.running + '/' + status.total)
+      } else {
+        if (TASKS_INFO[tid]) {
+          res.end(JSON.stringify(TASKS_INFO[tid], null, 2))
+          return
+        }
+        res.end(JSON.stringify({ error: 'no task' + tid }))
+      } 
     } else if (req.query.type === 'taskstart') {
-      clog.notify(clientip, 'start task', req.query.tn)
+      clog.notify(clientip, 'start task')
       res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
-      for (let tid in TASKS_INFO) {
-        if (TASKS_INFO[tid].name === req.query.tn && TASKS_WORKER[tid]) {
-          if (TASKS_INFO[tid].running === false) {
-            TASKS_WORKER[tid].start()
-            res.end(TASKS_INFO[tid].name + ' 开始运行，任务内容： ' + JSON.stringify(TASKS_INFO[tid]))
-          } else {
-            res.end(req.query.tn + ' 任务正在运行中，任务内容： ' + JSON.stringify(TASKS_INFO[tid]))
-          }
-          return
+      let tid = req.query.tid
+      if (TASKS_INFO[tid] && TASKS_WORKER[tid]) {
+        if (TASKS_INFO[tid].running === false) {
+          TASKS_WORKER[tid].start()
+          res.end(TASKS_INFO[tid].name + ' 开始运行，任务内容： ' + JSON.stringify(TASKS_INFO[tid]))
+        } else {
+          res.end(TASKS_INFO[tid].name + ' 任务正在运行中，任务内容： ' + JSON.stringify(TASKS_INFO[tid]))
         }
+        return
       }
-      res.end(req.query.tn + ' 任务不存在')
+      res.end(tid + ' 任务不存在')
     } else if (req.query.type === 'taskstop') {
-      clog.notify(clientip, 'stop task', req.query.tn)
+      clog.notify(clientip, 'stop task')
       res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
-      for (let tid in TASKS_INFO) {
-        if (TASKS_INFO[tid].name === req.query.tn && TASKS_WORKER[tid]) {
-          if (TASKS_INFO[tid].running === true) {
-            TASKS_WORKER[tid].stop()
-            res.end('停止任务 ' + TASKS_INFO[tid].name + '，任务内容： ' + JSON.stringify(TASKS_INFO[tid]))
-          } else {
-            res.end(req.query.tn + ' 任务已停止，任务内容： ' + JSON.stringify(TASKS_INFO[tid]))
-          }
-          return
+      let tid = req.query.tid 
+      if (TASKS_INFO[tid] && TASKS_WORKER[tid]) {
+        if (TASKS_INFO[tid].running === true) {
+          TASKS_WORKER[tid].stop()
+          res.end('停止任务 ' + TASKS_INFO[tid].name + '，任务内容： ' + JSON.stringify(TASKS_INFO[tid]))
+        } else {
+          res.end(TASKS_INFO[tid].name  + ' 任务已停止，任务内容： ' + JSON.stringify(TASKS_INFO[tid]))
         }
+        return
       }
-      res.end(req.query.tn + ' 任务不存在')
+      res.end(req.query.tid + ' 任务不存在')
     } else {
       res.end('wrong webhook type')
     }
