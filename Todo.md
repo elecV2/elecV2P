@@ -4,7 +4,7 @@
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
       <pre style="white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
         - [ ] minishell 上传/下载文件
-        - [ ] $HOLD request reject(cancel)
+        - [ ] request 模拟（postman）
       </pre>
     </div>
     <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
@@ -20,6 +20,7 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
+      - [x] $HOLD request reject(直接返回)
       - [x] webhook taskinfo 调整
       - [x] webUI remove antd menu
       - [X] (P)自签证书自定义生成 1.0

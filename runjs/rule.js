@@ -94,22 +94,22 @@ const CONFIG_RULE = (()=>{
 const localResponse = {
   reject: {
     statusCode: 200,
-    header: { 'Content-Type': 'text/plain' },
+    header: { "Content-Type": "text/plain;charset=utf-8" },
     body: ''
   },
   imghtml: {
     statusCode: 200,
-    header: { 'Content-Type': 'text/html; charset=utf-8' },
+    header: { "Content-Type": "text/html;charset=utf-8" },
     body: '<img src="data:image/png;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="elecV2P"/>'
   },
   json: {
     statusCode: 200,
-    header: { 'Content-Type': 'application/json' },
+    header: { "Content-Type": "application/json;charset=utf-8" },
     body: '{"data": "elecV2P"}'
   },
   tinyimg: {
     statusCode: 200,
-    header: { 'Content-Type': 'image/png' },
+    header: { "Content-Type": "image/png" },
     body: Buffer.from('R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=', 'base64')
   }
 }
@@ -186,6 +186,11 @@ module.exports = {
       return new Promise((resolve, reject) => {
         wsSer.recv.hold = res => {
           wsSer.recv.hold = null
+          if (res.reject) {
+            clog.notify('request $HOLD reject', res.body)
+            delete res.reject
+            return resolve({ response: Object.assign(localResponse.reject, res) })
+          }
           requestDetail.requestOptions.headers = res.header
           requestDetail.requestData = res.body
           if (res.request) Object.assign(requestDetail.requestOptions, res.request)
