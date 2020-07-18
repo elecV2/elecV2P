@@ -188,12 +188,19 @@ module.exports = {
           wsSer.recv.hold = null
           if (res.reject) {
             clog.notify('request $HOLD reject', res.body)
-            delete res.reject
-            return resolve({ response: Object.assign(localResponse.reject, res) })
+            return resolve({ 
+              response: {
+                statusCode: 200,
+                header: { ...localResponse.reject.header, ...res.header },
+                body: res.body
+              }
+            })
           }
           requestDetail.requestOptions.headers = res.header
           requestDetail.requestData = res.body
-          if (res.request) Object.assign(requestDetail.requestOptions, res.request)
+          if (res.request) {
+            Object.assign(requestDetail.requestOptions, res.request)
+          }
           clog.notify('request $HOLD done')
           resolve(requestDetail)
         }
@@ -227,7 +234,7 @@ module.exports = {
         let jsres = runJSFile(matchreq[3], { $request: formRequest(requestDetail) })
         if (jsres instanceof Promise) {
           jsres = await jsres.catch(()=>{
-            resolve(requestDetail)
+            clog.error('error on run remote js')
           })
         }
         if (jsres) {
@@ -235,8 +242,9 @@ module.exports = {
             // 直接返回结果，不访问目标网址
             clog.notify('返回结果:', jsres.response)
             resolve({ 
-              response: Object.assign(localResponse.reject, jsres.response) 
+              response: { ...localResponse.reject, ...jsres.response }
             })
+            return
           }
           // 请求信息修改
           if (jsres["User-Agent"]) {
