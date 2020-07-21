@@ -1,17 +1,11 @@
 const fs = require('fs')
-const axios = require('axios')
 const path = require('path')
 const qs = require('qs')
 
-const { logger, errStack, feedPush, iftttPush, store, euid } = require('../utils')
+const { logger, errStack, feedPush, iftttPush, store, eAxios } = require('../utils')
 const clog = new logger({ head: 'context', level: 'debug' })
 
 const exec = require('../func/exec')
-
-const CONFIG_CONTEXT = {
-  axios_timeout: 5000,            // axios 网络请求超时时间。单位：毫秒
-  axios_usagent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1'  // 通用 User-Agent. 关闭： false
-}
 
 const formReq = {
   getHeaders(req) {
@@ -24,7 +18,6 @@ const formReq = {
       }
       delete newheaders['Content-Length']
     }
-    if (!newheaders['User-Agent']) newheaders['User-Agent'] = CONFIG_CONTEXT.axios_usagent
     return newheaders
   },
   getBody(req) {
@@ -45,7 +38,6 @@ const formReq = {
       url: encodeURI(req.url || req),
       headers: this.getHeaders(req),
       data: this.getBody(req),
-      timeout: req.timeout || CONFIG_CONTEXT.axios_timeout,
       method: req.method || method || 'get'
     }
   }
@@ -61,7 +53,7 @@ class contextBase {
   }
 
   __dirname = process.cwd()
-  $axios = axios
+  $axios = eAxios
   $exec = exec
   $store = {
     get: (key) => {
@@ -99,7 +91,7 @@ class surgeContext {
 
   $httpClient = {
     get: (req, cb) => {
-      axios(formReq.uest(req)).then(response=>{
+      eAxios(formReq.uest(req)).then(response=>{
         let newres = {
           status: response.status,
           headers: response.headers,
@@ -119,7 +111,7 @@ class surgeContext {
       })
     },
     post: (req, cb) => {
-      axios(formReq.uest(req, 'post')).then(response=>{
+      eAxios(formReq.uest(req, 'post')).then(response=>{
         let newres = {
           status: response.status,
           headers: response.headers,
@@ -162,7 +154,7 @@ class quanxContext {
   $task = {
     fetch: (req, cb) => {
       return new Promise((resolve, reject) => {
-        axios(formReq.uest(req)).then(response=>{
+        eAxios(formReq.uest(req)).then(response=>{
           let res = {
                 statusCode: response.status,
                 headers: response.headers,

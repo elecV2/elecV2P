@@ -6,6 +6,8 @@ const { now } = require('./time')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'feed', level: 'debug' })
 
+const { CONFIG } = require('../config')
+
 const CONFIG_FEED = {
   enable: true,              // 关闭/开启 feed
   homepage: 'https://github.com/elecV2/elecV2P',              // feed 主页。
@@ -14,6 +16,10 @@ const CONFIG_FEED = {
   mergetime: 60,             // 合并多少时间内的通知，单位：秒
   mergenum: 10,              // 最大合并通知条数
   andor: false,              // 上面两项的逻辑。 true: 同时满足，false: 满足任一项
+}
+
+if (CONFIG.CONFIG_FEED) {
+  Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
 }
 
 function feedNew({ title = 'elecV2P notification', description = 'elecV2P 运行记录通知', ttl = 10 }) {

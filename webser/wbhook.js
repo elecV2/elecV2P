@@ -3,7 +3,9 @@ const { TASKS_WORKER, TASKS_INFO } = require('../func')
 const { logger, LOGFILE, nStatus } = require('../utils')
 const clog = new logger({ head: 'wbhook', level: 'debug' })
 
-module.exports = (app, CONFIG) => {
+const { CONFIG } = require('../config')
+
+module.exports = app => {
   app.get("/webhook", (req, res)=>{
     if (!CONFIG.wbrtoken) {
       res.end('服务器端未设置 token, 无法运行 JS')

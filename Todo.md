@@ -4,24 +4,33 @@
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
       <pre style="white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
         - [ ] minishell 上传/下载文件
-        - [ ] mock request axios rules
         - [ ] a-icon component
+        - [ ] log component
+        - [ ] $message 替换
+        - [ ] setting axios timeout/proxy/usagent
+        - [ ] logger log to minishell
       </pre>
     </div>
     <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
       <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
         - 说明文档 [progressing...]
-        - axios 封装
+        - Lists 注释保存
         - webpack 分包(?)
         - 多语言 [一个可能永远不填的坑..., start ready...]
-        - anyproxy 替换，使用其他库或原生代码，增强可定制性 [cancel?]
       </pre>
     </div>
   </div>
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
+      - [x] a-icon 合并
+      - [x] 任务日志 清空 button
+      - [x] myAxios 优化
+      - [ ] [cancelled]anyproxy 替换，使用其他库或原生代码，增强可定制性
+      - [x] mock request 通过内部 proxy
+      - [x] config 单独 js/合并
+      - [x] axios 封装 0.1
       - [x] mock to JS
       - [x] request 模拟 mock 1.0
       - [x] $HOLD request reject(直接返回)

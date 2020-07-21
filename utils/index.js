@@ -1,12 +1,11 @@
 const fs = require('fs')
 const path = require('path')
-const axios = require('axios')
 
 const { logger, setGlog, LOGFILE } = require('./logger')
 const { now, wait } = require('./time')
 const feed = require('./feed')
 const string = require('./string')
-const myAxios = require('./axios')
+const { eAxios } = require('./axios')
 
 const clog = new logger({ head: 'utils' })
 
@@ -24,11 +23,14 @@ function errStack(error, stack = false) {
 }
 
 function downloadfile(durl, dest) {
+  if (!dest) {
+    dest = path.join(__dirname, '../runjs/Lists', durl.split('/').pop())
+  }
   return new Promise((resolve, reject)=>{
-    axios({
+    eAxios({
       url: durl,
       responseType: 'stream'
-    }).then(response=>{
+    }, true).then(response=>{
       if (response.status == 404) {
         clog.error(durl + ' 404! 文件不存在')
         reject('404! 文件不存在')
@@ -107,7 +109,7 @@ module.exports = {
   logger,
   setGlog,
   LOGFILE,
-  myAxios,
+  eAxios,
   now,
   wait,
   errStack,

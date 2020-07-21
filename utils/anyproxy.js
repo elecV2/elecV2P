@@ -1,11 +1,11 @@
 const anyproxy = require('anyproxy')
 
-const { logger } = require('./utils/')
+const { logger } = require('./logger')
 const clog = new logger({ head: 'anyproxy' })
 
 function myAnyproxy(eoption) {
   if (eoption.rootCA) {
-    if (require('./func/crt.js').rootCrtSync() === false) {
+    if (require('../func/crt.js').rootCrtSync() === false) {
       anyproxy.utils.certMgr.generateRootCA((error, keyPath)=>{
         if(error){
           clog.error(error)

@@ -8,6 +8,8 @@ const clog = new logger({ head: 'runJSFile', level: 'debug' })
 const { wsSer } = require('../func/websocket')
 const { context } = require('./context')
 
+const { CONFIG } = require('../config')
+
 ;(()=>{
   // webhook runjs
   wsSer.recv.webhook = fn => {
@@ -29,6 +31,10 @@ const CONFIG_RUNJS = {
 
   SurgeEnable: false,     // 兼容 Surge 脚本
   QuanxEnable: false,     // 兼容 Quanx 脚本。都为 false 时，会进行自动判断
+}
+
+if (CONFIG.CONFIG_RUNJS) {
+  Object.assign(CONFIG_RUNJS, CONFIG.CONFIG_RUNJS)
 }
 
 const runstatus = {
@@ -144,9 +150,9 @@ function runJS(filename, jscode, addContext) {
  */
 function runJSFile(filename, addContext) {
   if (/^https?:/.test(filename)) {
-    var url = filename
+    const url = filename
     filename = url.split('/').pop()
-    let filePath = path.join(__dirname, 'JSFile', filename)
+    const filePath = path.join(__dirname, 'JSFile', filename)
     if (!fs.existsSync(filePath) || (CONFIG_RUNJS.intervals > 0 && new Date().getTime() - fs.statSync(filePath).mtimeMs > CONFIG_RUNJS.intervals*1000)) {
       clog.info('ready to download JS file', filename, '...')
       return new Promise((resolve, reject)=>{
@@ -165,7 +171,7 @@ function runJSFile(filename, addContext) {
     var JsStr = filename
     filename = 'testrun.js'
   } else {
-    let filePath = path.join(__dirname, 'JSFile', filename)
+    const filePath = path.join(__dirname, 'JSFile', filename)
     if (!fs.existsSync(filePath)) {
       clog.error(filename, '不存在')
       return filename + '不存在'

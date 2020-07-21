@@ -3,9 +3,10 @@ const fs = require('fs')
 const { logger, setGlog, CONFIG_FEED } = require('../utils')
 const clog = new logger({ head: 'wbconfig' })
 
+const { CONFIG } = require('../config')
 const { CONFIG_RUNJS } = require('../runjs/runJSFile')
 
-module.exports = (app, CONFIG) => {
+module.exports = app => {
   app.get("/config", (req, res)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get config data")
     let type = req.query.type

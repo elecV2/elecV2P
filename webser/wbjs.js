@@ -11,26 +11,25 @@ const CONFIG_JSFILE = {
   path: path.join(__dirname, "../runjs/JSFile"),
 }
 
-module.exports = (app, CONFIG) => {
+module.exports = app => {
   app.get("/jsfile", (req, res)=>{
-    let jsfn = req.query.jsfn
+    const jsfn = req.query.jsfn
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get js file", jsfn)
-    if (jsfn) {
-      if (fs.existsSync(path.join(CONFIG_JSFILE.path, jsfn))) {
-        res.end(fs.readFileSync(path.join(CONFIG_JSFILE.path, jsfn), "utf8"))
-        clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " read file: " + jsfn)
-      } else {
-        res.end(jsfn + ' 文件不存在')
-      }
+    if (/\.\./.test(jsfn)) {
+      res.end('非法目录请求')
+      return
+    }
+    if (fs.existsSync(path.join(CONFIG_JSFILE.path, jsfn))) {
+      res.end(fs.readFileSync(path.join(CONFIG_JSFILE.path, jsfn), "utf8"))
     } else {
-      res.end("404")
+      res.end('404 ' + jsfn + ' 文件不存在')
     }
   })
 
   app.get("/jsmanage", (req, res)=>{
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get js manage data")
     res.end(JSON.stringify({
-      storemanage: CONFIG.storemanage,
+      storemanage: true,
       jslists: JSLISTS,
     }))
   })
@@ -47,7 +46,7 @@ module.exports = (app, CONFIG) => {
 
   app.put("/jsfile", (req, res)=>{
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "put js file")
-    let op = req.body.op
+    const op = req.body.op
     switch(op){
       case 'jsdownload':
         downloadfile(req.body.url, path.join(CONFIG_JSFILE.path, req.body.name)).then(jsl=>{
@@ -71,7 +70,7 @@ module.exports = (app, CONFIG) => {
       return
     }
     if (req.body.jsname === 'totest') {
-      let jsres = runJSFile(req.body.jscontent, { type: 'jstest' })
+      const jsres = runJSFile(req.body.jscontent, { type: 'jstest' })
       res.end(typeof(jsres) !== 'string' ? JSON.stringify(jsres) : jsres)
     } else {
       fs.writeFileSync(path.join(CONFIG_JSFILE.path, req.body.jsname), req.body.jscontent)
@@ -82,8 +81,8 @@ module.exports = (app, CONFIG) => {
   })
 
   app.delete("/jsfile", (req, res)=>{
-    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "delete js file " + req.body.jsfn)
-    let jsfn = req.body.jsfn
+    const jsfn = req.body.jsfn
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "delete js file " + jsfn)
     if (jsfn) {
       fs.unlinkSync(path.join(CONFIG_JSFILE.path, jsfn))
       JSLISTS.splice(JSLISTS.indexOf(jsfn), 1)

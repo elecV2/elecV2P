@@ -1,12 +1,11 @@
 const fs = require('fs')
 const path = require('path')
-const axios = require('axios')
 
 const { Task, TASKS_WORKER, TASKS_INFO, jobFunc } = require('../func/task')
 const { wsSer } = require('../func/websocket')
 const { JSLISTS } = require('../runjs')
 
-const { logger, errStack } = require('../utils')
+const { logger, errStack, eAxios } = require('../utils')
 const clog = new logger({ head: 'wbtask', cb: wsSer.send.func('tasklog') })
 
 module.exports = app => {
@@ -63,8 +62,8 @@ module.exports = app => {
     const request = req.body.request
     switch(req.body.type){
       case "req":
-        axios(request).then(response=>{
-          clog.notify('mock request:', response.data)
+        eAxios(request).then(response=>{
+          clog.notify('mock request response:', response.data)
           res.end('success!')
         }).catch(error=>{
           clog.error('mock request error:', errStack(error))
@@ -80,7 +79,7 @@ module.exports = app => {
         }
         const jscont = `
 /**
- * mock JS from elecV2P
+ * mock JS from elecV2P - ${jsname}
  */
 
 const request = ${ JSON.stringify(request, null, 2) }

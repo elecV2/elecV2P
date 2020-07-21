@@ -1,12 +1,14 @@
 const fs = require('fs')
 const path = require('path')
 
+const { CONFIG_Port } = require('../config')
+
 const { logger } = require('../utils')
 const clog = new logger({ head: 'wbdata' })
 
 const { CONFIG_RULE, JSLISTS } = require('../runjs')
 
-module.exports = (app, CONFIG_Port) => {
+module.exports = app => {
   app.get("/data", (req, res)=>{
     let type = req.query.type
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress) 

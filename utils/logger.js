@@ -2,6 +2,8 @@ const fs = require('fs')
 const path = require('path')
 const { now } = require('./time')
 
+const { CONFIG } = require('../config')
+
 const CONFIG_LOG = {
   levels: {
     error: 0,
@@ -10,7 +12,7 @@ const CONFIG_LOG = {
     debug: 3
   },
   alignHeadlen: 16,               // 日志头部长度
-  globalLevel: 'info'
+  globalLevel: CONFIG.gloglevel || 'info'
 }
 
 CONFIG_LOG.logspath = function(){
