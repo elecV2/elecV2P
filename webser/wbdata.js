@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 
-const { CONFIG_Port } = require('../config')
+const { CONFIG, CONFIG_Port } = require('../config')
 
 const { logger } = require('../utils')
 const clog = new logger({ head: 'wbdata' })
@@ -15,6 +15,17 @@ module.exports = app => {
   + ` get data ${type}`)
     res.writeHead(200,{ 'Content-Type' : 'text/plain;charset=utf-8' })
     switch (type) {
+      case "overview":
+        res.end(JSON.stringify({
+          proxyPort: CONFIG_Port.proxy,
+          webifPort: CONFIG_Port.webif,
+          ruleslen: CONFIG_RULE.reqlists.length + CONFIG_RULE.reslists.length,
+          rewriteslen: CONFIG_RULE.rewritelists.length,
+          jslistslen: JSLISTS.length,
+          mitmhostlen: CONFIG_RULE.mitmhost.length,
+          version: CONFIG.version
+        }))
+        break
       case "rules":
         res.end(JSON.stringify({
           eplists: [...CONFIG_RULE.reqlists, ...CONFIG_RULE.reslists],
@@ -40,16 +51,6 @@ module.exports = app => {
         break
       case "todolist":
         res.end(fs.readFileSync(path.join(__dirname, '../Todo.md'), "utf8"))
-        break
-      case "overview":
-        res.end(JSON.stringify({
-          proxyPort: CONFIG_Port.proxy,
-          webifPort: CONFIG_Port.webif,
-          ruleslen: CONFIG_RULE.reqlists.length + CONFIG_RULE.reslists.length,
-          rewriteslen: CONFIG_RULE.rewritelists.length,
-          jslistslen: JSLISTS.length,
-          mitmhostlen: CONFIG_RULE.mitmhost.length
-        }))
         break
       default: {
         res.end("404")

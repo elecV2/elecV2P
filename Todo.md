@@ -5,9 +5,8 @@
       <pre style="white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
         - [ ] minishell 上传/下载文件
         - [ ] a-icon component
-        - [ ] log component
         - [ ] $message 替换
-        - [ ] setting axios timeout/proxy/usagent
+        - [ ] setting eAxios timeout/proxy/usagent
         - [ ] logger log to minishell
       </pre>
     </div>
@@ -16,7 +15,8 @@
       <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
         - 说明文档 [progressing...]
         - Lists 注释保存
-        - webpack 分包(?)
+        - 去 antd vue
+        - 文件编辑器（component || libery)
         - 多语言 [一个可能永远不填的坑..., start ready...]
       </pre>
     </div>
@@ -24,6 +24,9 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
+      - [x] log component
+      - [x] eAxios proxy 设置
+      - [x] remove a-layout
       - [x] a-icon 合并
       - [x] 任务日志 清空 button
       - [x] myAxios 优化

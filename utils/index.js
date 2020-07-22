@@ -30,7 +30,7 @@ function downloadfile(durl, dest) {
     eAxios({
       url: durl,
       responseType: 'stream'
-    }, true).then(response=>{
+    }, false).then(response=>{
       if (response.status == 404) {
         clog.error(durl + ' 404! 文件不存在')
         reject('404! 文件不存在')
