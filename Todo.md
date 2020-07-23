@@ -4,10 +4,9 @@
       <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
       <pre style="white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
         - [ ] minishell 上传/下载文件
-        - [ ] a-icon component
-        - [ ] $message 替换
         - [ ] setting eAxios timeout/proxy/usagent
-        - [ ] logger log to minishell
+        - [ ] $message 动画
+        - [ ] $request/$response JS 可用参数
       </pre>
     </div>
     <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
@@ -15,7 +14,6 @@
       <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
         - 说明文档 [progressing...]
         - Lists 注释保存
-        - 去 antd vue
         - 文件编辑器（component || libery)
         - 多语言 [一个可能永远不填的坑..., start ready...]
       </pre>
@@ -24,6 +22,9 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
+      - [X] (P)去 antd vue
+      - [x] a-icon component
+      - [x] $message 替换
       - [x] log component
       - [x] eAxios proxy 设置
       - [x] remove a-layout

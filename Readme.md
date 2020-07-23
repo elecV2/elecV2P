@@ -161,6 +161,7 @@ ifttt 通知需先在设置（setting）面板添加 key。目前 ifttt 通知�
 - [anyproxy](https://github.com/alibaba/anyproxy)
 - [axios](https://github.com/axios/axios)
 - [expressjs](https://expressjs.com)
+- [node-cron](https://github.com/merencia/node-cron)
 - [node-rss](https://github.com/dylang/node-rss)
 - [vue](http://vuejs.org/)
 - [Ant Design Vue](https://www.antdv.com)

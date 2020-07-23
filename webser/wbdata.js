@@ -23,7 +23,8 @@ module.exports = app => {
           rewriteslen: CONFIG_RULE.rewritelists.length,
           jslistslen: JSLISTS.length,
           mitmhostlen: CONFIG_RULE.mitmhost.length,
-          version: CONFIG.version
+          version: CONFIG.version,
+          start: CONFIG.start,
         }))
         break
       case "rules":
