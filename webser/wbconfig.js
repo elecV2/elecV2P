@@ -1,28 +1,29 @@
-const fs = require('fs')
-
-const { logger, setGlog, CONFIG_FEED } = require('../utils')
+const { logger, setGlog, CONFIG_FEED, CONFIG_Axios, list } = require('../utils')
 const clog = new logger({ head: 'wbconfig' })
 
 const { CONFIG } = require('../config')
-const { CONFIG_RUNJS } = require('../runjs/runJSFile')
+const { CONFIG_RUNJS, CONFIG_RULE } = require('../runjs')
 
 module.exports = app => {
   app.get("/config", (req, res)=>{
-    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get config data")
     let type = req.query.type
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get config data", type)
     switch(req.query.type){
       case 'setting':
         res.end(JSON.stringify({
           homepage: CONFIG.homepage,
-          gloglevel: CONFIG.gloglevel,
+          gloglevel: CONFIG.gloglevel || 'info',
           CONFIG_FEED,
           CONFIG_RUNJS,
+          CONFIG_Axios,
+          uagent: CONFIG_RULE.uagent,
           wbrtoken: CONFIG.wbrtoken,
           minishell: CONFIG.minishell || false
         }))
         break
-      default:
+      default:{
         res.end('no config data to get')
+      }
     }
   })
 
@@ -35,8 +36,9 @@ module.exports = app => {
         CONFIG_FEED.homepage = CONFIG.homepage
         Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
         Object.assign(CONFIG_RUNJS, CONFIG.CONFIG_RUNJS)
+        Object.assign(CONFIG_Axios, CONFIG.CONFIG_Axios)
         if (data.gloglevel !== CONFIG.gloglevel) setGlog(data.gloglevel)
-        fs.writeFileSync(CONFIG.path, JSON.stringify(CONFIG, null, 2))
+        list.put('config.json', JSON.stringify(CONFIG, null, 2))
         res.end("当前配置 已保存至 " + CONFIG.path)
         break
       case "homepage":
@@ -59,6 +61,10 @@ module.exports = app => {
         CONFIG.wbrtoken = req.body.data
         clog.info('web runjs token 设置为：', CONFIG.wbrtoken)
         res.end('设置成功')
+        break
+      case "eAxios":
+        Object.assign(CONFIG_Axios, req.body.data)
+        res.end('eAxios 设置成功')
         break
       default:{
         res.end("data put error")

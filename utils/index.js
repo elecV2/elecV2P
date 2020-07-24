@@ -5,7 +5,8 @@ const { logger, setGlog, LOGFILE } = require('./logger')
 const { now, wait } = require('./time')
 const feed = require('./feed')
 const string = require('./string')
-const { eAxios } = require('./axios')
+const { eAxios, CONFIG_Axios } = require('./axios')
+const { list } = require('./list')
 
 const clog = new logger({ head: 'utils' })
 
@@ -110,6 +111,8 @@ module.exports = {
   setGlog,
   LOGFILE,
   eAxios,
+  CONFIG_Axios,
+  list,
   now,
   wait,
   errStack,

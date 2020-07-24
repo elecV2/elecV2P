@@ -1,36 +1,23 @@
-const { runJSFile } = require('./runJSFile')
-
-const { logger } = require('../utils')
-const clog = new logger({ head: 'eV2PRules' })
+const { logger, isJson, list } = require('../utils')
+const clog = new logger({ head: 'runRules' })
 
 const { wsSer } = require('../func/websocket')
 
-const CONFIG_RULE = (()=>{
-  const fs = require('fs')
-  const path = require('path')
-  if (!fs.existsSync(path.join(__dirname, 'Lists'))) {
-    fs.mkdirSync(path.join(__dirname, 'Lists'))
-    clog.notify('暂无规则，新建 Lists 文件夹')
-    return {}
-  }
+const { runJSFile } = require('./runJSFile')
 
+const CONFIG_RULE = (()=>{
   function getUserAgent() {
-    let uagent = {}
-    if (fs.existsSync(path.join(__dirname, 'Lists', "useragent.list"))) {
-      try {
-        uagent = JSON.parse(fs.readFileSync(path.join(__dirname, 'Lists', "useragent.list"), "utf8"))
-      } catch(e) {
-        clog.error('User-Agent 获取失败')
-      }
-    }
+    let ustr = list.get('useragent.list')
+    let uagent = isJson(ustr) ? JSON.parse(ustr) : {}
     return { uagent }
   }
 
   function getRewriteList() {
     let subrules = []
     let rewritelists = []
-    if (fs.existsSync(path.join(__dirname, 'Lists', 'rewrite.list'))) {
-      fs.readFileSync(path.join(__dirname, 'Lists', 'rewrite.list'), 'utf8').split(/\r|\n/).forEach(l=>{
+    let rlist = list.get('rewrite.list')
+    if (rlist) {
+      rlist.split(/\r|\n/).forEach(l=>{
         if (/^(#|\[)/.test(l) || l.length<2) return
         let item = l.split(" ")
         if (item.length === 2) {
@@ -49,8 +36,9 @@ const CONFIG_RULE = (()=>{
   function getRulesList(){
     let reqlists = []
     let reslists = []
-    if (fs.existsSync(path.join(__dirname, 'Lists', 'default.list'))) {
-      fs.readFileSync(path.join(__dirname, 'Lists', 'default.list'), 'utf8').split(/\n|\r/).forEach(l=>{
+    let rstr = list.get('default.list')
+    if (rstr) {
+      rstr.split(/\n|\r/).forEach(l=>{
         if (l.length<=8 || /^(#|\[)/.test(l)) return
         let item = l.split(",")
         if (item.length >= 4) {
@@ -65,8 +53,9 @@ const CONFIG_RULE = (()=>{
 
   function getMitmhost() {
     let mitmhost = []
-    if (fs.existsSync(path.join(__dirname, 'Lists', 'mitmhost.list'))) {
-      mitmhost = fs.readFileSync(path.join(__dirname, 'Lists', 'mitmhost.list'), 'utf8').split(/\r|\n/).filter(host=>{
+    let mstr = list.get('mitmhost.list')
+    if (mstr) {
+      mitmhost = mstr.split(/\r|\n/).filter(host=>{
         if (/^(\[|#|;)/.test(host) || host.length < 3) {
           return false
         }
@@ -76,7 +65,7 @@ const CONFIG_RULE = (()=>{
     return { mitmhost }
   }
 
-  let config = {
+  const config = {
       mitmtype: 'list',
       ...getRulesList(),
       ...getRewriteList(),

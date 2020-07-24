@@ -1,26 +1,30 @@
 <div style="display: flex;justify-content: space-around;align-items: flex-start;box-sizing: border-box;color: white;font-size: 20px;">
   <div style="width: 50%;margin: 0 12px;">
     <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
-      <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
-      <pre style="white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
-        - [ ] minishell 上传/下载文件
-        - [ ] setting eAxios timeout/proxy/usagent
-        - [ ] $request/$response JS 可用参数
-      </pre>
+    <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
+    <pre style="white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
+      - [ ] $request/$response JS 可用参数
+      - [ ] docs eAixos/webhook
+      - [ ] 引入 cheerio, 增强 JS 对 html 的处理
+      - [ ] minishell dispatch logic
+    </pre>
     </div>
     <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
-      <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
-      <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
-        - 说明文档 [progressing...]
-        - Lists 注释保存
-        - 文件编辑器（component || libery)
-        - 多语言 [一个可能永远不填的坑..., start ready...]
-      </pre>
+    <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
+    <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
+      - 说明文档 [progressing...]
+      - Lists 注释保存
+      - minishell 上传/下载文件（编辑?）
+      - 文件编辑器（component || libery)
+      - 多语言 [一个可能永远不填的坑..., start ready...]
+    </pre>
     </div>
   </div>
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
+      - [x] setting eAxios timeout/proxy/usagent
+      - [x] utils list.get/put
       - [x] webUI message 优化/bug fix
       - [X] (P)去 antd vue
       - [x] a-icon component
