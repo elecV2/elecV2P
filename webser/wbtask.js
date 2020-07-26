@@ -1,11 +1,8 @@
-const fs = require('fs')
-const path = require('path')
-
 const { Task, TASKS_WORKER, TASKS_INFO, jobFunc } = require('../func/task')
 const { wsSer } = require('../func/websocket')
 const { JSLISTS } = require('../runjs')
 
-const { logger, errStack, eAxios } = require('../utils')
+const { logger, errStack, eAxios, list, jsfile } = require('../utils')
 const clog = new logger({ head: 'wbtask', cb: wsSer.send.func('tasklog') })
 
 module.exports = app => {
@@ -15,13 +12,12 @@ module.exports = app => {
   })
 
   app.put("/task", (req, res)=>{
-    // 定时任务相关操作
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), `put task`, req.body.op)
     let data = req.body.data
     switch(req.body.op){
       case "start":
         if (TASKS_WORKER[data.tid]) {
-          clog.info('删除原有任务，更新数据')
+          clog.info('delete task old data')
           if (TASKS_WORKER[data.tid].stat()) TASKS_WORKER[data.tid].stop()
           TASKS_WORKER[data.tid].delete()
         }
@@ -47,14 +43,16 @@ module.exports = app => {
         }
         res.end("task deleted!")
         break
-      case "save":
-        fs.writeFileSync(path.join(__dirname, '../runjs/Lists', 'task.list'), JSON.stringify(data))
-        res.end("success saved!")
-        break
       default:{
         res.end("task operation error")
       }
     }
+  })
+
+  app.post("/task", (req, res)=>{
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), `save task list`)
+    list.put('task.list', req.body)
+    res.end("success saved!")
   })
 
   app.put('/mock', (req, res)=>{
@@ -90,10 +88,9 @@ $axios(request).then(res=>{
   console.error(e)
 })
 `
-        const jspath = path.join(__dirname, "../runjs/JSFile", jsname)
-        fs.writeFileSync(jspath, jscont)
-        clog.notify(`${jsname} 文件成功保存至`, jspath)
-        res.end(jspath)
+        jsfile.put(jsname, jscont)
+        res.end(`success save ${jsname}!`)
+        clog.notify(`success save ${jsname}!`)
         if (JSLISTS.indexOf(jsname) === -1) JSLISTS.push(jsname)
         break
       default:{

@@ -2,7 +2,7 @@ const axios = require('axios')
 
 const { CONFIG, CONFIG_Port } = require('../config')
 
-const { list } = require('./list')
+const { list } = require('./file')
 
 const ustr = list.get('useragent.list')
 const uagent = ustr ? JSON.parse(ustr) : {}

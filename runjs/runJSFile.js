@@ -1,26 +1,12 @@
 const vm = require('vm')
-const fs = require('fs')
-const path = require('path')
 
-const { logger, feedAddItem, now, errStack, downloadfile, isJson } = require('../utils')
+const { logger, feedAddItem, now, errStack, downloadfile, isJson, jsfile } = require('../utils')
 const clog = new logger({ head: 'runJSFile', level: 'debug' })
 
 const { wsSer } = require('../func/websocket')
 const { context } = require('./context')
 
 const { CONFIG } = require('../config')
-
-;(()=>{
-  // webhook runjs
-  wsSer.recv.webhook = fn => {
-    runJSFile(fn, { type: 'webhook' })
-  }
-  
-  const StoreFolder = path.join(__dirname, 'Store')
-  const JSFolder = path.join(__dirname, 'JSFile')
-  if(!fs.existsSync(StoreFolder)) fs.mkdirSync(StoreFolder)
-  if(!fs.existsSync(JSFolder)) fs.mkdirSync(JSFolder)
-})();
 
 const CONFIG_RUNJS = {
   timeout_jsrun: 5000,    // JS 运行时间。单位：毫秒
@@ -152,12 +138,12 @@ function runJSFile(filename, addContext) {
   if (/^https?:/.test(filename)) {
     const url = filename
     filename = url.split('/').pop()
-    const filePath = path.join(__dirname, 'JSFile', filename)
-    if (!fs.existsSync(filePath) || (CONFIG_RUNJS.intervals > 0 && new Date().getTime() - fs.statSync(filePath).mtimeMs > CONFIG_RUNJS.intervals*1000)) {
+    const jscont = jsfile.get(filename)
+    if (!jscont || (CONFIG_RUNJS.intervals > 0 && new Date().getTime() - jsfile.get(filename, 'date') > CONFIG_RUNJS.intervals*1000)) {
       clog.info('ready to download JS file', filename, '...')
       return new Promise((resolve, reject)=>{
-        downloadfile(url, filePath).then(()=>{
-          resolve(runJS(filename, fs.readFileSync(filePath, 'utf8'), addContext))
+        downloadfile(url, jsfile.get(filename, 'path')).then(()=>{
+          resolve(runJS(filename, jsfile.get(filename), addContext))
         }).catch(error=>{
           error = errStack(error)
           clog.error('运行', url, '出现错误', error)
@@ -171,12 +157,11 @@ function runJSFile(filename, addContext) {
     var JsStr = filename
     filename = 'testrun.js'
   } else {
-    const filePath = path.join(__dirname, 'JSFile', filename)
-    if (!fs.existsSync(filePath)) {
+    var JsStr = jsfile.get(filename)
+    if (!JsStr) {
       clog.error(filename, '不存在')
       return filename + '不存在'
     }
-    var JsStr = fs.readFileSync(filePath, 'utf8')
   }
 
   return runJS(filename, JsStr, addContext)

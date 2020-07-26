@@ -6,7 +6,7 @@ const { now, wait } = require('./time')
 const feed = require('./feed')
 const string = require('./string')
 const { eAxios, CONFIG_Axios } = require('./axios')
-const { list } = require('./list')
+const { list, jsfile, store } = require('./file')
 
 const clog = new logger({ head: 'utils' })
 
@@ -69,43 +69,6 @@ function nStatus() {
   return musage
 }
 
-const store = {
-  path: path.join(__dirname, '../runjs/Store'),
-  get(key) {
-    clog.debug('get value for', key)
-    if (fs.existsSync(path.join(this.path, key))) {
-      return fs.readFileSync(path.join(this.path, key), 'utf8')
-    }
-    return undefined
-  },
-  put(value, key) {
-    clog.debug('put value to', key)
-    if (key && value) {
-      fs.writeFileSync(path.join(this.path, key), value, 'utf8')
-      return true
-    } 
-    clog.notify('store put error: no key or value')
-    return false
-  },
-  delete(key) {
-    clog.debug('delete store key:', key)
-    try {
-      fs.unlinkSync(path.join(this.path, key))
-      return true
-    } catch(e) {
-      clog.error(errStack(e, true))
-      return false
-    }
-  },
-  all() {
-    const storedata = {}
-    fs.readdirSync(this.path).forEach(s=>{
-      storedata[s] = fs.readFileSync(path.join(this.path, s), 'utf8')
-    })
-    return storedata
-  }
-}
-
 module.exports = {
   logger,
   setGlog,
@@ -113,6 +76,7 @@ module.exports = {
   eAxios,
   CONFIG_Axios,
   list,
+  jsfile,
   now,
   wait,
   errStack,

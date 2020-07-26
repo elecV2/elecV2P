@@ -33,38 +33,43 @@ module.exports = app => {
       case "config":
         let data = req.body.data
         Object.assign(CONFIG, data)
-        CONFIG_FEED.homepage = CONFIG.homepage
+        CONFIG.CONFIG_FEED.homepage = CONFIG.homepage
         Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
         Object.assign(CONFIG_RUNJS, CONFIG.CONFIG_RUNJS)
         Object.assign(CONFIG_Axios, CONFIG.CONFIG_Axios)
         if (data.gloglevel !== CONFIG.gloglevel) setGlog(data.gloglevel)
         list.put('config.json', JSON.stringify(CONFIG, null, 2))
-        res.end("当前配置 已保存至 " + CONFIG.path)
+        res.end("save config to " + CONFIG.path)
         break
       case "homepage":
         let homepage = req.body.data.replace(/\/$/, '')
         CONFIG.homepage = homepage
         CONFIG_FEED.homepage = homepage
-        res.end('主页设置成功')
+        res.end('set homepage success!')
         break
       case "gloglevel":
         try {
           CONFIG.gloglevel = req.body.data
           setGlog(CONFIG.gloglevel)
-          res.end('全局日志级别成功设置为 ' + CONFIG.gloglevel)
+          res.end('global loglevel set to' + CONFIG.gloglevel)
         } catch(e) {
-          res.end('全局日志级别设置失败 ' + e)
-          clog.error('全局日志级别设置失败 ' + e)
+          res.end('fail to set global loglevel ' + e.message)
+          clog.error('fail to set global loglevel ' + e.message)
         }
         break
       case "wbrtoken":
         CONFIG.wbrtoken = req.body.data
-        clog.info('web runjs token 设置为：', CONFIG.wbrtoken)
-        res.end('设置成功')
+        clog.notify('webhook token set to', CONFIG.wbrtoken)
+        res.end('webhook token set success!')
         break
       case "eAxios":
-        Object.assign(CONFIG_Axios, req.body.data)
-        res.end('eAxios 设置成功')
+        try {
+          Object.assign(CONFIG_Axios, req.body.data)
+          res.end('success! set eAxios')
+        } catch(e) {
+          res.end('fail to change eAxios setting')
+          console.error(e)
+        }
         break
       default:{
         res.end("data put error")
