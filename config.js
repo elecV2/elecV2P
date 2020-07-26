@@ -3,8 +3,6 @@ const path = require('path')
 
 const CONFIG = {
   path: path.join(__dirname, 'runjs', 'Lists', 'config.json'),
-  version: JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'))).version,
-  start: Date.now(),
   wbrtoken: 'a8c259b2-67fe-4c64-8700-7bfdf1f55cb3',    // webhook token（建议修改）
 }
 
@@ -16,6 +14,9 @@ if (fs.existsSync(CONFIG.path)) {
     // do something or not
   }
 }
+
+CONFIG.version = require('./package.json').version
+CONFIG.start   = Date.now()
 
 const CONFIG_Port = {
   proxy: 8001,    // anyproxy 代理端口

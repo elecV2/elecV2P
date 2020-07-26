@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const qs = require('qs')
+const cheerio = require('cheerio')
 
 const { logger, errStack, feedPush, iftttPush, store, eAxios } = require('../utils')
 const clog = new logger({ head: 'context', level: 'debug' })
@@ -55,6 +56,7 @@ class contextBase {
   __dirname = process.cwd()
   $axios = eAxios
   $exec = exec
+  $cheerio = cheerio
   $store = {
     get: (key) => {
       this.console.debug('get value for', key)

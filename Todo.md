@@ -3,10 +3,11 @@
     <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
     <pre style="white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
+      - [ ] webhook put/post/delete
+      - [ ] minishell dispatch logic
       - [ ] $request/$response JS 可用参数
       - [ ] docs eAixos/webhook
-      - [ ] 引入 cheerio, 增强 JS 对 html 的处理
-      - [ ] minishell dispatch logic
+      - [ ] 一键自签证书附加 p12 格式
     </pre>
     </div>
     <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
@@ -23,6 +24,10 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;padding: 6px 1em;text-align: left;">
+      - [x] JSTEST 0/false bug fix
+      - [x] webUI minishell/message 优化
+      - [x] 引入 cheerio, 增强 JS 对 html 的处理
+      - [x] config save bug fix
       - [x] setting eAxios timeout/proxy/usagent
       - [x] utils list.get/put
       - [x] webUI message 优化/bug fix

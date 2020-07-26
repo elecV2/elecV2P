@@ -1,6 +1,6 @@
 {
   "name": "elecV2P",
-  "version": "2.2.3",
+  "version": "2.2.5",
   "description": "customize personal network",
   "main": "index.js",
   "author": "elecV2",
@@ -15,13 +15,12 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "anyproxy": "^4.1.0",
+    "anyproxy": "^4.1.3",
     "axios": "^0.19.2",
-    "child_process": "^1.0.2",
+    "cheerio": "^1.0.0-rc.3",
     "formidable": "^1.2.1",
     "node-cron": "^2.0.3",
-    "rss": "^1.2.2",
-    "vm": "^0.1.0"
+    "rss": "^1.2.2"
   },
   "devDependencies": {
   },
