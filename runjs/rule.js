@@ -142,6 +142,7 @@ function formRequest($request) {
 function formResponse($response) {
   return {
     ...$response,
+    headers: $response.header,
     body: formBody($response.body)
   }
 }

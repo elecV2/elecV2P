@@ -2,8 +2,10 @@ const fs = require('fs')
 const path = require('path')
 const formidable = require('formidable')
 
+const { wsSer } = require('../func/websocket')
+
 const { logger, downloadfile, errStack } = require('../utils')
-const clog = new logger({ head: 'wbjsfile' })
+const clog = new logger({ head: 'wbjsfile', cb: wsSer.send.func('jsmanage') })
 
 const { runJSFile, JSLISTS, CONFIG_RUNJS } = require('../runjs')
 
@@ -64,19 +66,21 @@ module.exports = app => {
   })
 
   app.post("/jsfile", (req, res)=>{
-    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "post js file")
-    if (!req.body.jscontent) {
-      res.end("have no content")
+    let jsname = req.body.jsname
+    let jscontent = req.body.jscontent
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "post js file", jsname)
+    if (!(jsname || jscontent)) {
+      res.end("have no jsname or content")
       return
     }
-    if (req.body.jsname === 'totest') {
-      const jsres = runJSFile(req.body.jscontent, { type: 'jstest' })
+    if (jsname === 'totest') {
+      const jsres = runJSFile(req.body.jscontent, { type: 'jstest', cb: wsSer.send.func('jsmanage') })
       res.end(typeof(jsres) !== 'string' ? JSON.stringify(jsres) : jsres)
     } else {
-      fs.writeFileSync(path.join(CONFIG_JSFILE.path, req.body.jsname), req.body.jscontent)
-      clog.notify(`${req.body.jsname} 文件保存成功`)
-      res.end(`${req.body.jsname} 文件保存成功`)
-      if (JSLISTS.indexOf(req.body.jsname) === -1) JSLISTS.push(req.body.jsname)
+      fs.writeFileSync(path.join(CONFIG_JSFILE.path, jsname), req.body.jscontent)
+      clog.notify(`${jsname} 文件保存成功`)
+      res.end(`${jsname} 文件保存成功`)
+      if (JSLISTS.indexOf(jsname) === -1) JSLISTS.push(jsname)
     }
   })
 

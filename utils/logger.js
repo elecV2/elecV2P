@@ -104,7 +104,7 @@ const LOGFILE = {
     if (fs.existsSync(path.join(CONFIG_LOG.logspath, filename))) {
       return fs.readFileSync(path.join(CONFIG_LOG.logspath, filename), "utf8")
     }
-    clog.info(filename, '不存在')
+    clog.info(filename, 'not exist')
     return null
   },
   delete(filename){
@@ -128,7 +128,7 @@ function jsonArgs(args) {
   try {
     return [...args].map(arg=>typeof(arg) === 'object' ? (Buffer.isBuffer(arg) ? arg.toString() : JSON.stringify(arg)) : arg)
   } catch(e) {
-    clog.error('日志参数错误')
+    clog.error('wrong arguments')
     return ['there are some error in logs arguments']
   }
 }

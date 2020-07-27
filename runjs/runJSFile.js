@@ -71,11 +71,13 @@ async function taskCount(filename) {
  * @return {string/object}     JS 执行结果
  */
 function runJS(filename, jscode, addContext) {
-  clog.notify(addContext.type, 'runjs:', filename)
   let cb = ''
   if (addContext) {
     if (addContext.type) {
+      clog.notify(addContext.type, 'runjs:', filename)
       taskCount(filename)
+    } else {
+      clog.notify('runjs', filename)
     }
     if (addContext.cb) {
       cb = addContext.cb

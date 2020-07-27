@@ -96,7 +96,7 @@ docker-compose up -d
 
 ![rules](https://raw.githubusercontent.com/elecV2/elecV2P-dei/master/docs/res/rules.png)
 
-详见 [docs/rules.md](https://github.com/elecV2/elecV2P-dei/tree/master/docs/03-rules.md) （龟速完成中）
+详见 [docs/rules.md](https://github.com/elecV2/elecV2P-dei/tree/master/docs/03-rules.md)
 
 ## 定时任务
 
@@ -150,16 +150,17 @@ ifttt 通知需先在设置（setting）面板添加 key。目前 ifttt 通知�
 
 ## docs
 
-更多： [说明文档](https://github.com/elecV2/elecV2P-dei) - 龟速完成中
+更多： [说明文档](https://github.com/elecV2/elecV2P-dei)
 
 ### 简单声明
 
 *该项目仅用于学习交流，任何使用，风险自负。*
 
-## 贡献
+## 贡献/参考
 
 - [anyproxy](https://github.com/alibaba/anyproxy)
 - [axios](https://github.com/axios/axios)
+- [cheerio](https://github.com/cheeriojs/cheerio)
 - [expressjs](https://expressjs.com)
 - [node-cron](https://github.com/merencia/node-cron)
 - [node-rss](https://github.com/dylang/node-rss)

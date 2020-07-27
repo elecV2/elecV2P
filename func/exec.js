@@ -9,7 +9,7 @@ const { wsSer } = require('./websocket')
 
 const CONFIG_exec = {
   shellcwd: process.cwd(),    // minishell cwd
-  timeout:  60,               // exec 命令最大执行时间，单位：秒
+  timeout:  60000,               // exec 命令最大执行时间，单位：毫秒
 }
 
 /**
@@ -64,8 +64,8 @@ wsSer.recv.shell = command => {
  * exec 执行函数
  * @param  {string}    command          具体指令
  * @param  {string}    options.cwd      当前工作目录
- * @param  {string}    options.env      env
- * @param  {number}    options.timeout  timeout，单位：秒
+ * @param  {string}    options.env      env 环境变量
+ * @param  {number}    options.timeout  timeout，单位：毫秒
  * @param  {function}  options.cb       回调函数，接收参数为 stdout 的数据
  * @param  {boolean}   options.logout   是否输出执行日志
  * @return {none}                 
@@ -74,7 +74,7 @@ function execFunc(command, { cwd, env, timeout = CONFIG_exec.timeout, cb, logout
   command = commandCross(command)
   const option = {
     encoding: 'buffer',
-    timeout: timeout * 1000,
+    timeout
   }
   if (cwd) option.cwd = cwd
   if (env) option.env = env

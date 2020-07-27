@@ -4,7 +4,7 @@ const axios = require('axios')
 const { now } = require('./time')
 
 const { logger } = require('./logger')
-const clog = new logger({ head: 'feed', level: 'debug' })
+const clog = new logger({ head: 'utilsFeed', level: 'debug' })
 
 const { CONFIG } = require('../config')
 
@@ -38,16 +38,19 @@ let feed = feedNew({})
 
 function iftttPush(title, description, url) {
   if (CONFIG_FEED.iftttid) {
-    const body = {};
-    [...arguments].forEach((arg, ind)=>{
-      body['value' + (ind + 1)] = arg
-    });
-    clog.notify('ifttt webhook trigger:', title, description)
+    const body = {
+      value1: title
+    }
+    if (description) body.value2 = description
+    if (url) body.value3 = url
+    clog.notify('ifttt webhook trigger, send data:', body)
     axios.post('https://maker.ifttt.com/trigger/elecV2P/with/key/' + CONFIG_FEED.iftttid, body).then(res=>{
       clog.debug('iftttPush result:', res.data)
     }).catch(e=>{
       clog.error(e)
     })
+  } else {
+    clog.notify('Please set ifttt id first')
   }
 }
 

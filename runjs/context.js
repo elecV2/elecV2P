@@ -1,9 +1,7 @@
-const fs = require('fs')
-const path = require('path')
 const qs = require('qs')
 const cheerio = require('cheerio')
 
-const { logger, errStack, feedPush, iftttPush, store, eAxios } = require('../utils')
+const { logger, errStack, feedPush, iftttPush, store, eAxios, jsfile } = require('../utils')
 const clog = new logger({ head: 'context', level: 'debug' })
 
 const exec = require('../func/exec')
@@ -144,6 +142,7 @@ class surgeContext {
   $notification = {
     post: (...data) => {
       this.fconsole.notify(data.join(' '))
+      iftttPush(data[0], data[1], data[2])
     }
   }
 }
@@ -183,6 +182,7 @@ class quanxContext {
   }
   $notify = (...data)=>{
     this.fconsole.notify(data.join(' '))
+    iftttPush(data[0], data[1], data[2])
   }
 }
 
@@ -202,7 +202,7 @@ class context {
     if ($require) {
       this.final.console.debug('require module', $require)
       if (/^\.\//.test($require)) {
-        this.final[$require.split('/').pop().replace(/\.js$/, '')] = require(path.join(__dirname, 'JSFile', $require))
+        this.final[$require.split('/').pop().replace(/\.js$/, '')] = require(jsfile.get($require, 'path'))
       } else {
         this.final[$require] = require($require)
       }
