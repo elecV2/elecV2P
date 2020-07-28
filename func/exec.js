@@ -8,7 +8,7 @@ const clog = new logger({ head: 'funcExec', level: 'debug' })
 const { wsSer } = require('./websocket')
 
 const CONFIG_exec = {
-  shellcwd: process.cwd(),    // minishell cwd
+  shellcwd: process.cwd(),       // minishell cwd
   timeout:  60000,               // exec 命令最大执行时间，单位：毫秒
 }
 
@@ -67,10 +67,9 @@ wsSer.recv.shell = command => {
  * @param  {string}    options.env      env 环境变量
  * @param  {number}    options.timeout  timeout，单位：毫秒
  * @param  {function}  options.cb       回调函数，接收参数为 stdout 的数据
- * @param  {boolean}   options.logout   是否输出执行日志
  * @return {none}                 
  */
-function execFunc(command, { cwd, env, timeout = CONFIG_exec.timeout, cb, logout = true }) {
+function execFunc(command, { cwd, env, timeout = CONFIG_exec.timeout, cb }) {
   command = commandCross(command)
   const option = {
     encoding: 'buffer',
@@ -81,24 +80,23 @@ function execFunc(command, { cwd, env, timeout = CONFIG_exec.timeout, cb, logout
 
   const childexec = exec(command, option)
 
-  if (logout) {
-    clog.notify('start run command:', command)
+  clog.notify('start run command:', command)
 
-    childexec.stdout.on('data', data => {
-      clog.info(data.toString())
-      if (cb) cb(data.toString())
-    })
+  childexec.stdout.on('data', data => {
+    data = data.toString()
+    clog.info(data)
+    if (cb) cb(data)
+  })
 
-    childexec.stderr.on('data', data => {
-      data = data.toString()
-      clog.error(data)
-      wsSer.send({ type: 'minishell', data })
-    })
+  childexec.stderr.on('data', data => {
+    data = data.toString()
+    clog.error(data)
+    wsSer.send({ type: 'minishell', data })
+  })
 
-    childexec.on('exit', ()=>{
-      clog.notify(command, 'finished')
-    })
-  }
+  childexec.on('exit', ()=>{
+    clog.notify(command, 'finished')
+  })
 }
 
 // windows 平台编码转换

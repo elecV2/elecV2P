@@ -1,6 +1,6 @@
 const { CONFIG, CONFIG_Port } = require('../config')
 
-const { logger, list, file } = require('../utils')
+const { logger, list } = require('../utils')
 const clog = new logger({ head: 'wbdata' })
 
 const { CONFIG_RULE, JSLISTS } = require('../script')
@@ -46,9 +46,6 @@ module.exports = app => {
         break
       case "filter":
         res.end(list.get('filter.list'))
-        break
-      case "todolist":
-        res.end(file.get('Todo.md'))
         break
       default: {
         res.end("404")

@@ -148,8 +148,11 @@ function downloadfile(durl, dest) {
 }
 
 const file = {
-  get(pname){
+  get(pname, type){
     let fpath = path.join(__dirname, '../', pname)
+    if (type === 'path') {
+      return fpath
+    }
     if (fs.existsSync(fpath)) {
       return fs.readFileSync(fpath, 'utf8')
     }

@@ -57,6 +57,7 @@ services:
       - "/elecv2p/JSFile:/usr/local/app/script/JSFile"
       - "/elecv2p/Lists:/usr/local/app/script/Lists"
       - "/elecv2p/Store:/usr/local/app/script/Store"
+      - "/elecv2p/Shell:/usr/local/app/script/Shell"
 ```
 
 ``` sh

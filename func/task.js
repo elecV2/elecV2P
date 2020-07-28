@@ -6,7 +6,7 @@ const exec = require('./exec')
 const { wsSer } = require('./websocket')
 const { runJSFile } = require('../script/runJSFile')
 
-const { logger, feedAddItem, isJson, list } = require('../utils')
+const { logger, feedAddItem, isJson, list, file } = require('../utils')
 const clog = new logger({ head: 'funcTask', cb: wsSer.send.func('tasklog'), file: 'funcTask' })
 
 // 任务类型： cron/schedule
@@ -124,9 +124,9 @@ function jobFunc(job) {
     return ()=>{
       clog.notify('run exec cammand', job.target)
       exec(job.target, {
+        cwd: file.get('script/Shell', 'path'),
         cb: data => {
-          const execlog = new logger({ head: 'taskExec', cb: wsSer.send.func('tasklog'), file: 'taskExec' })
-          execlog.info(data)
+          clog.info(data)
         }
       })
     }
