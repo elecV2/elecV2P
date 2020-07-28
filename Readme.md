@@ -54,9 +54,9 @@ services:
       - "8101:8001"
       - "8102:8002"
     volumes:
-      - "/elecv2p/JSFile:/usr/local/app/runjs/JSFile"
-      - "/elecv2p/Lists:/usr/local/app/runjs/Lists"
-      - "/elecv2p/Store:/usr/local/app/runjs/Store"
+      - "/elecv2p/JSFile:/usr/local/app/script/JSFile"
+      - "/elecv2p/Lists:/usr/local/app/script/Lists"
+      - "/elecv2p/Store:/usr/local/app/script/Store"
 ```
 
 ``` sh

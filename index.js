@@ -5,7 +5,7 @@ webstser()
 
 const aProxyOptions = {
   port: CONFIG_Port.proxy,
-  rule: require('./runjs/rule.js'),
+  rule: require('./script/rule.js'),
   webInterface: {
     enable: true,          // 是否打开代理请求查看端口
     port: CONFIG_Port.webif

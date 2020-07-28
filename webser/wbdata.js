@@ -1,12 +1,9 @@
-const fs = require('fs')
-const path = require('path')
-
 const { CONFIG, CONFIG_Port } = require('../config')
 
-const { logger } = require('../utils')
+const { logger, list, file } = require('../utils')
 const clog = new logger({ head: 'wbdata' })
 
-const { CONFIG_RULE, JSLISTS } = require('../runjs')
+const { CONFIG_RULE, JSLISTS } = require('../script')
 
 module.exports = app => {
   app.get("/data", (req, res)=>{
@@ -48,10 +45,10 @@ module.exports = app => {
         }))
         break
       case "filter":
-        res.end(fs.readFileSync(path.join(__dirname, '../runjs', 'Lists', 'filter.list'), 'utf8'))
+        res.end(list.get('filter.list'))
         break
       case "todolist":
-        res.end(fs.readFileSync(path.join(__dirname, '../Todo.md'), "utf8"))
+        res.end(file.get('Todo.md'))
         break
       default: {
         res.end("404")
@@ -64,9 +61,9 @@ module.exports = app => {
     switch(req.body.type){
       case "rules":
         let fdata = req.body.data.eplists
-        fs.writeFileSync(path.join(__dirname, '../runjs', 'Lists', 'default.list'), "[elecV2P rules]\n" + fdata.join("\n"))
+        list.put('default.list', "[elecV2P rules]\n" + fdata.join("\n"))
 
-        res.end("规则保存成功")
+        res.end("success! rules saved.")
         CONFIG_RULE.reqlists = []
         CONFIG_RULE.reslists = []
         fdata.forEach(r=>{
@@ -78,8 +75,8 @@ module.exports = app => {
       case "mitmhost":
         let mhost = req.body.data
         mhost = mhost.filter(host=>host.length>2)
-        fs.writeFileSync(path.join(__dirname, '../runjs', 'Lists', 'mitmhost.list'), "[mitmhost]\n" + mhost.join("\n"))
-        res.end("保存 mitmhost : " + mhost.length)
+        list.put('mitmhost', "[mitmhost]\n" + mhost.join("\n"))
+        res.end("success! mitmhost list saved: " + mhost.length)
         CONFIG_RULE.mitmhost = mhost
         break
       case "mitmtype":

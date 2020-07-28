@@ -1,9 +1,11 @@
-const { logger, isJson, list } = require('../utils')
+const { logger, isJson, list, jsfile } = require('../utils')
 const clog = new logger({ head: 'runRules' })
 
 const { wsSer } = require('../func/websocket')
 
 const { runJSFile } = require('./runJSFile')
+
+const JSLISTS = jsfile.get('list')
 
 const CONFIG_RULE = (()=>{
   function getUserAgent() {
@@ -150,6 +152,7 @@ function formResponse($response) {
 module.exports = {
   summary: 'elecV2P - customize personal network',
   CONFIG_RULE,
+  JSLISTS,
   *beforeSendRequest(requestDetail) {
     let matchreq = getrules(requestDetail, null, CONFIG_RULE.reqlists)
     if (!matchreq) return requestDetail

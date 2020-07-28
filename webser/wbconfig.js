@@ -2,7 +2,7 @@ const { logger, setGlog, CONFIG_FEED, CONFIG_Axios, list } = require('../utils')
 const clog = new logger({ head: 'wbconfig' })
 
 const { CONFIG } = require('../config')
-const { CONFIG_RUNJS, CONFIG_RULE } = require('../runjs')
+const { CONFIG_RUNJS, CONFIG_RULE } = require('../script')
 
 module.exports = app => {
   app.get("/config", (req, res)=>{

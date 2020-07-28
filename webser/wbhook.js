@@ -1,5 +1,5 @@
 const { TASKS_WORKER, TASKS_INFO } = require('../func')
-const { runJSFile, JSLISTS } = require('../runjs')
+const { runJSFile, JSLISTS } = require('../script')
 
 const { logger, LOGFILE, nStatus } = require('../utils')
 const clog = new logger({ head: 'wbhook', level: 'debug' })

@@ -1,24 +1,16 @@
 const fs = require('fs')
 const path = require('path')
 
-const { logger, CONFIG_FEED } = require('../utils')
+const { logger, CONFIG_FEED, list } = require('../utils')
 const clog = new logger({ head: 'wblist' })
 
-const { CONFIG_RULE } = require('../runjs')
-
-function getList(name) {
-  let listpath = path.join(__dirname, '../runjs', 'Lists', name)
-  if (fs.existsSync(listpath)) {
-    return fs.readFileSync(listpath, 'utf8')
-  }
-  return name + ' 文件不存在'
-}
+const { CONFIG_RULE } = require('../script')
 
 module.exports = app => {
-  const LISTPATH = path.join(__dirname, '../runjs', 'Lists')
+  const LISTPATH = path.join(__dirname, '../script', 'Lists')
 
   app.get("/filter", (req, res)=>{
-    res.end(getList('filter.list'))
+    res.end(list.get('filter.list'))
   })
   
   app.post("/rewritelists", (req, res)=>{

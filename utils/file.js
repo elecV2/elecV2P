@@ -1,13 +1,14 @@
 const fs = require('fs')
 const path = require('path')
+const axios = require('axios')
 
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFile' })
 
 const fpath = {
-  list: path.join(__dirname, '../runjs', 'Lists'),
-  js: path.join(__dirname, '../runjs', 'JSFile'),
-  store: path.join(__dirname, '../runjs', 'Store')
+  list: path.join(__dirname, '../script', 'Lists'),
+  js: path.join(__dirname, '../script', 'JSFile'),
+  store: path.join(__dirname, '../script', 'Store')
 }
 
 if (!fs.existsSync(fpath.list)) {
@@ -26,7 +27,10 @@ if (!fs.existsSync(fpath.store)) {
 }
 
 const list = {
-  get(name){
+  get(name, type){
+    if (type === 'path') {
+      return path.join(fpath.list, name)
+    }
     if (fs.existsSync(path.join(fpath.list, name))) {
       return fs.readFileSync(path.join(fpath.list, name), "utf8")
     }
@@ -47,6 +51,9 @@ const list = {
 
 const jsfile = {
   get(name, type){
+    if (name === 'list') {
+      return fs.readdirSync(fpath.js).sort()
+    }
     if (type === 'path') {
       return path.join(fpath.js, name)
     }
@@ -69,6 +76,9 @@ const jsfile = {
     } catch(e) {
       clog.error('put js file error', name, e.stack)
     }
+  },
+  delete(name){
+    fs.unlinkSync(path.join(fpath.js, name))
   }
 }
 
@@ -108,4 +118,46 @@ const store = {
   }
 }
 
-module.exports = { list, jsfile, store }
+function downloadfile(durl, dest) {
+  if (!dest) {
+    dest = list.get(durl.split('/').pop(), 'path')
+  }
+  return new Promise((resolve, reject)=>{
+    axios({
+      url: durl,
+      responseType: 'stream'
+    }).then(response=>{
+      if (response.status == 404) {
+        clog.error(durl + ' 404! file dont exist')
+        reject('404! file dont exist')
+        return
+      }
+      let file = fs.createWriteStream(dest)
+      response.data.pipe(file)
+      file.on('finish', ()=>{
+        clog.notify("download: " + durl + " to: " + dest)
+        file.close()
+        resolve(dest)
+      })
+    }).catch(e=>{
+      e = errStack(e)
+      clog.error(durl, 'download fail!', e)
+      reject('download fail! ' + e)
+    })
+  })
+}
+
+const file = {
+  get(pname){
+    let fpath = path.join(__dirname, '../', pname)
+    if (fs.existsSync(fpath)) {
+      return fs.readFileSync(fpath, 'utf8')
+    }
+    clog.error(pname, 'not exist')
+  },
+  copy(source, target){
+    fs.copyFileSync(source, target)
+  }
+}
+
+module.exports = { list, jsfile, store, file, downloadfile }

@@ -1,6 +1,6 @@
 const { Task, TASKS_WORKER, TASKS_INFO, jobFunc } = require('../func/task')
 const { wsSer } = require('../func/websocket')
-const { JSLISTS } = require('../runjs')
+const { JSLISTS } = require('../script')
 
 const { logger, errStack, eAxios, list, jsfile } = require('../utils')
 const clog = new logger({ head: 'wbtask', cb: wsSer.send.func('tasklog') })

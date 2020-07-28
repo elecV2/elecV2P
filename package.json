@@ -1,6 +1,6 @@
 {
   "name": "elecV2P",
-  "version": "2.2.7",
+  "version": "2.2.8",
   "description": "customize personal network",
   "main": "index.js",
   "author": "elecV2",
@@ -27,9 +27,9 @@
   "nodemonConfig": {
     "ignore": [
       "logs",
-      "runjs/JSFile/*",
-      "runjs/Lists/*",
-      "runjs/Store/*",
+      "script/JSFile/*",
+      "script/Lists/*",
+      "script/Store/*",
       "web/*",
       "*test.js"
     ]

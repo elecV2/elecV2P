@@ -1,14 +1,12 @@
-const fs = require('fs')
-const path = require('path')
 const nodecron = require('node-cron')
 
 const cron = require('./crontask.js')
 const schedule = require('./schedule')
 const exec = require('./exec')
 const { wsSer } = require('./websocket')
-const { runJSFile } = require('../runjs/runJSFile')
+const { runJSFile } = require('../script/runJSFile')
 
-const { logger, feedAddItem, isJson } = require('../utils')
+const { logger, feedAddItem, isJson, list } = require('../utils')
 const clog = new logger({ head: 'funcTask', cb: wsSer.send.func('tasklog'), file: 'funcTask' })
 
 // 任务类型： cron/schedule
@@ -83,19 +81,14 @@ class Task {
   }
 }
 
-
 const TASKS_INFO = {}             // 任务信息列表
 const TASKS_WORKER = {}           // 执行任务列表
 
 const taskInit = function() {
   // 初始化任务列表
-  if (fs.existsSync(path.join(__dirname, '../runjs/Lists', 'task.list'))) {
-    try {
-      let tasklist = fs.readFileSync(path.join(__dirname, '../runjs/Lists', 'task.list'), "utf8")
-      if (isJson(tasklist)) Object.assign(TASKS_INFO, JSON.parse(tasklist))
-    } catch(e) {
-      clog.error(e.stack)
-    }
+  const tlist = list.get('task.list')
+  if (tlist && isJson(tlist)) {
+    Object.assign(TASKS_INFO, JSON.parse(tlist))
   }
 
   for(let tid in TASKS_INFO) {

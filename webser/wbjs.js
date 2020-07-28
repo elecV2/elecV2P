@@ -1,17 +1,11 @@
-const fs = require('fs')
-const path = require('path')
 const formidable = require('formidable')
 
 const { wsSer } = require('../func/websocket')
 
-const { logger, downloadfile, errStack } = require('../utils')
+const { logger, downloadfile, errStack, jsfile, file } = require('../utils')
 const clog = new logger({ head: 'wbjsfile', cb: wsSer.send.func('jsmanage') })
 
-const { runJSFile, JSLISTS, CONFIG_RUNJS } = require('../runjs')
-
-const CONFIG_JSFILE = {
-  path: path.join(__dirname, "../runjs/JSFile"),
-}
+const { runJSFile, JSLISTS, CONFIG_RUNJS } = require('../script')
 
 module.exports = app => {
   app.get("/jsfile", (req, res)=>{
@@ -21,8 +15,9 @@ module.exports = app => {
       res.end('非法目录请求')
       return
     }
-    if (fs.existsSync(path.join(CONFIG_JSFILE.path, jsfn))) {
-      res.end(fs.readFileSync(path.join(CONFIG_JSFILE.path, jsfn), "utf8"))
+    const jscont = jsfile.get(jsfn)
+    if (jscont) {
+      res.end(jscont)
     } else {
       res.end('404 ' + jsfn + ' 文件不存在')
     }
@@ -51,7 +46,7 @@ module.exports = app => {
     const op = req.body.op
     switch(op){
       case 'jsdownload':
-        downloadfile(req.body.url, path.join(CONFIG_JSFILE.path, req.body.name)).then(jsl=>{
+        downloadfile(req.body.url, jsfile.get(req.body,name, 'path')).then(jsl=>{
           res.end('文件已下载至：' + jsl)
           if (JSLISTS.indexOf(req.body.name) === -1) JSLISTS.push(req.body.name)
         }).catch(e=>{
@@ -77,7 +72,7 @@ module.exports = app => {
       const jsres = runJSFile(req.body.jscontent, { type: 'jstest', cb: wsSer.send.func('jsmanage') })
       res.end(typeof(jsres) !== 'string' ? JSON.stringify(jsres) : jsres)
     } else {
-      fs.writeFileSync(path.join(CONFIG_JSFILE.path, jsname), req.body.jscontent)
+      jsfile.put(jsname, req.body.jscontent)
       clog.notify(`${jsname} 文件保存成功`)
       res.end(`${jsname} 文件保存成功`)
       if (JSLISTS.indexOf(jsname) === -1) JSLISTS.push(jsname)
@@ -88,7 +83,7 @@ module.exports = app => {
     const jsfn = req.body.jsfn
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "delete js file " + jsfn)
     if (jsfn) {
-      fs.unlinkSync(path.join(CONFIG_JSFILE.path, jsfn))
+      jsfile.delete(jsfn)
       JSLISTS.splice(JSLISTS.indexOf(jsfn), 1)
     } else {
       clog.error("delete js file error")
@@ -99,29 +94,30 @@ module.exports = app => {
   app.post('/uploadjs', (req, res) => {
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "正在上传 JS 文件")
     // js文件上传
-    var jsfile = new formidable.IncomingForm()
-    jsfile.maxFieldsSize = 2 * 1024 * 1024 //限制为最大2M
-    jsfile.keepExtensions = true
-    jsfile.multiples = true
-    jsfile.parse(req, (err, fields, files) => {
+    var uploadfile = new formidable.IncomingForm()
+    uploadfile.maxFieldsSize = 2 * 1024 * 1024 //限制为最大2M
+    uploadfile.keepExtensions = true
+    uploadfile.multiples = true
+    uploadfile.parse(req, (err, fields, files) => {
       if (err) {
         clog.error('Error', errStack(err))
-        // throw err
+        res.end('js upload fail!' + err.message)
+        return
       }
 
       if (!files.js) return
       if (files.js.length) {
-        files.js.forEach(file=>{
-          clog.notify('上传文件：', file.name)
-          fs.copyFileSync(file.path, path.join(CONFIG_JSFILE.path, file.name))
-          if (JSLISTS.indexOf(file.name) === -1) JSLISTS.push(file.name)
+        files.js.forEach(sgfile=>{
+          clog.notify('upload js file:', sgfile.name)
+          file.copy(sgfile.path, jsfile.get(sgfile.name, 'path'))
+          if (JSLISTS.indexOf(sgfile.name) === -1) JSLISTS.push(sgfile.name)
         })
       } else {
-        clog.notify('上传文件：', files.js.name)
-        fs.copyFileSync(files.js.path, path.join(CONFIG_JSFILE.path, files.js.name))
+        clog.notify('upload js file:', files.js.name)
+        file.copy(files.js.path, jsfile.get(files.js.name, 'path'))
         if (JSLISTS.indexOf(files.js.name) === -1) JSLISTS.push(files.js.name)
       }
     })
-    res.end('js uploaded success!')
+    res.end('success!')
   })
 }
