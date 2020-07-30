@@ -13,7 +13,11 @@ const CONFIG_Axios = {
   uagent:  'iPhone'         // 通用 User-Agent，相关列表为 useragent.list。
 }
 
-if (CONFIG.CONFIG_Axios) Object.assign(CONFIG_Axios, CONFIG.CONFIG_Axios)
+if (CONFIG.CONFIG_Axios) {
+  Object.assign(CONFIG_Axios, CONFIG.CONFIG_Axios)
+} else {
+  CONFIG.CONFIG_Axios = CONFIG_Axios
+}
 
 function getUagent() {
   return uagent[CONFIG_Axios.uagent] ? uagent[CONFIG_Axios.uagent].header : null

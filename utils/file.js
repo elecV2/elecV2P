@@ -52,7 +52,16 @@ const list = {
 const jsfile = {
   get(name, type){
     if (name === 'list') {
-      return fs.readdirSync(fpath.js).sort()
+      const jslist = fs.readdirSync(fpath.js)
+      let flist = []
+      jslist.forEach(f=>{
+        if (fs.statSync(path.join(fpath.js, f)).isDirectory()) {
+          flist = flist.concat(fs.readdirSync(path.join(fpath.js, f)).map(secf=>f + '/' + secf))
+        } else {
+          flist.push(f)
+        }
+      })
+      return flist.sort()
     }
     if (type === 'path') {
       return path.join(fpath.js, name)

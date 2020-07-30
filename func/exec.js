@@ -69,7 +69,9 @@ wsSer.recv.shell = command => {
  * @param  {function}  options.cb       回调函数，接收参数为 stdout 的数据
  * @return {none}                 
  */
-function execFunc(command, { cwd, env, timeout = CONFIG_exec.timeout, cb }) {
+function execFunc(command, options) {
+  const { cwd, env, timeout = CONFIG_exec.timeout, cb } = options || {}
+
   command = commandCross(command)
   const option = {
     encoding: 'buffer',
@@ -91,6 +93,7 @@ function execFunc(command, { cwd, env, timeout = CONFIG_exec.timeout, cb }) {
   childexec.stderr.on('data', data => {
     data = data.toString()
     clog.error(data)
+    if (cb) cb(null, data)
     wsSer.send({ type: 'minishell', data })
   })
 

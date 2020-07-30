@@ -2,7 +2,7 @@ const http = require('http')
 const express = require('express')
 const compression = require('compression')
 
-const { CONFIG_Port } = require('./config')
+const { CONFIG, CONFIG_Port } = require('./config')
 const { websocketSer } = require('./func/websocket')
 
 const { logger } = require('./utils/logger')
@@ -40,7 +40,7 @@ module.exports = () => {
   const webstPort = process.env.PORT || CONFIG_Port.webst || 80
 
   server.listen(webstPort, ()=>{
-    clog.notify("elecV2P manage on port", webstPort)
+    clog.notify("elecV2P", CONFIG.version, "on port", webstPort)
   })
 
   websocketSer({ server, path: '/elecV2P' })

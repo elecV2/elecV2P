@@ -21,6 +21,8 @@ const CONFIG_RUNJS = {
 
 if (CONFIG.CONFIG_RUNJS) {
   Object.assign(CONFIG_RUNJS, CONFIG.CONFIG_RUNJS)
+} else {
+  CONFIG.CONFIG_RUNJS = CONFIG_RUNJS
 }
 
 const runstatus = {

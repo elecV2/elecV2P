@@ -20,6 +20,8 @@ const CONFIG_FEED = {
 
 if (CONFIG.CONFIG_FEED) {
   Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
+} else {
+  CONFIG.CONFIG_FEED = CONFIG_FEED
 }
 
 function feedNew({ title = 'elecV2P notification', description = 'elecV2P 运行记录通知', ttl = 10 }) {
