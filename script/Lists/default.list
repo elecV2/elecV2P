@@ -7,3 +7,4 @@ url,httpbin.org/get,hold,0,res
 resstatus,404,js,404.js,res
 host,host.com,ua,iPhone,res
 host,host.com,js,empty.js,res
+url,httpbin.org/html,js,exam-cheerio-hbin.js,res

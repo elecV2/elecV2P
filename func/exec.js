@@ -1,8 +1,6 @@
-const fs = require('fs')
-const path = require('path')
 const { exec } = require('child_process')
 
-const { logger } = require('../utils')
+const { logger, file } = require('../utils')
 const clog = new logger({ head: 'funcExec', level: 'debug' })
 
 const { wsSer } = require('./websocket')
@@ -38,9 +36,20 @@ function commandCross(command) {
  * @return    {none}               
  */
 wsSer.recv.shell = command => {
+  if (command === 'cwd') {
+    wsSer.send({
+      type: 'minishell',
+      data: {
+        type: 'cwd',
+        data: CONFIG_exec.shellcwd
+      }
+    })
+    return
+  }
   if (/^cd /.test(command)) {
-    let cwd = path.join(CONFIG_exec.shellcwd, command.replace('cd ', ''))
-    if(fs.existsSync(cwd)) {
+    let cdd = command.replace('cd ', '')
+    let cwd = file.path(CONFIG_exec.shellcwd, cdd)
+    if(cwd) {
       CONFIG_exec.shellcwd = cwd
       wsSer.send({
         type: 'minishell',
@@ -50,7 +59,7 @@ wsSer.recv.shell = command => {
         }
       })
     } else {
-      wsSer.send({ type: 'minishell', data: cwd + ' dont exist' })
+      wsSer.send({ type: 'minishell', data: cdd + ' don\'t exist' })
     }
   } else {
     execFunc(command, {

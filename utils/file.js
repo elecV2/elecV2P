@@ -169,6 +169,13 @@ const file = {
   },
   copy(source, target){
     fs.copyFileSync(source, target)
+  },
+  path(x1, x2){
+    if (!(x1 && x2)) return
+    let rpath = path.join(x1, x2)
+    if (fs.existsSync(rpath)) {
+      return rpath
+    }
   }
 }
 

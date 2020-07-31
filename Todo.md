@@ -6,6 +6,7 @@
       - [ ] 自签证书附加 p12 格式
       - [ ] runJS return promise
       - [ ] example 多语言(python/sh).js
+      - [ ] exec -e env
     </pre>
     </div>
     <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
