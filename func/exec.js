@@ -46,6 +46,7 @@ wsSer.recv.shell = command => {
     })
     return
   }
+  command = decodeURI(command)
   if (/^cd /.test(command)) {
     let cdd = command.replace('cd ', '')
     let cwd = file.path(CONFIG_exec.shellcwd, cdd)

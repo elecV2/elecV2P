@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
-const EasyCert = require('node-easy-cert');
+const forge = require('node-forge')
+const EasyCert = require('node-easy-cert')
 
 const anycrtpath = require('os').homedir() + '/.anyproxy/certificates'
 
@@ -40,6 +41,9 @@ function newRootCrt(evoptions, cb) {
       clog.error(error)
     } else {
       clog.notify('new rootCA generated at', keyPath)
+      const password = evoptions.password || 'elecV2P'
+      const p12b64 = pemToP12(keyPath, crtPath, password)
+      fs.writeFileSync(path.join(rootCApath, 'p12b64.txt'), `password = ${password}\np12base64 = ${p12b64}`, 'utf8')
     }
     if(cb) cb(error, keyPath, crtPath)
   })
@@ -71,6 +75,19 @@ function rootCrtSync() {
   }
   clog.info('rootCA 目录下无根证书，将自动生成新的证书')
   return false
+}
+
+function pemToP12(keyPath, crtPath, password='elecV2P') {
+  const key = fs.readFileSync(keyPath)
+  const crt = fs.readFileSync(crtPath)
+  const prikey = forge.pki.privateKeyFromPem(key.toString())
+  const pubcrt = forge.pki.certificateFromPem(crt.toString())
+
+  const p12Asn1 = forge.pkcs12.toPkcs12Asn1(prikey, pubcrt, password)
+  const p12Der = forge.asn1.toDer(p12Asn1).getBytes()
+  const p12b64 = forge.util.encode64(p12Der)
+
+  return p12b64
 }
 
 module.exports = { clearCrt, rootCrtSync, newRootCrt }

@@ -2,7 +2,7 @@
 
 if [ "$name" = "" ]
 then
-  name='elecV2P'
+name='elecV2P'
 fi
 
 echo "hello "${name}", - shell"

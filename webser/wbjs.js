@@ -19,6 +19,7 @@ module.exports = app => {
     if (jscont) {
       res.end(jscont)
     } else {
+      res.writeHead(404, { 'Content-Type': 'text/plain;charset=utf-8' })
       res.end('404 ' + jsfn + ' 文件不存在')
     }
   })

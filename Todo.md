@@ -3,10 +3,11 @@
     <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
     <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;">
-      - [ ] 自签证书附加 p12 格式
       - [ ] runJS return promise
       - [ ] example 多语言(python/sh).js
+      - [ ] PATH:Shell
       - [ ] exec -e env
+      - [ ] js -e env
     </pre>
     </div>
     <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
@@ -24,6 +25,7 @@
   <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
     <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
     <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;">
+      - [x] 自签证书附加 p12 格式
       - [x] webhook remote JS forece downloads(rename)
       - [x] script 子目录保存获取
       - [x] docs Advanced.md
