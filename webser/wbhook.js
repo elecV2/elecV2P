@@ -21,11 +21,23 @@ function handler(req, res){
   clog.notify(clientip, "webhook:", rbody.type)
   if (rbody.type === 'runjs') {
     let fn = rbody.fn
-    if (JSLISTS.indexOf(fn) === -1) {
+    if (!/^https?:/.test(fn) && JSLISTS.indexOf(fn) === -1) {
       res.end('no such js file ' + fn)
     } else {
-      const jsres = runJSFile(fn, { type: 'webhook' })
-      let body = 'results:' + (typeof(jsres) !== 'string' ? JSON.stringify(jsres) : jsres)
+      const addContext = {
+        type: 'webhook'
+      }
+      if (rbody.rename) {
+        addContext.rename = rbody.rename
+      }
+      const jsres = runJSFile(fn, addContext)
+      let body = ''
+      if (/^https?:/.test(fn)) {
+        body = '远程 JS, 请前往 log path 查看运行日志'
+        fn = addContext.rename || fn.split('/').pop()
+      } else {
+        body = 'results:' + (typeof(jsres) !== 'string' ? JSON.stringify(jsres) : jsres)
+      }
       const logf = fn + '.log'
       body += `\n\nlog file path: /logs/${logf}\n\n${LOGFILE.get(logf)}`
       res.end(body)

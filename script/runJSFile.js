@@ -1,6 +1,6 @@
 const vm = require('vm')
 
-const { logger, feedAddItem, now, errStack, downloadfile, isJson, jsfile } = require('../utils')
+const { logger, feedAddItem, now, errStack, downloadfile, isJson, jsfile, file } = require('../utils')
 const clog = new logger({ head: 'runJSFile', level: 'debug' })
 
 const { wsSer } = require('../func/websocket')
@@ -72,22 +72,16 @@ async function taskCount(filename) {
  * @param  {object} addContext 附加环境变量 context
  * @return {string/object}     JS 执行结果
  */
-function runJS(filename, jscode, addContext) {
-  let cb = ''
-  if (addContext) {
-    if (addContext.type) {
-      clog.notify(addContext.type, 'runjs:', filename)
-      taskCount(filename)
-    } else {
-      clog.notify('runjs', filename)
-    }
-    if (addContext.cb) {
-      cb = addContext.cb
-      delete addContext.cb
-    } else if (addContext.type) {
-      cb = wsSer.send.func(addContext.type)
-    }
+function runJS(filename, jscode, addContext={}) {
+  let cb = addContext.cb
+  delete addContext.cb
+  if (addContext.type) {
+    clog.notify(addContext.type, 'runjs:', filename)
+    taskCount(filename)
+    if (!cb) cb = wsSer.send.func(addContext.type)
     delete addContext.type
+  } else {
+    clog.notify('runjs', filename)
   }
   const fconsole = new logger({ head: filename, file: CONFIG_RUNJS.jslogfile ? filename : false, cb })
   const CONTEXT = new context({ fconsole })
@@ -138,26 +132,26 @@ function runJS(filename, jscode, addContext) {
  * @param     {object}    addContext    附加环境变量 context
  * @return    {string/object}           runJS() 的结果
  */
-function runJSFile(filename, addContext) {
+function runJSFile(filename, addContext={}) {
   if (/^https?:/.test(filename)) {
     const url = filename
-    filename = url.split('/').pop()
-    const jscont = jsfile.get(filename)
-    if (!jscont || (CONFIG_RUNJS.intervals > 0 && new Date().getTime() - jsfile.get(filename, 'date') > CONFIG_RUNJS.intervals*1000)) {
+    filename = addContext.rename || url.split('/').pop()
+    const jsIsExist = file.isExist(jsfile.get(filename, 'path'))
+    if (!jsIsExist || addContext.type === 'webhook' || (CONFIG_RUNJS.intervals > 0 && new Date().getTime() - jsfile.get(filename, 'date') > CONFIG_RUNJS.intervals*1000)) {
       clog.info('ready to download JS file', filename, '...')
       return new Promise((resolve, reject)=>{
         downloadfile(url, jsfile.get(filename, 'path')).then(()=>{
           resolve(runJS(filename, jsfile.get(filename), addContext))
         }).catch(error=>{
           error = errStack(error)
-          clog.error('运行', url, '出现错误', error)
+          clog.error('run', url, 'error:', error)
           reject(error)
         })
       })
     }
   }
 
-  if (addContext && addContext.type === 'jstest') {
+  if (addContext.type === 'jstest') {
     var JsStr = filename
     filename = 'testrun.js'
   } else {

@@ -104,7 +104,7 @@ const LOGFILE = {
     if (fs.existsSync(path.join(CONFIG_LOG.logspath, filename))) {
       return fs.readFileSync(path.join(CONFIG_LOG.logspath, filename), "utf8")
     }
-    clog.info(filename, 'not exist')
+    clog.info(filename, 'not exist yet')
     return null
   },
   delete(filename){

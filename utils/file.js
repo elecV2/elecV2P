@@ -2,6 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const axios = require('axios')
 
+const { errStack } = require('./string')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFile' })
 
@@ -129,7 +130,7 @@ const store = {
 
 function downloadfile(durl, dest) {
   if (!dest) {
-    dest = list.get(durl.split('/').pop(), 'path')
+    dest = jsfile.get(durl.split('/').pop(), 'path')
   }
   return new Promise((resolve, reject)=>{
     axios({
@@ -176,6 +177,12 @@ const file = {
     if (fs.existsSync(rpath)) {
       return rpath
     }
+  },
+  isExist(filepath){
+    if (fs.existsSync(filepath)) {
+      return true
+    }
+    return false
   }
 }
 

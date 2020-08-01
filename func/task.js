@@ -125,8 +125,12 @@ function jobFunc(job) {
       clog.notify('run exec cammand', job.target)
       exec(job.target, {
         cwd: file.get('script/Shell', 'path'),
-        cb: data => {
-          clog.info(data)
+        cb(data, error){
+          if (error) {
+            clog.error(error)
+          } else {
+            clog.info(data)
+          }
         }
       })
     }
