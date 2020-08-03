@@ -225,7 +225,7 @@ module.exports = {
     if ('js' === matchreq[2] ) {
       return new Promise(async (resolve, reject)=>{
         let jsres = runJSFile(matchreq[3], { $request: formRequest(requestDetail) })
-        if (jsres instanceof Promise) {
+        if (jsres && typeof(jsres.then) === 'function') {
           jsres = await jsres.catch(()=>{
             clog.error('error on run remote js')
           })
@@ -268,7 +268,7 @@ module.exports = {
         clog.info('match rewrite rules:', r[0], r[1])
         return new Promise(async (resolve, reject)=>{
           let jsres = runJSFile(r[1], { $request: formRequest($request), $response: formResponse($response) })
-          if (jsres instanceof Promise) {
+          if (jsres && typeof(jsres.then) === 'function') {
             jsres = await jsres.catch(()=>{
               resolve({ response: $response })
             })
@@ -329,7 +329,7 @@ module.exports = {
     if (matchres[2] === "js") {
       return new Promise(async (resolve, reject)=>{
         let jsres = runJSFile(matchres[3], { $request: formRequest($request), $response: formResponse($response) })
-        if (jsres instanceof Promise) {
+        if (jsres && typeof(jsres.then) === 'function') {
           jsres = await jsres.catch(()=>{
             resolve({ response: $response })
           })

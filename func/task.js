@@ -102,9 +102,23 @@ const taskInit = function() {
 function jobFunc(job) {
   // 任务信息转化为可执行函数
   if (job.type === 'runjs') {
+    const options = { type: 'task', cb: wsSer.send.func('tasklog') }
+    
+    let envrough = job.target.match(/-e ([^-]+)/)
+    if (envrough) {
+      let envlist = envrough[1].trim().split(' ')
+      envlist.forEach(ev=>{
+        let ei = ev.split('=')
+        if (ei.length === 2) {
+          options['$' + ei[0].trim()] = ei[1].trim()
+        }
+      })
+    }
+
+    job.target = job.target.split(/ -e/)[0]
     return ()=>{
       clog.notify('runjs', job.target)
-      runJSFile(job.target, { type: 'task', cb: wsSer.send.func('tasklog') })
+      runJSFile(job.target, options)
     }
   } else if (job.type === 'taskstart') {
     return ()=>{

@@ -18,16 +18,45 @@ const CONFIG_exec = {
 function commandCross(command) {
   const isWin = /^win/.test(process.platform)
   if (isWin) {
-    if (command === 'ls') command = 'dir'
+    if (/^ls/.test(command)) command = command.replace('ls', 'dir')
     else if (/^cat/.test(command)) command = command.replace('cat', 'type')
     else if (command === 'reboot') command = 'powershell.exe restart-computer'
     else if (/^(rm|mv|cp|mkdir|rmdir)/.test(command)) command = 'powershell.exe ' + command
   } else {
-    if (command === 'dir') command = 'ls'
+    if (/^dir/.test(command)) command = command.replace('dir', 'ls')
     else if (/^type/.test(command)) command = command.replace('type', 'cat')
     else if (/Restart-Computer/i.test(command)) command = 'reboot'
   }
   return command
+}
+
+/**
+ * command 参数处理 -c/-e
+ * @param     {string}    command    exec 命令
+ * @param     {object}    options    命令执行环境
+ * @return    {string}               处理后命令
+ */
+function commandArgu(command, options={}) {
+  let cwd = command.match(/-c (\S+)/)
+  if (cwd) {
+    options.cwd = file.get(cwd[1], 'path')
+  }
+
+  let envrough = command.match(/-e ([^-]+)/)
+  if (envrough) {
+    let envlist = envrough[1].trim().split(' ')
+    options.env = { ...envlist }
+
+    envlist.forEach(ev=>{
+      let ei = ev.split('=')
+      if (ei.length === 2) {
+        options.env[ei[0].trim()] = ei[1].trim()
+      }
+    })
+  }
+  command = command.split(/ -(c|e)/)[0]
+
+  return { command, options }
 }
 
 /**
@@ -82,7 +111,6 @@ wsSer.recv.shell = command => {
 function execFunc(command, options) {
   const { cwd, env, timeout = CONFIG_exec.timeout, cb } = options || {}
 
-  command = commandCross(command)
   const option = {
     encoding: 'buffer',
     timeout
@@ -90,7 +118,9 @@ function execFunc(command, options) {
   if (cwd) option.cwd = cwd
   if (env) option.env = env
 
-  const childexec = exec(command, option)
+  const fev = commandArgu(command, option)
+  command = commandCross(fev.command)
+  const childexec = exec(command, fev.options)
 
   clog.notify('start run command:', command)
 

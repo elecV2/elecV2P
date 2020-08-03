@@ -31,16 +31,21 @@ function handler(req, res){
         addContext.rename = rbody.rename
       }
       const jsres = runJSFile(fn, addContext)
-      let body = ''
-      if (/^https?:/.test(fn)) {
-        body = '远程 JS, 请前往 log path 查看运行日志'
-        fn = addContext.rename || fn.split('/').pop()
+      fn = addContext.rename || fn.split('/').pop()
+      if (jsres && typeof(jsres.then) === 'function') {
+        jsres.then(data=>{
+          if (data) res.write(typeof(data) === 'object' ? JSON.stringify(data) : data)
+          else res.write(fn + 'don\'t return any value')
+        }).catch(error=>{
+          res.write('error: ' + error)
+        }).finally(()=>{
+          res.end(`\n\nconsole log file: /logs/${fn}.log\n\n${LOGFILE.get(fn+'.log')}`)
+        })
       } else {
-        body = 'results:' + (typeof(jsres) !== 'string' ? JSON.stringify(jsres) : jsres)
+        if(jsres) res.write(typeof(jsres) === 'object' ? JSON.stringify(jsres) : jsres)
+        else res.write(fn + 'don\'t return any value')
+        res.end(`\n\nconsole log file: /logs/${fn}.log\n\n${LOGFILE.get(fn+'.log')}`)
       }
-      const logf = fn + '.log'
-      body += `\n\nlog file path: /logs/${logf}\n\n${LOGFILE.get(logf)}`
-      res.end(body)
     }
   } else if (rbody.type === 'deletelog') {
     let name = rbody.fn

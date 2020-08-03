@@ -119,7 +119,7 @@ function runJS(filename, jscode, addContext={}) {
   try {
     const result = vm.runInNewContext(jscode, CONTEXT.final, { displayErrors: true, timeout: CONFIG_RUNJS.timeout_jsrun })
     if (CONTEXT.final.$result) return CONTEXT.final.$result
-    return (typeof result === 'object' && !isJson(result)) ? null : result
+    return result
   } catch(error) {
     fconsole.error(errStack(error, true))
     return { body: errStack(error) }

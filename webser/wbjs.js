@@ -28,7 +28,7 @@ module.exports = app => {
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get js manage data")
     res.end(JSON.stringify({
       storemanage: true,
-      jslists: JSLISTS,
+      jslists: Object.assign(JSLISTS, jsfile.get('list'))
     }))
   })
 
@@ -71,7 +71,15 @@ module.exports = app => {
     }
     if (jsname === 'totest') {
       const jsres = runJSFile(req.body.jscontent, { type: 'jstest', cb: wsSer.send.func('jsmanage') })
-      res.end(typeof(jsres) !== 'string' ? JSON.stringify(jsres) : jsres)
+      if (jsres && typeof(jsres.then) === 'function') {
+        jsres.then(data=>{
+          res.end(typeof(data) === 'object' ? JSON.stringify(data) : data)
+        }).catch(error=>{
+          res.end('error: ' + error)
+        })
+      } else {
+        res.end(typeof(jsres) === 'object' ? JSON.stringify(jsres) : jsres)
+      }
     } else {
       jsfile.put(jsname, req.body.jscontent)
       clog.notify(`${jsname} 文件保存成功`)
