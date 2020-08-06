@@ -52,7 +52,7 @@ function iftttPush(title, description, url) {
       clog.error(e)
     })
   } else {
-    clog.notify('Please set ifttt id first')
+    clog.notify('Have no IFTTT id yet, skip IFTTT push')
   }
 }
 

@@ -1,5 +1,5 @@
 const { logger, isJson, list, jsfile } = require('../utils')
-const clog = new logger({ head: 'runRules' })
+const clog = new logger({ head: 'elecV2P' })
 
 const { wsSer } = require('../func/websocket')
 

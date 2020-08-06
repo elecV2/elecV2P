@@ -39,7 +39,7 @@ function commandCross(command) {
 function commandArgu(command, options={}) {
   let cwd = command.match(/-c (\S+)/)
   if (cwd) {
-    options.cwd = file.get(cwd[1], 'path')
+    options.cwd = file.path(process.cwd(), cwd[1])
   }
 
   let envrough = command.match(/-e ([^-]+)/)
@@ -54,7 +54,7 @@ function commandArgu(command, options={}) {
       }
     })
   }
-  command = command.split(/ -(c|e)/)[0]
+  command = command.split(/ -(c|e) /)[0]
 
   return { command, options }
 }
