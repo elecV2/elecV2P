@@ -47,7 +47,7 @@ module.exports = app => {
     const op = req.body.op
     switch(op){
       case 'jsdownload':
-        downloadfile(req.body.url, jsfile.get(req.body,name, 'path')).then(jsl=>{
+        downloadfile(req.body.url, jsfile.get(req.body.name, 'path')).then(jsl=>{
           res.end('文件已下载至：' + jsl)
           if (JSLISTS.indexOf(req.body.name) === -1) JSLISTS.push(req.body.name)
         }).catch(e=>{

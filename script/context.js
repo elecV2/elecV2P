@@ -1,6 +1,7 @@
 const qs = require('qs')
 const cheerio = require('cheerio')
 
+const { CONFIG } = require('../config')
 const { logger, errStack, feedPush, iftttPush, store, eAxios, jsfile } = require('../utils')
 const clog = new logger({ head: 'context', level: 'debug' })
 
@@ -142,7 +143,7 @@ class surgeContext {
   $notification = {
     post: (...data) => {
       this.fconsole.notify(data.join(' '))
-      iftttPush(data[0], data[1], data[2])
+      if (CONFIG.JSIFTTT) iftttPush(data[0], data[1], data[2])
     }
   }
 }
@@ -182,7 +183,7 @@ class quanxContext {
   }
   $notify = (...data)=>{
     this.fconsole.notify(data.join(' '))
-    iftttPush(data[0], data[1], data[2])
+    if (CONFIG.JSIFTTT) iftttPush(data[0], data[1], data[2])
   }
 }
 
