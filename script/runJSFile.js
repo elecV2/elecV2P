@@ -76,8 +76,8 @@ function runJS(filename, jscode, addContext={}) {
   let cb = addContext.cb
   delete addContext.cb
   if (addContext.type) {
-    clog.notify(addContext.type, 'runjs:', filename)
     taskCount(filename)
+    clog.notify(addContext.type, 'runjs:', filename)
     if (!cb) cb = wsSer.send.func(addContext.type)
     delete addContext.type
   } else {

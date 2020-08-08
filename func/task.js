@@ -113,9 +113,9 @@ function jobFunc(job) {
           options['$' + ei[0].trim()] = ei[1].trim()
         }
       })
+      job.target = job.target.split(/ -e /)[0]
     }
 
-    job.target = job.target.split(/ -e/)[0]
     return ()=>{
       clog.notify('runjs', job.target)
       runJSFile(job.target, options)
