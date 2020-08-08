@@ -2,7 +2,7 @@ const formidable = require('formidable')
 
 const { wsSer } = require('../func/websocket')
 
-const { logger, downloadfile, errStack, jsfile, file } = require('../utils')
+const { logger, downloadfile, eAxios, errStack, jsfile, file } = require('../utils')
 const clog = new logger({ head: 'wbjsfile', cb: wsSer.send.func('jsmanage') })
 
 const { runJSFile, JSLISTS, CONFIG_RUNJS } = require('../script')
@@ -128,5 +128,49 @@ module.exports = app => {
       }
     })
     res.end('success!')
+  })
+
+  app.put('/mock', (req, res)=>{
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), `make mock`, req.body.type)
+    const request = req.body.request
+    switch(req.body.type){
+      case "req":
+        eAxios(request).then(response=>{
+          clog.notify('mock request response:', response.data)
+          res.end('success!')
+        }).catch(error=>{
+          clog.error('mock request error:', errStack(error))
+          res.end('fail!')
+        })
+        break
+      case "js":
+        let jsname = req.body.jsname
+        if (jsname) {
+          if (!/\.js$/.test(jsname)) jsname = jsname + '.js'
+        } else {
+          jsname = 'elecV2Pmock.js'
+        }
+        const jscont = `
+/**
+ * mock JS from elecV2P - ${jsname}
+ */
+
+const request = ${ JSON.stringify(request, null, 2) }
+
+$axios(request).then(res=>{
+  console.log(res.data)
+}).catch(e=>{
+  console.error(e)
+})
+`
+        jsfile.put(jsname, jscont)
+        res.end(`success save ${jsname}!`)
+        clog.notify(`success save ${jsname}!`)
+        if (JSLISTS.indexOf(jsname) === -1) JSLISTS.push(jsname)
+        break
+      default:{
+        res.end("wrong mock type")
+      }
+    }
   })
 }

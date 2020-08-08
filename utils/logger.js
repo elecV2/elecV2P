@@ -93,7 +93,7 @@ const clog = new logger({ head: 'logger', level: 'debug' })
 
 const LOGFILE = {
   put(filename, data){
-    fs.appendFile(path.join(CONFIG_LOG.logspath, filename), data + '\n', (err) => {
+    fs.appendFile(path.join(CONFIG_LOG.logspath, filename.split('/').join('-')), data + '\n', (err) => {
       if (err) clog.error(err)
     })
   },
