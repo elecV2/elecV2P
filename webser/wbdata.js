@@ -72,7 +72,7 @@ module.exports = app => {
       case "mitmhost":
         let mhost = req.body.data
         mhost = mhost.filter(host=>host.length>2)
-        list.put('mitmhost', "[mitmhost]\n" + mhost.join("\n"))
+        list.put('mitmhost.list', "[mitmhost]\n" + mhost.join("\n"))
         res.end("success! mitmhost list saved: " + mhost.length)
         CONFIG_RULE.mitmhost = mhost
         break

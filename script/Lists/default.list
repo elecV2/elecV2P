@@ -1,10 +1,9 @@
 [elecV2P rules]
-host,www.baidu.com,js,0body.js,req
 url,adtest,block,reject,req
 url,adtest/(get|post),block,tinyimg,req
 url,httpbin.org,js,0json.js,res
 url,httpbin.org/get,hold,0,res
-resstatus,404,js,404.js,res
+useragent,Chrome,ua,Quark,req
+resstatus,404,js,0body.js,res
 host,host.com,ua,iPhone,res
-host,host.com,js,empty.js,res
 url,httpbin.org/html,js,exam-cheerio-hbin.js,res

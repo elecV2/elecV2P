@@ -1,8 +1,9 @@
+const homedir = require('os').homedir()
+
 const { logger } = require('../utils')
 const clog = new logger({ head: 'wbcrt' })
 
 const { rootCrtSync, clearCrt, newRootCrt } = require('../func')
-const homedir = require('os').homedir()
 
 module.exports = app => {
   app.get("/crt", (req, res)=>{

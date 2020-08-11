@@ -233,7 +233,7 @@ module.exports = {
         if (jsres) {
           if (jsres.response) {
             // 直接返回结果，不访问目标网址
-            clog.notify('返回结果:', jsres.response)
+            clog.notify('response:', jsres.response)
             resolve({ 
               response: { ...localResponse.reject, ...jsres.response }
             })
@@ -241,7 +241,7 @@ module.exports = {
           }
           // 请求信息修改
           if (jsres["User-Agent"]) {
-            clog.notify("User-Agent 设置为: " + jsres["User-Agent"])
+            clog.notify("User-Agent set to:", jsres["User-Agent"])
             requestDetail.requestOptions.headers["User-Agent"] = jsres["User-Agent"]
           } else if (jsres.body) {
             clog.notify("request body changed")
@@ -255,7 +255,7 @@ module.exports = {
     }
     if ("ua" === matchreq[2]) {
       requestDetail.requestOptions.headers['User-Agent'] = CONFIG_RULE.uagent[matchreq[3]].header
-      clog.info("User-Agent 设置为：" + CONFIG_RULE.uagent[matchreq[3]])
+      clog.notify("User-Agent set to", CONFIG_RULE.uagent[matchreq[3]].name)
       return requestDetail
     }
   },
