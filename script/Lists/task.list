@@ -1,1 +1,22 @@
-{}
+{
+  "jxwQOSJZ": {
+    "name": "test",
+    "type": "schedule",
+    "job": {
+      "type": "runjs",
+      "target": "test.js"
+    },
+    "time": "3",
+    "running": false
+  },
+  "m8LWPxDc": {
+    "name": "exec task",
+    "type": "cron",
+    "job": {
+      "type": "exec",
+      "target": "node -v"
+    },
+    "time": "30 10 0 * * *",
+    "running": false
+  }
+}

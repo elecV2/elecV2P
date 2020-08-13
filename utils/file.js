@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const axios = require('axios')
 
-const { errStack } = require('./string')
+const { errStack, isJson, euid } = require('./string')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFile' })
 
@@ -93,20 +93,38 @@ const jsfile = {
 }
 
 const store = {
+  euid: euid(18),
   get(key) {
+    if (key === undefined) return
     clog.debug('get value for', key)
     if (fs.existsSync(path.join(fpath.store, key))) {
-      return fs.readFileSync(path.join(fpath.store, key), 'utf8')
+      const value = fs.readFileSync(path.join(fpath.store, key), 'utf8')
+      const jsvalue = isJson(value)
+      if (jsvalue && jsvalue.euid === this.euid) {
+        return jsvalue.value
+      }
+      return value
     }
-    return undefined
   },
-  put(value, key) {
+  put(value, key, type) {
     clog.debug('put value to', key)
-    if (key && value) {
+    if (key !== undefined && value !== undefined) {
+      type = type || typeof value
+      if (type !== 'string') {
+        try {
+          value = JSON.stringify({
+            euid: this.euid,
+            type, value
+          })
+        } catch(e) {
+          clog.error('store put error:', errStack(e))
+          return false
+        }
+      }
       fs.writeFileSync(path.join(fpath.store, key), value, 'utf8')
       return true
     } 
-    clog.notify('store put error: no key or value')
+    clog.error('store put error: no key or value')
     return false
   },
   delete(key) {
@@ -122,7 +140,8 @@ const store = {
   all() {
     const storedata = {}
     fs.readdirSync(fpath.store).forEach(s=>{
-      storedata[s] = fs.readFileSync(path.join(fpath.store, s), 'utf8')
+      storedata[s] = this.get(s) 
+      // fs.readFileSync(path.join(fpath.store, s), 'utf8')
     })
     return storedata
   }

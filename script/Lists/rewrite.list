@@ -1,0 +1,2 @@
+[elecV2P rewrite.list]
+^https?:\/\/httpbin\.org/get\?body 0body.js

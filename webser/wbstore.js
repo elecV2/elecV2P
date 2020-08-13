@@ -10,7 +10,7 @@ module.exports = app => {
 
   app.put("/store", (req, res) => {
     let data = req.body.data
-    if (!data) {
+    if (data === undefined) {
       res.end('no put data!')
       return
     }
