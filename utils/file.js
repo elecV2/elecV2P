@@ -4,7 +4,7 @@ const axios = require('axios')
 
 const { errStack, isJson, euid } = require('./string')
 const { logger } = require('./logger')
-const clog = new logger({ head: 'utilsFile' })
+const clog = new logger({ head: 'utilsFile', level: 'debug' })
 
 const fpath = {
   list: path.join(__dirname, '../script', 'Lists'),
@@ -64,6 +64,7 @@ const jsfile = {
       })
       return flist.sort()
     }
+    if (!/\.js$/.test(name)) { name = name + '.js' }
     if (type === 'path') {
       return path.join(fpath.js, name)
     }
@@ -77,6 +78,7 @@ const jsfile = {
     return false
   },
   put(name, cont){
+    if (!/\.js$/.test(name)) { name = name + '.js' }
     try {
       if (typeof(cont) === 'object') {
         cont = JSON.stringify(cont)
@@ -88,6 +90,7 @@ const jsfile = {
     }
   },
   delete(name){
+    if (!/\.js$/.test(name)) { name = name + '.js' }
     fs.unlinkSync(path.join(fpath.js, name))
   }
 }

@@ -48,14 +48,14 @@ module.exports = app => {
     switch(op){
       case 'jsdownload':
         downloadfile(req.body.url, jsfile.get(req.body.name, 'path')).then(jsl=>{
-          res.end('文件已下载至：' + jsl)
+          res.end('download js file to: ' + jsl)
           if (JSLISTS.indexOf(req.body.name) === -1) JSLISTS.push(req.body.name)
         }).catch(e=>{
-          res.end(req.body.name + ' 下载错误!' + e)
+          res.end(req.body.name + ' download error!' + errStack(e))
         })
         break
       default: {
-        res.end("jsfile put error")
+        res.end(op + " - wrong operation on js file")
         break
       }
     }

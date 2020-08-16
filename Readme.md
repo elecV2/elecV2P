@@ -9,9 +9,9 @@
 - 定时任务（倒计时/cron 定时）
 - FEED/IFTTT 通知
 
-## 安装/install
+## 安装运行/install and run
 
-*建议在本地运行。网络部署，风险自负*
+*软件开放权限较大，建议局域网使用。网络部署，风险自负*
 
 ### nodejs （不推荐）
 
@@ -19,18 +19,6 @@
 yarn
 yarn start
 ```
-
-如果要在移动设备上使用 MITM 功能，可能需要手动将 `node_modules/node-easy-cert/dist/certGenerator.js` 第 30 行的 **1024** 改为 **2048**
-
-``` js
-function getKeysAndCert(serialNumber) {
-  var keys = forge.pki.rsa.generateKeyPair(1024);    // before
-  var keys = forge.pki.rsa.generateKeyPair(2048);    // before
-  ...
-}
-```
-
-*docker 已进行修改，无需进行以上操作*
 
 ### docker
 

@@ -26,7 +26,7 @@ module.exports = app => {
       req.body.subrule.forEach(surl=>{
         file.write("sub " + surl + "\n")
       })
-      file.write('\n[rewrite]\n')
+      file.write('\n[elecV2P rewrite.list]\n')
       req.body.rewritelists.forEach(v=>{
         file.write(v.join(' ') + '\n')
       })

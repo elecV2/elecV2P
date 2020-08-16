@@ -118,7 +118,7 @@ function jobFunc(job) {
 
     return ()=>{
       clog.notify('runjs', job.target)
-      runJSFile(job.target, options)
+      runJSFile(job.target, Object.assign({}, options))
     }
   } else if (job.type === 'taskstart') {
     return ()=>{
