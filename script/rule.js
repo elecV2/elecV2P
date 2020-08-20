@@ -1,5 +1,5 @@
 const { logger, isJson, list, jsfile } = require('../utils')
-const clog = new logger({ head: 'elecV2P' })
+const clog = new logger({ head: 'elecV2P', level: 'debug' })
 
 const { wsSer } = require('../func/websocket')
 
@@ -233,9 +233,10 @@ module.exports = {
         if (jsres) {
           if (jsres.response) {
             // 直接返回结果，不访问目标网址
-            clog.notify('response:', jsres.response)
-            resolve({ 
-              response: { ...localResponse.reject, ...jsres.response }
+            clog.notify('request force to local response')
+            clog.debug('response:', jsres.response)
+            resolve({
+              response: { ...localResponse.imghtml, ...jsres.response }
             })
             return
           }
@@ -245,6 +246,7 @@ module.exports = {
             requestDetail.requestOptions.headers["User-Agent"] = jsres["User-Agent"]
           } else if (jsres.body) {
             clog.notify("request body changed")
+            clog.debug('request body change to', jsres.body)
             requestDetail.requestData = jsres.body
           } else {
             Object.assign(requestDetail.requestOptions, jsres)

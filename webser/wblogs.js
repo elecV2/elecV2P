@@ -6,7 +6,7 @@ module.exports = app => {
     let filename = req.params.filename
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get logs", filename)
     let logs = LOGFILE.get(filename)
-    if (logs === undefined) {
+    if (!logs) {
       res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
       res.end(`404: ${filename} 文件不存在`)
       return

@@ -70,15 +70,15 @@ module.exports = app => {
       return
     }
     if (jsname === 'totest') {
-      const jsres = runJSFile(req.body.jscontent, { type: 'jstest', cb: wsSer.send.func('jsmanage') })
+      const jsres = runJSFile(req.body.jscontent, { type: 'rawcode', from: 'jstest', cb: wsSer.send.func('jsmanage') })
       if (jsres && typeof(jsres.then) === 'function') {
         jsres.then(data=>{
-          res.end(typeof(data) === 'object' ? JSON.stringify(data) : data)
+          res.end(typeof(data) === 'object' ? JSON.stringify(data) : String(data))
         }).catch(error=>{
           res.end('error: ' + error)
         })
       } else {
-        res.end(typeof(jsres) === 'object' ? JSON.stringify(jsres) : jsres)
+        res.end(typeof(jsres) === 'object' ? JSON.stringify(jsres) : String(jsres))
       }
     } else {
       jsfile.put(jsname, req.body.jscontent)

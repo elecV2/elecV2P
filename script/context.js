@@ -34,12 +34,15 @@ const formReq = {
     return null
   },
   uest(req, method) {
-    return {
+    const freq = {
       url: encodeURI(req.url || req),
       headers: this.getHeaders(req),
-      data: this.getBody(req),
       method: req.method || method || 'get'
     }
+    if (freq.method !== 'get') {
+      freq.data = this.getBody(req)
+    }
+    return freq
   }
 }
 

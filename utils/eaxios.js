@@ -10,7 +10,7 @@ const uagent = ustr ? JSON.parse(ustr) : {}
 const CONFIG_Axios = {
   proxy:   false,           // axios 请求代理
   timeout: 5000,            // axios 请求超时时间。单位：毫秒
-  uagent:  'iPhone'         // 通用 User-Agent，相关列表为 useragent.list。
+  uagent:  'iPhone'         // 通用 User-Agent，相关列表为 script/Lists/useragent.list
 }
 
 if (CONFIG.CONFIG_Axios) {
@@ -53,7 +53,7 @@ function eAxios(request, proxy) {
   }
 
   return new Promise((resolve, reject)=>{
-    axios(request).then(res=>resolve(res)).catch(e=>reject(e.stack))
+    axios(request).then(res=>resolve(res)).catch(e=>reject(e))
   })
 }
 

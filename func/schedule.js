@@ -4,17 +4,6 @@ const { wsSer } = require('./websocket')
 
 const clog = new logger({ head: 'schedule', level: 'debug', cb: wsSer.send.func('tasklog')  })
 
-/**
- * 基础格式
- * taskinfo = {
-    name: "任务名称",
-    type: "schedule",
-    time: "30 999 2 3",
-    running: true
-  }
-  job: function(),
- */
-
 module.exports = class {
   _Task = {}
 

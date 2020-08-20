@@ -1,7 +1,7 @@
-const { TASKS_WORKER, TASKS_INFO } = require('../func')
+const { Task, TASKS_WORKER, TASKS_INFO, jobFunc } = require('../func')
 const { runJSFile, JSLISTS } = require('../script')
 
-const { logger, LOGFILE, nStatus } = require('../utils')
+const { logger, LOGFILE, nStatus, euid } = require('../utils')
 const clog = new logger({ head: 'wbhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -20,31 +20,39 @@ function handler(req, res){
   let clientip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
   clog.notify(clientip, "webhook:", rbody.type)
   if (rbody.type === 'runjs') {
-    let fn = rbody.fn
-    if (!/^https?:/.test(fn) && JSLISTS.indexOf(fn) === -1) {
+    let fn = rbody.fn || ''
+    if (!rbody.rawcode && !/^https?:/.test(fn) && JSLISTS.indexOf(fn) === -1) {
       res.end('no such js file ' + fn)
     } else {
       const addContext = {
         type: 'webhook'
       }
+      let showfn = fn.split('/').pop()
+      if (rbody.rawcode) {
+        addContext.type = 'rawcode'
+        addContext.from = 'webhook'
+        fn = rbody.rawcode
+        showfn = 'rawcode.js'
+      }
       if (rbody.rename) {
         addContext.rename = rbody.rename
+        showfn = rbody.rename
       }
-      const jsres = runJSFile(fn, addContext)
-      fn = addContext.rename || fn.split('/').pop()
+      const jsres = runJSFile(fn, { ...addContext })
+      const fullu = req.protocol + '://' + req.get('host')
       if (jsres && typeof(jsres.then) === 'function') {
         jsres.then(data=>{
-          if (data) res.write(typeof(data) === 'object' ? JSON.stringify(data) : data)
-          else res.write(fn + 'don\'t return any value')
+          if (data) res.write(typeof(data) === 'object' ? JSON.stringify(data) : String(data))
+          else res.write(showfn + ' don\'t return any value')
         }).catch(error=>{
           res.write('error: ' + error)
         }).finally(()=>{
-          res.end(`\n\nconsole log file: /logs/${fn}.log\n\n${LOGFILE.get(fn+'.log')}`)
+          res.end(`\n\nconsole log file: ${fullu}/logs/${showfn}.log\n\n${LOGFILE.get(showfn+'.log')}`)
         })
       } else {
-        if(jsres) res.write(typeof(jsres) === 'object' ? JSON.stringify(jsres) : jsres)
-        else res.write(fn + 'don\'t return any value')
-        res.end(`\n\nconsole log file: /logs/${fn}.log\n\n${LOGFILE.get(fn+'.log')}`)
+        if(jsres) res.write(typeof(jsres) === 'object' ? JSON.stringify(jsres) : String(jsres))
+        else res.write(showfn + ' don\'t return any value')
+        res.end(`\n\nconsole log file: ${fullu}/logs/${showfn}.log\n\n${LOGFILE.get(showfn+'.log')}`)
       }
     }
   } else if (rbody.type === 'deletelog') {
@@ -104,6 +112,14 @@ function handler(req, res){
       return
     }
     res.end(rbody.tid + ' 任务不存在')
+  } else if (rbody.type === 'taskadd') {
+    clog.notify(clientip, 'add a new task')
+    const newtid = euid()
+    TASKS_INFO[newtid] = rbody.task
+    TASKS_INFO[newtid].id = newtid
+    TASKS_WORKER[newtid] = new Task(TASKS_INFO[newtid], jobFunc(TASKS_INFO[newtid].job))
+    res.end('success add task: ' + TASKS_INFO[newtid].name)
+    if (rbody.running) TASKS_WORKER[newtid].start()
   } else {
     res.end('wrong webhook type')
   }

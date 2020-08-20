@@ -75,13 +75,11 @@ async function taskCount(filename) {
 function runJS(filename, jscode, addContext={}) {
   let cb = addContext.cb
   delete addContext.cb
+  clog.notify('run', filename, 'from', addContext.from || addContext.type || 'rule')
   if (addContext.type) {
     taskCount(filename)
-    clog.notify(addContext.type, 'runjs:', filename)
     if (!cb) cb = wsSer.send.func(addContext.type)
     delete addContext.type
-  } else {
-    clog.notify('runjs', filename)
   }
   const fconsole = new logger({ head: filename, file: CONFIG_RUNJS.jslogfile ? filename : false, cb })
   const CONTEXT = new context({ fconsole })
@@ -151,9 +149,9 @@ function runJSFile(filename, addContext={}) {
     }
   }
 
-  if (addContext.type === 'jstest') {
+  if (addContext.type === 'rawcode') {
     var JsStr = filename
-    filename = 'testrun.js'
+    filename = addContext.rename || 'rawcode.js'
   } else {
     var JsStr = jsfile.get(filename)
     if (!JsStr) {

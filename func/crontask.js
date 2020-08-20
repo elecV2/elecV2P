@@ -5,19 +5,7 @@ const { logger } = require('../utils')
 
 const clog = new logger({ head: 'crontask', cb: wsSer.send.func('tasklog') })
 
-/**
- * 基础格式
- * taskinfo = {
-    name: "任务名称",
-    type: "cron",
-    time: 30 * * * * * (六位 cron 时间格式）,
-    running: false
-  }
-    job: function(),
- */
-
 module.exports = class {
-  
   constructor(task, job) {
     this.task = task
     this.job = job

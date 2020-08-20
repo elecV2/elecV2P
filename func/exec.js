@@ -31,12 +31,12 @@ function commandCross(command) {
 }
 
 /**
- * command 参数处理 -c/-e
+ * command 参数处理 -c/-e，可执行化命令
  * @param     {string}    command    exec 命令
  * @param     {object}    options    命令执行环境
  * @return    {string}               处理后命令
  */
-function commandArgu(command, options={}) {
+function commandSetup(command, options={}) {
   let cwd = command.match(/-c (\S+)/)
   if (cwd) {
     options.cwd = file.path(process.cwd(), cwd[1])
@@ -54,8 +54,12 @@ function commandArgu(command, options={}) {
       }
     })
   }
-  command = command.split(/ -(c|e) /)[0]
+  command = commandCross(command.split(/ -(c|e) /)[0])
 
+  if (options.timeout === undefined) {
+    options.timeout = CONFIG_exec.timeout
+  }
+  options.encoding = 'buffer'
   return { command, options }
 }
 
@@ -109,21 +113,12 @@ wsSer.recv.shell = command => {
  * @return {none}                 
  */
 function execFunc(command, options) {
-  const { cwd, env, timeout = CONFIG_exec.timeout, cb } = options || {}
-
-  const option = {
-    encoding: 'buffer',
-    timeout
-  }
-  if (cwd) option.cwd = cwd
-  if (env) option.env = env
-
-  const fev = commandArgu(command, option)
-  command = commandCross(fev.command)
-  const childexec = exec(command, fev.options)
+  const fev = commandSetup(command, options)
+  const childexec = exec(fev.command, fev.options)
 
   clog.notify('start run command:', command)
 
+  const { cb } = options || {}
   childexec.stdout.on('data', data => {
     data = data.toString()
     clog.info(data)

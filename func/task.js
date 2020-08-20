@@ -9,38 +9,6 @@ const { runJSFile } = require('../script/runJSFile')
 const { logger, feedAddItem, isJson, list, file } = require('../utils')
 const clog = new logger({ head: 'funcTask', cb: wsSer.send.func('tasklog'), file: 'funcTask' })
 
-// 任务类型： cron/schedule
-// 基础格式： 
-// info: {
-//  name: "任务名称",
-//  type: "schedule",
-//  time: "30 999 2 3",
-//  running: true
-// }
-// job: function
-
-function bIsValid(info) {
-  // 任务合法性检测
-  if (!info.name) {
-    clog.error('no task name')
-    return false
-  }
-  if (!/cron|schedule|exec/.test(info.type)) {
-    clog.error(info.name, 'unknow task type', info.type)
-    return false
-  }
-  if (info.type === 'cron' && !nodecron.validate(info.time)) {
-    clog.error(info.time, 'wrong cron time format')
-    return false
-  }
-  let ftime = info.time.split(' ')
-  if (info.type === 'schedule' && ftime.filter(t=>/^\d+$/.test(t)).length !== ftime.length ) {
-    clog.error(info.time, 'wrong schedule time format')
-    return false
-  }
-  return true
-}
-
 class Task {
   constructor(info, job){
     this.info = info
@@ -99,6 +67,28 @@ const taskInit = function() {
   }
 }();
 
+function bIsValid(info) {
+  // 任务合法性检测
+  if (!info.name) {
+    clog.error('no task name')
+    return false
+  }
+  if (!/cron|schedule|exec/.test(info.type)) {
+    clog.error(info.name, 'unknow task type', info.type)
+    return false
+  }
+  if (info.type === 'cron' && !nodecron.validate(info.time)) {
+    clog.error(info.time, 'wrong cron time format')
+    return false
+  }
+  let ftime = info.time.split(' ')
+  if (info.type === 'schedule' && ftime.filter(t=>/^\d+$/.test(t)).length !== ftime.length ) {
+    clog.error(info.time, 'wrong schedule time format')
+    return false
+  }
+  return true
+}
+
 function jobFunc(job) {
   // 任务信息转化为可执行函数
   if (job.type === 'runjs') {
@@ -118,7 +108,7 @@ function jobFunc(job) {
 
     return ()=>{
       clog.notify('runjs', job.target)
-      runJSFile(job.target, Object.assign({}, options))
+      runJSFile(job.target, { ...options })
     }
   } else if (job.type === 'taskstart') {
     return ()=>{
@@ -140,11 +130,7 @@ function jobFunc(job) {
       exec(job.target, {
         cwd: file.get('script/Shell', 'path'),
         cb(data, error){
-          if (error) {
-            clog.error(error)
-          } else {
-            clog.info(data)
-          }
+          error ? clog.error(error) : clog.info(data)
         }
       })
     }
