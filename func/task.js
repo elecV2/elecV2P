@@ -107,19 +107,16 @@ function jobFunc(job) {
     }
 
     return ()=>{
-      clog.notify('runjs', job.target)
       runJSFile(job.target, { ...options })
     }
   } else if (job.type === 'taskstart') {
     return ()=>{
-      clog.notify('start task', TASKS_INFO[job.target].name)
       TASKS_WORKER[job.target].start()
       TASKS_INFO[job.target].running = true
       wsSer.send({type: 'task', data: {tid: job.target, op: 'start'}})
     }
   } else if (job.type === 'taskstop') {
     return ()=>{
-      clog.notify('stop task', TASKS_INFO[job.target].name)
       TASKS_WORKER[job.target].stop()
       TASKS_INFO[job.target].running = false
       wsSer.send({type: 'task', data: {tid: job.target, op: 'stop'}})

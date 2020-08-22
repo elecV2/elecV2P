@@ -1,7 +1,7 @@
 const { exec } = require('child_process')
 
 const { logger, file } = require('../utils')
-const clog = new logger({ head: 'funcExec', level: 'debug' })
+const clog = new logger({ head: 'funcExec', file: 'funcExec' })
 
 const { wsSer } = require('./websocket')
 

@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const axios = require('axios')
 
-const { errStack, isJson, euid } = require('./string')
+const { errStack, isJson } = require('./string')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFile', level: 'debug' })
 
@@ -96,33 +96,26 @@ const jsfile = {
 }
 
 const store = {
-  euid: euid(18),
   get(key) {
     if (key === undefined) return
     clog.debug('get value for', key)
     if (fs.existsSync(path.join(fpath.store, key))) {
       const value = fs.readFileSync(path.join(fpath.store, key), 'utf8')
       const jsvalue = isJson(value)
-      if (jsvalue && jsvalue.euid === this.euid) {
+      if (jsvalue && /number|boolean|object|string/.test(jsvalue.type)) {
         return jsvalue.value
       }
       return value
     }
   },
   put(value, key, type) {
-    clog.debug('put value to', key)
     if (key !== undefined && value !== undefined) {
+      clog.debug('put value to', key)
       type = type || typeof value
       if (type !== 'string') {
-        try {
-          value = JSON.stringify({
-            euid: this.euid,
-            type, value
-          })
-        } catch(e) {
-          clog.error('store put error:', errStack(e))
-          return false
-        }
+        value = JSON.stringify({
+          type, value
+        })
       }
       fs.writeFileSync(path.join(fpath.store, key), value, 'utf8')
       return true
