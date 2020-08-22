@@ -2,27 +2,27 @@
 <div style="width: 50%;margin: 0 12px;">
 <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
-<span style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+<pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
 - 主要功能基本完成，告一段落
 - 后面偶尔修修 Bug，欢迎提交 Issue
 - Porject 的坑有时间再填
 - Thanks for using.
-</span>
+</pre>
 </div>
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
-<span style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+<pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
 - 说明文档 [1.0 基本完成，优化中...]
 - Lists 注释保存/单条标记(dirty)上传
 - minishell 上传/下载文件（编辑?）
 - 文件编辑器（component || libery)
 - 多语言 [一个可能永远不填的坑..., start ready...]
-</span>
+</pre>
 </div>
 </div>
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
-<span style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+<pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
 - [x] store.get bug fix
 - [x] Todo.md 显示优化
 - [x] 添加 exec 执行日志
@@ -251,6 +251,6 @@
 - [x] 根证书只同步，不上传
 - [x] js 文件上传
 - [x] 同步证书/清空历史已签发证书
-</span>
+</pre>
 </div>
 </div>
