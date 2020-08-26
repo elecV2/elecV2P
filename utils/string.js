@@ -1,4 +1,4 @@
-function isJson(str) {
+function sJson(str) {
   try {
     return JSON.parse(str)
   } catch {
@@ -6,13 +6,17 @@ function isJson(str) {
   }
 }
 
-function bIsUrl(url){
+function sUrl(url){
   try {
-    new URL(url)
-    return true
+    return new URL(url)
   } catch {
     return false
   }
+}
+
+function sType(obj) {
+  if (typeof obj !== 'object') return typeof obj
+  return Object.prototype.toString.call(obj).slice(8, -1).toLocaleLowerCase()
 }
 
 function euid(len = 8) {
@@ -27,7 +31,7 @@ function euid(len = 8) {
 }
 
 function errStack(error, stack = false) {
-  if (!error) return
+  if (error === undefined) return 'no error information'
   if (error.stack) {
     if (stack) return error.stack
     let errline = error.stack.match(/evalmachine\.<anonymous>:([0-9]+(:[0-9]+)?)/)
@@ -49,8 +53,9 @@ function nStatus() {
 
 module.exports = {
   euid,
-  isJson,
-  bIsUrl,
+  sJson,
+  sUrl,
+  sType,
   errStack,
   nStatus
 }

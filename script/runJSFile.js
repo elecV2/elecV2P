@@ -1,6 +1,6 @@
 const vm = require('vm')
 
-const { logger, feedAddItem, now, errStack, downloadfile, isJson, jsfile, file } = require('../utils')
+const { logger, feedAddItem, now, errStack, downloadfile, jsfile, file } = require('../utils')
 const clog = new logger({ head: 'runJSFile', level: 'debug' })
 
 const { wsSer } = require('../func/websocket')
@@ -116,7 +116,7 @@ function runJS(filename, jscode, addContext={}) {
 
   try {
     const result = vm.runInNewContext(jscode, CONTEXT.final, { displayErrors: true, timeout: CONFIG_RUNJS.timeout_jsrun })
-    if (CONTEXT.final.$result) return CONTEXT.final.$result
+    if (CONTEXT.final.$result !== undefined) return CONTEXT.final.$result
     return result
   } catch(error) {
     fconsole.error(errStack(error, true))

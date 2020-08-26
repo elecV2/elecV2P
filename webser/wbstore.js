@@ -1,11 +1,16 @@
+const { wsSer } = require('../func/websocket')
 const { logger, store } = require('../utils')
-const clog = new logger({ head: 'wbstore' })
+const clog = new logger({ head: 'wbstore', cb: wsSer.send.func('jsmanage') })
 
 module.exports = app => {
   app.get("/store", (req, res) => {
-    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " get store data")
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " get store data", req.query.key)
     res.writeHead(200, { 'Content-Type' : 'text/plain;charset=utf-8' })
-    res.end(JSON.stringify(store.all()))
+    if (req.query.key) {
+      res.end(store.get(req.query.key, 'raw'))
+    } else {
+      res.end(JSON.stringify(store.all()))
+    }
   })
 
   app.put("/store", (req, res) => {
@@ -21,20 +26,45 @@ module.exports = app => {
         res.end(store.get(data))
         break
       case "save":
-        if (store.put(data.value, data.key)) {
-          clog.notify(`保存 ${ data.key } 值: ${ data.value }`)
-          res.end(data.key + ' 已保存')
+        if (data.key === undefined || data.value === undefined) {
+          res.end('no key or value')
         } else {
-          res.end('保存失败!')
+          const key = data.key
+          const value = data.value
+          let finalval = ''
+          try {
+            switch (value.type) {
+              case 'number':
+                finalval = Number(value.value)
+                break
+              case 'boolean':
+                finalval = Boolean(value.value)
+                break
+              case 'array':
+              case 'object':
+                finalval = JSON.parse(value.value)
+                break
+              default:{
+                finalval = value.value === undefined ? value : value.value
+                if (typeof finalval === 'object') finalval = JSON.stringify(finalval)
+              }
+            }
+            store.put(finalval, key, value.type)
+            clog.notify(`save ${ data.key } value: `, finalval)
+            res.end(data.key + ' saved')
+          } catch(e) {
+            clog.error(e.stack)
+            res.end('fail to save, ' + e.message)
+          }
         }
         break
       case "delete":
         if (store.delete(data)) {
           clog.notify(data, 'deleted')
-          res.end(data + ' 已删除')
+          res.end(data + ' deleted')
         } else {
           clog.error('delete fail!', e)
-          res.end('删除失败' + e.message)
+          res.end('delete fail' + e.message)
         }
         break
       default:{

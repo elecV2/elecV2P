@@ -47,7 +47,7 @@ const formReq = {
 }
 
 function getResBody(body) {
-  return typeof(body) === 'object' ? (Buffer.isBuffer(body) ? body.toString() : JSON.stringify(body)) : body
+  return sType(body) === 'object' ? JSON.stringify(body) : String(body)
 }
 
 class contextBase {
@@ -59,20 +59,7 @@ class contextBase {
   $axios = eAxios
   $exec = exec
   $cheerio = cheerio
-  $store = {
-    get: (key) => {
-      this.console.debug('get value for', key)
-      return store.get(key)
-    },
-    put: (value, key) => {
-      this.console.debug('get value for', key)
-      return store.put(value, key)
-    },
-    delete: (key) => {
-      if(store.delete(key)) this.console.notify('delete store key:', key)
-      else this.console.error('fail!', key, 'dont exist')
-    }
-  }
+  $store = store
   $feed = {
     push(title, description, url) {
       feedPush(title, description, url)
@@ -83,7 +70,7 @@ class contextBase {
   }
   $done = (data) => {
     this.console.debug('$done:', data)
-    this.$result = data ? typeof(data) === 'object' ? data : { body: data } : {}
+    this.$result = data !== undefined ? typeof(data) === 'object' ? data : { body: data } : {}
     return this.$result
   }
 }
@@ -103,7 +90,7 @@ class surgeContext {
         }
         if(cb) cb(null, newres, newres.body)
       }).catch(error=>{
-        clog.error('httpClient.get error:', error)
+        clog.error('httpClient.get error:', error.stack)
         if(cb) {
           error = errStack(error)
           try {
@@ -123,7 +110,7 @@ class surgeContext {
         }
         if(cb) cb(null, newres, newres.body)
       }).catch(error=>{
-        clog.error('httpClient.post error:', error)
+        clog.error('httpClient.post error:', error.stack)
         if(cb) {
           error = errStack(error)
           try {

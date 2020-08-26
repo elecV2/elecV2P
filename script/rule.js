@@ -1,4 +1,4 @@
-const { logger, isJson, list, jsfile } = require('../utils')
+const { logger, sJson, sUrl, sType, list, jsfile } = require('../utils')
 const clog = new logger({ head: 'elecV2P', level: 'debug' })
 
 const { wsSer } = require('../func/websocket')
@@ -9,8 +9,8 @@ const JSLISTS = jsfile.get('list')
 
 const CONFIG_RULE = (()=>{
   function getUserAgent() {
-    let ustr = list.get('useragent.list')
-    let uagent = isJson(ustr) ? JSON.parse(ustr) : {}
+    const ustr = list.get('useragent.list')
+    const uagent = sJson(ustr) || {}
     return { uagent }
   }
 
@@ -130,7 +130,7 @@ function getrules($request, $response, lists) {
 }
 
 function formBody(body) {
-  return typeof(body) === 'object' ? (Buffer.isBuffer(body) ? body.toString() : JSON.stringify(body)) : body
+  return sType(body) === 'object' ? JSON.stringify(body) : String(body)
 }
 
 function formRequest($request) {
@@ -175,12 +175,12 @@ module.exports = {
           body: requestDetail.requestData.toString()
         }
       })
-      clog.notify('waiting $HOLD request results')
+      clog.notify(requestDetail.url, 'waiting $HOLD request results')
       return new Promise((resolve, reject) => {
         wsSer.recv.hold = res => {
           wsSer.recv.hold = null
           if (res.reject) {
-            clog.notify('request $HOLD reject', res.body)
+            clog.notify('request $HOLD local response', res.body)
             return resolve({ 
               response: {
                 statusCode: 200,
@@ -194,7 +194,7 @@ module.exports = {
           if (res.request) {
             Object.assign(requestDetail.requestOptions, res.request)
           }
-          clog.notify('request $HOLD done')
+          clog.notify(requestDetail.url, 'request $HOLD done')
           resolve(requestDetail)
         }
 
@@ -202,7 +202,7 @@ module.exports = {
           setTimeout(()=>{
             wsSer.recv.hold = null
             wsSer.send({ type: 'hold', data: 'over' })
-            clog.notify('$HOLD timeout, continue with orignal data')
+            clog.notify(requestDetail.url, '$HOLD timeout, continue with orignal data')
             resolve(requestDetail)
           }, Number(matchreq[3]) * 1000)
         }
@@ -213,11 +213,16 @@ module.exports = {
       return { response: localResponse[matchreq[3]] }
     }
     if (/^(30.)$/.test(matchreq[2])) {
-      clog.info(matchreq[2], "重定向至", matchreq[3])
+      const orgurl = sUrl(requestDetail.url)
+      const newurl = sUrl(matchreq[3], requestDetail.url)
+      if (newurl.hash === '') newurl.hash = orgurl.hash
+      if (newurl.search === '') newurl.search = orgurl.search
+      if (newurl.pathname === '/') newurl.pathname = orgurl.pathname
+      clog.info(requestDetail.url, matchreq[2], "重定向至", newurl.href)
       return {
         response: {
           statusCode: matchreq[2],
-          header: { Location: matchreq[3] }
+          header: { Location: newurl.href }
         }
       }
     }
@@ -233,8 +238,8 @@ module.exports = {
         if (jsres) {
           if (jsres.response) {
             // 直接返回结果，不访问目标网址
-            clog.notify('request force to local response')
-            clog.debug('response:', jsres.response)
+            clog.notify(requestDetail.url, 'request force to local response')
+            clog.debug(requestDetail.url, 'response:', jsres.response)
             resolve({
               response: { ...localResponse.imghtml, ...jsres.response }
             })
@@ -242,11 +247,11 @@ module.exports = {
           }
           // 请求信息修改
           if (jsres["User-Agent"]) {
-            clog.notify("User-Agent set to:", jsres["User-Agent"])
+            clog.notify(requestDetail.url, "User-Agent set to:", jsres["User-Agent"])
             requestDetail.requestOptions.headers["User-Agent"] = jsres["User-Agent"]
           } else if (jsres.body) {
-            clog.notify("request body changed")
-            clog.debug('request body change to', jsres.body)
+            clog.notify(requestDetail.url, "request body changed")
+            clog.debug(requestDetail.url, 'request body change to', jsres.body)
             requestDetail.requestData = jsres.body
           } else {
             Object.assign(requestDetail.requestOptions, jsres)
@@ -257,7 +262,7 @@ module.exports = {
     }
     if ("ua" === matchreq[2]) {
       requestDetail.requestOptions.headers['User-Agent'] = CONFIG_RULE.uagent[matchreq[3]].header
-      clog.notify("User-Agent set to", CONFIG_RULE.uagent[matchreq[3]].name)
+      clog.notify(requestDetail.url, "User-Agent set to", CONFIG_RULE.uagent[matchreq[3]].name)
       return requestDetail
     }
   },
@@ -320,11 +325,16 @@ module.exports = {
       return { response: localResponse[matchres[3]] }
     }
     if (/^(30.)$/.test(matchres[2])) {
-      clog.info(matchres[2], "重定向至", matchres[3])
+      const orgurl = sUrl(requestDetail.url)
+      const newurl = sUrl(matchres[3], requestDetail.url)
+      if (newurl.hash === '') newurl.hash = orgurl.hash
+      if (newurl.search === '') newurl.search = orgurl.search
+      if (newurl.pathname === '/') newurl.pathname = orgurl.pathname
+      clog.info(requestDetail.url, matchres[2], "重定向至", newurl.href)
       return {
         response: {
           statusCode: matchres[2],
-          header: { Location: matchres[3] }
+          header: { Location: newurl.href }
         }
       }
     }

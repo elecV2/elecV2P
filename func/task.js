@@ -6,7 +6,7 @@ const exec = require('./exec')
 const { wsSer } = require('./websocket')
 const { runJSFile } = require('../script/runJSFile')
 
-const { logger, feedAddItem, isJson, list, file } = require('../utils')
+const { logger, feedAddItem, sJson, list, file } = require('../utils')
 const clog = new logger({ head: 'funcTask', cb: wsSer.send.func('tasklog'), file: 'funcTask' })
 
 class Task {
@@ -55,7 +55,7 @@ const TASKS_WORKER = {}           // 执行任务列表
 const taskInit = function() {
   // 初始化任务列表
   const tlist = list.get('task.list')
-  if (tlist && isJson(tlist)) {
+  if (tlist && sJson(tlist)) {
     Object.assign(TASKS_INFO, JSON.parse(tlist))
   }
 

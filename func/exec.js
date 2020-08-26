@@ -18,8 +18,8 @@ const CONFIG_exec = {
 function commandCross(command) {
   const isWin = /^win/.test(process.platform)
   if (isWin) {
-    if (/^ls/.test(command)) command = command.replace('ls', 'dir')
-    else if (/^cat/.test(command)) command = command.replace('cat', 'type')
+    if (/^ls |^find /.test(command)) command = command.replace('ls', 'dir')
+    else if (/^cat /.test(command)) command = command.replace('cat', 'type')
     else if (command === 'reboot') command = 'powershell.exe restart-computer'
     else if (/^(rm|mv|cp|mkdir|rmdir)/.test(command)) command = 'powershell.exe ' + command
   } else {

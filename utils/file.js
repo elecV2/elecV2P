@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const axios = require('axios')
 
-const { errStack, isJson } = require('./string')
+const { errStack, sJson, sType } = require('./string')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFile', level: 'debug' })
 
@@ -96,13 +96,16 @@ const jsfile = {
 }
 
 const store = {
-  get(key) {
+  get(key, type) {
     if (key === undefined) return
     clog.debug('get value for', key)
     if (fs.existsSync(path.join(fpath.store, key))) {
       const value = fs.readFileSync(path.join(fpath.store, key), 'utf8')
-      const jsvalue = isJson(value)
-      if (jsvalue && /number|boolean|object|string/.test(jsvalue.type)) {
+      if (type === 'raw') {
+        return value
+      }
+      const jsvalue = sJson(value)
+      if (jsvalue && jsvalue.value !== undefined && /^(number|boolean|object|string|array)$/.test(jsvalue.type)) {
         return jsvalue.value
       }
       return value
@@ -111,11 +114,24 @@ const store = {
   put(value, key, type) {
     if (key !== undefined && value !== undefined) {
       clog.debug('put value to', key)
-      type = type || typeof value
-      if (type !== 'string') {
+      if (value === '') {
+        return this.delete(key)
+      }
+      if (type === 'a') {
+        const oldval = this.get(key)
+        if (typeof oldval === 'string') value = oldval + '\n' + value
+        else if (Array.isArray(oldval)) value = Array.isArray(value) ? [...oldval, ...value] : [...oldval, value]
+        else if (sType(oldval) === 'object') value = Object.assign(oldval, value)
+        else if (typeof oldval === 'number') value = oldval + Number(value)
+        type = undefined
+      }
+      type = type || sType(value)
+      if (/^(number|boolean|object|array)$/.test(type)) {
         value = JSON.stringify({
           type, value
         })
+      } else {
+        value = String(value)
       }
       fs.writeFileSync(path.join(fpath.store, key), value, 'utf8')
       return true
@@ -134,10 +150,10 @@ const store = {
     }
   },
   all() {
+    return fs.readdirSync(fpath.store)
     const storedata = {}
     fs.readdirSync(fpath.store).forEach(s=>{
-      storedata[s] = this.get(s) 
-      // fs.readFileSync(path.join(fpath.store, s), 'utf8')
+      storedata[s] = this.get(s)
     })
     return storedata
   }
