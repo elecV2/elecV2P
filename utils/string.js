@@ -1,4 +1,5 @@
 function sJson(str) {
+  if (sType(str) === 'object') return str
   try {
     return JSON.parse(str)
   } catch {

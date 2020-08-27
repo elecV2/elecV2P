@@ -2,7 +2,7 @@ const qs = require('qs')
 const cheerio = require('cheerio')
 
 const { CONFIG } = require('../config')
-const { logger, errStack, feedPush, iftttPush, store, eAxios, jsfile } = require('../utils')
+const { logger, errStack, sType, feedPush, iftttPush, store, eAxios, jsfile } = require('../utils')
 const clog = new logger({ head: 'context', level: 'debug' })
 
 const exec = require('../func/exec')
@@ -94,7 +94,7 @@ class surgeContext {
         if(cb) {
           error = errStack(error)
           try {
-            cb(error, null, `{error: '${error}'}`)
+            cb(error, null, `{"error": "${error}"}`)
           } catch(err) {
             this.fconsole.error('httpClient.get cb error:', errStack(err))
           }
@@ -114,7 +114,7 @@ class surgeContext {
         if(cb) {
           error = errStack(error)
           try {
-            cb(error, null, `{ error: '${ error }' }`)
+            cb(error, null, `{"error": "${error}"}`)
           } catch(error) {
             this.fconsole.error(errStack(error))
           }

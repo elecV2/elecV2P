@@ -102,6 +102,7 @@ const LOGFILE = {
     if (filename == 'all') {
       return fs.readdirSync(CONFIG_LOG.logspath)
     }
+    filename = filename.split('/').join('-')
     if (fs.existsSync(path.join(CONFIG_LOG.logspath, filename))) {
       return fs.readFileSync(path.join(CONFIG_LOG.logspath, filename), "utf8")
     }

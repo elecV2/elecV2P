@@ -1,7 +1,7 @@
 const { Task, TASKS_WORKER, TASKS_INFO, jobFunc } = require('../func')
 const { runJSFile, JSLISTS } = require('../script')
 
-const { logger, LOGFILE, nStatus, euid, sType } = require('../utils')
+const { logger, LOGFILE, nStatus, euid, sJson, sType } = require('../utils')
 const clog = new logger({ head: 'wbhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -27,7 +27,7 @@ function handler(req, res){
       const addContext = {
         type: 'webhook'
       }
-      let showfn = fn.split('/').pop()
+      let showfn = /^https?:/.test(fn) ? fn.split('/').pop() : fn
       if (rbody.rawcode) {
         addContext.type = 'rawcode'
         addContext.from = 'webhook'
@@ -53,12 +53,12 @@ function handler(req, res){
         }).catch(error=>{
           res.write('error: ' + error)
         }).finally(()=>{
-          res.end(`\n\nconsole log file: ${fullu}/logs/${showfn}.log\n\n${LOGFILE.get(showfn+'.log')}`)
+          res.end(`\n\nconsole log file: ${fullu}/logs/${showfn.split('/').join('-')}.log\n\n${LOGFILE.get(showfn+'.log')}`)
         })
       } else {
         if(jsres) res.write(sType(jsres) === 'object' ? JSON.stringify(jsres) : String(jsres))
         else res.write(showfn + ' don\'t return any value')
-        res.end(`\n\nconsole log file: ${fullu}/logs/${showfn}.log\n\n${LOGFILE.get(showfn+'.log')}`)
+        res.end(`\n\nconsole log file: ${fullu}/logs/${showfn.split('/').join('-')}.log\n\n${LOGFILE.get(showfn+'.log')}`)
       }
     }
   } else if (rbody.type === 'deletelog') {

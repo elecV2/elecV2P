@@ -45,7 +45,7 @@ function commandSetup(command, options={}) {
   let envrough = command.match(/-e ([^-]+)/)
   if (envrough) {
     let envlist = envrough[1].trim().split(' ')
-    options.env = { ...envlist }
+    options.env = { ...options.env, ...envlist }
 
     envlist.forEach(ev=>{
       let ei = ev.split('=')
@@ -110,6 +110,7 @@ wsSer.recv.shell = command => {
  * @param  {string}    options.env      env 环境变量
  * @param  {number}    options.timeout  timeout，单位：毫秒
  * @param  {function}  options.cb       回调函数，接收参数为 stdout 的数据
+ * @param  {boolean}   options.call     callback all, 是否等命令执行完成后一次返回所有输出
  * @return {none}                 
  */
 function execFunc(command, options) {
@@ -119,10 +120,11 @@ function execFunc(command, options) {
   clog.notify('start run command:', command)
 
   const { cb } = options || {}
+  const fdata = []
   childexec.stdout.on('data', data => {
     data = data.toString()
     clog.info(data)
-    if (cb) cb(data)
+    if (cb) options.call ? fdata.push(data) : cb(data)
   })
 
   childexec.stderr.on('data', data => {
@@ -134,6 +136,7 @@ function execFunc(command, options) {
 
   childexec.on('exit', ()=>{
     clog.notify(command, 'finished')
+    if (cb && options.call) cb(fdata, null, true)
   })
 }
 
