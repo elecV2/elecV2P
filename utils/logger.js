@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const { now } = require('./time')
-const { sType } = require('./string')
+const { sString } = require('./string')
 
 const { CONFIG } = require('../config')
 
@@ -128,7 +128,7 @@ const LOGFILE = {
 
 function jsonArgs(args) {
   try {
-    return [...args].map(arg=>sType(arg) === 'object' ? JSON.stringify(arg) : String(arg))
+    return [...args].map(arg=>sString(arg))
   } catch(e) {
     clog.error('wrong arguments')
     return ['there are some error in logs arguments']

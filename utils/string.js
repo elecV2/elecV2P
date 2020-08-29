@@ -1,10 +1,25 @@
-function sJson(str) {
-  if (sType(str) === 'object') return str
+/**
+ * JSON 化输入值，成功返回 JSON 化后的值，不可转化则返回 false，
+ * @param     {string}     str      需要转化的变量
+ * @param     {Boolean}    force    强制转化为 JSON 返回。结果为 { 0: str }
+ * @return    {object object}       返回 JSON object 或者 false
+ */
+function sJson(str, force=false) {
+  if (/^(object|array)$/.test(sType(str))) return str
   try {
     return JSON.parse(str)
   } catch {
+    if (force) return { 0: str }
     return false
   }
+}
+
+function sString(obj) {
+  if (typeof obj === 'string') return obj
+  if (/^(object|array)$/.test(sType(obj))) {
+    return JSON.stringify(obj)
+  }
+  return String(obj)
 }
 
 function sUrl(url){
@@ -55,6 +70,7 @@ function nStatus() {
 module.exports = {
   euid,
   sJson,
+  sString,
   sUrl,
   sType,
   errStack,

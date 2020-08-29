@@ -2,7 +2,7 @@ const qs = require('qs')
 const cheerio = require('cheerio')
 
 const { CONFIG } = require('../config')
-const { logger, errStack, sType, feedPush, iftttPush, store, eAxios, jsfile } = require('../utils')
+const { logger, errStack, sType, sString, feedPush, iftttPush, store, eAxios, jsfile } = require('../utils')
 const clog = new logger({ head: 'context', level: 'debug' })
 
 const exec = require('../func/exec')
@@ -12,7 +12,7 @@ const formReq = {
     let newheaders = {}
     if (req.headers) {
       try {
-        newheaders = typeof(req.headers) === 'object' ? req.headers : JSON.parse(req.headers)
+        newheaders = sType(req.headers) === 'object' ? req.headers : JSON.parse(req.headers)
       } catch(e) {
         clog.error('req headers error:', errStack(e))
       }
@@ -46,16 +46,13 @@ const formReq = {
   }
 }
 
-function getResBody(body) {
-  return sType(body) === 'object' ? JSON.stringify(body) : String(body)
-}
-
 class contextBase {
   constructor({ fconsole = clog }){
     this.console = fconsole
   }
 
   __dirname = process.cwd()
+  __home = CONFIG.homepage
   $axios = eAxios
   $exec = exec
   $cheerio = cheerio
@@ -86,7 +83,7 @@ class surgeContext {
         let newres = {
           status: response.status,
           headers: response.headers,
-          body: getResBody(response.data)
+          body: sString(response.data)
         }
         if(cb) cb(null, newres, newres.body)
       }).catch(error=>{
@@ -106,7 +103,7 @@ class surgeContext {
         let newres = {
           status: response.status,
           headers: response.headers,
-          body: getResBody(response.data)
+          body: sString(response.data)
         }
         if(cb) cb(null, newres, newres.body)
       }).catch(error=>{
@@ -150,7 +147,7 @@ class quanxContext {
           let res = {
                 statusCode: response.status,
                 headers: response.headers,
-                body: getResBody(response.data)
+                body: sString(response.data)
               }
           if (cb) cb(res)
           resolve(res)

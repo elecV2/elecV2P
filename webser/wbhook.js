@@ -1,7 +1,7 @@
 const { Task, TASKS_WORKER, TASKS_INFO, jobFunc } = require('../func')
 const { runJSFile, JSLISTS } = require('../script')
 
-const { logger, LOGFILE, nStatus, euid, sJson, sType } = require('../utils')
+const { logger, LOGFILE, nStatus, euid, sJson, sString } = require('../utils')
 const clog = new logger({ head: 'wbhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -39,7 +39,7 @@ function handler(req, res){
         showfn = rbody.rename
       }
       if (rbody.env) {
-        const senv = sJson(rbody.env)
+        const senv = sJson(rbody.env, true)
         for (let env in senv) {
           addContext['$' + env] = senv[env]
         }
@@ -48,7 +48,7 @@ function handler(req, res){
       const fullu = req.protocol + '://' + req.get('host')
       if (jsres && typeof(jsres.then) === 'function') {
         jsres.then(data=>{
-          if (data) res.write(sType(data) === 'object' ? JSON.stringify(data) : String(data))
+          if (data) res.write(sString(data))
           else res.write(showfn + ' don\'t return any value')
         }).catch(error=>{
           res.write('error: ' + error)
@@ -56,7 +56,7 @@ function handler(req, res){
           res.end(`\n\nconsole log file: ${fullu}/logs/${showfn.split('/').join('-')}.log\n\n${LOGFILE.get(showfn+'.log')}`)
         })
       } else {
-        if(jsres) res.write(sType(jsres) === 'object' ? JSON.stringify(jsres) : String(jsres))
+        if(jsres) res.write(sString(jsres))
         else res.write(showfn + ' don\'t return any value')
         res.end(`\n\nconsole log file: ${fullu}/logs/${showfn.split('/').join('-')}.log\n\n${LOGFILE.get(showfn+'.log')}`)
       }

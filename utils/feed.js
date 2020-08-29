@@ -56,16 +56,18 @@ function iftttPush(title, description, url) {
   }
 }
 
-function feedPush(title, description, url = CONFIG_FEED.homepage + '/feed/?new=' + new Date().getTime()) {
+function feedPush(title, description, url) {
   if (!(title && description)) return
+  const date = new Date()
+  const guid = String(date.getTime())
   clog.notify('添加 item', title, description)
   feed.item({
     title,
     description,
-    url,
-    guid: String(new Date().getTime()),
+    url: url || CONFIG_FEED.homepage + '/feed/?new=' + guid,
+    guid,
     author: 'elecV2P',
-    date: Date()
+    date: String(date)
   })
   iftttPush(title, description, url)
 }

@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const axios = require('axios')
 
-const { errStack, sJson, sType } = require('./string')
+const { errStack, sJson, sString, sType } = require('./string')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFile', level: 'debug' })
 
@@ -100,15 +100,30 @@ const store = {
     if (key === undefined) return
     clog.debug('get value for', key)
     if (fs.existsSync(path.join(fpath.store, key))) {
-      const value = fs.readFileSync(path.join(fpath.store, key), 'utf8')
+      let value = fs.readFileSync(path.join(fpath.store, key), 'utf8')
       if (type === 'raw') {
         return value
       }
       const jsvalue = sJson(value)
       if (jsvalue && jsvalue.value !== undefined && /^(number|boolean|object|string|array)$/.test(jsvalue.type)) {
-        return jsvalue.value
+        value = jsvalue.value
       }
-      return value
+      if (type === undefined) return value
+      switch (type) {
+        case 'boolean':
+          return Boolean(value)
+        case 'number':
+          return Number(value)
+        case 'array':
+        case 'object':
+          return sJson(value, true)
+        case 'string':
+          return sString(value)
+        default:{
+          clog.error('unknow store get type', type, 'return original value')
+          return value
+        }
+      }
     }
   },
   put(value, key, type) {
@@ -121,11 +136,20 @@ const store = {
         const oldval = this.get(key)
         if (typeof oldval === 'string') value = oldval + '\n' + value
         else if (Array.isArray(oldval)) value = Array.isArray(value) ? [...oldval, ...value] : [...oldval, value]
-        else if (sType(oldval) === 'object') value = Object.assign(oldval, value)
+        else if (sType(oldval) === 'object') value = Object.assign(oldval, sJson(value, true))
         else if (typeof oldval === 'number') value = oldval + Number(value)
-        type = undefined
+        type = sType(value)
+      } else if (type === 'number') {
+        value = Number(value)
+      } else if (type === 'boolean') {
+        value = Boolean(value)
+      } else if (type === 'object' || type === 'array') {
+        value = sJson(value, true)
+      } else if (type === 'string') {
+        value = sString(value)
+      } else {
+        type = sType(value)
       }
-      type = type || sType(value)
       if (/^(number|boolean|object|array)$/.test(type)) {
         value = JSON.stringify({
           type, value
