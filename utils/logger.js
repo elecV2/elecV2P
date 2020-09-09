@@ -136,7 +136,7 @@ function jsonArgs(args) {
 }
 
 function alignHead(head) {
-  if (head.length == CONFIG_LOG.alignHeadlen) return head
+  if (head.length === CONFIG_LOG.alignHeadlen) return head
   if (head.length < CONFIG_LOG.alignHeadlen) {
     let nstr = head.split(' ')
     let space = CONFIG_LOG.alignHeadlen - head.length
@@ -146,7 +146,9 @@ function alignHead(head) {
     return nstr.join(' ')
   }
   if (head.length > CONFIG_LOG.alignHeadlen) {
-    let nstr = head.split(' ').pop()
+    const sp = head.split('/')
+    if (sp.length > 1) head = sp[0].slice(0,1) + '/' + sp.pop()
+    const nstr = head.split(' ').pop()
     return head.slice(0, CONFIG_LOG.alignHeadlen-6-nstr.length) + '...' + head.slice(-nstr.length-3)
   }
 }

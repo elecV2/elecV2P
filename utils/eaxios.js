@@ -35,19 +35,19 @@ function eAxios(request, proxy) {
       url: request
     }
   }
-  if (!request.timeout) request.timeout = CONFIG_Axios.timeout
-  if (!request.headers) {
+  if (request.data === undefined) request.data = request.body
+  if (request.timeout === undefined) request.timeout = CONFIG_Axios.timeout
+  if (request.headers === undefined) {
     request.headers = {
       "User-Agent": getUagent()
     }
-  } else if (!request.headers['User-Agent']) {
+  } else if (request.headers['User-Agent'] === undefined) {
     request.headers['User-Agent'] = getUagent()
   }
 
-  const isForceSkipProxy = proxy === false
-  if (!isForceSkipProxy && (proxy || CONFIG_Axios.proxy)) {
+  if (proxy !== false && (proxy || CONFIG_Axios.proxy)) {
     request.proxy = proxy || CONFIG_Axios.proxy
-    if (!request.proxy.port) {
+    if (request.proxy.port === undefined) {
       request.proxy.port = CONFIG_Port.proxy
     }
   }

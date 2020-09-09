@@ -72,7 +72,7 @@ const jsfile = {
       if (type === 'date') {
         return fs.statSync(path.join(fpath.js, name)).mtimeMs
       }
-      return fs.readFileSync(path.join(fpath.js, name), "utf8")
+      return fs.readFileSync(path.join(fpath.js, name), 'utf8')
     }
     clog.error('no such js file', name)
     return false
@@ -134,7 +134,7 @@ const store = {
       }
       if (type === 'a') {
         const oldval = this.get(key)
-        if (typeof oldval === 'string') value = oldval + '\n' + value
+        if (typeof oldval === 'string') value = oldval + '\n' + sString(value)
         else if (Array.isArray(oldval)) value = Array.isArray(value) ? [...oldval, ...value] : [...oldval, value]
         else if (sType(oldval) === 'object') value = Object.assign(oldval, sJson(value, true))
         else if (typeof oldval === 'number') value = oldval + Number(value)

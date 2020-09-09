@@ -40,7 +40,7 @@ const formReq = {
       method: req.method || method || 'get'
     }
     if (freq.method !== 'get') {
-      freq.data = this.getBody(req)
+      freq.data = req.data || this.getBody(req)
     }
     return freq
   }

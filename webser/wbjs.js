@@ -150,10 +150,9 @@ module.exports = app => {
         } else {
           jsname = 'elecV2Pmock.js'
         }
-        const jscont = `
-/**
+        const jscont = `/**
  * mock JS from elecV2P - ${jsname}
- */
+**/
 
 const request = ${ JSON.stringify(request, null, 2) }
 
@@ -161,8 +160,7 @@ $axios(request).then(res=>{
   console.log(res.data)
 }).catch(e=>{
   console.error(e)
-})
-`
+})`
         jsfile.put(jsname, jscont)
         res.end(`success save ${jsname}!`)
         clog.notify(`success save ${jsname}!`)

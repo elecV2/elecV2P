@@ -1,6 +1,6 @@
 const { wsSer } = require('../func/websocket')
 const { logger, store } = require('../utils')
-const clog = new logger({ head: 'wbstore', cb: wsSer.send.func('jsmanage') })
+const clog = new logger({ head: 'wbstore', cb: wsSer.send.func('jsmanage'), lever: 'debug' })
 
 module.exports = app => {
   app.get("/store", (req, res) => {
@@ -50,7 +50,7 @@ module.exports = app => {
               }
             }
             store.put(finalval, key, value.type)
-            clog.notify(`save ${ data.key } value: `, finalval)
+            clog.debug(`save ${ data.key } value: `, finalval)
             res.end(data.key + ' saved')
           } catch(e) {
             clog.error(e.stack)
