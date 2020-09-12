@@ -107,7 +107,7 @@ function jobFunc(job) {
     }
 
     return ()=>{
-      runJSFile(job.target, { ...options })
+      return runJSFile(job.target, { ...options })
     }
   } else if (job.type === 'taskstart') {
     return ()=>{

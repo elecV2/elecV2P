@@ -1,4 +1,4 @@
-const { logger, feedAddItem } = require('../utils')
+const { logger, feedAddItem, sType } = require('../utils')
 
 const { wsSer } = require('./websocket')
 
@@ -42,28 +42,32 @@ module.exports = class {
       } else {
         clearInterval(this.temIntval)
         clog.log("start run", this.task.name, 'job')
-        clog.debug('如果任务中有异步函数，要等异步函数具体执行时才能看到结果')
-        this.job()
+        const jobres = this.job()
 
         if (this.repeat < this._Task.repeat || this._Task.repeat >= 999) {
           this.repeat++
           this.start()
         } else {
-          this.task.running = false
-          clog.log('schedule task:', this.task.name, 'finished')
-          feedAddItem('schedule task ' + this.task.name + ' finished', 'time: ' + this.task.time)
-          if(this.task.id) wsSer.send({type: 'task', data: {tid: this.task.id, op: 'stop'}})
+          if (sType(jobres) === 'promise') {
+            jobres.finally(()=>{
+              this.stop('finished')
+            })
+          } else {
+            this.stop('finished')
+          }
         }
       }
     }, 1000)
   }
   
-  stop(){
+  stop(flag = 'stopped'){
     // 暂停任务
     if (this.task) {
       this.task.running = false
       clearInterval(this.temIntval)
-      clog.log("stop schedule task:", this.task.name)
+      clog.log('schedule task:', this.task.name, flag)
+      feedAddItem('schedule task ' + this.task.name + ' ' + flag, 'time: ' + this.task.time)
+      if(this.task.id) wsSer.send({type: 'task', data: {tid: this.task.id, op: 'stop'}})
     }
   }
 

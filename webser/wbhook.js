@@ -1,7 +1,7 @@
 const { Task, TASKS_WORKER, TASKS_INFO, jobFunc } = require('../func')
 const { runJSFile, JSLISTS } = require('../script')
 
-const { logger, LOGFILE, nStatus, euid, sJson, sString } = require('../utils')
+const { logger, LOGFILE, nStatus, euid, sJson, sString, sType } = require('../utils')
 const clog = new logger({ head: 'wbhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -46,7 +46,7 @@ function handler(req, res){
       }
       const jsres = runJSFile(fn, { ...addContext })
       const fullu = req.protocol + '://' + req.get('host')
-      if (jsres && typeof(jsres.then) === 'function') {
+      if (sType(jsres) === 'promise') {
         jsres.then(data=>{
           if (data) res.write(sString(data))
           else res.write(showfn + ' don\'t return any value')

@@ -67,7 +67,7 @@ class contextBase {
   }
   $done = (data) => {
     this.console.debug('$done:', data)
-    this.$result = data !== undefined ? typeof(data) === 'object' ? data : { body: data } : {}
+    this.$result = data !== undefined ? sType(data) === 'object' ? data : { body: data } : {}
     return this.$result
   }
 }
@@ -130,7 +130,7 @@ class surgeContext {
   $notification = {
     post: (...data) => {
       this.fconsole.notify(data.join(' '))
-      if (CONFIG.JSIFTTT) iftttPush(data[0], data[1], data[2])
+      if (CONFIG.JSIFTTT) iftttPush(data[0] + ' ' + data[1], data[2], data[3] ? data[3].url || data[3] : undefined)
     }
   }
 }
@@ -170,7 +170,7 @@ class quanxContext {
   }
   $notify = (...data)=>{
     this.fconsole.notify(data.join(' '))
-    if (CONFIG.JSIFTTT) iftttPush(data[0], data[1], data[2])
+    if (CONFIG.JSIFTTT) iftttPush(data[0] + ' ' + data[1], data[2], data[3] ? data[3]["open-url"] || data[3]["media-url"] || data[3] : undefined)
   }
 }
 

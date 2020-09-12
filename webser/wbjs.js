@@ -2,7 +2,7 @@ const formidable = require('formidable')
 
 const { wsSer } = require('../func/websocket')
 
-const { logger, downloadfile, eAxios, errStack, sString, jsfile, file } = require('../utils')
+const { logger, downloadfile, eAxios, errStack, sString, sType, jsfile, file } = require('../utils')
 const clog = new logger({ head: 'wbjsfile', cb: wsSer.send.func('jsmanage') })
 
 const { runJSFile, JSLISTS, CONFIG_RUNJS } = require('../script')
@@ -71,7 +71,7 @@ module.exports = app => {
     }
     if (jsname === 'totest') {
       const jsres = runJSFile(req.body.jscontent, { type: 'rawcode', from: 'jstest', cb: wsSer.send.func('jsmanage') })
-      if (jsres && typeof(jsres.then) === 'function') {
+      if (sType(jsres) === 'promise') {
         jsres.then(data=>{
           res.end(sString(data))
         }).catch(error=>{

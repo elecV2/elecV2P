@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const axios = require('axios')
 
-const { errStack, sJson, sString, sType } = require('./string')
+const { errStack, sJson, sString, sType, iRandom } = require('./string')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFile', level: 'debug' })
 
@@ -119,6 +119,23 @@ const store = {
           return sJson(value, true)
         case 'string':
           return sString(value)
+        case 'r':
+        case 'random':
+          switch (sType(value)) {
+            case 'array':
+              return value[iRandom(0, value.length-1)]
+            case 'object':
+              const keys = Object.keys(value)
+              return value[keys[iRandom(0, keys.length-1)]]
+            case 'number':
+              return iRandom(value)
+            case 'boolean':
+              return Boolean(iRandom(0,1))
+            default: {
+              const strList = value.split(/\n|\r/)
+              return strList[iRandom(0, strList.length-1)]
+            }
+          }
         default:{
           clog.error('unknow store get type', type, 'return original value')
           return value

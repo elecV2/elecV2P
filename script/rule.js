@@ -230,7 +230,7 @@ module.exports = {
     if ('js' === matchreq[2] ) {
       return new Promise(async (resolve, reject)=>{
         let jsres = runJSFile(matchreq[3], { $request: formRequest(requestDetail) })
-        if (jsres && typeof(jsres.then) === 'function') {
+        if (sType(jsres) === 'promise') {
           jsres = await jsres.catch(()=>{
             clog.error('error on run remote js')
           })
@@ -240,10 +240,9 @@ module.exports = {
             // 直接返回结果，不访问目标网址
             clog.notify(requestDetail.url, 'request force to local response')
             clog.debug(requestDetail.url, 'response:', jsres.response)
-            resolve({
+            return resolve({
               response: { ...localResponse.imghtml, ...jsres.response }
             })
-            return
           }
           // 请求信息修改
           if (jsres["User-Agent"]) {
@@ -275,7 +274,7 @@ module.exports = {
         clog.info('match rewrite rules:', r[0], r[1])
         return new Promise(async (resolve, reject)=>{
           let jsres = runJSFile(r[1], { $request: formRequest($request), $response: formResponse($response) })
-          if (jsres && typeof(jsres.then) === 'function') {
+          if (sType(jsres) === 'promise') {
             jsres = await jsres.catch(()=>{
               resolve({ response: $response })
             })
@@ -341,7 +340,7 @@ module.exports = {
     if (matchres[2] === "js") {
       return new Promise(async (resolve, reject)=>{
         let jsres = runJSFile(matchres[3], { $request: formRequest($request), $response: formResponse($response) })
-        if (jsres && typeof(jsres.then) === 'function') {
+        if (sType(jsres) === 'promise') {
           jsres = await jsres.catch(()=>{
             resolve({ response: $response })
           })

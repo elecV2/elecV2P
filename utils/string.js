@@ -46,6 +46,23 @@ function euid(len = 8) {
   return str
 }
 
+function UUID(){
+  let dt = new Date().getTime()
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    let r = (dt + Math.random()*16)%16 | 0
+    dt = Math.floor(dt/16)
+    return (c=='x' ? r :(r&0x3|0x8)).toString(16)
+  })
+}
+
+function iRandom(min, max) {
+  if (max === undefined) {
+    max = min
+    min = 0
+  }
+  return Math.floor(Math.random()*(max - min + 1)) + min
+}
+
 function errStack(error, stack = false) {
   if (error === undefined) return 'no error information'
   if (error.stack) {
@@ -69,6 +86,8 @@ function nStatus() {
 
 module.exports = {
   euid,
+  UUID,
+  iRandom,
   sJson,
   sString,
   sUrl,
