@@ -1,6 +1,6 @@
 const ws = require('ws')
 
-const { logger, nStatus, euid } = require('../utils')
+const { logger, nStatus, euid, sType, sString, sJson } = require('../utils')
 const clog = new logger({ head: 'webSocket', level: 'debug' })
 
 // 服务器 websocket 发送/接收 数据
@@ -42,13 +42,13 @@ wsSer.recv.ready = recver => {
 }
 
 function wsSend(data, target){
-  if (typeof(data) == "object") {
+  if (sType(data) === "object") {
     if (wsSer.recverlists.indexOf('minishell') === -1 && wsSer.recverlists.indexOf(data.type) === -1) {
       clog.debug('client recver', data.type, 'no ready yet')
       return
     }
-    data = JSON.stringify(data)
   }
+  data = sString(data)
   if (wsobs.WSS) {
     clog.debug('send client msg:', data)
     wsobs.WSS.clients.forEach(client=>{
@@ -79,11 +79,7 @@ function websocketSer({ server, path }) {
     wsobs.send()
 
     ws.on('message', (msg, req) => {
-      try {
-        var recvdata = JSON.parse(msg)
-      } catch {
-        var recvdata = msg
-      }
+      const recvdata = sJson(msg) || msg
       if (recvdata.type && wsSer.recv[recvdata.type]) {
         // 检查是否设置了特定数据处理函数
         wsSer.recv[recvdata.type](recvdata.data, recvdata.euid)

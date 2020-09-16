@@ -7,7 +7,8 @@ const clog = new logger({ head: 'wbhook', level: 'debug' })
 const { CONFIG } = require('../config')
 
 function handler(req, res){
-  let rbody = req.method === 'GET' ? req.query : req.body
+  const rbody = req.method === 'GET' ? req.query : req.body
+  clog.debug(rbody)
   res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
   if (!CONFIG.wbrtoken) {
     res.end('服务器端未设置 token, 无法运行 JS')
@@ -17,7 +18,7 @@ function handler(req, res){
     res.end('token 无效')
     return
   }
-  let clientip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
+  const clientip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
   clog.notify(clientip, "webhook:", rbody.type)
   if (rbody.type === 'runjs') {
     let fn = rbody.fn || ''
@@ -62,7 +63,7 @@ function handler(req, res){
       }
     }
   } else if (rbody.type === 'deletelog') {
-    let name = rbody.fn
+    const name = rbody.fn
     if (LOGFILE.delete(name)) {
       res.end(name + '日志文件删除成功')
     } else {
@@ -94,7 +95,7 @@ function handler(req, res){
     } 
   } else if (rbody.type === 'taskstart') {
     clog.notify(clientip, 'start task')
-    let tid = rbody.tid
+    const tid = rbody.tid
     if (TASKS_INFO[tid] && TASKS_WORKER[tid]) {
       if (TASKS_INFO[tid].running === false) {
         TASKS_WORKER[tid].start()
@@ -107,7 +108,7 @@ function handler(req, res){
     res.end(tid + ' 任务不存在')
   } else if (rbody.type === 'taskstop') {
     clog.notify(clientip, 'stop task')
-    let tid = rbody.tid 
+    const tid = rbody.tid 
     if (TASKS_INFO[tid] && TASKS_WORKER[tid]) {
       if (TASKS_INFO[tid].running === true) {
         TASKS_WORKER[tid].stop()

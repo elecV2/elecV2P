@@ -8,7 +8,7 @@ const CONFIG = {
 
 if (fs.existsSync(CONFIG.path)) {
   try {
-    let saveconfig = fs.readFileSync(CONFIG.path, "utf8")
+    const saveconfig = fs.readFileSync(CONFIG.path, "utf8")
     Object.assign(CONFIG, JSON.parse(saveconfig))
   } catch {
     // do something or not

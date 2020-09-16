@@ -12,7 +12,7 @@ module.exports = app => {
     const jsfn = req.query.jsfn
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get js file", jsfn)
     if (/\.\./.test(jsfn)) {
-      res.end('非法目录请求')
+      res.end('illegal request about ' + jsfn)
       return
     }
     const jscont = jsfile.get(jsfn)
@@ -20,7 +20,7 @@ module.exports = app => {
       res.end(jscont)
     } else {
       res.writeHead(404, { 'Content-Type': 'text/plain;charset=utf-8' })
-      res.end('404 ' + jsfn + ' 文件不存在')
+      res.end('404 ' + jsfn + ' don\'t exist')
     }
   })
 
@@ -36,9 +36,9 @@ module.exports = app => {
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "put runjsconfig")
     try {
       Object.assign(CONFIG_RUNJS, req.body.data)
-      res.end(`RUNJS 相关设置修改成功`)
+      res.end('RUNJS config changed')
     } catch {
-      res.end('RUNJS 相关设置修改失败')
+      res.end('fail to change RUNJS config')
     }
   })
 
@@ -82,8 +82,8 @@ module.exports = app => {
       }
     } else {
       jsfile.put(jsname, req.body.jscontent)
-      clog.notify(`${jsname} 文件保存成功`)
-      res.end(`${jsname} 文件保存成功`)
+      clog.notify(`${jsname} success saved`)
+      res.end(`${jsname} success saved`)
       if (JSLISTS.indexOf(jsname) === -1) JSLISTS.push(jsname)
     }
   })
@@ -101,7 +101,7 @@ module.exports = app => {
   })
 
   app.post('/uploadjs', (req, res) => {
-    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "正在上传 JS 文件")
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "uploading JS file")
     // js文件上传
     var uploadfile = new formidable.IncomingForm()
     uploadfile.maxFieldsSize = 2 * 1024 * 1024 //限制为最大2M
@@ -127,11 +127,11 @@ module.exports = app => {
         if (JSLISTS.indexOf(files.js.name) === -1) JSLISTS.push(files.js.name)
       }
     })
-    res.end('success!')
+    res.end('upload success!')
   })
 
   app.put('/mock', (req, res)=>{
-    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), `make mock`, req.body.type)
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'make mock', req.body.type)
     const request = req.body.request
     switch(req.body.type){
       case "req":

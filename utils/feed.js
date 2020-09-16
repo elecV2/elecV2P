@@ -44,7 +44,7 @@ function iftttPush(title, description, url) {
       value1: title
     }
     if (description) body.value2 = description
-    if (url) body.value3 = url
+    if (url) body.value3 = url.url || url["open-url"] || url["media-url"] || url
     clog.notify('ifttt webhook trigger, send data:', body)
     axios.post('https://maker.ifttt.com/trigger/elecV2P/with/key/' + CONFIG_FEED.iftttid, body).then(res=>{
       clog.debug('iftttPush result:', res.data)
@@ -57,9 +57,10 @@ function iftttPush(title, description, url) {
 }
 
 function feedPush(title, description, url) {
-  if (!(title && description)) return
+  if (title === undefined) return
   const date = new Date()
   const guid = String(date.getTime())
+  url = url ? url.url || url["open-url"] || url["media-url"] || url : url
   clog.notify('添加 item', title, description)
   feed.item({
     title,
