@@ -99,7 +99,7 @@ const LOGFILE = {
     })
   },
   get(filename){
-    if (filename == 'all') {
+    if (filename === 'all') {
       return fs.readdirSync(CONFIG_LOG.logspath)
     }
     filename = filename.split('/').join('-')

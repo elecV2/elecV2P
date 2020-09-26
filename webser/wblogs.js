@@ -1,17 +1,17 @@
-const { logger, LOGFILE } = require('../utils')
+const { logger, LOGFILE, sType } = require('../utils')
 const clog = new logger({ head: 'wblogs' })
 
 module.exports = app => {
   app.get("/logs/:filename", (req, res)=>{
-    let filename = req.params.filename
+    const filename = req.params.filename
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get logs", filename)
-    let logs = LOGFILE.get(filename)
+    const logs = LOGFILE.get(filename)
     if (!logs) {
       res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
-      res.end(`404: ${filename} 文件不存在`)
+      res.end(`404: ${filename} don't exist`)
       return
     }
-    if (typeof(logs) === 'object') {
+    if (sType(logs) === 'array') {
       res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })
       res.write('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
       res.write(`<title>elecV2P logs - ${logs.length}</title>`)
@@ -26,12 +26,12 @@ module.exports = app => {
   })
 
   app.delete("/logs", (req, res)=>{
-    let name = req.body.name
+    const name = req.body.name
     clog.notify(req.headers['x-forwarded-for'] || req.connection.remoteAddress, "delete log file", name)
     if (LOGFILE.delete(name)) {
-      res.end(name + '日志文件删除成功')
+      res.end(name + ' success deleted!')
     } else {
-      res.end(name + '文件不存在')
+      res.end(name + ' don\'t exist')
     }
   })
 }

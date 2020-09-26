@@ -23,6 +23,7 @@ function handler(req, res){
   if (rbody.type === 'runjs') {
     let fn = rbody.fn || ''
     if (!rbody.rawcode && !/^https?:/.test(fn) && JSLISTS.indexOf(fn) === -1) {
+      clog.info('can\'t find js file', fn)
       res.end('no such js file ' + fn)
     } else {
       const addContext = {
@@ -65,9 +66,9 @@ function handler(req, res){
   } else if (rbody.type === 'deletelog') {
     const name = rbody.fn
     if (LOGFILE.delete(name)) {
-      res.end(name + '日志文件删除成功')
+      res.end(name + ' success deleted!')
     } else {
-      res.end(name + '文件不存在')
+      res.end(name + ' log file don\'t exist')
     }
   } else if (rbody.type === 'status') {
     clog.info(clientip, 'get sever status')
