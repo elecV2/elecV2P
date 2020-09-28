@@ -69,8 +69,8 @@ module.exports = app => {
       res.end("have no jsname or content")
       return
     }
-    if (jsname === 'totest') {
-      const jsres = runJSFile(req.body.jscontent, { type: 'rawcode', from: 'jstest', cb: wsSer.send.func('jsmanage') })
+    if (req.body.type === 'totest') {
+      const jsres = runJSFile(req.body.jscontent, { type: 'rawcode', rename: jsname, from: 'jstest', cb: wsSer.send.func('jsmanage') })
       if (sType(jsres) === 'promise') {
         jsres.then(data=>{
           res.end(sString(data))
