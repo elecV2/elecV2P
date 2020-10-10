@@ -1,4 +1,5 @@
 const http = require('http')
+const path = require('path')
 const express = require('express')
 const compression = require('compression')
 
@@ -8,7 +9,7 @@ const { websocketSer } = require('./func/websocket')
 const { logger } = require('./utils/logger')
 const clog = new logger({ head: 'webServer' })
 
-const { wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook } = require('./webser')
+const { wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook, wbefss } = require('./webser')
 
 module.exports = () => {
   const app = express()
@@ -17,7 +18,12 @@ module.exports = () => {
 
   const ONEMONTH = 60 * 1000 * 60 * 24 * 30                // 页面缓存时间
 
-  app.use(express.static(__dirname + '/web/dist', { maxAge: ONEMONTH }))
+  app.use(express.static(path.resolve(__dirname, 'web/dist'), { maxAge: ONEMONTH }))
+
+  if (CONFIG.efss) {
+    wbefss(app)
+    app.use('/efss', express.static(path.resolve(__dirname, CONFIG.efss), { maxAge: ONEMONTH }))
+  }
 
   wbconfig(app)
   wbfeed(app)

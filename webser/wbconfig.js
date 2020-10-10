@@ -18,7 +18,8 @@ module.exports = app => {
           CONFIG_Axios,
           uagent: CONFIG_RULE.uagent,
           wbrtoken: CONFIG.wbrtoken,
-          minishell: CONFIG.minishell || false
+          minishell: CONFIG.minishell || false,
+          efss: CONFIG.efss
         }))
         break
       default:{
@@ -70,6 +71,11 @@ module.exports = app => {
           res.end('fail to change eAxios setting')
           console.error(e)
         }
+        break
+      case "efss":
+        CONFIG.efss = req.body.data
+        clog.notify('efss location set to', CONFIG.efss)
+        res.end('reset efss location success!')
         break
       default:{
         res.end("data put error")

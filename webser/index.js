@@ -8,5 +8,6 @@ const wbdata = require('./wbdata')
 const wblist = require('./wblist')
 const wbconfig = require('./wbconfig')
 const wbhook = require('./wbhook')
+const wbefss = require('./wbefss')
 
-module.exports = { wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook }
+module.exports = { wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook, wbefss }
