@@ -15,18 +15,16 @@ module.exports = app => {
       return
     }
     const efssF = path.resolve(__dirname, '../', CONFIG.efss)
-    const listFile = function(folder){
-      fs.readdirSync(folder).forEach(file=>{
-        const fpath = path.join(folder, file)
-        if (fs.statSync(fpath).isDirectory()) {
-          listFile(fpath)
-        } else {
-          const spath = fpath.replace(efssF, '').slice(1).replace(/\\/g, '/')
-          res.write(`<a class='efssa' href='./${ spath }' target='_blank'>${ spath }</a>`)
-        }
-      })
+    if (!fs.existsSync(efssF)) {
+      clog.error('efss folder dont exist')
+      res.end(efssF + ' dont exist')
+      return
     }
+    res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })
     res.write(`
+    <meta name="HandheldFriendly" content="True">
+    <meta name="MobileOptimized" content="320">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, minimal-ui">
     <title>elecV2P file storage system</title>
     <style>
       .efssa {
@@ -39,6 +37,17 @@ module.exports = app => {
         border-radius: 6px;
       }
     </style>`)
+    const listFile = function(folder){
+      fs.readdirSync(folder).forEach(file=>{
+        const fpath = path.join(folder, file)
+        if (fs.statSync(fpath).isDirectory()) {
+          listFile(fpath)
+        } else {
+          const spath = fpath.replace(efssF, '').slice(1).replace(/\\/g, '/')
+          res.write(`<a class='efssa' href='/efss/${ spath }' target='_blank'>${ spath }</a>`)
+        }
+      })
+    }
     listFile(efssF)
     res.end()
   })

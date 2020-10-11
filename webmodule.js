@@ -22,7 +22,6 @@ module.exports = () => {
 
   if (CONFIG.efss) {
     wbefss(app)
-    app.use('/efss', express.static(path.resolve(__dirname, CONFIG.efss), { maxAge: ONEMONTH }))
   }
 
   wbconfig(app)

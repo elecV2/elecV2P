@@ -1,3 +1,7 @@
+const fs = require('fs')
+const path = require('path')
+const express = require('express')
+
 const { logger, setGlog, CONFIG_FEED, CONFIG_Axios, list } = require('../utils')
 const clog = new logger({ head: 'wbconfig' })
 
@@ -28,12 +32,49 @@ module.exports = app => {
     }
   })
 
+  if (CONFIG.efss) {
+    const dyn = dynStatic(path.resolve(__dirname, '../', CONFIG.efss))
+    app.use('/efss', dyn)
+
+    function dynStatic(path) {
+      let static = express.static(path)
+      const dyn = function (req, res, next) {
+        return static(req, res, next)
+      }
+      dyn.setPath = function(newPath) {
+        static = express.static(newPath)
+      }
+      return dyn
+    }
+
+    var efssSet = function(cefss){
+      if (cefss === false) {
+        clog.notify('efss is closed')
+        CONFIG.efss = false
+        return 'efss is closed'
+      } else {
+        const efssF = path.resolve(__dirname, '../', cefss)
+        if (!fs.existsSync(efssF)) {
+          clog.error(cefss + ' dont exist')
+          return cefss + ' dont exist'
+        } else {
+          clog.notify('efss location set to', cefss)
+          dyn.setPath(efssF)
+          CONFIG.efss = cefss
+          return 'reset efss location success!'
+        }
+      }
+    }
+  }
+
   app.put("/config", (req, res)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " put config " + req.body.type)
+
     switch(req.body.type){
       case "config":
         let data = req.body.data
         Object.assign(CONFIG, data)
+        if (CONFIG.efss !== false) efssSet(CONFIG.efss)
         if (CONFIG.CONFIG_FEED) CONFIG.CONFIG_FEED.homepage = CONFIG.homepage
         Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
         Object.assign(CONFIG_RUNJS, CONFIG.CONFIG_RUNJS)
@@ -73,9 +114,11 @@ module.exports = app => {
         }
         break
       case "efss":
-        CONFIG.efss = req.body.data
-        clog.notify('efss location set to', CONFIG.efss)
-        res.end('reset efss location success!')
+        if (CONFIG.efss !== false) {
+          res.end(efssSet(req.body.data))
+        } else {
+          res.end('efss is closed!')
+        }
         break
       default:{
         res.end("data put error")
