@@ -1,7 +1,4 @@
-const fs = require('fs')
-const path = require('path')
-
-const { logger } = require('../utils')
+const { logger, file } = require('../utils')
 const clog = new logger({ head: 'wbefss' })
 
 const { CONFIG } = require('../config')
@@ -14,8 +11,8 @@ module.exports = app => {
       res.end('efss is closed!')
       return
     }
-    const efssF = path.resolve(__dirname, '../', CONFIG.efss)
-    if (!fs.existsSync(efssF)) {
+    const efssF = file.get(CONFIG.efss, 'path')
+    if (!file.isExist(efssF)) {
       clog.error('efss folder dont exist')
       res.end(efssF + ' dont exist')
       return
@@ -37,18 +34,10 @@ module.exports = app => {
         border-radius: 6px;
       }
     </style>`)
-    const listFile = function(folder){
-      fs.readdirSync(folder).forEach(file=>{
-        const fpath = path.join(folder, file)
-        if (fs.statSync(fpath).isDirectory()) {
-          listFile(fpath)
-        } else {
-          const spath = fpath.replace(efssF, '').slice(1).replace(/\\/g, '/')
-          res.write(`<a class='efssa' href='/efss/${ spath }' target='_blank'>${ spath }</a>`)
-        }
-      })
-    }
-    listFile(efssF)
+    file.aList(efssF).forEach(fpath=>{
+      const spath = fpath.replace(efssF, '').slice(1).replace(/\\/g, '/')
+      res.write(`<a class='efssa' href='/efss/${ spath }' target='_blank'>${ spath }</a>`)      
+    })
     res.end()
   })
 }

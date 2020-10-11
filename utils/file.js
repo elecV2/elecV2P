@@ -6,6 +6,8 @@ const { errStack, sJson, sString, sType, iRandom } = require('./string')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFile', level: 'debug' })
 
+const { CONFIG } = require('../config')
+
 const fpath = {
   list: path.join(__dirname, '../script', 'Lists'),
   js: path.join(__dirname, '../script', 'JSFile'),
@@ -231,7 +233,7 @@ function downloadfile(durl, dest) {
 
 const file = {
   get(pname, type){
-    let fpath = path.join(__dirname, '../', pname)
+    const fpath = path.resolve(__dirname, '../', pname)
     if (type === 'path') {
       return fpath
     }
@@ -245,7 +247,7 @@ const file = {
   },
   path(x1, x2){
     if (!(x1 && x2)) return
-    let rpath = path.resolve(x1, x2)
+    const rpath = path.resolve(x1, x2)
     if (fs.existsSync(rpath)) {
       return rpath
     }
@@ -255,6 +257,20 @@ const file = {
       return true
     }
     return false
+  },
+  aList(folder, option){
+    if (!fs.existsSync(folder)) return []
+    let flist = []
+    fs.readdirSync(folder).forEach(file=>{
+      const fpath = path.join(folder, file)
+      if (fs.statSync(fpath).isDirectory()) {
+        flist = flist.concat(this.aList(fpath))
+      } else {
+        flist.push(fpath)
+      }
+    })
+
+    return flist
   }
 }
 

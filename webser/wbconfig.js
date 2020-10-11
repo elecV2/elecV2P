@@ -1,8 +1,6 @@
-const fs = require('fs')
-const path = require('path')
 const express = require('express')
 
-const { logger, setGlog, CONFIG_FEED, CONFIG_Axios, list } = require('../utils')
+const { logger, setGlog, CONFIG_FEED, CONFIG_Axios, list, file } = require('../utils')
 const clog = new logger({ head: 'wbconfig' })
 
 const { CONFIG } = require('../config')
@@ -33,7 +31,7 @@ module.exports = app => {
   })
 
   if (CONFIG.efss) {
-    const dyn = dynStatic(path.resolve(__dirname, '../', CONFIG.efss))
+    const dyn = dynStatic(file.get(CONFIG.efss, 'path'))
     app.use('/efss', dyn)
 
     function dynStatic(path) {
@@ -53,15 +51,15 @@ module.exports = app => {
         CONFIG.efss = false
         return 'efss is closed'
       } else {
-        const efssF = path.resolve(__dirname, '../', cefss)
-        if (!fs.existsSync(efssF)) {
-          clog.error(cefss + ' dont exist')
-          return cefss + ' dont exist'
-        } else {
+        const efssF = file.get(cefss, 'path')
+        if (file.isExist(efssF)) {
           clog.notify('efss location set to', cefss)
           dyn.setPath(efssF)
           CONFIG.efss = cefss
           return 'reset efss location success!'
+        } else {
+          clog.error(cefss + ' dont exist')
+          return cefss + ' dont exist'
         }
       }
     }
