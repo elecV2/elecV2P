@@ -258,17 +258,35 @@ const file = {
     }
     return false
   },
-  aList(folder, option){
+  aList(folder, option = { deep: -1, limit: -1 }){
     if (!fs.existsSync(folder)) return []
-    let flist = []
-    fs.readdirSync(folder).forEach(file=>{
-      const fpath = path.join(folder, file)
-      if (fs.statSync(fpath).isDirectory()) {
-        flist = flist.concat(this.aList(fpath))
-      } else {
-        flist.push(fpath)
+    if (option !== undefined && sType(option) !== 'object') {
+      clog.error('file.aList option must be json object,', option, 'was given')
+      return []
+    }
+    if (option.deep === undefined || sType(option.deep) !== 'number') option.deep = -1
+    if (option.limit === undefined || sType(option.limit) !== 'number') option.limit = -1
+    let flist = [], dlist = [[folder]]
+    for (let tdeep = 0; tdeep < dlist.length; tdeep++) {
+      clog.debug(tdeep)
+      if (option.deep !== -1 && tdeep >= option.deep) return flist
+      for (let cfolder of dlist[tdeep]) {
+        const rlist = fs.readdirSync(cfolder)
+        for (let file of rlist) {
+          clog.debug(file)
+          const fpath = path.join(cfolder, file)
+          if (fs.statSync(fpath).isDirectory()) {
+            dlist[tdeep+1] ? dlist[tdeep+1].push(fpath) : dlist[tdeep+1] = [fpath]
+          } else {
+            if (option.limit === -1 || flist.length < option.limit) {
+              flist.push(fpath)
+            } else {
+              return flist
+            }
+          }
+        }
       }
-    })
+    }
 
     return flist
   }

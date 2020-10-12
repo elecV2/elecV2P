@@ -3,6 +3,11 @@ const clog = new logger({ head: 'wbefss' })
 
 const { CONFIG } = require('../config')
 
+const CONFIG_efss = {
+  max: 200,        // 最大文件显示数
+  deep: -1,        // 显示文件的最大目录深度。-1: 所有子文件夹，0: 不显示，1: 显示1级目录文件。
+}
+
 module.exports = app => {
   app.get('/efss', (req, res)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'get efss resource')
@@ -34,7 +39,7 @@ module.exports = app => {
         border-radius: 6px;
       }
     </style>`)
-    file.aList(efssF).forEach(fpath=>{
+    file.aList(efssF, { deep: CONFIG_efss.deep, limit: CONFIG_efss.max }).forEach(fpath=>{
       const spath = fpath.replace(efssF, '').slice(1).replace(/\\/g, '/')
       res.write(`<a class='efssa' href='/efss/${ spath }' target='_blank'>${ spath }</a>`)      
     })
