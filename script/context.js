@@ -74,7 +74,7 @@ class contextBase {
 
 class surgeContext {
   constructor({ fconsole = clog }){
-    this.fconsole = fconsole 
+    this.fconsole = fconsole
   }
 
   $httpClient = {
@@ -85,16 +85,14 @@ class surgeContext {
           headers: response.headers,
           body: sString(response.data)
         }
-        if(cb) cb(null, newres, newres.body)
+        if(cb && sType(cb) === 'function') cb(null, newres, newres.body)
       }).catch(error=>{
         clog.error('httpClient.get error:', error.stack)
-        if(cb) {
-          error = errStack(error)
-          try {
-            cb(error, null, `{"error": "${error}"}`)
-          } catch(err) {
-            this.fconsole.error('httpClient.get cb error:', errStack(err))
-          }
+        error = errStack(error)
+        if(cb && sType(cb) === 'function') {
+          cb(error, null, `{"error": "${ error }"}`)
+        } else {
+          this.fconsole.error('httpClient.get error:', error)
         }
       })
     },
@@ -105,16 +103,14 @@ class surgeContext {
           headers: response.headers,
           body: sString(response.data)
         }
-        if(cb) cb(null, newres, newres.body)
+        if(cb && sType(cb) === 'function') cb(null, newres, newres.body)
       }).catch(error=>{
         clog.error('httpClient.post error:', error.stack)
-        if(cb) {
-          error = errStack(error)
-          try {
-            cb(error, null, `{"error": "${error}"}`)
-          } catch(error) {
-            this.fconsole.error(errStack(error))
-          }
+        error = errStack(error)
+        if(cb && sType(cb) === 'function') {
+          cb(error, null, `{"error": "${ error }"}`)
+        } else {
+          this.fconsole.error('httpClient.post error:', error)
         }
       })
     }
@@ -149,12 +145,12 @@ class quanxContext {
                 headers: response.headers,
                 body: sString(response.data)
               }
-          if (cb) cb(res)
+          if (cb && sType(cb) === 'function') cb(res)
           resolve(res)
         }).catch(error=>{
           error = errStack(error)
           this.fconsole.error(error)
-          if(cb) cb(error)
+          if(cb && sType(cb) === 'function') cb(error)
           reject({ error })
         })
       })

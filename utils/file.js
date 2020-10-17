@@ -202,35 +202,6 @@ const store = {
   }
 }
 
-function downloadfile(durl, dest) {
-  if (!dest) {
-    dest = jsfile.get(durl.split('/').pop(), 'path')
-  }
-  return new Promise((resolve, reject)=>{
-    axios({
-      url: durl,
-      responseType: 'stream'
-    }).then(response=>{
-      if (response.status == 404) {
-        clog.error(durl + ' 404! file dont exist')
-        reject('404! file dont exist')
-        return
-      }
-      let file = fs.createWriteStream(dest)
-      response.data.pipe(file)
-      file.on('finish', ()=>{
-        clog.notify("download: " + durl + " to: " + dest)
-        file.close()
-        resolve(dest)
-      })
-    }).catch(e=>{
-      e = errStack(e)
-      clog.error(durl, 'download fail!', e)
-      reject('download fail! ' + e)
-    })
-  })
-}
-
 const file = {
   get(pname, type){
     const fpath = path.resolve(__dirname, '../', pname)
@@ -290,6 +261,35 @@ const file = {
 
     return flist
   }
+}
+
+function downloadfile(durl, dest) {
+  if (!dest) {
+    dest = file.get((CONFIG.efss || '.') + '/' + durl.split('/').pop(), 'path')
+  }
+  return new Promise((resolve, reject)=>{
+    axios({
+      url: durl,
+      responseType: 'stream'
+    }).then(response=>{
+      if (response.status == 404) {
+        clog.error(durl + ' 404! file dont exist')
+        reject('404! file dont exist')
+        return
+      }
+      let file = fs.createWriteStream(dest)
+      response.data.pipe(file)
+      file.on('finish', ()=>{
+        clog.notify("download: " + durl + " to: " + dest)
+        file.close()
+        resolve(dest)
+      })
+    }).catch(e=>{
+      e = errStack(e)
+      clog.error(durl, 'download fail!', e)
+      reject('download fail! ' + e)
+    })
+  })
 }
 
 module.exports = { list, jsfile, store, file, downloadfile }
