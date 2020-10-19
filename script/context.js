@@ -2,13 +2,13 @@ const qs = require('qs')
 const cheerio = require('cheerio')
 
 const { CONFIG } = require('../config')
-const { logger, errStack, sType, sString, feedPush, iftttPush, store, eAxios, jsfile } = require('../utils')
+const { logger, errStack, sType, sString, feedPush, iftttPush, store, eAxios, jsfile, file, downloadfile } = require('../utils')
 const clog = new logger({ head: 'context', level: 'debug' })
 
 const exec = require('../func/exec')
 
 const formReq = {
-  getHeaders(req) {
+  headers(req) {
     let newheaders = {}
     if (req.headers) {
       try {
@@ -20,7 +20,7 @@ const formReq = {
     }
     return newheaders
   },
-  getBody(req) {
+  body(req) {
     if (req.body) return req.body
     let url = req.url || req
     if (/\?/.test(url)) {
@@ -36,11 +36,11 @@ const formReq = {
   uest(req, method) {
     const freq = {
       url: encodeURI(req.url || req),
-      headers: this.getHeaders(req),
+      headers: this.headers(req),
       method: req.method || method || 'get'
     }
     if (freq.method !== 'get') {
-      freq.data = req.data || this.getBody(req)
+      freq.data = req.data || this.body(req)
     }
     return freq
   }
@@ -53,9 +53,11 @@ class contextBase {
 
   __dirname = process.cwd()
   __home = CONFIG.homepage
+  __efss = file.get(CONFIG.efss, 'path')
   $axios = eAxios
   $exec = exec
   $cheerio = cheerio
+  $download = downloadfile
   $store = store
   $feed = {
     push(title, description, url) {

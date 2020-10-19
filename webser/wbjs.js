@@ -114,7 +114,10 @@ module.exports = app => {
         return
       }
 
-      if (!files.js) return
+      if (!files.js) {
+        clog.info('no js file to upload')
+        return
+      }
       if (files.js.length) {
         files.js.forEach(sgfile=>{
           clog.notify('upload js file:', sgfile.name)

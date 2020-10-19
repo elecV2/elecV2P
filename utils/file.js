@@ -204,6 +204,10 @@ const store = {
 
 const file = {
   get(pname, type){
+    if (!pname) {
+      clog.info('parameters:', pname, 'was given, file.get no result')
+      return ''
+    }
     const fpath = path.resolve(__dirname, '../', pname)
     if (type === 'path') {
       return fpath
@@ -265,7 +269,7 @@ const file = {
 
 function downloadfile(durl, dest) {
   if (!dest) {
-    dest = file.get((CONFIG.efss || '.') + '/' + durl.split('/').pop(), 'path')
+    dest = file.get((CONFIG.efss || 'web/dist') + '/' + durl.split('/').pop(), 'path')
   }
   return new Promise((resolve, reject)=>{
     axios({
