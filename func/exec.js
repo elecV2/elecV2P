@@ -42,7 +42,7 @@ function commandSetup(command, options={}) {
     options.cwd = file.path(process.cwd(), cwd[1])
   }
 
-  let envrough = command.match(/-e ([^-]+)/)
+  let envrough = command.replace(/ -c (\S+)/g, '').match(/-e ([^-]+)/)
   if (envrough) {
     let envlist = envrough[1].trim().split(' ')
     options.env = { ...options.env, ...envlist }

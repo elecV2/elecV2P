@@ -93,17 +93,17 @@ function jobFunc(job) {
   // 任务信息转化为可执行函数
   if (job.type === 'runjs') {
     const options = { type: 'task', cb: wsSer.send.func('tasklog') }
-    
-    let envrough = job.target.match(/-e ([^-]+)/)
-    if (envrough) {
-      let envlist = envrough[1].trim().split(' ')
+    const jobenvs = job.target.split(/ -e /)
+    let envrough = jobenvs[1]
+    if (envrough !== undefined) {
+      let envlist = envrough.trim().split(' ')
       envlist.forEach(ev=>{
-        let ei = ev.split('=')
-        if (ei.length === 2) {
-          options['$' + ei[0].trim()] = ei[1].trim()
+        let ei = ev.match(/(.*?)=(.*)/)
+        if (ei.length === 3) {
+          options['$' + ei[1]] = ei[2]
         }
       })
-      job.target = job.target.split(/ -e /)[0]
+      job.target = jobenvs[0]
     }
 
     return ()=>{
