@@ -146,41 +146,43 @@ const store = {
     }
   },
   put(value, key, type) {
-    if (key !== undefined && value !== undefined) {
-      clog.debug('put value to', key)
-      if (value === '') {
-        return this.delete(key)
-      }
-      if (type === 'a') {
-        const oldval = this.get(key)
+    if (key === undefined || value === undefined) { 
+      clog.error('store put error: no key or value')
+      return false
+    }
+    clog.debug('put value to', key)
+    if (value === '') {
+      return this.delete(key)
+    }
+    if (type === 'a') {
+      const oldval = this.get(key)
+      if (oldval !== undefined) {
         if (typeof oldval === 'string') value = oldval + '\n' + sString(value)
         else if (Array.isArray(oldval)) value = Array.isArray(value) ? [...oldval, ...value] : [...oldval, value]
         else if (sType(oldval) === 'object') value = Object.assign(oldval, sJson(value, true))
         else if (typeof oldval === 'number') value = oldval + Number(value)
-        type = sType(value)
-      } else if (type === 'number') {
-        value = Number(value)
-      } else if (type === 'boolean') {
-        value = Boolean(value)
-      } else if (type === 'object' || type === 'array') {
-        value = sJson(value, true)
-      } else if (type === 'string') {
-        value = sString(value)
-      } else {
-        type = sType(value)
       }
-      if (/^(number|boolean|object|array)$/.test(type)) {
-        value = JSON.stringify({
-          type, value
-        })
-      } else {
-        value = String(value)
-      }
-      fs.writeFileSync(path.join(fpath.store, key), value, 'utf8')
-      return true
-    } 
-    clog.error('store put error: no key or value')
-    return false
+      type = sType(value)
+    } else if (type === 'number') {
+      value = Number(value)
+    } else if (type === 'boolean') {
+      value = Boolean(value)
+    } else if (type === 'object' || type === 'array') {
+      value = sJson(value, true)
+    } else if (type === 'string') {
+      value = sString(value)
+    } else {
+      type = sType(value)
+    }
+    if (/^(number|boolean|object|array)$/.test(type)) {
+      value = JSON.stringify({
+        type, value
+      })
+    } else {
+      value = String(value)
+    }
+    fs.writeFileSync(path.join(fpath.store, key), value, 'utf8')
+    return true
   },
   delete(key) {
     clog.debug('delete store key:', key)
