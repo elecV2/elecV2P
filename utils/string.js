@@ -1,3 +1,8 @@
+function sType(obj) {
+  if (typeof obj !== 'object') return typeof obj
+  return Object.prototype.toString.call(obj).slice(8, -1).toLocaleLowerCase()
+}
+
 /**
  * JSON 化输入值，成功返回 JSON 化后的值，不可转化则返回 false，
  * @param     {string}     str      需要转化的变量
@@ -29,11 +34,6 @@ function sUrl(url){
   } catch {
     return false
   }
-}
-
-function sType(obj) {
-  if (typeof obj !== 'object') return typeof obj
-  return Object.prototype.toString.call(obj).slice(8, -1).toLocaleLowerCase()
 }
 
 function euid(len = 8) {

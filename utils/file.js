@@ -229,11 +229,24 @@ const file = {
       return rpath
     }
   },
-  isExist(filepath){
+  isExist(filepath, isDir){
     if (fs.existsSync(filepath)) {
-      return true
+      return isDir ? fs.statSync(filepath).isDirectory() : true
     }
     return false
+  },
+  size(filepath){
+    if (fs.existsSync(filepath)) {
+      const fsize = fs.statSync(filepath).size
+      if (fsize > 1000000) {
+        return (fsize/1000000).toFixed(2) + ' MB'
+      } else if (fsize > 1000) {
+        return (fsize/1000).toFixed(2) + ' KB'
+      } else {
+        return fsize + ' B'
+      }
+    }
+    return 0
   },
   aList(folder, option = { deep: -1, limit: -1 }){
     if (!fs.existsSync(folder)) return []
@@ -256,7 +269,7 @@ const file = {
             dlist[tdeep+1] ? dlist[tdeep+1].push(fpath) : dlist[tdeep+1] = [fpath]
           } else {
             if (option.limit === -1 || flist.length < option.limit) {
-              flist.push(fpath)
+              flist.push({ path: fpath, size: this.size(fpath) })
             } else {
               return flist
             }
@@ -270,9 +283,26 @@ const file = {
 }
 
 function downloadfile(durl, dest) {
-  if (!dest) {
-    dest = file.get((CONFIG.efss || 'web/dist') + '/' + durl.split('/').pop(), 'path')
+  if (!durl.startsWith('http')) return Promise.reject(durl + ' is not a valid url')
+  let folder = '', fname = ''
+  const isFolder = file.isExist(dest, true)
+  if (!dest || isFolder) {
+    const sdurl = durl.split(/\/|\?|#/)
+    do {
+      fname = sdurl.pop().trim()
+    } while (fname === '')
   }
+  if (isFolder) {
+    folder = dest
+  } else if (/\//.test(dest)) {
+    folder = dest.slice(0, dest.lastIndexOf('/'))
+    if (!fs.existsSync(folder)) fs.mkdirSync(folder, {recursive: true})
+    fname = dest.slice(dest.lastIndexOf('/'))
+  } else {
+    folder = file.get(CONFIG.efss || 'web/dist', 'path')
+  }
+  
+  dest = path.join(folder, fname || dest)
   return new Promise((resolve, reject)=>{
     axios({
       url: durl,

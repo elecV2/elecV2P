@@ -43,7 +43,7 @@ function handler(req, res){
       if (rbody.env) {
         const senv = sJson(rbody.env, true)
         for (let env in senv) {
-          addContext['$' + env] = senv[env]
+          addContext[env.startsWith('$') ? env : ('$' + env)] = senv[env]
         }
       }
       const jsres = runJSFile(fn, { ...addContext })

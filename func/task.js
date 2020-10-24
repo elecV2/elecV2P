@@ -100,7 +100,7 @@ function jobFunc(job) {
       envlist.forEach(ev=>{
         let ei = ev.match(/(.*?)=(.*)/)
         if (ei.length === 3) {
-          options['$' + ei[1]] = ei[2]
+          options[ei[1].startsWith('$') ? ei[1] : ('$' + ei[1])] = ei[2]
         }
       })
       job.target = jobenvs[0]

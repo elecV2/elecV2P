@@ -7,6 +7,43 @@ const { CONFIG } = require('../config')
 const { CONFIG_RUNJS, CONFIG_RULE } = require('../script')
 
 module.exports = app => {
+  let efssSet = null
+
+  if (CONFIG.efss !== false) {
+    const dyn = dynStatic(file.get(CONFIG.efss, 'path'))
+    app.use('/efss', dyn)
+
+    function dynStatic(path) {
+      let static = express.static(path)
+      const dyn = function (req, res, next) {
+        return static(req, res, next)
+      }
+      dyn.setPath = function(newPath) {
+        static = express.static(newPath)
+      }
+      return dyn
+    }
+
+    efssSet = function(cefss){
+      if (cefss === false) {
+        clog.notify('efss is closed')
+        CONFIG.efss = false
+        return 'efss is closed'
+      } else {
+        const efssF = file.get(cefss, 'path')
+        if (file.isExist(efssF)) {
+          clog.notify('efss location set to', cefss)
+          dyn.setPath(efssF)
+          CONFIG.efss = cefss
+          return 'reset efss location success!'
+        } else {
+          clog.error(cefss + ' dont exist')
+          return cefss + ' dont exist'
+        }
+      }
+    }
+  }
+
   app.get("/config", (req, res)=>{
     let type = req.query.type
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get config data", type)
@@ -30,44 +67,8 @@ module.exports = app => {
     }
   })
 
-  if (CONFIG.efss) {
-    const dyn = dynStatic(file.get(CONFIG.efss, 'path'))
-    app.use('/efss', dyn)
-
-    function dynStatic(path) {
-      let static = express.static(path)
-      const dyn = function (req, res, next) {
-        return static(req, res, next)
-      }
-      dyn.setPath = function(newPath) {
-        static = express.static(newPath)
-      }
-      return dyn
-    }
-
-    var efssSet = function(cefss){
-      if (cefss === false) {
-        clog.notify('efss is closed')
-        CONFIG.efss = false
-        return 'efss is closed'
-      } else {
-        const efssF = file.get(cefss, 'path')
-        if (file.isExist(efssF)) {
-          clog.notify('efss location set to', cefss)
-          dyn.setPath(efssF)
-          CONFIG.efss = cefss
-          return 'reset efss location success!'
-        } else {
-          clog.error(cefss + ' dont exist')
-          return cefss + ' dont exist'
-        }
-      }
-    }
-  }
-
   app.put("/config", (req, res)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " put config " + req.body.type)
-
     switch(req.body.type){
       case "config":
         let data = req.body.data
