@@ -1,7 +1,7 @@
 const { Task, TASKS_WORKER, TASKS_INFO, jobFunc } = require('../func')
 const { runJSFile, JSLISTS } = require('../script')
 
-const { logger, LOGFILE, nStatus, euid, sJson, sString, sType } = require('../utils')
+const { logger, LOGFILE, nStatus, euid, sJson, sString, sType, file } = require('../utils')
 const clog = new logger({ head: 'wbhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -132,6 +132,17 @@ function handler(req, res){
       return
     }
     res.end('a task object is expected!')
+  } else if (rbody.type === 'efssdelete') {
+    clog.notify(clientip, 'delete efss file')
+    let filename = rbody.fn || rbody.filename
+    if (filename) {
+      filename = decodeURI(filename)
+      file.delete(filename, file.get(CONFIG.efss, 'path'))
+      res.end(filename + ' is deleted!')
+    } else {
+      clog.info('a name of file(parameter fn) is expected.')
+      res.end('a name of file(parameter fn) is expected.')
+    }
   } else {
     res.end('wrong webhook type')
   }

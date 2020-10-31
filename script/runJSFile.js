@@ -153,11 +153,7 @@ function runJSFile(filename, addContext={}) {
   let rawjs = ''
   if (addContext.type === 'rawcode') {
     rawjs = filename
-    filename = 'rawcode.js'
-    if (addContext.rename) {
-      filename = addContext.rename
-      jsfile.put(filename, rawjs)
-    }
+    filename = addContext.rename || 'rawcode.js'
   } else {
     rawjs = jsfile.get(filename)
     if (!rawjs) {

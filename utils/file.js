@@ -93,7 +93,11 @@ const jsfile = {
   },
   delete(name){
     if (!/\.js$/.test(name)) { name = name + '.js' }
-    fs.unlinkSync(path.join(fpath.js, name))
+    const jspath = path.join(fpath.js, name)
+    if (fs.existsSync(jspath)) fs.unlinkSync(jspath)
+    else {
+      clog.error('no such js file:', name)
+    }
   }
 }
 
@@ -186,13 +190,13 @@ const store = {
   },
   delete(key) {
     clog.debug('delete store key:', key)
-    try {
-      fs.unlinkSync(path.join(fpath.store, key))
+    const spath = path.join(fpath.store, key)
+    if (fs.existsSync(spath)) {
+      fs.unlinkSync(spath)
       return true
-    } catch(e) {
-      clog.error(errStack(e, true))
-      return false
     }
+    clog.error('store key', key, 'no exist.')
+    return false
   },
   all() {
     return fs.readdirSync(fpath.store)
@@ -218,6 +222,15 @@ const file = {
       return fs.readFileSync(fpath, 'utf8')
     }
     clog.error(pname, 'not exist')
+  },
+  delete(fname, basepath) {
+    basepath && (fname = path.join(basepath, fname))
+    if (fs.existsSync(fname)) {
+      fs.unlinkSync(fname)
+      clog.info('delete file', fname)
+    } else {
+      clog.info(fname, 'no existed.')
+    }
   },
   copy(source, target){
     fs.copyFileSync(source, target)
