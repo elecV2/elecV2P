@@ -131,6 +131,7 @@ function runJS(filename, jscode, addContext={}) {
  * @return    {string/object}           runJS() 的结果
  */
 function runJSFile(filename, addContext={}) {
+  if (!filename) return
   if (/^https?:/.test(filename)) {
     const url = filename
     filename = addContext.rename || url.split('/').pop()
@@ -149,18 +150,23 @@ function runJSFile(filename, addContext={}) {
     }
   }
 
+  let rawjs = ''
   if (addContext.type === 'rawcode') {
-    var JsStr = filename
-    filename = addContext.rename || 'rawcode.js'
+    rawjs = filename
+    filename = 'rawcode.js'
+    if (addContext.rename) {
+      filename = addContext.rename
+      jsfile.put(filename, rawjs)
+    }
   } else {
-    var JsStr = jsfile.get(filename)
-    if (!JsStr) {
+    rawjs = jsfile.get(filename)
+    if (!rawjs) {
       clog.error(filename, '不存在')
       return filename + '不存在'
     }
   }
 
-  return runJS(filename, JsStr, addContext)
+  return runJS(filename, rawjs, addContext)
 }
 
 module.exports = { runJSFile, CONFIG_RUNJS }

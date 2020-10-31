@@ -16,7 +16,7 @@ class Task {
   }
 
   stat(){
-    return (this.info.running ? true : false)
+    return Boolean(this.info.running)
   }
 
   start(){

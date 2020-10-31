@@ -7,7 +7,7 @@ $download('https://raw.githubusercontent.com/elecV2/elecV2P-dei/master/examples/
   aria2cDown('https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/0body.js')
 }).catch(e=>console.error(e))
 
-// 配合 $exec 使用 aria2 进行下载。（需提前配置好 aria2 使用环境, 使命令 aria2c 在系统 Shell 环境中可用）
+// 配合 $exec 使用 aria2 进行下载。(如果出现错误，根据错误信息进行调整修复）
 function aria2cDown(dlink, loc) {
   $exec(`./aria2c --enable-dht=true ${dlink} -d ${loc || __efss}`, {
     cwd: './script/Shell',

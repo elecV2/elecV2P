@@ -122,12 +122,16 @@ function handler(req, res){
     res.end(rbody.tid + ' 任务不存在')
   } else if (rbody.type === 'taskadd') {
     clog.notify(clientip, 'add a new task')
-    const newtid = euid()
-    TASKS_INFO[newtid] = rbody.task
-    TASKS_INFO[newtid].id = newtid
-    TASKS_WORKER[newtid] = new Task(TASKS_INFO[newtid], jobFunc(TASKS_INFO[newtid].job))
-    res.end('success add task: ' + TASKS_INFO[newtid].name)
-    if (rbody.running) TASKS_WORKER[newtid].start()
+    if (rbody.task && sType(rbody.task) === 'object') {
+      const newtid = euid()
+      TASKS_INFO[newtid] = rbody.task
+      TASKS_INFO[newtid].id = newtid
+      TASKS_WORKER[newtid] = new Task(TASKS_INFO[newtid], jobFunc(TASKS_INFO[newtid].job))
+      res.end('success add task: ' + TASKS_INFO[newtid].name)
+      if (rbody.task.running) TASKS_WORKER[newtid].start()
+      return
+    }
+    res.end('a task object is expected!')
   } else {
     res.end('wrong webhook type')
   }
