@@ -105,47 +105,49 @@ const store = {
   get(key, type) {
     if (key === undefined) return
     clog.debug('get value for', key)
-    if (fs.existsSync(path.join(fpath.store, key))) {
-      let value = fs.readFileSync(path.join(fpath.store, key), 'utf8')
-      if (type === 'raw') {
-        return value
-      }
-      const jsvalue = sJson(value)
-      if (jsvalue && jsvalue.value !== undefined && /^(number|boolean|object|string|array)$/.test(jsvalue.type)) {
-        value = jsvalue.value
-      }
-      if (type === undefined) return value
-      switch (type) {
-        case 'boolean':
-          return Boolean(value)
-        case 'number':
-          return Number(value)
-        case 'array':
-        case 'object':
-          return sJson(value, true)
-        case 'string':
-          return sString(value)
-        case 'r':
-        case 'random':
-          switch (sType(value)) {
-            case 'array':
-              return value[iRandom(0, value.length-1)]
-            case 'object':
-              const keys = Object.keys(value)
-              return value[keys[iRandom(0, keys.length-1)]]
-            case 'number':
-              return iRandom(value)
-            case 'boolean':
-              return Boolean(iRandom(0,1))
-            default: {
-              const strList = value.split(/\n|\r/)
-              return strList[iRandom(0, strList.length-1)]
-            }
+    if (!fs.existsSync(path.join(fpath.store, key))) {
+      clog.info(key, 'not set yet.')
+      return
+    }
+    let value = fs.readFileSync(path.join(fpath.store, key), 'utf8')
+    if (type === 'raw') {
+      return value
+    }
+    const jsvalue = sJson(value)
+    if (jsvalue && jsvalue.value !== undefined && /^(number|boolean|object|string|array)$/.test(jsvalue.type)) {
+      value = jsvalue.value
+    }
+    if (type === undefined) return value
+    switch (type) {
+      case 'boolean':
+        return Boolean(value)
+      case 'number':
+        return Number(value)
+      case 'array':
+      case 'object':
+        return sJson(value, true)
+      case 'string':
+        return sString(value)
+      case 'r':
+      case 'random':
+        switch (sType(value)) {
+          case 'array':
+            return value[iRandom(0, value.length-1)]
+          case 'object':
+            const keys = Object.keys(value)
+            return value[keys[iRandom(0, keys.length-1)]]
+          case 'number':
+            return iRandom(value)
+          case 'boolean':
+            return Boolean(iRandom(0,1))
+          default: {
+            const strList = value.split(/\n|\r/)
+            return strList[iRandom(0, strList.length-1)]
           }
-        default:{
-          clog.error('unknow store get type', type, 'return original value')
-          return value
         }
+      default:{
+        clog.error('unknow store get type', type, 'return original value')
+        return value
       }
     }
   },
