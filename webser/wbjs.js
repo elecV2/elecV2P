@@ -70,7 +70,7 @@ module.exports = app => {
       return
     }
     if (req.body.type === 'totest') {
-      const jsres = runJSFile(req.body.jscontent, { type: 'rawcode', rename: jsname, from: 'jstest', cb: wsSer.send.func('jsmanage') })
+      const jsres = runJSFile(req.body.jscontent, { type: 'rawcode', from: 'jstest', cb: wsSer.send.func('jsmanage') })
       if (sType(jsres) === 'promise') {
         jsres.then(data=>{
           res.end(sString(data))

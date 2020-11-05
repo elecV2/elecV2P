@@ -81,39 +81,61 @@ class surgeContext {
 
   $httpClient = {
     get: (req, cb) => {
+      let error = null,
+          resps = {},
+          sbody  = ''
       eAxios(formReq.uest(req)).then(response=>{
-        let newres = {
+        resps = {
           status: response.status,
           headers: response.headers,
-          body: sString(response.data)
         }
-        if(cb && sType(cb) === 'function') cb(null, newres, newres.body)
+        sbody = sString(response.data)
       }).catch(error=>{
         this.fconsole.error('httpClient.get error:', error.stack)
-        error = errStack(error)
-        if(cb && sType(cb) === 'function') {
-          cb(error, null, `{"error": "${ error }"}`)
+        if (error.response) {
+          resps = {
+            status: error.response.status,
+            headers: error.response.headers,
+          }
+          sbody = sString(error.response.data)
+        } else if (error.request) {
+          error = 'request config error'
+          sbody = sString(req)
         } else {
-          this.fconsole.error('httpClient.get error:', error)
+          sbody = error.message
+          error = errStack(error)
         }
+      }).finally(()=>{
+        if(cb && sType(cb) === 'function') cb(error, resps, sbody)
       })
     },
     post: (req, cb) => {
+      let error = null,
+          resps = {},
+          sbody  = ''
       eAxios(formReq.uest(req, 'post')).then(response=>{
-        let newres = {
+        resps = {
           status: response.status,
           headers: response.headers,
-          body: sString(response.data)
         }
-        if(cb && sType(cb) === 'function') cb(null, newres, newres.body)
+        sbody = sString(response.data)
       }).catch(error=>{
         this.fconsole.error('httpClient.post error:', error.stack)
-        error = errStack(error)
-        if(cb && sType(cb) === 'function') {
-          cb(error, null, `{"error": "${ error }"}`)
+        if (error.response) {
+          resps = {
+            status: error.response.status,
+            headers: error.response.headers,
+          }
+          sbody = sString(error.response.data)
+        } else if (error.request) {
+          error = 'request config error'
+          sbody = sString(req)
         } else {
-          this.fconsole.error('httpClient.post error:', error)
+          sbody = error.message
+          error = errStack(error)
         }
+      }).finally(()=>{
+        if(cb && sType(cb) === 'function') cb(error, resps, sbody)
       })
     }
   }
@@ -150,8 +172,8 @@ class quanxContext {
           if (cb && sType(cb) === 'function') cb(res)
           resolve(res)
         }).catch(error=>{
+          this.fconsole.error(error.stack)
           error = errStack(error)
-          this.fconsole.error(error)
           if(cb && sType(cb) === 'function') cb(error)
           reject({ error })
         })

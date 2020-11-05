@@ -134,9 +134,14 @@ function runJSFile(filename, addContext={}) {
   if (!filename) return
   if (/^https?:/.test(filename)) {
     const url = filename
-    filename = addContext.rename || url.split('/').pop()
+    const sdurl = url.split(/\/|\?|#/)
+    do {
+      filename = sdurl.pop().trim()
+    } while (filename === '')
     const jsIsExist = file.isExist(jsfile.get(filename, 'path'))
     if (!jsIsExist || addContext.type === 'webhook' || (CONFIG_RUNJS.intervals > 0 && new Date().getTime() - jsfile.get(filename, 'date') > CONFIG_RUNJS.intervals*1000)) {
+      if (addContext.rename) filename = addContext.rename
+      if (!/\.js$/.test(filename)) { filename += '.js' }
       clog.info('ready to download JS file', filename, '...')
       return new Promise((resolve, reject)=>{
         downloadfile(url, jsfile.get(filename, 'path')).then(()=>{
@@ -150,16 +155,16 @@ function runJSFile(filename, addContext={}) {
     }
   }
 
-  let rawjs = ''
+  let rawjs = (addContext.type === 'rawcode') ? filename : jsfile.get(filename)
+  if (!rawjs) {
+    clog.error(filename, '不存在')
+    return filename + '不存在'
+  }
   if (addContext.type === 'rawcode') {
-    rawjs = filename
     filename = addContext.rename || 'rawcode.js'
-  } else {
-    rawjs = jsfile.get(filename)
-    if (!rawjs) {
-      clog.error(filename, '不存在')
-      return filename + '不存在'
-    }
+  }
+  if (addContext.rename) {
+    jsfile.put(addContext.rename, rawjs)
   }
 
   return runJS(filename, rawjs, addContext)
