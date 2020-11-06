@@ -91,7 +91,7 @@ class surgeContext {
         }
         sbody = sString(response.data)
       }).catch(error=>{
-        this.fconsole.error('httpClient.get error:', error.stack)
+        this.fconsole.error('$httpClient.get ', req, error.stack)
         if (error.response) {
           resps = {
             status: error.response.status,
@@ -106,7 +106,13 @@ class surgeContext {
           error = errStack(error)
         }
       }).finally(()=>{
-        if(cb && sType(cb) === 'function') cb(error, resps, sbody)
+        if(cb && sType(cb) === 'function') {
+          try {
+            cb(error, resps, sbody)
+          } catch(err) {
+            this.fconsole.error('$httpClient.get cb error:', errStack(err))
+          }
+        }
       })
     },
     post: (req, cb) => {
@@ -120,7 +126,7 @@ class surgeContext {
         }
         sbody = sString(response.data)
       }).catch(error=>{
-        this.fconsole.error('httpClient.post error:', error.stack)
+        this.fconsole.error('$httpClient.post', req, error.stack)
         if (error.response) {
           resps = {
             status: error.response.status,
@@ -135,7 +141,13 @@ class surgeContext {
           error = errStack(error)
         }
       }).finally(()=>{
-        if(cb && sType(cb) === 'function') cb(error, resps, sbody)
+        if(cb && sType(cb) === 'function') {
+          try {
+            cb(error, resps, sbody)
+          } catch(err) {
+            this.fconsole.error('$httpClient.post cb error:', errStack(err))
+          }
+        }
       })
     }
   }
@@ -162,20 +174,27 @@ class quanxContext {
 
   $task = {
     fetch: (req, cb) => {
+      let resp = null
       return new Promise((resolve, reject) => {
         eAxios(formReq.uest(req)).then(response=>{
-          let res = {
+          resp = {
                 statusCode: response.status,
                 headers: response.headers,
                 body: sString(response.data)
               }
-          if (cb && sType(cb) === 'function') cb(res)
-          resolve(res)
+          resolve(resp)
         }).catch(error=>{
-          this.fconsole.error(error.stack)
-          error = errStack(error)
-          if(cb && sType(cb) === 'function') cb(error)
-          reject({ error })
+          this.fconsole.error('$task.fetch', req, error.stack)
+          resp = errStack(error)
+          reject({ error: resp })
+        }).finally(()=>{
+          if(cb && sType(cb) === 'function') {
+            try {
+              cb(resp)
+            } catch(err) {
+              this.fconsole.error('$task.fetch cb error:', errStack(err))
+            }
+          }
         })
       })
     }
