@@ -66,7 +66,7 @@ const jsfile = {
       })
       return flist.sort()
     }
-    if (!/\.js$/.test(name)) { name = name + '.js' }
+    if (!/\.js$/.test(name)) name += '.js'
     if (type === 'path') {
       return path.join(fpath.js, name)
     }
@@ -80,7 +80,7 @@ const jsfile = {
     return false
   },
   put(name, cont){
-    if (!/\.js$/.test(name)) { name = name + '.js' }
+    if (!/\.js$/.test(name)) name += '.js'
     try {
       if (typeof(cont) === 'object') {
         cont = JSON.stringify(cont)
@@ -92,11 +92,14 @@ const jsfile = {
     }
   },
   delete(name){
-    if (!/\.js$/.test(name)) { name = name + '.js' }
+    if (!/\.js$/.test(name)) name += '.js'
     const jspath = path.join(fpath.js, name)
-    if (fs.existsSync(jspath)) fs.unlinkSync(jspath)
-    else {
+    if (fs.existsSync(jspath)) {
+      fs.unlinkSync(jspath)
+      return true
+    } else {
       clog.error('no such js file:', name)
+      return false
     }
   }
 }
@@ -230,8 +233,10 @@ const file = {
     if (fs.existsSync(fname)) {
       fs.unlinkSync(fname)
       clog.info('delete file', fname)
+      return true
     } else {
       clog.info(fname, 'no existed.')
+      return false
     }
   },
   copy(source, target){

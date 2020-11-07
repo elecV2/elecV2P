@@ -110,7 +110,7 @@ class surgeContext {
           try {
             cb(error, resps, sbody)
           } catch(err) {
-            this.fconsole.error('$httpClient.get cb error:', errStack(err))
+            this.fconsole.error('$httpClient.get cb error:', errStack(err, true))
           }
         }
       })
@@ -145,7 +145,7 @@ class surgeContext {
           try {
             cb(error, resps, sbody)
           } catch(err) {
-            this.fconsole.error('$httpClient.post cb error:', errStack(err))
+            this.fconsole.error('$httpClient.post cb error:', errStack(err, true))
           }
         }
       })
@@ -192,7 +192,7 @@ class quanxContext {
             try {
               cb(resp)
             } catch(err) {
-              this.fconsole.error('$task.fetch cb error:', errStack(err))
+              this.fconsole.error('$task.fetch cb error:', errStack(err, true))
             }
           }
         })

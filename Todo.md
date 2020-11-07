@@ -13,6 +13,7 @@
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
 - 说明文档 [1.0 基本完成，优化中...]
+- 限 IP/密码 访问后台管理页面
 - Lists 注释保存/单条标记(dirty)上传
 - minishell 上传/下载文件（编辑?）
 - 文件编辑器（component || libery)

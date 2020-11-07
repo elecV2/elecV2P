@@ -92,18 +92,21 @@ module.exports = app => {
     const jsfn = req.body.jsfn
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "delete js file " + jsfn)
     if (jsfn) {
-      jsfile.delete(jsfn)
-      JSLISTS.splice(JSLISTS.indexOf(jsfn), 1)
+      if (jsfile.delete(jsfn)) {
+        JSLISTS.splice(JSLISTS.indexOf(jsfn), 1)
+        res.end(jsfn + ' is deleted!')
+      } else {
+        res.end(jsfn + ' not existed!')
+      }
     } else {
-      clog.error("delete js file error")
+      clog.error('a js file name is expect!')
+      res.end('a parameter jsfn is expect.')
     }
-    res.end(jsfn + ' is deleted!')
   })
 
   app.post('/uploadjs', (req, res) => {
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "uploading JS file")
-    // js文件上传
-    var uploadfile = new formidable.IncomingForm()
+    const uploadfile = new formidable.IncomingForm()
     uploadfile.maxFieldsSize = 2 * 1024 * 1024 //限制为最大2M
     uploadfile.keepExtensions = true
     uploadfile.multiples = true
