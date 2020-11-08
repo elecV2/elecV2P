@@ -1,6 +1,6 @@
 const { Task, TASKS_WORKER, TASKS_INFO, jobFunc } = require('../func/task')
 
-const { logger, list } = require('../utils')
+const { logger, list, sType } = require('../utils')
 const clog = new logger({ head: 'wbtask' })
 
 module.exports = app => {
@@ -49,7 +49,11 @@ module.exports = app => {
 
   app.post("/task", (req, res)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), `save task list`)
-    list.put('task.list', req.body)
-    res.end("success saved!")
+    if (sType(req.body) === 'object' && list.put('task.list', req.body)) {
+      res.end('task list success saved!')
+    } else {
+      clog.error('fail to save', req.body, 'to task.list')
+      res.end('fail to save task list.')
+    }
   })
 }

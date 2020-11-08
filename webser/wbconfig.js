@@ -58,7 +58,8 @@ module.exports = app => {
           uagent: CONFIG_RULE.uagent,
           wbrtoken: CONFIG.wbrtoken,
           minishell: CONFIG.minishell || false,
-          efss: CONFIG.efss
+          efss: CONFIG.efss,
+          security: CONFIG.SECURITY || {}
         }))
         break
       default:{
@@ -117,6 +118,14 @@ module.exports = app => {
           res.end(efssSet(req.body.data))
         } else {
           res.end('efss is closed!')
+        }
+        break
+      case "security":
+        CONFIG.SECURITY = req.body.data
+        if (CONFIG.SECURITY.status === false) {
+          res.end('security access is cancelled.')
+        } else {
+          res.end('updata saved!')
         }
         break
       default:{

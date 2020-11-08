@@ -46,6 +46,7 @@ module.exports = app => {
     uploadfile.maxFieldsSize = 200 * 1024 * 1024 //限制为最大 200M
     uploadfile.keepExtensions = true
     uploadfile.multiples = true
+    // uploadfile.uploadDir = file.get(CONFIG.efss, 'path')
     uploadfile.parse(req, (err, fields, files) => {
       if (err) {
         clog.error('Error', errStack(err, true))

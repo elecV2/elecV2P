@@ -1,7 +1,7 @@
 const { Task, TASKS_WORKER, TASKS_INFO, jobFunc } = require('../func')
 const { runJSFile, JSLISTS } = require('../script')
 
-const { logger, LOGFILE, nStatus, euid, sJson, sString, sType, file } = require('../utils')
+const { logger, LOGFILE, nStatus, euid, sJson, sString, sType, file, list } = require('../utils')
 const clog = new logger({ head: 'wbhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -11,11 +11,11 @@ function handler(req, res){
   clog.debug(rbody)
   res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
   if (!CONFIG.wbrtoken) {
-    res.end('服务器端未设置 token, 无法运行 JS')
+    res.end('no webhook token is set.')
     return
   }
   if (rbody.token !== CONFIG.wbrtoken) {
-    res.end('token 无效')
+    res.end('token is illegal')
     return
   }
   const clientip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
@@ -132,6 +132,10 @@ function handler(req, res){
       return
     }
     res.end('a task object is expected!')
+  } else if (rbody.type === 'tasksave') {
+    clog.notify(clientip, 'save current task list.')
+    if (list.put('task.list', TASKS_INFO)) res.end('success save current task list!')
+    else res.end('fail to save current task list.')
   } else if (rbody.type === 'efssdelete') {
     clog.notify(clientip, 'delete efss file')
     let filename = rbody.fn || rbody.filename

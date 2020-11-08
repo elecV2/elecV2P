@@ -2,27 +2,21 @@ const qs = require('qs')
 const cheerio = require('cheerio')
 
 const { CONFIG } = require('../config')
-const { logger, errStack, sType, sString, feedPush, iftttPush, store, eAxios, jsfile, file, downloadfile } = require('../utils')
+const { logger, errStack, sType, sString, sJson, feedPush, iftttPush, store, eAxios, jsfile, file, downloadfile } = require('../utils')
 const clog = new logger({ head: 'context', level: 'debug' })
 
 const exec = require('../func/exec')
 
 const formReq = {
   headers(req) {
-    let newheaders = {}
-    if (req.headers) {
-      try {
-        newheaders = sType(req.headers) === 'object' ? req.headers : JSON.parse(req.headers)
-      } catch(e) {
-        clog.error('req headers error:', errStack(e))
-      }
-      delete newheaders['Content-Length']
-    }
+    const newheaders = req.headers ? sJson(req.headers, true) : {}
+    delete newheaders['Content-Length']
     return newheaders
   },
   body(req) {
+    if (req.method === 'get' || req.method === 'GET') return null
     if (req.body) return req.body
-    let url = req.url || req
+    const url = req.url || req
     if (/\?/.test(url)) {
       const spu = url.split('?')
       if (req.headers && /json/.test(req.headers["Content-Type"])) {
@@ -39,7 +33,8 @@ const formReq = {
       headers: this.headers(req),
       method: req.method || method || 'get'
     }
-    if (freq.method !== 'get') {
+    if (freq.method !== 'get' && freq.method !== 'GET') {
+      if (!freq.headers['Content-Type'] && !freq.headers['content-type']) freq.headers['Content-Type'] = 'application/x-www-form-urlencoded'
       freq.data = req.data || this.body(req)
     }
     return freq

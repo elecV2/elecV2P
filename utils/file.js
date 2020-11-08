@@ -41,13 +41,11 @@ const list = {
   },
   put(name, cont){
     try {
-      if (typeof(cont) === 'object') {
-        cont = JSON.stringify(cont)
-      }
-      fs.writeFileSync(path.join(fpath.list, name), cont, 'utf8')
+      fs.writeFileSync(path.join(fpath.list, name), sString(cont), 'utf8')
       return true
     } catch(e) {
       clog.error('put list file error', name, e.stack)
+      return false
     }
   }
 }
