@@ -33,7 +33,7 @@ module.exports = () => {
     if(whitelist.indexOf(ipAddress) !== -1 || (blacklist.indexOf('*') === -1 && blacklist.indexOf(ipAddress) === -1)) {
       next()
     } else {
-      clog.notify(ipAddress, 'is try to access sever.')
+      clog.error(ipAddress, 'is try to access sever.')
       res.send('don\'t allow to access.')
     }
   })

@@ -1,4 +1,3 @@
-const qs = require('qs')
 const cheerio = require('cheerio')
 
 const { CONFIG } = require('../config')
@@ -14,28 +13,25 @@ const formReq = {
     return newheaders
   },
   body(req) {
-    if (req.method === 'get' || req.method === 'GET') return null
-    if (req.body) return req.body
-    const url = req.url || req
-    if (/\?/.test(url)) {
-      const spu = url.split('?')
-      if (req.headers && /json/.test(req.headers["Content-Type"])) {
-        return qs.parse(spu[1])
-      } else {
-        return spu[1]
+    if (sType(req) === 'string' || !req.method || req.method.toLowerCase() === 'get') return null
+    const reqb = req.data || req.body
+    if (reqb) {
+      if (sType(reqb === 'string') && req.headers && /json/i.test(req.headers["Content-Type"])) {
+        return sJson(reqb, true)
       }
-    }
+      return reqb
+    } 
     return null
   },
   uest(req, method) {
     const freq = {
-      url: encodeURI(req.url || req),
+      url: req.url || req,
       headers: this.headers(req),
       method: req.method || method || 'get'
     }
-    if (freq.method !== 'get' && freq.method !== 'GET') {
-      if (!freq.headers['Content-Type'] && !freq.headers['content-type']) freq.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-      freq.data = req.data || this.body(req)
+    if (!freq.headers['Content-Type'] && !freq.headers['content-type']) freq.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+    if (freq.method.toLowerCase() !== 'get') {
+      freq.data = this.body(req)
     }
     return freq
   }

@@ -10,10 +10,20 @@ module.exports = app => {
   })
 
   app.put("/task", (req, res)=>{
-    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), `put task`, req.body.op)
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), req.body.op, `task`)
     let data = req.body.data
+    if (!data.tid) {
+      clog.info('modify task fail! parameter tid is not present.')
+      res.end('modify task fail!')
+      return
+    }
     switch(req.body.op){
       case "start":
+        if (!data.task || sType(data.task) !== 'object') {
+          clog.error('start task error, unknow task info:', data.task)
+          res.end('start task error.')
+          return
+        }
         if (TASKS_WORKER[data.tid]) {
           clog.info('delete task old data')
           if (TASKS_WORKER[data.tid].stat()) TASKS_WORKER[data.tid].stop()
