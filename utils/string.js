@@ -20,7 +20,7 @@ function sJson(str, force=false) {
 }
 
 function sString(obj) {
-  if (obj === undefined) return ''
+  if (obj === undefined || obj === null) return ''
   if (typeof obj === 'string') return obj
   if (/^(object|array)$/.test(sType(obj))) {
     return JSON.stringify(obj)

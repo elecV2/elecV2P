@@ -75,9 +75,9 @@ const CONFIG_RULE = (()=>{
       ...getUserAgent()
     }
 
-  clog.notify(`default 规则 ${ config.reqlists.length + config.reslists.length } 条`)
-  clog.notify(`rewrite 规则 ${ config.rewritelists.length } 条`)
-  clog.notify(`MITM hosts ${ config.mitmhost.length } 个`)
+  clog.notify(`default rules: ${ config.reqlists.length + config.reslists.length }`)
+  clog.notify(`rewrite rules: ${ config.rewritelists.length }`)
+  clog.notify(`MITM hosts: ${ config.mitmhost.length }`)
 
   return config
 })();

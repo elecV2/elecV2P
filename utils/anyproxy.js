@@ -10,7 +10,7 @@ function myAnyproxy(eoption) {
         if(error){
           clog.error(error)
         } else {
-          clog.notify('新的根证书已生成', keyPath, '安装并信任后，MITM 才能正常工作')
+          clog.notify('a new rootCA is generated at', keyPath, '. please install and trust it, to make MITM work')
         }
       })
     }
@@ -30,7 +30,7 @@ function myAnyproxy(eoption) {
   const proxyServer = new anyproxy.ProxyServer({...options, ...eoption})
 
   proxyServer.on('ready', ()=>{
-    clog.notify('服务器已准备就绪')
+    clog.notify('elecV2P is ready')
   })
 
   proxyServer.on('error', (e)=>{

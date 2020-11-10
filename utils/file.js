@@ -142,7 +142,7 @@ const store = {
           case 'boolean':
             return Boolean(iRandom(0,1))
           default: {
-            const strList = value.split(/\n|\r/)
+            const strList = value.split(/\r\n|\r|\n/)
             return strList[iRandom(0, strList.length-1)]
           }
         }
@@ -312,10 +312,10 @@ function downloadfile(durl, dest) {
   }
   if (isFolder) {
     folder = dest
-  } else if (/\//.test(dest)) {
-    folder = dest.slice(0, dest.lastIndexOf('/'))
+  } else if (dest.indexOf(path.sep) !== -1) {
+    folder = dest.slice(0, dest.lastIndexOf(path.sep))
     if (!fs.existsSync(folder)) fs.mkdirSync(folder, {recursive: true})
-    fname = dest.slice(dest.lastIndexOf('/'))
+    fname = dest.slice(dest.lastIndexOf(path.sep))
   } else {
     folder = file.get(CONFIG.efss || 'web/dist', 'path')
   }

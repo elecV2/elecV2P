@@ -70,76 +70,61 @@ class surgeContext {
     this.fconsole = fconsole
   }
 
+  surgeRequest(req, cb) {
+    let error = null,
+        resps = {},
+        sbody  = ''
+    eAxios(formReq.uest(req)).then(response=>{
+      resps = {
+        status: response.status,
+        headers: response.headers,
+      }
+      sbody = sString(response.data)
+    }).catch(err=>{
+      this.fconsole.error('$httpClient', req.method, req, err.message)
+      if (err.response) {
+        error = err.message
+        resps = {
+          status: err.response.status,
+          headers: err.response.headers,
+        }
+        sbody = sString(err.response.data)
+      } else if (err.request) {
+        error = 'request config error'
+        sbody = sString(err.request)
+      } else {
+        error = err.message
+        sbody = errStack(err)
+      }
+    }).finally(()=>{
+      if(cb && sType(cb) === 'function') {
+        try {
+          cb(error, resps, sbody)
+        } catch(err) {
+          this.fconsole.error('$httpClient', req.method, 'cb error:', errStack(err, true))
+        }
+      }
+    })
+  }
+
   $httpClient = {
     get: (req, cb) => {
-      let error = null,
-          resps = {},
-          sbody  = ''
-      eAxios(formReq.uest(req)).then(response=>{
-        resps = {
-          status: response.status,
-          headers: response.headers,
-        }
-        sbody = sString(response.data)
-      }).catch(error=>{
-        this.fconsole.error('$httpClient.get ', req, error.stack)
-        if (error.response) {
-          resps = {
-            status: error.response.status,
-            headers: error.response.headers,
-          }
-          sbody = sString(error.response.data)
-        } else if (error.request) {
-          error = 'request config error'
-          sbody = sString(req)
-        } else {
-          sbody = error.message
-          error = errStack(error)
-        }
-      }).finally(()=>{
-        if(cb && sType(cb) === 'function') {
-          try {
-            cb(error, resps, sbody)
-          } catch(err) {
-            this.fconsole.error('$httpClient.get cb error:', errStack(err, true))
-          }
-        }
-      })
+      this.surgeRequest(req, cb)
     },
     post: (req, cb) => {
-      let error = null,
-          resps = {},
-          sbody  = ''
-      eAxios(formReq.uest(req, 'post')).then(response=>{
-        resps = {
-          status: response.status,
-          headers: response.headers,
-        }
-        sbody = sString(response.data)
-      }).catch(error=>{
-        this.fconsole.error('$httpClient.post', req, error.stack)
-        if (error.response) {
-          resps = {
-            status: error.response.status,
-            headers: error.response.headers,
-          }
-          sbody = sString(error.response.data)
-        } else if (error.request) {
-          error = 'request config error'
-          sbody = sString(req)
-        } else {
-          sbody = error.message
-          error = errStack(error)
-        }
-      }).finally(()=>{
-        if(cb && sType(cb) === 'function') {
-          try {
-            cb(error, resps, sbody)
-          } catch(err) {
-            this.fconsole.error('$httpClient.post cb error:', errStack(err, true))
-          }
-        }
-      })
+      if (sType(req) === 'string') req = { url: req }
+      req.method = 'post'
+      this.surgeRequest(req, cb)
+    },
+    put: (req, cb) => {
+      if (sType(req) === 'string') req = { url: req }
+      req.method = 'put'
+      this.surgeRequest(req, cb)
+    },
+    delete: (req, cb) => {
+      if (sType(req) === 'string') req = { url: req }
+      req.method = 'delete'
+      this.surgeRequest(req, cb)
     }
   }
   $persistentStore = {

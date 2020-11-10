@@ -59,6 +59,7 @@ const taskInit = function() {
     Object.assign(TASKS_INFO, JSON.parse(tlist))
   }
 
+  if (Object.keys(TASKS_INFO).length) clog.info('retrieve task from Lists/task.list')
   for(let tid in TASKS_INFO) {
     TASKS_WORKER[tid] = new Task(TASKS_INFO[tid], jobFunc(TASKS_INFO[tid].job))
     if (TASKS_INFO[tid].running) {

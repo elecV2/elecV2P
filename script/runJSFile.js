@@ -73,6 +73,10 @@ async function taskCount(filename) {
  * @return {string/object}     JS 执行结果
  */
 function runJS(filename, jscode, addContext={}) {
+  if (!filename || !jscode) {
+    clog.error('don\'t have any code to run')
+    return 'no code to run.'
+  }
   let cb = addContext.cb
   delete addContext.cb
   clog.notify('run', filename, 'from', addContext.from || addContext.type || 'rule')
@@ -120,7 +124,7 @@ function runJS(filename, jscode, addContext={}) {
     return result
   } catch(error) {
     fconsole.error(errStack(error, true))
-    return { body: errStack(error) }
+    return { body: error.message }
   }
 }
 
@@ -142,14 +146,17 @@ function runJSFile(filename, addContext={}) {
     if (!jsIsExist || addContext.type === 'webhook' || (CONFIG_RUNJS.intervals > 0 && new Date().getTime() - jsfile.get(filename, 'date') > CONFIG_RUNJS.intervals*1000)) {
       if (addContext.rename) filename = addContext.rename
       if (!/\.js$/.test(filename)) { filename += '.js' }
-      clog.info('ready to download JS file', filename, '...')
+      clog.info('downloading', filename, 'from', url)
       return new Promise((resolve, reject)=>{
         downloadfile(url, jsfile.get(filename, 'path')).then(()=>{
-          resolve(runJS(filename, jsfile.get(filename), addContext))
+          clog.info('success download', filename, ', ready to run...')
         }).catch(error=>{
           error = errStack(error)
           clog.error('run', url, 'error:', error)
-          reject(error)
+          clog.info('tring run', filename, 'from local...')
+          // reject(error)
+        }).finally(()=>{
+          resolve(runJS(filename, jsfile.get(filename), addContext))
         })
       })
     }
@@ -157,8 +164,8 @@ function runJSFile(filename, addContext={}) {
 
   let rawjs = (addContext.type === 'rawcode') ? filename : jsfile.get(filename)
   if (!rawjs) {
-    clog.error(filename, '不存在')
-    return filename + '不存在'
+    clog.error(filename, 'not exist.')
+    return filename + ' not exist.'
   }
   if (addContext.type === 'rawcode') {
     filename = addContext.rename || 'rawcode.js'

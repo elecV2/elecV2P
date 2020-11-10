@@ -53,7 +53,9 @@ class logger {
   }
 
   info(){
-    let cont = `[${ this.infohead }][${ now() }]: ${ jsonArgs(arguments).join(' ') }`
+    const args = formArgs(arguments)
+    if (!args) return
+    const cont = `[${ this.infohead }][${ now() }]: ${ args }`
     if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['info'] && CONFIG_LOG.levels['info'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
       console.log(cont)
     }
@@ -62,7 +64,9 @@ class logger {
   }
 
   notify(){
-    let cont = `[${ this.notifyhead }][${ now() }]: ${ jsonArgs(arguments).join(' ') }`
+    const args = formArgs(arguments)
+    if (!args) return
+    const cont = `[${ this.notifyhead }][${ now() }]: ${ args }`
     if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['notify'] && CONFIG_LOG.levels['notify'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
       console.log(cont)
     }
@@ -71,7 +75,9 @@ class logger {
   }
 
   error(){
-    let cont = `[${ this.errorhead }][${ now() }]: ${ jsonArgs(arguments).join(' ') }`
+    const args = formArgs(arguments)
+    if (!args) return
+    const cont = `[${ this.errorhead }][${ now() }]: ${ args }`
     if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['error'] && CONFIG_LOG.levels['error'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
       console.error(cont)
     }
@@ -81,7 +87,9 @@ class logger {
   }
 
   debug(){
-    let cont = `[${ this.debughead }][${ now() }]: ${ jsonArgs(arguments).join(' ') }`
+    const args = formArgs(arguments)
+    if (!args) return
+    const cont = `[${ this.debughead }][${ now() }]: ${ args }`
     if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['debug'] && CONFIG_LOG.levels['debug'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
       console.log(cont)
       if(this._cb) this._cb(cont)
@@ -94,11 +102,13 @@ const clog = new logger({ head: 'logger', level: 'debug' })
 
 const LOGFILE = {
   put(filename, data){
-    fs.appendFile(path.join(CONFIG_LOG.logspath, filename.split('/').join('-')), data + '\n', (err) => {
+    if (!filename || !data) return
+    fs.appendFile(path.join(CONFIG_LOG.logspath, filename.split('/').join('-')), sString(data) + '\n', (err) => {
       if (err) clog.error(err)
     })
   },
   get(filename){
+    if (!filename) return
     if (filename === 'all') {
       return fs.readdirSync(CONFIG_LOG.logspath)
     }
@@ -126,12 +136,16 @@ const LOGFILE = {
   }
 }
 
-function jsonArgs(args) {
+function formArgs(args) {
   try {
-    return [...args].map(arg=>sString(arg))
+    args = [...args]
+    if (args.length) {
+      return args.filter(arg=>arg).map(arg=>sString(arg)).join(' ')
+    }
+    return ''
   } catch(e) {
     clog.error('wrong arguments')
-    return ['there are some error in logs arguments']
+    return 'there are some error in logs arguments'
   }
 }
 
