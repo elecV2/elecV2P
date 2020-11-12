@@ -248,6 +248,7 @@ const file = {
     }
   },
   isExist(filepath, isDir){
+    if (!filepath) return false
     if (fs.existsSync(filepath)) {
       return isDir ? fs.statSync(filepath).isDirectory() : true
     }
@@ -312,7 +313,7 @@ function downloadfile(durl, dest) {
   }
   if (isFolder) {
     folder = dest
-  } else if (dest.indexOf(path.sep) !== -1) {
+  } else if (dest && dest.indexOf(path.sep) !== -1) {
     folder = dest.slice(0, dest.lastIndexOf(path.sep))
     if (!fs.existsSync(folder)) fs.mkdirSync(folder, {recursive: true})
     fname = dest.slice(dest.lastIndexOf(path.sep))

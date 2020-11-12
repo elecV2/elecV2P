@@ -13,7 +13,7 @@ function sJson(str, force=false) {
   if (/^(object|array)$/.test(sType(str))) return str
   try {
     return JSON.parse(str)
-  } catch {
+  } catch(e) {
     if (force) return { 0: str }
     return false
   }
@@ -31,7 +31,7 @@ function sString(obj) {
 function sUrl(url){
   try {
     return new URL(url)
-  } catch {
+  } catch(e) {
     return false
   }
 }
