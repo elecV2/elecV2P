@@ -10,8 +10,7 @@ const JSLISTS = jsfile.get('list')
 const CONFIG_RULE = (()=>{
   function getUserAgent() {
     const ustr = list.get('useragent.list')
-    const uagent = sJson(ustr) || {}
-    return { uagent }
+    return { uagent: sJson(ustr) || {} }
   }
 
   function getRewriteList() {

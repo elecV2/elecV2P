@@ -134,7 +134,7 @@ function handler(req, res){
     res.end('a task object is expected!')
   } else if (rbody.type === 'tasksave') {
     clog.notify(clientip, 'save current task list.')
-    if (list.put('task.list', TASKS_INFO)) res.end('success save current task list!')
+    if (list.put('task.list', TASKS_INFO)) res.end('success save current task list!\n' + Object.keys(TASKS_INFO).length)
     else res.end('fail to save current task list.')
   } else if (rbody.type === 'efssdelete') {
     clog.notify(clientip, 'delete efss file')

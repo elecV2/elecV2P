@@ -13,7 +13,7 @@ const formReq = {
     return newheaders
   },
   body(req) {
-    if (sType(req) === 'string' || (req.method && req.method.toLowerCase() === 'get')) return null
+    if (sType(req) === 'string' || !req.method || req.method.toLowerCase() === 'get') return null
     const reqb = req.data || req.body
     if (reqb) {
       if (sType(reqb === 'string') && req.headers && /json/i.test(req.headers["Content-Type"])) {

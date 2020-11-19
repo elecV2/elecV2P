@@ -1,6 +1,5 @@
 const fs = require('fs')
 const path = require('path')
-const axios = require('axios')
 
 const { errStack, sJson, sString, sType, iRandom } = require('./string')
 const { logger } = require('./logger')
@@ -296,55 +295,8 @@ const file = {
         }
       }
     }
-
     return flist
   }
 }
 
-function downloadfile(durl, dest) {
-  if (!durl.startsWith('http')) return Promise.reject(durl + ' is not a valid url')
-  let folder = '', fname = ''
-  const isFolder = file.isExist(dest, true)
-  if (!dest || isFolder) {
-    const sdurl = durl.split(/\/|\?|#/)
-    do {
-      fname = sdurl.pop().trim()
-    } while (fname === '')
-  }
-  if (isFolder) {
-    folder = dest
-  } else if (dest && dest.indexOf(path.sep) !== -1) {
-    folder = dest.slice(0, dest.lastIndexOf(path.sep))
-    if (!fs.existsSync(folder)) fs.mkdirSync(folder, {recursive: true})
-    fname = dest.slice(dest.lastIndexOf(path.sep))
-  } else {
-    folder = file.get(CONFIG.efss || 'web/dist', 'path')
-  }
-  
-  dest = path.join(folder, fname || dest)
-  return new Promise((resolve, reject)=>{
-    axios({
-      url: durl,
-      responseType: 'stream'
-    }).then(response=>{
-      if (response.status == 404) {
-        clog.error(durl + ' 404! file dont exist')
-        reject('404! file dont exist')
-        return
-      }
-      let file = fs.createWriteStream(dest)
-      response.data.pipe(file)
-      file.on('finish', ()=>{
-        clog.notify("download: " + durl + " to: " + dest)
-        file.close()
-        resolve(dest)
-      })
-    }).catch(e=>{
-      e = errStack(e)
-      clog.error(durl, 'download fail!', e)
-      reject('download fail! ' + e)
-    })
-  })
-}
-
-module.exports = { list, jsfile, store, file, downloadfile }
+module.exports = { list, jsfile, store, file }

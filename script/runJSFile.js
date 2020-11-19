@@ -149,7 +149,7 @@ function runJSFile(filename, addContext={}) {
       clog.info('downloading', filename, 'from', url)
       return new Promise((resolve, reject)=>{
         downloadfile(url, jsfile.get(filename, 'path')).then(()=>{
-          clog.info('success download', filename, ', ready to run...')
+          clog.info(`success download ${filename}, ready to run...`)
         }).catch(error=>{
           error = errStack(error)
           clog.error('run', url, 'error:', error)

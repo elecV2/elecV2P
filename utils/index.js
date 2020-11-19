@@ -1,7 +1,7 @@
 const { now, wait } = require('./time')
-const { eAxios, CONFIG_Axios } = require('./eaxios')
 const { logger, setGlog, LOGFILE } = require('./logger')
-const { list, jsfile, store, file, downloadfile } = require('./file')
+const { list, jsfile, store, file } = require('./file')
+const { eAxios, downloadfile, CONFIG_Axios } = require('./eaxios')
 const { euid, sJson, sString, sUrl, sType, errStack, nStatus, UUID, iRandom } = require('./string')
 const { CONFIG_FEED, feedAddItem, iftttPush, feedPush, feedXml, feedClear } = require('./feed')
 
