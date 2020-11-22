@@ -11,17 +11,17 @@ module.exports = app => {
       res.end(`404: ${filename} don't exist`)
       return
     }
+    res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })
+    res.write('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
     if (sType(logs) === 'array') {
-      res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })
-      res.write('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
-      res.write(`<title>elecV2P LOGS - ${logs.length}</title><style>body {display: flex;flex-wrap: wrap;justify-content: space-between;font-size: 18px;font-family: 'Microsoft YaHei', -apple-system, Arial;}a {border-radius: 10px;padding: 8px 12px;margin: 4px 8px;height: fit-content;text-decoration: none;background: #1890ff;color: white;}</style>`)
+      res.write(`<title>elecV2P LOGS - ${logs.length}</title><style>body{display: flex;flex-wrap: wrap;justify-content: space-between;}.item{height: fit-content;text-decoration: none;border-radius: 10px;padding: 8px 12px;margin: 4px 8px;background: #1890ff;color: white;font-size: 18px;font-family: 'Microsoft YaHei', -apple-system, Arial;}</style>`)
       logs.forEach(log=>{
-        res.write('<a href="/logs/' + log + '" >' + log + '</a>')
+        res.write(`<a class='item' href="/logs/${log}">${log}</a>`)
       })
       res.end()
     } else {
-      res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
-      res.end(logs)
+      res.write(`<title>${filename} - elecV2P</title><style>.logs{height: fit-content;text-decoration: none;border-radius: 10px;padding: 8px 12px;margin: 4px 8px;background: #1890ff;color: white;font-size: 18px;font-family: 'Microsoft YaHei', -apple-system, Arial;}</style>`)
+      res.end(`<div class='logs'>${logs}</div>`)
     }
   })
 

@@ -24,6 +24,9 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [x] dockerfile.arm test
+- [x] webUI logs better
+- [x] context require better
 - [x] context request bug fix
 - [x] windows downloadfile dest bug fix
 - [x] runjs addContext.rename to save
