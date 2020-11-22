@@ -14,9 +14,9 @@ module.exports = app => {
     if (sType(logs) === 'array') {
       res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })
       res.write('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
-      res.write(`<title>elecV2P logs - ${logs.length}</title>`)
+      res.write(`<title>elecV2P LOGS - ${logs.length}</title><style>body {display: flex;flex-wrap: wrap;justify-content: space-between;font-size: 18px;font-family: 'Microsoft YaHei', -apple-system, Arial;}a {border-radius: 10px;padding: 8px 12px;margin: 4px 8px;height: fit-content;text-decoration: none;background: #1890ff;color: white;}</style>`)
       logs.forEach(log=>{
-        res.write('<a href="/logs/' + log + '" >' + log + '</a><br>')
+        res.write('<a href="/logs/' + log + '" >' + log + '</a>')
       })
       res.end()
     } else {

@@ -67,6 +67,9 @@ const jsfile = {
     if (type === 'path') {
       return path.join(fpath.js, name)
     }
+    if (type === 'dir') {
+      return path.dirname(path.join(fpath.js, name))
+    }
     if (fs.existsSync(path.join(fpath.js, name))) {
       if (type === 'date') {
         return fs.statSync(path.join(fpath.js, name)).mtimeMs

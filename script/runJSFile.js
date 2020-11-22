@@ -96,15 +96,11 @@ function runJS(filename, jscode, addContext={}) {
     CONTEXT.add({ quanx: true })
   }
 
-  if (/\/\/ @require +/.test(jscode)) {
-    try {
-      [...jscode.matchAll(/\/\/ @require +(.+)/g)].forEach(rq=>{
-        rq[1].split(',').forEach(r=>{
-          CONTEXT.add({ $require: r.trim().replace(/^('|"|`)|('|"|`)$/g, '') })
-        })
-      })
-    } catch(e) {
-      fconsole.error('@require error', errStack(e))
+  if (/require\(/.test(jscode)) {
+    CONTEXT.final.require = (path)=>{
+      const locfile = file.path(jsfile.get(filename, 'dir'), /\.js$/i.test(path) ? path : path + '.js')
+      if (file.isExist(locfile)) return require(locfile)
+      else return require(path)
     }
   }
 
@@ -168,7 +164,7 @@ function runJSFile(filename, addContext={}) {
     return filename + ' not exist.'
   }
   if (addContext.type === 'rawcode') {
-    filename = addContext.rename || 'rawcode.js'
+    filename = addContext.rename || addContext.from || 'rawcode.js'
   }
   if (addContext.rename) {
     jsfile.put(addContext.rename, rawjs)

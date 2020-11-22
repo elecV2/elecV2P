@@ -138,7 +138,7 @@ class surgeContext {
   $notification = {
     post: (...data) => {
       this.fconsole.notify(data.map(arg=>sString(arg)).join(' '))
-      iftttPush(data[0] + ' ' + data[1], data[2], data[3] ? data[3].url || data[3] : undefined)
+      feedPush(data[0] + ' ' + data[1], data[2], data[3] ? data[3].url || data[3] : undefined)
     }
   }
 }
@@ -185,7 +185,7 @@ class quanxContext {
   }
   $notify = (...data)=>{
     this.fconsole.notify(data.map(arg=>sString(arg)).join(' '))
-    iftttPush(data[0] + ' ' + data[1], data[2], data[3] ? data[3]["open-url"] || data[3]["media-url"] || data[3] : undefined)
+    feedPush(data[0] + ' ' + data[1], data[2], data[3] ? data[3]["open-url"] || data[3]["media-url"] || data[3] : undefined)
   }
 }
 
@@ -201,14 +201,6 @@ class context {
     } else if (quanx) {
       this.final.console.debug('启用 quanx 兼容模式')
       Object.assign(this.final, new quanxContext({ fconsole: this.final.console }))
-    }
-    if ($require) {
-      this.final.console.debug('require module', $require)
-      if (/^\.\//.test($require)) {
-        this.final[$require.split('/').pop().replace(/\.js$/, '')] = require(jsfile.get($require, 'path'))
-      } else {
-        this.final[$require] = require($require)
-      }
     }
     if (addContext) {
       Object.assign(this.final, addContext)

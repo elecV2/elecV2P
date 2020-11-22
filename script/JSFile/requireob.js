@@ -1,3 +1,4 @@
 module.exports = data => {
-  console.log('it a data from require ob js', data)
+  console.log('data from requireob js', data)
+  return 'data from requireob js' + data
 }
