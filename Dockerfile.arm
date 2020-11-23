@@ -10,10 +10,8 @@ FROM arm64v8/node:alpine
 ADD ./ /usr/local/app
 WORKDIR /usr/local/app
 
-RUN ["/bin/bash", "-c", "chmod", "-R", "777", "/usr/local/app"]
-
 COPY --from=builder /usr/local/app/node_modules /usr/local/app/node_modules
 
 EXPOSE 80 8001 8002
 
-CMD ["/bin/bash", "-c", "yarn", "start"]
+CMD ["node", "index.js"]
