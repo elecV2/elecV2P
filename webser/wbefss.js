@@ -43,19 +43,20 @@ module.exports = app => {
   app.post('/efss', (req, res)=>{
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "uploading efss file")
     const uploadfile = new formidable.IncomingForm()
-    uploadfile.maxFieldsSize = 200 * 1024 * 1024 //限制为最大 200M
+    uploadfile.maxFieldsSize = 200 * 1024 * 1024 // 限制为最大 200M
     uploadfile.keepExtensions = true
     uploadfile.multiples = true
     // uploadfile.uploadDir = file.get(CONFIG.efss, 'path')
     uploadfile.parse(req, (err, fields, files) => {
       if (err) {
-        clog.error('Error', errStack(err, true))
+        clog.error(errStack(err, true))
         res.end('efss upload fail!' + err.message)
         return
       }
 
       if (!files.efss) {
-        clog.info('no efss file to upload')
+        clog.info('no efss file to upload.')
+        res.end('a file is expect.')
         return
       }
       const efssF = file.get(CONFIG.efss, 'path')
@@ -68,8 +69,8 @@ module.exports = app => {
         clog.notify('upload file:', files.efss.name, 'to efss')
         file.copy(files.efss.path, efssF + '/' + files.efss.name)
       }
+      res.end('upload success!')
     })
-    res.end('upload success!')
   })
 
   app.delete('/efss', (req, res)=>{

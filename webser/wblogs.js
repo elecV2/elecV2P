@@ -20,7 +20,7 @@ module.exports = app => {
       })
       res.end()
     } else {
-      res.write(`<title>${filename} - elecV2P</title><style>.logs{height: fit-content;text-decoration: none;border-radius: 10px;padding: 8px 12px;margin: 4px 8px;background: #1890ff;color: white;font-size: 18px;font-family: 'Microsoft YaHei', -apple-system, Arial;}</style>`)
+      res.write(`<title>${filename} - elecV2P</title><style>.logs{height: fit-content;text-decoration: none;border-radius: 10px;padding: 8px 12px;margin: 4px 8px;background: #1890ff;color: white;font-size: 18px;white-space: pre-wrap;font-family: 'Microsoft YaHei', -apple-system, Arial;}</style>`)
       res.end(`<div class='logs'>${logs}</div>`)
     }
   })

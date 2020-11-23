@@ -66,10 +66,24 @@ function handler(req, res){
     break
   case 'deletelog':
     const name = rbody.fn
+    clog.info(clientip, 'delete log', name)
     if (LOGFILE.delete(name)) {
       res.end(name + ' success deleted!')
     } else {
       res.end(name + ' log file don\'t exist')
+    }
+    break
+  case 'getlog':
+    clog.info(clientip, 'get log', rbody.fn)
+    const logcont = LOGFILE.get(rbody.fn)
+    if (logcont) {
+      if (sType(logcont) === 'array') {
+        res.end(JSON.stringify(logcont))
+      } else {
+        res.end(logcont)
+      }
+    } else {
+      res.end(rbody.fn + ' log file don\'t exist')
     }
     break
   case 'status':

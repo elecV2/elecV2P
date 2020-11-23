@@ -103,7 +103,7 @@ const clog = new logger({ head: 'logger', level: 'debug' })
 const LOGFILE = {
   put(filename, data){
     if (!filename || !data) return
-    fs.appendFile(path.join(CONFIG_LOG.logspath, filename.split('/').join('-')), sString(data) + '\n', (err) => {
+    fs.appendFile(path.join(CONFIG_LOG.logspath, filename.split(/\/|\\/).join('-')), sString(data) + '\n', (err) => {
       if (err) clog.error(err)
     })
   },
@@ -112,12 +112,12 @@ const LOGFILE = {
     if (filename === 'all') {
       return fs.readdirSync(CONFIG_LOG.logspath)
     }
-    filename = filename.split('/').join('-')
-    if (fs.existsSync(path.join(CONFIG_LOG.logspath, filename))) {
-      return fs.readFileSync(path.join(CONFIG_LOG.logspath, filename), "utf8")
+    filename = filename.split(/\/|\\/).join('-')
+    let logfpath = path.join(CONFIG_LOG.logspath, filename)
+    if (fs.existsSync(logfpath)) {
+      return fs.readFileSync(logfpath, "utf8")
     }
     clog.info(filename, 'not exist yet')
-    return null
   },
   delete(filename){
     if (filename == 'all') {
@@ -160,7 +160,7 @@ function alignHead(head) {
     return nstr.join(' ')
   }
   if (head.length > CONFIG_LOG.alignHeadlen) {
-    const sp = head.split('/')
+    const sp = head.split(/\/|\\/)
     if (sp.length > 1) head = sp[0].slice(0,1) + '/' + sp.pop()
     const nstr = head.split(' ').pop()
     return head.slice(0, CONFIG_LOG.alignHeadlen-6-nstr.length) + '...' + head.slice(-nstr.length-3)
