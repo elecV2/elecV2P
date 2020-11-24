@@ -65,12 +65,12 @@ module.exports = app => {
     let jsname = req.body.jsname
     let jscontent = req.body.jscontent
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "post js file", jsname)
-    if (!(jsname || jscontent)) {
+    if (!(jsname && jscontent)) {
       res.end("have no jsname or content")
       return
     }
     if (req.body.type === 'totest') {
-      const jsres = runJSFile(req.body.jscontent, { type: 'rawcode', from: jsname || 'jstest', cb: wsSer.send.func('jsmanage') })
+      const jsres = runJSFile(req.body.jscontent, { type: 'rawcode', from: jsname.split('.js')[0] + '-test.js', cb: wsSer.send.func('jsmanage') })
       if (sType(jsres) === 'promise') {
         jsres.then(data=>{
           res.end(sString(data))
