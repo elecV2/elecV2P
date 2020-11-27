@@ -20,7 +20,7 @@ const formReq = {
         return sJson(reqb, true)
       }
       return reqb
-    } 
+    }
     return null
   },
   uest(req, method) {
