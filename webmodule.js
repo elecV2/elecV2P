@@ -14,7 +14,7 @@ const { wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, 
 module.exports = () => {
   const app = express()
   app.use(compression())
-  app.use(express.json())
+  app.use(express.json({limit: '20mb'}))
 
   app.use((req, res, next)=>{
     if (!CONFIG.SECURITY || CONFIG.SECURITY.status === false) {

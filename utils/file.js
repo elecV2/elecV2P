@@ -109,7 +109,7 @@ const store = {
     if (key === undefined) return
     clog.debug('get value for', key)
     if (!fs.existsSync(path.join(fpath.store, key))) {
-      clog.info(key, 'not set yet.')
+      clog.debug(key, 'not set yet.')
       return
     }
     let value = fs.readFileSync(path.join(fpath.store, key), 'utf8')
