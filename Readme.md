@@ -10,11 +10,11 @@
 - FEED/IFTTT 通知
 - EFSS 文件管理
 
-## 安装/install
+## 安装/INSTALL
 
-*软件开放权限较大，建议局域网使用。网络部署，风险自负*
+**软件开放权限较大，建议局域网使用。网络部署，风险自负**
 
-### nodejs （不推荐）
+### NODEJS （不推荐）
 
 ``` sh
 git clone https://github.com/elecV2/elecV2P.git
@@ -24,12 +24,12 @@ yarn
 yarn start
 ```
 
-### docker
+### DOCKER
 
-基础镜像：elecv2/elecv2p
-ARM 镜像：（适用于 N1/OPENWRT/树莓派等 ARM 架构的系统）
-- elecv2/elecv2p:arm64
-- elecv2/elecv2p:arm32
+- 基础镜像：elecv2/elecv2p
+- ARM 镜像：（适用于 N1/OPENWRT/树莓派等 ARM 架构的系统）
+    - elecv2/elecv2p:arm64
+    - elecv2/elecv2p:arm32
 
 ``` sh
 # 基础使用命令
@@ -116,19 +116,19 @@ docker logs elecv2p -f
 
 使用新的证书后，记得重新下载安装信任，并清除由之前根证书签发的域名证书。
 
-## rules - 网络请求修改规则
+## RULES - 网络请求修改
 
 ![rules](https://raw.githubusercontent.com/elecV2/elecV2P-dei/master/docs/res/rules.png)
 
-详见 [docs/rules.md](https://github.com/elecV2/elecV2P-dei/tree/master/docs/03-rules.md)
+详细说明参考: [docs/03-rules.md](https://github.com/elecV2/elecV2P-dei/tree/master/docs/03-rules.md)
 
 ## 定时任务
 
-![task](https://raw.githubusercontent.com/elecV2/elecV2P-dei/master/docs/res/task.png)
+![task](https://raw.githubusercontent.com/elecV2/elecV2P-dei/master/docs/res/taskall.png)
 
 目前支持两种定时方式：
 - 倒计时 schedule
-- 定时 cron
+- cron 定时
 
 ### 时间格式：
 
@@ -157,13 +157,13 @@ docker logs elecv2p -f
 
 - 运行 JS
 - 开始/停止 其他定时任务
-- exec 命令。参考： [child_process_exec](https://nodejs.org/api/child_process.html#child_process_child_process_exec_command_options_callback)
+- 基础 shell 指令。参考： [child_process_exec](https://nodejs.org/api/child_process.html#child_process_child_process_exec_command_options_callback)
 
 ## 通知
 
 目前支持两种通知模式：feed/rss 和 ifttt
 
-feed/rss 地址为 :80/feed。
+feed/rss 订阅地址为 :80/feed。
 
 ifttt 通知需在手机端下载 IFTTT 软件，并创建一条 if **Webhook** than **Notifications** 规则。然后在设置（setting）面板中添加相关的 key。
 
@@ -173,11 +173,11 @@ ifttt 通知需在手机端下载 IFTTT 软件，并创建一条 if **Webhook** 
 - 定时任务 JS 运行次数（默认运行 50 次通知一次）
 - JS 脚本中的自主调用通知
 
-更多查看： [07-feed&notify](https://github.com/elecV2/elecV2P-dei/tree/master/docs/07-feed&notify.md)
+详细说明参考: [07-feed&notify](https://github.com/elecV2/elecV2P-dei/tree/master/docs/07-feed&notify.md)
 
-## docs
+## DOCUMENTS&EXAMPLES
 
-更多： [说明文档](https://github.com/elecV2/elecV2P-dei)
+说明文档及一些例程：[https://github.com/elecV2/elecV2P-dei](https://github.com/elecV2/elecV2P-dei)
 
 ### 简单声明
 

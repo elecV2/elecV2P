@@ -1,7 +1,7 @@
 const { Task, TASKS_WORKER, TASKS_INFO, jobFunc } = require('../func')
 const { runJSFile, JSLISTS } = require('../script')
 
-const { logger, LOGFILE, nStatus, euid, sJson, sString, sType, file, list } = require('../utils')
+const { logger, LOGFILE, nStatus, euid, sJson, sString, sType, file, list, downloadfile } = require('../utils')
 const clog = new logger({ head: 'wbhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -165,6 +165,21 @@ function handler(req, res){
     } else {
       clog.info('a name of file(parameter fn) is expected.')
       res.end('a name of file(parameter fn) is expected.')
+    }
+    break
+  case 'download':
+  case 'downloadfile':
+    clog.notify(clientip, 'ready download file to efss')
+    if (rbody.url && rbody.url.startsWith('http')) {
+      downloadfile(rbody.url).then(dest=>{
+        clog.info(rbody.url, 'download to', dest)
+        res.end('success download ' + rbody.url + ' to efss')
+      }).catch(e=>{
+        clog.error(rbody.url, e)
+        res.end('fail to download ' + rbody.url + 'error: ' + e)
+      })
+    } else {
+      res.end('wrong download url.')
     }
     break
   default:
