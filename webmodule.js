@@ -14,14 +14,14 @@ const { wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, 
 module.exports = () => {
   const app = express()
   app.use(compression())
-  app.use(express.json({limit: '20mb'}))
+  app.use(express.json({ limit: '20mb' }))
 
   app.use((req, res, next)=>{
-    if (!CONFIG.SECURITY || CONFIG.SECURITY.status === false) {
+    if (!CONFIG.SECURITY || CONFIG.SECURITY.enable === false) {
       next()
       return
     }
-    if (CONFIG.wbrtoken && req.body.token === CONFIG.wbrtoken) {
+    if (CONFIG.wbrtoken && (req.query.token === CONFIG.wbrtoken || req.body.token === CONFIG.wbrtoken)) {
       next()
       return
     }

@@ -161,11 +161,11 @@ docker logs elecv2p -f
 
 ## 通知
 
-目前支持两种通知模式：feed/rss 和 ifttt
+目前支持两种通知模式：FEED/RSS 和 IFTTT
 
-feed/rss 订阅地址为 :80/feed。
+FEED/RSS 订阅地址为 :80/feed。
 
-ifttt 通知需在手机端下载 IFTTT 软件，并创建一条 if **Webhook** than **Notifications** 规则。然后在设置（setting）面板中添加相关的 key。
+IFTTT 通知需在手机端下载 IFTTT APP，并创建一条 if **Webhook** than **Notifications** 规则。然后在设置（setting）面板中添加相关的 key。
 
 通知内容：
 

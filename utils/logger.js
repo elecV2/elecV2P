@@ -103,12 +103,14 @@ const clog = new logger({ head: 'logger', level: 'debug' })
 const LOGFILE = {
   put(filename, data){
     if (!filename || !data) return
+    filename = filename.trim()
     fs.appendFile(path.join(CONFIG_LOG.logspath, filename.split(/\/|\\/).join('-')), sString(data) + '\n', (err) => {
       if (err) clog.error(err)
     })
   },
   get(filename){
     if (!filename) return
+    filename = filename.trim()
     if (filename === 'all') {
       return fs.readdirSync(CONFIG_LOG.logspath)
     }
@@ -120,6 +122,8 @@ const LOGFILE = {
     clog.info(filename, 'not exist yet')
   },
   delete(filename){
+    if (!filename) return
+    filename = filename.trim()
     if (filename == 'all') {
       fs.readdirSync(CONFIG_LOG.logspath).forEach(file=>{
         clog.notify('delete log file:', file)
@@ -170,9 +174,9 @@ function alignHead(head) {
 function setGlog(level) {
   if(CONFIG_LOG.levels.hasOwnProperty(level)) {
     CONFIG_LOG.globalLevel = level
-    clog.notify('全局日志级别调整为', level)
+    clog.notify('global loglevel set to', level)
   } else {
-    clog.error('非法 level', level, '全局日志级别调整失败')
+    clog.error('illegal level', level, 'fail to change global loglevel.')
   }
 }
 

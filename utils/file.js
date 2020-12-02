@@ -51,6 +51,8 @@ const list = {
 
 const jsfile = {
   get(name, type){
+    name = name.trim()
+    if (!name) return false
     if (name === 'list') {
       const jslist = fs.readdirSync(fpath.js)
       let flist = []

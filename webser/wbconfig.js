@@ -52,9 +52,7 @@ module.exports = app => {
         res.end(JSON.stringify({
           homepage: CONFIG.homepage,
           gloglevel: CONFIG.gloglevel || 'info',
-          CONFIG_FEED,
-          CONFIG_RUNJS,
-          CONFIG_Axios,
+          CONFIG_FEED, CONFIG_RUNJS, CONFIG_Axios,
           uagent: CONFIG_RULE.uagent,
           wbrtoken: CONFIG.wbrtoken,
           minishell: CONFIG.minishell || false,
@@ -93,10 +91,10 @@ module.exports = app => {
         try {
           CONFIG.gloglevel = req.body.data
           setGlog(CONFIG.gloglevel)
-          res.end('global loglevel set to' + CONFIG.gloglevel)
+          res.end('全局日志级别调整为 ' + CONFIG.gloglevel)
         } catch(e) {
-          res.end('fail to set global loglevel ' + e.message)
-          clog.error('fail to set global loglevel ' + e.message)
+          res.end('全局日志级别调整失败 ' + e.message)
+          clog.error('全局日志级别调整失败 ' + e.message)
         }
         break
       case "wbrtoken":
@@ -122,14 +120,14 @@ module.exports = app => {
         break
       case "security":
         CONFIG.SECURITY = req.body.data
-        if (CONFIG.SECURITY.status === false) {
+        if (CONFIG.SECURITY.enable === false) {
           res.end('security access is cancelled.')
         } else {
           res.end('updata saved!')
         }
         break
       default:{
-        res.end("data put error")
+        res.end("data put error, unknow type: " + req.body.type)
       }
     }
   })

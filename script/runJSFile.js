@@ -131,6 +131,7 @@ function runJS(filename, jscode, addContext={}) {
  * @return    {string/object}           runJS() 的结果
  */
 function runJSFile(filename, addContext={}) {
+  filename = filename.trim()
   if (!filename) return
   if (/^https?:/.test(filename)) {
     const url = filename

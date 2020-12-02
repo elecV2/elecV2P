@@ -41,6 +41,8 @@ wsSer.recv.ready = recver => {
   if (wsSer.recverlists.indexOf(recver) < 0) wsSer.recverlists.push(recver)
 }
 
+wsSer.recv.stopsendstatus = flag => flag ? wsobs.stop() : wsobs.send()
+
 function wsSend(data, target){
   if (sType(data) === "object") {
     if (wsSer.recverlists.indexOf('minishell') === -1 && wsSer.recverlists.indexOf(data.type) === -1) {

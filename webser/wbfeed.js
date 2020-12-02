@@ -14,25 +14,35 @@ module.exports = app => {
     switch(req.body.type){
       case "op":
         CONFIG_FEED.enable = data
-        clog.notify(`feed 已 ${ data ? '开启' : '关闭' }`)
-        res.end(`feed 已 ${ data ? '开启' : '关闭' }`)
+        clog.notify(`FEED 已 ${ data ? '开启' : '关闭' }`)
+        res.end(`FEED 已 ${ data ? '开启' : '关闭' }`)
         break
       case "clear":
         feedClear()
-        res.end('feed 已清空')
+        res.end('FEED 已清空')
         break
       case "ifttt":
         CONFIG_FEED.iftttid = data
-        clog.notify(`ifttt webhook 功能已 ${ data ? '开启' : '关闭' }`)
-        res.end(`ifttt webhook 功能已 ${ data ? '开启' : '关闭' }`)
+        clog.notify(`IFTTT 通知功能已 ${ data.enable ? '开启' : '关闭' }`)
+        res.end(`IFTTT 通知功能已 ${ data.enable ? '开启' : '关闭' }`)
+        break
+      case "barkkey":
+        CONFIG_FEED.barkkey = data
+        clog.notify(`BARK 通知功能已 ${ data.enable ? '开启' : '关闭' }`)
+        res.end(`BARK 通知功能已 ${ data.enable ? '开启' : '关闭' }`)
+        break
+      case "sckey":
+        CONFIG_FEED.sckey = data
+        clog.notify(`SERVERCHAN 通知功能已 ${ data.enable ? '开启' : '关闭' }`)
+        res.end(`SERVERCHAN 通知功能已 ${ data.enable ? '开启' : '关闭' }`)
         break
       case "merge":
-        Object.assign(CONFIG_FEED, data)
-        clog.notify(`feed 通知合并功能已 ${ data.enable ? '开启' : '取消' }`)
-        res.end(`feed 通知合并功能已 ${ data.enable ? '开启' : '取消' }`)
+        CONFIG_FEED.merge = data
+        clog.notify(`FEED 通知合并功能已 ${ data.enable ? '开启' : '取消' }`)
+        res.end(`FEED 通知合并功能已 ${ data.enable ? '开启' : '取消' }`)
         break
       default:{
-        res.end('feed put 未知操作')
+        res.end('FEED PUT 未知操作')
       }
     }
   })
