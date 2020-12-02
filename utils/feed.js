@@ -23,6 +23,7 @@ const CONFIG_FEED = {
 }
 
 if (CONFIG.CONFIG_FEED) {
+  if (typeof CONFIG.CONFIG_FEED.iftttid === 'string') CONFIG.CONFIG_FEED.iftttid = { enable: true, key: CONFIG.CONFIG_FEED.iftttid }
   Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
 } else {
   CONFIG.CONFIG_FEED = CONFIG_FEED
@@ -65,13 +66,20 @@ function barkPush(title, description, url) {
     return
   }
   if (CONFIG_FEED.barkkey && CONFIG_FEED.barkkey.enable && CONFIG_FEED.barkkey.key) {
-    const pushurl = `https://api.day.app/${CONFIG_FEED.barkkey.key}/${title}/${description}`
+    let pushurl = `https://api.day.app/${CONFIG_FEED.barkkey.key}/`
     if (url) {
       url = url.url || url["open-url"] || url["media-url"] || url
       pushurl += '?url=' + encodeURI(url)
     }
-    clog.notify('bark notify:', title, description)
-    axios.get(pushurl).then(res=>{
+    clog.notify('bark notify:', title, description, url)
+    axios({
+      url: pushurl,
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      data: `title=${encodeURI(title)}&body=${encodeURI(description)}`
+    }).then(res=>{
       clog.debug('barkPush result:', res.data)
     }).catch(e=>{
       if (e.response) clog.error(e.response.data)
@@ -97,7 +105,7 @@ function schanPush(title, description, url) {
       url = url.url || url["open-url"] || url["media-url"] || url
       body.desp += `\n\n[${url}](${url})`
     }
-    clog.notify('server chan push:', title, description)
+    clog.notify('server chan push:', title, description, url)
     axios.post(`https://sc.ftqq.com/${CONFIG_FEED.sckey.key}.send`, body).then(res=>{
       clog.debug('server chan result:', res.data)
     }).catch(e=>{
