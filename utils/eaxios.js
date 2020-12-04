@@ -80,7 +80,7 @@ function downloadfile(durl, dest) {
     if (!fs.existsSync(folder)) fs.mkdirSync(folder, {recursive: true})
     fname = dest.slice(dest.lastIndexOf(path.sep))
   } else {
-    folder = file.get(CONFIG.efss || 'web/dist', 'path')
+    folder = file.get(CONFIG.efss.directory || 'web/dist', 'path')
   }
   
   dest = path.join(folder, fname || dest)

@@ -2,7 +2,7 @@ const RSS = require('rss')
 const axios = require('axios')
 
 const { now } = require('./time')
-const { sString } = require('./string')
+const { sString, sType } = require('./string')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFeed', level: 'debug' })
 
@@ -23,6 +23,7 @@ const CONFIG_FEED = {
 }
 
 if (CONFIG.CONFIG_FEED) {
+  // 兼容 2.8.1 之前的版本
   if (typeof CONFIG.CONFIG_FEED.iftttid === 'string') CONFIG.CONFIG_FEED.iftttid = { enable: true, key: CONFIG.CONFIG_FEED.iftttid }
   Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
 } else {
@@ -41,13 +42,22 @@ function feedNew({ title = 'elecV2P notification', description = 'elecV2P 运行
 }
 let feed = feedNew({})
 
+function formUrl(url) {
+  if (!url) return
+  if (sType(url) === 'object') {
+    return Object.keys(url).length ? (url.url || url["open-url"] || url["media-url"] || url.openUrl || url.mediaUrl) : undefined
+  }
+  if (sType(url) === 'string') return url
+}
+
 function iftttPush(title, description, url) {
   if (CONFIG_FEED.iftttid && CONFIG_FEED.iftttid.enable && CONFIG_FEED.iftttid.key) {
     const body = {
       value1: title
     }
     if (description) body.value2 = description
-    if (url) body.value3 = encodeURI(url.url || url["open-url"] || url["media-url"] || url)
+    url = formUrl(url)
+    if (url) body.value3 = encodeURI(url)
     clog.notify('ifttt webhook trigger, send data:', body)
     axios.post('https://maker.ifttt.com/trigger/elecV2P/with/key/' + CONFIG_FEED.iftttid.key, body).then(res=>{
       clog.debug('iftttPush result:', res.data)
@@ -67,9 +77,9 @@ function barkPush(title, description, url) {
   }
   if (CONFIG_FEED.barkkey && CONFIG_FEED.barkkey.enable && CONFIG_FEED.barkkey.key) {
     let pushurl = `https://api.day.app/${CONFIG_FEED.barkkey.key}/`
+    url = formUrl(url)
     if (url) {
-      url = url.url || url["open-url"] || url["media-url"] || url
-      pushurl += '?url=' + encodeURI(url)
+      pushurl += '?url=' + url
     }
     clog.notify('bark notify:', title, description, url)
     axios({
@@ -102,7 +112,7 @@ function schanPush(title, description, url) {
     }
     if (url) {
       if (url["media-url"]) body.desp += '\n\n![](' + url["media-url"] + ')'
-      url = url.url || url["open-url"] || url["media-url"] || url
+      url = formUrl(url)
       body.desp += `\n\n[${url}](${url})`
     }
     clog.notify('server chan push:', title, description, url)
@@ -121,7 +131,7 @@ function feedPush(title, description, url) {
   if (title === undefined || title.trim() === '') return
   const date = new Date()
   const guid = sString(date.getTime())
-  url = url ? url.url || url["open-url"] || url["media-url"] || url : ''
+  url = formUrl(url)
 
   if (CONFIG_FEED.enable) {
     clog.notify('add feed item', title, description)

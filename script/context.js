@@ -1,7 +1,7 @@
 const cheerio = require('cheerio')
 
 const { CONFIG } = require('../config')
-const { logger, errStack, sType, sString, sJson, feedPush, iftttPush, store, eAxios, jsfile, file, downloadfile } = require('../utils')
+const { logger, errStack, sType, sString, sJson, feedPush, iftttPush, barkPush, store, eAxios, jsfile, file, downloadfile } = require('../utils')
 const clog = new logger({ head: 'context', level: 'debug' })
 
 const exec = require('../func/exec')
@@ -44,7 +44,7 @@ class contextBase {
 
   __dirname = process.cwd()
   __home = CONFIG.homepage
-  __efss = file.get(CONFIG.efss, 'path')
+  __efss = file.get(CONFIG.efss.directory, 'path')
   $axios = eAxios
   $exec = exec
   $cheerio = cheerio
@@ -56,6 +56,9 @@ class contextBase {
     },
     ifttt(title, description, url) {
       iftttPush(title, description, url)
+    },
+    bark(title, description, url) {
+      barkPush(title, description, url)
     }
   }
   $done = (data) => {

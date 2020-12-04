@@ -10,21 +10,26 @@ const CONFIG_Port = {
 const CONFIG = {
   path: path.join(__dirname, 'script', 'Lists', 'config.json'),
   wbrtoken: 'a8c259b2-67fe-4c64-8700-7bfdf1f55cb3',    // webhook token（建议修改）
-  efss: './efss'  // elecV2P file storage system 目录，默认开启。关闭： false
+  efss: {                    // elecV2P file storage system
+    enable: true,            // 默认开启。关闭： false
+    directory: './efss'      // 文件存储位置  
+  }
 };
 
 (()=>{
   if (fs.existsSync(CONFIG.path)) {
     try {
-      const saveconfig = fs.readFileSync(CONFIG.path, "utf8")
-      Object.assign(CONFIG, JSON.parse(saveconfig))
+      const saveconfig = JSON.parse(fs.readFileSync(CONFIG.path, "utf8"))
+      // 兼容 2.8.2 之前的版本
+      if (typeof saveconfig.efss === 'string') saveconfig.efss = { enable: true, directory: saveconfig.efss }
+      Object.assign(CONFIG, saveconfig)
     } catch(e) {
       console.log(`[CONFIG     error][${new Date().toLocaleString('zh', { hour12:false })}]: JSON.parse config file error`, e)
     }
   }
 
-  if (CONFIG.efss) {
-    const efssF = path.resolve(__dirname, CONFIG.efss)
+  if (CONFIG.efss.enable) {
+    const efssF = path.resolve(__dirname, CONFIG.efss.directory)
     if(!fs.existsSync(efssF)) fs.mkdirSync(efssF)
   }
 

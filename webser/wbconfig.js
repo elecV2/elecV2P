@@ -7,39 +7,36 @@ const { CONFIG } = require('../config')
 const { CONFIG_RUNJS, CONFIG_RULE } = require('../script')
 
 module.exports = app => {
-  let efssSet = null
+  const dyn = dynStatic(file.get(CONFIG.efss.directory, 'path'))
+  app.use('/efss', dyn)
 
-  if (CONFIG.efss !== false) {
-    const dyn = dynStatic(file.get(CONFIG.efss, 'path'))
-    app.use('/efss', dyn)
-
-    function dynStatic(path) {
-      let static = express.static(path)
-      const dyn = function (req, res, next) {
-        return static(req, res, next)
-      }
-      dyn.setPath = function(newPath) {
-        static = express.static(newPath)
-      }
-      return dyn
+  function dynStatic(path) {
+    let static = express.static(path)
+    const dyn = function (req, res, next) {
+      return static(req, res, next)
     }
+    dyn.setPath = function(newPath) {
+      static = express.static(newPath)
+    }
+    return dyn
+  }
 
-    efssSet = function(cefss){
-      if (cefss === false) {
-        clog.notify('efss is closed')
-        CONFIG.efss = false
-        return 'efss is closed'
+  function efssSet(cefss){
+    if (cefss.enable === false) {
+      clog.notify('efss is closed')
+      CONFIG.efss.enable = false
+      return 'efss is closed'
+    } else {
+      const efssF = file.get(cefss.directory, 'path')
+      if (file.isExist(efssF)) {
+        clog.notify('efss location set to', cefss.directory)
+        dyn.setPath(efssF)
+        CONFIG.efss.enable = true
+        CONFIG.efss.directory = cefss.directory
+        return 'reset efss location success!'
       } else {
-        const efssF = file.get(cefss, 'path')
-        if (file.isExist(efssF)) {
-          clog.notify('efss location set to', cefss)
-          dyn.setPath(efssF)
-          CONFIG.efss = cefss
-          return 'reset efss location success!'
-        } else {
-          clog.error(cefss + ' dont exist')
-          return cefss + ' dont exist'
-        }
+        clog.error(cefss.directory + ' dont exist')
+        return cefss.directory + ' dont exist'
       }
     }
   }
@@ -72,7 +69,7 @@ module.exports = app => {
       case "config":
         let data = req.body.data
         Object.assign(CONFIG, data)
-        if (CONFIG.efss !== false) efssSet(CONFIG.efss)
+        if (data.efss.enable !== false) efssSet(CONFIG.efss)
         if (CONFIG.CONFIG_FEED) CONFIG.CONFIG_FEED.homepage = CONFIG.homepage
         Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
         Object.assign(CONFIG_RUNJS, CONFIG.CONFIG_RUNJS)
@@ -112,11 +109,7 @@ module.exports = app => {
         }
         break
       case "efss":
-        if (CONFIG.efss !== false) {
-          res.end(efssSet(req.body.data))
-        } else {
-          res.end('efss is closed!')
-        }
+        res.end(efssSet(req.body.data))
         break
       case "security":
         CONFIG.SECURITY = req.body.data
