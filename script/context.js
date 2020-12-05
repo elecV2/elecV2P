@@ -93,7 +93,7 @@ class surgeContext {
         }
         sbody = sString(err.response.data)
       } else if (err.request) {
-        error = 'request config error'
+        error = 'request config error: ' + err.message
         sbody = sString(req)
       } else {
         error = err.message

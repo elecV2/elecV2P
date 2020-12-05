@@ -2,7 +2,7 @@ const RSS = require('rss')
 const axios = require('axios')
 
 const { now } = require('./time')
-const { sString, sType } = require('./string')
+const { sType } = require('./string')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFeed', level: 'debug' })
 
@@ -31,13 +31,15 @@ if (CONFIG.CONFIG_FEED) {
 }
 
 function feedNew({ title = 'elecV2P notification', description = 'elecV2P 运行记录通知', ttl = 10 }) {
-  clog.debug('生成新的 feed', title)
+  clog.debug('a new feed:', title)
+  const date = new Date()
   return new RSS({
     title, description,
     site_url: CONFIG_FEED.homepage,
     feed_url: CONFIG_FEED.homepage + '/feed',
     docs: 'https://github.com/elecV2/elecV2P-dei/tree/master/docs/07-feed&notify.md',
     language: 'zh-CN', ttl,
+    pubDate: date.getTime() - date.getTimezoneOffset()*60*1000
   })
 }
 let feed = feedNew({})
@@ -130,7 +132,7 @@ function schanPush(title, description, url) {
 function feedPush(title, description, url) {
   if (title === undefined || title.trim() === '') return
   const date = new Date()
-  const guid = sString(date.getTime())
+  const guid = date.getTime() - date.getTimezoneOffset()*60*1000
   url = formUrl(url)
 
   if (CONFIG_FEED.enable) {
@@ -138,9 +140,8 @@ function feedPush(title, description, url) {
     feed.item({
       title, description,
       url: url || CONFIG_FEED.homepage + '/feed/?new=' + guid,
-      guid,
-      author: 'elecV2P',
-      date: sString(date)
+      guid, author: 'elecV2P',
+      date: guid,
     })
   }
   iftttPush(title, description, url)
@@ -161,7 +162,7 @@ const mergefeed = {
   }
 }
 
-function feedAddItem(title = 'elecV2P notification', description =  '通知内容', url = CONFIG_FEED.homepage + '/feed/?new=' + new Date().getTime()) {
+function feedAddItem(title = 'elecV2P notification', description =  '通知内容', url) {
   if (/test/.test(title)) return
   if (CONFIG_FEED.merge.enable) {
     mergefeed.content.push(title + ' - ' + now() + '\n' + description + '\n')
