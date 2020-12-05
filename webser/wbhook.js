@@ -39,6 +39,7 @@ function handler(req, res){
       if (rbody.rename) {
         addContext.rename = rbody.rename
         showfn = rbody.rename
+        if (JSLISTS.indexOf(rbody.rename) === -1) JSLISTS.push(rbody.rename)
       }
       if (rbody.env) {
         const senv = sJson(rbody.env, true)

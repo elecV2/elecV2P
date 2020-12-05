@@ -72,7 +72,7 @@ function errStack(error, stack = false) {
     if (errline && errline[1]) {
       return 'line ' + errline[1] + ' error: ' + error.message
     }
-    return error.message || error.error || error.stack
+    return error.error || error.stack
   }
   if (error.message) return error.message
   return error

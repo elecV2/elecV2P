@@ -29,11 +29,11 @@ module.exports = app => {
     } else {
       const efssF = file.get(cefss.directory, 'path')
       if (file.isExist(efssF)) {
-        clog.notify('efss location set to', cefss.directory)
+        clog.notify('efss directory set to', cefss.directory)
         dyn.setPath(efssF)
         CONFIG.efss.enable = true
         CONFIG.efss.directory = cefss.directory
-        return 'reset efss location success!'
+        return 'reset efss directory success!'
       } else {
         clog.error(cefss.directory + ' dont exist')
         return cefss.directory + ' dont exist'

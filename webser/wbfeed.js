@@ -2,7 +2,7 @@ const { logger, CONFIG_FEED, feedXml, feedClear } = require('../utils')
 const clog = new logger({ head: 'wbfeed' })
 
 module.exports = app => {
-  app.get("/feed", (req, res)=>{
+  app.get(['/feed', '/rss'], (req, res)=>{
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get feed")
     res.set('Content-Type', 'text/xml')
     res.end(feedXml())

@@ -4,7 +4,7 @@ const axios = require('axios')
 
 const { CONFIG, CONFIG_Port } = require('../config')
 
-const { sJson } = require('./string')
+const { sJson, errStack } = require('./string')
 
 const { list, file } = require('./file')
 const uagent = sJson(list.get('useragent.list')) || {}
@@ -102,9 +102,8 @@ function downloadfile(durl, dest) {
         resolve(dest)
       })
     }).catch(e=>{
-      e = errStack(e)
-      clog.error(durl, 'download fail!', e)
-      reject('download fail! ' + e)
+      reject('download fail! ' + e.message)
+      clog.error(durl, 'download fail!', errStack(e))
     })
   })
 }
