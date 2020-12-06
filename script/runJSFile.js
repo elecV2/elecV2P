@@ -1,6 +1,6 @@
 const vm = require('vm')
 
-const { logger, feedAddItem, now, errStack, downloadfile, jsfile, file } = require('../utils')
+const { logger, feedAddItem, now, sType, downloadfile, jsfile, file } = require('../utils')
 const clog = new logger({ head: 'runJSFile', level: 'debug' })
 
 const { wsSer } = require('../func/websocket')
@@ -94,9 +94,7 @@ function runJS(filename, jscode, addContext={}) {
   } else if (CONFIG_RUNJS.QuanxEnable || /\$task|\$prefs|\$notify/.test(jscode)) {
     clog.debug(`${filename} 使用 Quantumult X 兼容模式运行`)
     CONTEXT.add({ quanx: true })
-  }
-
-  if (/require\(/.test(jscode)) {
+  } else if (/require\(/.test(jscode)) {
     CONTEXT.final.require = (path)=>{
       const locfile = file.path(jsfile.get(filename, 'dir'), /\.js$/i.test(path) ? path : path + '.js')
       if (file.isExist(locfile)) return require(locfile)
@@ -104,22 +102,14 @@ function runJS(filename, jscode, addContext={}) {
     }
   }
 
-  const inTime = jscode.match(/setTimeout|setInterval|clearInterval|clearTimeout/g)
-  if (inTime) {
-    if (inTime.indexOf('setTimeout') > -1) CONTEXT.final.setTimeout = setTimeout
-    if (inTime.indexOf('setInterval') > -1) CONTEXT.final.setInterval = setInterval
-    if (inTime.indexOf('clearTimeout') > -1) CONTEXT.final.clearTimeout = clearTimeout
-    if (inTime.indexOf('clearInterval') > -1) CONTEXT.final.clearInterval = clearInterval
-  }
-
-  if (Object.keys(addContext).length) CONTEXT.add({ addContext })
+  if (sType(addContext) === 'object' && Object.keys(addContext).length) CONTEXT.add({ addContext })
 
   try {
     const result = vm.runInNewContext(jscode, CONTEXT.final, { displayErrors: true, timeout: CONFIG_RUNJS.timeout_jsrun })
     if (CONTEXT.final.$result !== undefined) return CONTEXT.final.$result
     return result
   } catch(error) {
-    fconsole.error(errStack(error, true))
+    fconsole.error(error.stack)
     return { body: error.message }
   }
 }
@@ -148,7 +138,6 @@ function runJSFile(filename, addContext={}) {
         downloadfile(url, jsfile.get(filename, 'path')).then(()=>{
           clog.info(`success download ${filename}, ready to run...`)
         }).catch(error=>{
-          error = errStack(error)
           clog.error('run', url, 'error:', error)
           clog.info('tring run', filename, 'from local...')
           // reject(error)

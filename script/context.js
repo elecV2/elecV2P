@@ -42,6 +42,11 @@ class contextBase {
     this.console = fconsole
   }
 
+  setTimeout = setTimeout
+  setInterval = setInterval
+  clearTimeout = clearTimeout
+  clearInterval = clearInterval
+
   __dirname = process.cwd()
   __home = CONFIG.homepage
   __efss = file.get(CONFIG.efss.directory, 'path')
