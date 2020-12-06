@@ -107,9 +107,12 @@ class surgeContext {
     }).finally(()=>{
       if(cb && sType(cb) === 'function') {
         try {
-          cb(error, resps, sbody)
+          let cbres = cb(error, resps, sbody)
+          if (sType(cbres) === 'promise') {
+            cbres.catch(err=>this.fconsole.error('$httpClient', req.method, req.url, 'cb error:', errStack(err, true)))
+          }
         } catch(err) {
-          this.fconsole.error('$httpClient', req.method, 'cb error:', errStack(err, true))
+          this.fconsole.error('$httpClient', req.method, req.url, 'cb error:', errStack(err, true))
         }
       }
     })
@@ -174,7 +177,10 @@ class quanxContext {
         }).finally(()=>{
           if(cb && sType(cb) === 'function') {
             try {
-              cb(resp)
+              let cbres = cb(resp)
+              if (sType(cbres) === 'promise') {
+                cbres.catch(err=>this.fconsole.error('$task.fetch cb error:', errStack(err, true)))
+              }
             } catch(err) {
               this.fconsole.error('$task.fetch cb error:', errStack(err, true))
             }
