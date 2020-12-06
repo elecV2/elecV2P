@@ -1,8 +1,8 @@
 module.exports = {
   now(){
-    // let tzoffset = (new Date()).getTimezoneOffset() * 60000
-    // return (new Date(Date.now() - tzoffset)).toISOString().replace(/T/, ' ').replace(/\..+/, '')
-    return new Date().toLocaleString('zh', { hour12: false })
+    const tzoffset = (new Date()).getTimezoneOffset() * 60000
+    return new Date(Date.now() - tzoffset).toISOString().slice(0, -1).replace('T', ' ')
+    // return new Date().toLocaleString('zh', { hour12: false })
   },
   wait(s, show=false, data=null){
     console.log('waiting %s seconds', s)

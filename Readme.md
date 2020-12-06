@@ -91,7 +91,7 @@ docker logs elecv2p -f
 
 - 80：    后台管理界面。添加规则/JS 文件管理/定时任务管理/MITM 证书 等
 - 8001：  anyproxy 代理端口
-- 8002：  anyproxy 连接查看端口
+- 8002：  anyproxy 代理请求查看端口
 
 ## 根证书相关 - HTTPS 解密
 
@@ -161,19 +161,22 @@ docker logs elecv2p -f
 
 ## 通知
 
-目前支持两种通知模式：FEED/RSS 和 IFTTT
+目前支持通知方式：
+- FEED/RSS 订阅
+- IFTTT WEBHOOK
+- BARK 通知
+- SERVERCHAN 通知
 
 FEED/RSS 订阅地址为 :80/feed。
 
 IFTTT 通知需在手机端下载 IFTTT APP，并创建一条 if **Webhook** than **Notifications** 规则。然后在设置（setting）面板中添加相关的 key。
 
 通知内容：
-
 - 定时任务开始/结束
 - 定时任务 JS 运行次数（默认运行 50 次通知一次）
 - JS 脚本中的自主调用通知
 
-详细说明参考: [07-feed&notify](https://github.com/elecV2/elecV2P-dei/tree/master/docs/07-feed&notify.md)
+BARK/SERVERCHAN 通知设置等其他详细说明参考: [07-feed&notify](https://github.com/elecV2/elecV2P-dei/tree/master/docs/07-feed&notify.md)
 
 ## DOCUMENTS&EXAMPLES
 

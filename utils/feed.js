@@ -9,11 +9,11 @@ const clog = new logger({ head: 'utilsFeed', level: 'debug' })
 const { CONFIG } = require('../config')
 
 const CONFIG_FEED = {
-  enable: true,              // 关闭/开启 feed
-  homepage: 'https://github.com/elecV2/elecV2P',  // feed 主页。
-  iftttid: {enable: true, key: ''},               // 关闭/开启 ifttt 通知
-  barkkey: {enable: false, key: ''},              // 关闭/开启 bark 通知
-  sckey:   {enable: false, key: ''},              // 关闭/开启 server 酱通知
+  enable: true,              // 关闭/开启 FEED
+  homepage: 'https://github.com/elecV2/elecV2P',  // FEED 主页。
+  iftttid: {enable: true, key: ''},               // 关闭/开启 IFTTT 通知
+  barkkey: {enable: false, key: ''},              // 关闭/开启 BARK 通知
+  sckey:   {enable: false, key: ''},              // 关闭/开启 SERVER 酱通知
   merge: {
     enable: true,              // 是否合并一定时间内的通知
     gaptime: 60,               // 合并多少时间内的通知，单位：秒
