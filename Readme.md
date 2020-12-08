@@ -8,7 +8,7 @@
 - 运行 JS/SHELL 脚本
 - 定时任务（倒计时/cron 定时）
 - FEED/IFTTT 通知
-- EFSS 文件管理
+- EFSS 文件管理（优化中）
 
 ## 安装/INSTALL
 
