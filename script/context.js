@@ -19,7 +19,7 @@ const formReq = {
     // if (sType(req) === 'string' || !req.method || req.method.toLowerCase() === 'get') return null
     const reqb = req.data || req.body
     if (reqb) {
-      if (!req.headers || Object.key(req.headers).length === 0) return reqb
+      if (!req.headers || Object.keys(req.headers).length === 0) return reqb
       if (sType(reqb) === 'string' && /json/i.test(req.headers["Content-Type"])) {
         return sJson(reqb, true)
       }
