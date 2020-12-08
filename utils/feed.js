@@ -1,3 +1,4 @@
+const qs = require('qs')
 const RSS = require('rss')
 const axios = require('axios')
 
@@ -88,7 +89,7 @@ function barkPush(title, description, url) {
       url: pushurl,
       method: 'post',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
       },
       data: `title=${encodeURI(title)}&body=${encodeURI(description)}`
     }).then(res=>{
@@ -118,7 +119,14 @@ function schanPush(title, description, url) {
       body.desp += `\n\n[${url}](${url})`
     }
     clog.notify('server chan push:', title, description, url)
-    axios.post(`https://sc.ftqq.com/${CONFIG_FEED.sckey.key}.send`, body).then(res=>{
+    axios({
+      url: `https://sc.ftqq.com/${CONFIG_FEED.sckey.key}.send`,
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+      },
+      data: qs.stringify(body)
+    }).then(res=>{
       clog.debug('server chan result:', res.data)
     }).catch(e=>{
       if (e.response) clog.error(e.response.data)
@@ -133,13 +141,12 @@ function feedPush(title, description, url) {
   if (title === undefined || title.trim() === '') return
   const date = new Date()
   const guid = date.getTime() - date.getTimezoneOffset()*60*1000
-  url = formUrl(url)
 
   if (CONFIG_FEED.enable) {
     clog.notify('add feed item', title, description)
     feed.item({
       title, description,
-      url: url || CONFIG_FEED.homepage + '/feed/?new=' + guid,
+      url: formUrl(url) || CONFIG_FEED.homepage + '/feed/?new=' + guid,
       guid, author: 'elecV2P',
       date: guid,
     })

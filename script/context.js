@@ -1,3 +1,4 @@
+const qs = require('qs')
 const cheerio = require('cheerio')
 
 const { CONFIG } = require('../config')
@@ -10,30 +11,32 @@ const formReq = {
   headers(req) {
     const newheaders = req.headers ? sJson(req.headers, true) : {}
     delete newheaders['Content-Length']
+    delete newheaders['content-length']
+    if (!newheaders['Content-Type'] && !newheaders['content-type']) newheaders['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
     return newheaders
   },
   body(req) {
-    if (sType(req) === 'string' || !req.method || req.method.toLowerCase() === 'get') return null
+    // if (sType(req) === 'string' || !req.method || req.method.toLowerCase() === 'get') return null
     const reqb = req.data || req.body
     if (reqb) {
-      if (sType(reqb === 'string') && req.headers && /json/i.test(req.headers["Content-Type"])) {
+      if (!req.headers || Object.key(req.headers).length === 0) return reqb
+      if (sType(reqb) === 'string' && /json/i.test(req.headers["Content-Type"])) {
         return sJson(reqb, true)
+      }
+      if (sType(reqb) === 'object' && /x-www-form-urlencoded/i.test(req.headers["Content-Type"])) {
+        return qs.stringify(reqb)
       }
       return reqb
     }
     return null
   },
   uest(req, method) {
-    const freq = {
+    return {
       url: req.url || req,
       headers: this.headers(req),
-      method: req.method || method || 'get'
+      method: req.method || method || 'get',
+      data: this.body(req)
     }
-    if (!freq.headers['Content-Type'] && !freq.headers['content-type']) freq.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    if (freq.method.toLowerCase() !== 'get') {
-      freq.data = this.body(req)
-    }
-    return freq
   }
 }
 
@@ -109,7 +112,7 @@ class surgeContext {
         try {
           let cbres = cb(error, resps, sbody)
           if (sType(cbres) === 'promise') {
-            cbres.catch(err=>this.fconsole.error('$httpClient', req.method, req.url, 'cb error:', errStack(err, true)))
+            cbres.catch(err=>this.fconsole.error('$httpClient', req.method, req.url, 'async cb error:', errStack(err, true)))
           }
         } catch(err) {
           this.fconsole.error('$httpClient', req.method, req.url, 'cb error:', errStack(err, true))
@@ -179,7 +182,7 @@ class quanxContext {
             try {
               let cbres = cb(resp)
               if (sType(cbres) === 'promise') {
-                cbres.catch(err=>this.fconsole.error('$task.fetch cb error:', errStack(err, true)))
+                cbres.catch(err=>this.fconsole.error('$task.fetch async cb error:', errStack(err, true)))
               }
             } catch(err) {
               this.fconsole.error('$task.fetch cb error:', errStack(err, true))

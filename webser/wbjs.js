@@ -76,6 +76,7 @@ module.exports = app => {
           res.end(sString(data))
         }).catch(error=>{
           res.end('error: ' + error)
+          clog.error(errStack(error))
         })
       } else {
         res.end(sString(jsres))
@@ -146,7 +147,7 @@ module.exports = app => {
           res.end('success!')
         }).catch(error=>{
           clog.error('mock request error:', errStack(error))
-          res.end('fail!')
+          res.end('fail! ' + error.message)
         })
         break
       case "js":

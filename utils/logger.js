@@ -149,7 +149,7 @@ function formArgs(args) {
     return ''
   } catch(e) {
     clog.error('wrong arguments')
-    return 'there are some error in logs arguments'
+    return 'there are some errors in logs arguments'
   }
 }
 

@@ -5,7 +5,7 @@
 ### 基础功能
 
 - 查看/修改 网络请求 (MITM)
-- 运行 JS 脚本
+- 运行 JS/SHELL 脚本
 - 定时任务（倒计时/cron 定时）
 - FEED/IFTTT 通知
 - EFSS 文件管理
@@ -22,6 +22,11 @@ cd elecV2P
 
 yarn
 yarn start
+
+# 升级
+# - 先备份好个人数据，比如 script 中的 JSFile/Store/Lists/Shell 文件夹，efss 文件夹等
+# - 然后再从 Github 下载最新的代码进行覆盖升级
+# - 最后两把备份好的文件复制到原来的位置
 ```
 
 ### DOCKER
@@ -42,6 +47,11 @@ docker run --restart=always -d --name elecv2p -e TZ=Asia/Shanghai -p 8100:80 -p 
 docker run --restart=always -d --name elecv2p -e TZ=Asia/Shanghai -p 8100:80 -p 8101:8001 -p 8102:8002 -v /elecv2p/JSFile:/usr/local/app/script/JSFile -v /elecv2p/Store:/usr/local/app/script/Store elecv2/elecv2p:arm64
 
 # 以上命令执行任意一条即可，根据实际需求进行调整。
+
+# 升级 Docker 镜像。（如果没有使用持久化存储，升级后所有个人数据会丢失，请提前手动备份导出）
+docker rm elecv2p              # 先删除旧的容器
+docker pull elecv2/elecv2p     # 下载新镜像。镜像名和之前使用的相对应，比如 elecv2/elecv2p:arm64
+# 再使用之前 docker run xxxx 命令再次启动即可
 ```
 
 ### docker-compose （推荐）
@@ -74,7 +84,7 @@ services:
 # 直接启动
 docker-compose up -d
 
-# 更新镜像并重新启动
+# 更新镜像并重新启动。 （docker-compose 已使用 volumes 映射存储了个人数据，无需再手动备份）
 docker-compose pull elecv2p && docker-compose up -d
 ```
 

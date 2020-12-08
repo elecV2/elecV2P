@@ -49,9 +49,7 @@ module.exports = class {
           this.start()
         } else {
           if (sType(jobres) === 'promise') {
-            jobres.finally(()=>{
-              this.stop('finished')
-            })
+            Promise.race([jobres, new Promise(resolve=>setTimeout(resolve, 5000))]).finally(res=>this.stop('finished'))
           } else {
             this.stop('finished')
           }

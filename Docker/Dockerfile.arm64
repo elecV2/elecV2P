@@ -12,6 +12,8 @@ WORKDIR /usr/local/app
 
 COPY --from=builder /usr/local/app/node_modules /usr/local/app/node_modules
 
+RUN /bin/bash -c 'chmod  -R 777 /usr/local/app'
+
 EXPOSE 80 8001 8002
 
 CMD ["node", "index.js"]

@@ -1,6 +1,6 @@
 const vm = require('vm')
 
-const { logger, feedAddItem, now, sType, downloadfile, jsfile, file } = require('../utils')
+const { logger, feedAddItem, now, sType, errStack, downloadfile, jsfile, file } = require('../utils')
 const clog = new logger({ head: 'runJSFile', level: 'debug' })
 
 const { wsSer } = require('../func/websocket')
@@ -110,7 +110,7 @@ function runJS(filename, jscode, addContext={}) {
     return result
   } catch(error) {
     fconsole.error(error.stack)
-    return { body: error.message }
+    return { error: error.message }
   }
 }
 
@@ -160,7 +160,19 @@ function runJSFile(filename, addContext={}) {
     jsfile.put(addContext.rename, rawjs)
   }
 
-  return runJS(filename, rawjs, addContext)
+  return new Promise((resolve, reject)=>{
+    const JSres = runJS(filename, rawjs, addContext)
+    if (sType(JSres) === 'promise') {
+      let finalres = ''
+      JSres.then(res=>finalres=res).catch(err=>{
+        clog.error(errStack(err))
+        finalres = `run ${filename} error: ${err.message || err}`
+        // reject(errStack(err))
+      }).finally(()=>resolve(finalres))
+    } else {
+      resolve(JSres)
+    }
+  })
 }
 
 module.exports = { runJSFile, CONFIG_RUNJS }

@@ -231,7 +231,7 @@ module.exports = {
         let jsres = runJSFile(matchreq[3], { $request: formRequest(requestDetail) })
         if (sType(jsres) === 'promise') {
           jsres = await jsres.catch(()=>{
-            clog.error('error on run remote js')
+            clog.error('error on run js', matchreq[3])
           })
         }
         if (jsres) {
