@@ -5,15 +5,14 @@ WORKDIR /usr/local/app
 
 RUN yarn install --prod
 
+RUN chmod -R 777 /usr/local/app
+
 FROM arm32v7/node:alpine
 
 ADD ./ /usr/local/app
 WORKDIR /usr/local/app
 
-USER node
 COPY --from=builder /usr/local/app/node_modules /usr/local/app/node_modules
-
-RUN ["chmod", "755", "/usr/local/app"]
 
 EXPOSE 80 8001 8002
 
