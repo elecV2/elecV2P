@@ -28,6 +28,11 @@ function sString(obj) {
   return String(obj)
 }
 
+function bEmpty(obj) {
+  if (obj === undefined || obj === null || obj.trim() === '' || (sType(obj) === 'object' && Object.keys(obj).length === 0)) return true
+  return false
+}
+
 function sUrl(url){
   try {
     return new URL(url)
@@ -86,14 +91,4 @@ function nStatus() {
   return musage
 }
 
-module.exports = {
-  euid,
-  UUID,
-  iRandom,
-  sJson,
-  sString,
-  sUrl,
-  sType,
-  errStack,
-  nStatus
-}
+module.exports = { euid, UUID, iRandom, sJson, sString, bEmpty, sUrl, sType, errStack, nStatus }

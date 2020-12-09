@@ -3,7 +3,7 @@ const RSS = require('rss')
 const axios = require('axios')
 
 const { now } = require('./time')
-const { sType } = require('./string')
+const { sType, bEmpty } = require('./string')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFeed', level: 'debug' })
 
@@ -55,6 +55,8 @@ function formUrl(url) {
 
 function iftttPush(title, description, url) {
   if (CONFIG_FEED.iftttid && CONFIG_FEED.iftttid.enable && CONFIG_FEED.iftttid.key) {
+    if (bEmpty(title)) title = 'elecV2P 通知'
+    if (bEmpty(description)) description = 'a empty message.\n没有任何通知内容。'
     const body = {
       value1: title
     }
@@ -74,11 +76,9 @@ function iftttPush(title, description, url) {
 }
 
 function barkPush(title, description, url) {
-  if (!title) {
-    clog.info('bark push: no content to push.')
-    return
-  }
   if (CONFIG_FEED.barkkey && CONFIG_FEED.barkkey.enable && CONFIG_FEED.barkkey.key) {
+    if (bEmpty(title)) title = 'elecV2P 通知'
+    if (bEmpty(description)) description = 'a empty message.\n没有任何通知内容。'
     let pushurl = `https://api.day.app/${CONFIG_FEED.barkkey.key}/`
     url = formUrl(url)
     if (url) {
@@ -104,19 +104,17 @@ function barkPush(title, description, url) {
 }
 
 function schanPush(title, description, url) {
-  if (!title) {
-    clog.info('server chan push: no content to push.')
-    return
-  }
   if (CONFIG_FEED.sckey && CONFIG_FEED.sckey.enable && CONFIG_FEED.sckey.key) {
+    if (bEmpty(title)) title = 'elecV2P 通知'
+    if (bEmpty(description)) description = 'a empty message.\n没有任何通知内容。'
     const body = {
       "text": title,
       "desp": description
     }
     if (url) {
-      if (url["media-url"]) body.desp += '\n\n![](' + url["media-url"] + ')'
+      if (url["media-url"]) body.desp += '\n![](' + url["media-url"] + ')'
       url = formUrl(url)
-      body.desp += `\n\n[${url}](${url})`
+      body.desp += `\n[${url}](${url})`
     }
     clog.notify('server chan push:', title, description, url)
     axios({
@@ -138,11 +136,12 @@ function schanPush(title, description, url) {
 }
 
 function feedPush(title, description, url) {
-  if (title === undefined || title.trim() === '') return
-  const date = new Date()
-  const guid = date.getTime() - date.getTimezoneOffset()*60*1000
+  if (bEmpty(title)) title = 'elecV2P 通知'
+  if (bEmpty(description)) description = 'a empty message.\n没有任何通知内容。'
 
   if (CONFIG_FEED.enable) {
+    const date = new Date()
+    const guid = date.getTime() - date.getTimezoneOffset()*60*1000
     clog.notify('add feed item', title, description)
     feed.item({
       title, description,
