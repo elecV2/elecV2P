@@ -34,7 +34,7 @@ function myAnyproxy(eoption) {
   })
 
   proxyServer.on('error', (e)=>{
-    clog.err(e)
+    clog.err(e.stack || e)
   })
 
   return proxyServer

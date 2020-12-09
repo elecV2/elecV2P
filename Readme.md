@@ -23,6 +23,10 @@ cd elecV2P
 yarn
 yarn start
 
+# 推荐使用 PM2 运行，方便状态查看及自动重启
+yarn global add pm2
+pm2 start index.js
+
 # 升级
 # - 先备份好个人数据，比如 script 中的 JSFile/Store/Lists/Shell 文件夹，efss 文件夹等
 # - 然后再从 Github 下载最新的代码进行覆盖升级
