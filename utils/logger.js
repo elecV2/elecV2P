@@ -165,7 +165,7 @@ function alignHead(head) {
   }
   if (head.length > CONFIG_LOG.alignHeadlen) {
     const sp = head.split(/\/|\\/)
-    if (sp.length > 1) head = sp[0].slice(0,1) + '/' + sp.pop()
+    if (sp.length > 1) head = sp[0].slice(0,1) + path.sep + sp.pop()
     const nstr = head.split(' ').pop()
     return head.slice(0, CONFIG_LOG.alignHeadlen-6-nstr.length) + '...' + head.slice(-nstr.length-3)
   }
