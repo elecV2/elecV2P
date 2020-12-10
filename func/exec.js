@@ -124,14 +124,15 @@ function execFunc(command, options) {
   childexec.stdout.on('data', data => {
     data = data.toString()
     clog.info(data)
-    if (cb) options.call ? fdata.push(data) : cb(data)
+    if (cb) cb(data)
+    if (options.call) fdata.push(data)
   })
 
-  childexec.stderr.on('data', data => {
-    data = data.toString()
-    clog.error(data)
-    if (cb) cb(null, data)
-    wsSer.send({ type: 'minishell', data })
+  childexec.stderr.on('data', err => {
+    err = err.toString()
+    clog.error(err)
+    if (cb) cb(null, err)
+    wsSer.send({ type: 'minishell', data: err })
   })
 
   childexec.on('exit', ()=>{

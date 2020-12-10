@@ -2,8 +2,8 @@ const qs = require('qs')
 const cheerio = require('cheerio')
 
 const { CONFIG } = require('../config')
-const { logger, errStack, sType, sString, sJson, feedPush, iftttPush, barkPush, store, eAxios, jsfile, file, downloadfile } = require('../utils')
-const clog = new logger({ head: 'context', level: 'debug' })
+const { errStack, sType, sString, sJson, feedPush, iftttPush, barkPush, store, eAxios, jsfile, file, downloadfile } = require('../utils')
+// const clog = new logger({ head: 'context', level: 'debug' })
 
 const exec = require('../func/exec')
 
@@ -31,6 +31,7 @@ const formReq = {
     return null
   },
   uest(req, method) {
+    delete req.opts
     return {
       url: req.url || req,
       headers: this.headers(req),
@@ -41,7 +42,7 @@ const formReq = {
 }
 
 class contextBase {
-  constructor({ fconsole = clog }){
+  constructor({ fconsole }){
     this.console = fconsole
   }
 
@@ -77,7 +78,7 @@ class contextBase {
 }
 
 class surgeContext {
-  constructor({ fconsole = clog }){
+  constructor({ fconsole }){
     this.fconsole = fconsole
   }
 
@@ -92,7 +93,7 @@ class surgeContext {
       }
       sbody = sString(response.data)
     }).catch(err=>{
-      this.fconsole.error('$httpClient', req.method, req, err.message)
+      this.fconsole.error('$httpClient', req.method, req.url, err.message)
       if (err.response) {
         error = err.message
         resps = {
@@ -101,7 +102,7 @@ class surgeContext {
         }
         sbody = sString(err.response.data)
       } else if (err.request) {
-        error = 'request config error: ' + err.message
+        error = `$httpClient ${req.method} ${req.url} error: ${err.message}`
         sbody = sString(req)
       } else {
         error = err.message
@@ -158,7 +159,7 @@ class surgeContext {
 }
 
 class quanxContext {
-  constructor({ fconsole = clog }){
+  constructor({ fconsole }){
     this.fconsole = fconsole
   }
 
@@ -174,7 +175,7 @@ class quanxContext {
               }
           resolve(resp)
         }).catch(error=>{
-          this.fconsole.error('$task.fetch', req, error.stack)
+          this.fconsole.error('$task.fetch', req.url, error.stack)
           resp = errStack(error)
           reject({ error: resp })
         }).finally(()=>{
@@ -207,7 +208,7 @@ class quanxContext {
 }
 
 class context {
-  constructor({ fconsole = clog }){
+  constructor({ fconsole }){
     this.final = new contextBase({ fconsole })
   }
 

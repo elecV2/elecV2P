@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const { now } = require('./time')
-const { sString } = require('./string')
+const { sString, bEmpty } = require('./string')
 
 const { CONFIG } = require('../config')
 
@@ -144,7 +144,7 @@ function formArgs(args) {
   try {
     args = [...args]
     if (args.length) {
-      return args.filter(arg=>arg).map(arg=>sString(arg)).join(' ')
+      return args.filter(arg=>!bEmpty(arg)).map(arg=>sString(arg).trim()).join(' ')
     }
     return ''
   } catch(e) {

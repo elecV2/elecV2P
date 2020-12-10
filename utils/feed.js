@@ -50,7 +50,7 @@ function formUrl(url) {
   if (sType(url) === 'object') {
     return Object.keys(url).length ? (url.url || url["open-url"] || url["media-url"] || url.openUrl || url.mediaUrl) : undefined
   }
-  if (sType(url) === 'string') return url
+  if (sType(url) === 'string') return url.trim()
 }
 
 function iftttPush(title, description, url) {
@@ -58,9 +58,9 @@ function iftttPush(title, description, url) {
     if (bEmpty(title)) title = 'elecV2P 通知'
     if (bEmpty(description)) description = 'a empty message.\n没有任何通知内容。'
     const body = {
-      value1: title
+      value1: title.trim()
     }
-    if (description) body.value2 = description
+    if (description) body.value2 = description.trim()
     url = formUrl(url)
     if (url) body.value3 = encodeURI(url)
     clog.notify('ifttt webhook trigger, send data:', body)
@@ -91,7 +91,7 @@ function barkPush(title, description, url) {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
       },
-      data: `title=${encodeURI(title)}&body=${encodeURI(description)}`
+      data: `title=${encodeURI(title.trim())}&body=${encodeURI(description.trim())}`
     }).then(res=>{
       clog.debug('barkPush result:', res.data)
     }).catch(e=>{
@@ -108,8 +108,8 @@ function schanPush(title, description, url) {
     if (bEmpty(title)) title = 'elecV2P 通知'
     if (bEmpty(description)) description = 'a empty message.\n没有任何通知内容。'
     const body = {
-      "text": title,
-      "desp": description
+      "text": title.trim(),
+      "desp": description.trim()
     }
     if (url) {
       if (url["media-url"]) body.desp += '\n![](' + url["media-url"] + ')'
@@ -144,7 +144,7 @@ function feedPush(title, description, url) {
     const guid = date.getTime() - date.getTimezoneOffset()*60*1000
     clog.notify('add feed item', title, description)
     feed.item({
-      title, description,
+      title: title, description,
       url: formUrl(url) || CONFIG_FEED.homepage + '/feed/?new=' + guid,
       guid, author: 'elecV2P',
       date: guid,

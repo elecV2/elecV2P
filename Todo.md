@@ -13,8 +13,8 @@
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
 - 说明文档 [1.0 基本完成，优化中...]
-- 限 IP/密码 访问后台管理页面
 - Lists 注释保存/单条标记(dirty)上传
+- Backup 备份导出/导入 (lists/store)
 - minishell 上传/下载文件（编辑?）
 - 文件编辑器（component || libery)
 - 多语言 [一个可能永远不填的坑..., start ready...]
@@ -24,6 +24,7 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [X] 限 IP 访问后台管理页面
 - [x] efss upload file test 0.1
 - [x] 添加 bark/serverchan 通知
 - [x] docker arm64/arm32
