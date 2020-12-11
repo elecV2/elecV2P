@@ -3,7 +3,7 @@ const RSS = require('rss')
 const axios = require('axios')
 
 const { now } = require('./time')
-const { sType, bEmpty } = require('./string')
+const { sType, sString, bEmpty } = require('./string')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFeed', level: 'debug' })
 

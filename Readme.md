@@ -90,7 +90,7 @@ services:
       - "/elecv2p/efss:/usr/local/app/efss"
 ```
 
-*具体的端口映射和存储映射，可根据个人情况进行调整*
+*具体的端口映射和 volumes 目录，可根据个人情况进行调整*
 
 然后在 docker-compose.yaml 同目录下执行以下任一命令
 ``` sh
@@ -121,6 +121,7 @@ docker logs elecv2p -f
 ## 根证书相关 - HTTPS 解密
 
 *如果不使用 RULES/REWRITE 相关功能，此步骤可跳过。*
+*升级启动后，如果不是使用之前的证书，需要重新下载安装信任*
 
 ### 安装证书
 

@@ -27,7 +27,7 @@
 - [X] 限 IP 访问后台管理页面
 - [x] efss upload file test 0.1
 - [x] 添加 bark/serverchan 通知
-- [x] docker arm64/arm32
+- [x] docker arm64/arm32 0.1 (test)
 - [x] dockerfile.arm test
 - [x] webUI logs better
 - [x] context require better
