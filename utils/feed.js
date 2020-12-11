@@ -55,12 +55,20 @@ function formUrl(url) {
 
 function iftttPush(title, description, url) {
   if (CONFIG_FEED.iftttid && CONFIG_FEED.iftttid.enable && CONFIG_FEED.iftttid.key) {
-    if (bEmpty(title)) title = 'elecV2P 通知'
-    if (bEmpty(description)) description = 'a empty message.\n没有任何通知内容。'
-    const body = {
-      value1: title.trim()
+    if (bEmpty(title)) {
+      title = 'elecV2P 通知'
+    } else {
+      title = sString(title).trim()
     }
-    if (description) body.value2 = description.trim()
+    if (bEmpty(description)) {
+      description = 'a empty message.\n没有任何通知内容。'
+    } else {
+      description = sString(description).trim()
+    }
+    const body = {
+      value1: title
+    }
+    if (description) body.value2 = description
     url = formUrl(url)
     if (url) body.value3 = encodeURI(url)
     clog.notify('ifttt webhook trigger, send data:', body)
@@ -77,8 +85,16 @@ function iftttPush(title, description, url) {
 
 function barkPush(title, description, url) {
   if (CONFIG_FEED.barkkey && CONFIG_FEED.barkkey.enable && CONFIG_FEED.barkkey.key) {
-    if (bEmpty(title)) title = 'elecV2P 通知'
-    if (bEmpty(description)) description = 'a empty message.\n没有任何通知内容。'
+    if (bEmpty(title)) {
+      title = 'elecV2P 通知'
+    } else {
+      title = sString(title).trim()
+    }
+    if (bEmpty(description)) {
+      description = 'a empty message.\n没有任何通知内容。'
+    } else {
+      description = sString(description).trim()
+    }
     let pushurl = `https://api.day.app/${CONFIG_FEED.barkkey.key}/`
     url = formUrl(url)
     if (url) {
@@ -91,7 +107,7 @@ function barkPush(title, description, url) {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
       },
-      data: `title=${encodeURI(title.trim())}&body=${encodeURI(description.trim())}`
+      data: `title=${encodeURI(title)}&body=${encodeURI(description)}`
     }).then(res=>{
       clog.debug('barkPush result:', res.data)
     }).catch(e=>{
@@ -105,11 +121,19 @@ function barkPush(title, description, url) {
 
 function schanPush(title, description, url) {
   if (CONFIG_FEED.sckey && CONFIG_FEED.sckey.enable && CONFIG_FEED.sckey.key) {
-    if (bEmpty(title)) title = 'elecV2P 通知'
-    if (bEmpty(description)) description = 'a empty message.\n没有任何通知内容。'
+    if (bEmpty(title)) {
+      title = 'elecV2P 通知'
+    } else {
+      title = sString(title).trim()
+    }
+    if (bEmpty(description)) {
+      description = 'a empty message.\n没有任何通知内容。'
+    } else {
+      description = sString(description).trim()
+    }
     const body = {
-      "text": title.trim(),
-      "desp": description.trim()
+      "text": title,
+      "desp": description
     }
     if (url) {
       if (url["media-url"]) body.desp += '\n![](' + url["media-url"] + ')'
@@ -136,8 +160,16 @@ function schanPush(title, description, url) {
 }
 
 function feedPush(title, description, url) {
-  if (bEmpty(title)) title = 'elecV2P 通知'
-  if (bEmpty(description)) description = 'a empty message.\n没有任何通知内容。'
+  if (bEmpty(title)) {
+    title = 'elecV2P 通知'
+  } else {
+    title = sString(title).trim()
+  }
+  if (bEmpty(description)) {
+    description = 'a empty message.\n没有任何通知内容。'
+  } else {
+    description = sString(description).trim()
+  }
 
   if (CONFIG_FEED.enable) {
     const date = new Date()

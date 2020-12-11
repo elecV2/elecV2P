@@ -5,8 +5,8 @@ $exec('apk add python3', {
   cb(data, error, finish){
     if (finish) {
       // 安装完以后可以直接在 JS 中调用。（pyhton 和库安装完成可在其他脚本中直接调用，不需要再次安装。）
-      $exec('python3 test.py', {
-        cwd: './script/Shell',
+      $exec('python3 -u test.py', {
+        cwd: './script/Shell',            // test.py 文件所在的目录
         cb(data, error){
           error ? console.error(error) : console.log(data)
         }

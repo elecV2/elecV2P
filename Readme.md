@@ -12,7 +12,7 @@
 
 ## 安装/INSTALL
 
-**软件开放权限较大，建议局域网使用。网络部署，风险自负**
+**程序使用权限较大，建议局域网使用。网络部署，风险自负**
 
 ### NODEJS （不推荐）
 
@@ -23,13 +23,13 @@ cd elecV2P
 yarn
 yarn start
 
-# 推荐使用 PM2 运行，方便状态查看及自动重启
+# 或者使用 PM2 运行，方便状态查看及管理
 yarn global add pm2
 pm2 start index.js
 
 # 升级
 # - 先备份好个人数据，比如 script 中的 JSFile/Store/Lists/Shell 文件夹，efss 文件夹等
-# - 然后再从 Github 下载最新的代码进行覆盖升级
+# - 然后再从 Github 下载最新的代码进行升级覆盖
 # - 最后两把备份好的文件复制到原来的位置
 ```
 
@@ -54,11 +54,18 @@ docker run --restart=always -d --name elecv2p -e TZ=Asia/Shanghai -p 8100:80 -p 
 
 # 升级 Docker 镜像。（如果没有使用持久化存储，升级后所有个人数据会丢失，请提前手动备份导出）
 docker rm elecv2p              # 先删除旧的容器
-docker pull elecv2/elecv2p     # 下载新镜像。镜像名和之前使用的相对应，比如 elecv2/elecv2p:arm64
-# 再使用之前 docker run xxxx 命令再次启动即可
+docker pull elecv2/elecv2p     # 再下载新的镜像。镜像名注意要和之前使用的相对应
+# 再使用之前的 docker run xxxx 命令启动即可
 ```
 
 ### docker-compose （推荐）
+
+可选择操作
+``` sh
+mkdir /elecv2p
+cd /elecv2p
+nano docker-compose.yaml
+```
 
 将以下内容保存为 docker-compose.yaml 文件。
 ``` yaml
@@ -83,9 +90,11 @@ services:
       - "/elecv2p/efss:/usr/local/app/efss"
 ```
 
+*具体的端口映射和存储映射，可根据个人情况进行调整*
+
 然后在 docker-compose.yaml 同目录下执行以下任一命令
 ``` sh
-# 直接启动
+# 直接启动。（首次启动命令）
 docker-compose up -d
 
 # 更新镜像并重新启动。 （docker-compose 已使用 volumes 映射存储了个人数据，无需再手动备份）
@@ -107,9 +116,11 @@ docker logs elecv2p -f
 - 8001：  anyproxy 代理端口
 - 8002：  anyproxy 代理请求查看端口
 
+*可在 config.js 文件中进行修改*
+
 ## 根证书相关 - HTTPS 解密
 
-*如果不使用 rules/rewrite 相关功能，此步骤可跳过。*
+*如果不使用 RULES/REWRITE 相关功能，此步骤可跳过。*
 
 ### 安装证书
 

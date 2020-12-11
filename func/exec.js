@@ -137,7 +137,7 @@ function execFunc(command, options) {
 
   childexec.on('exit', ()=>{
     clog.notify(command, 'finished')
-    if (cb && options.call) cb(fdata, null, true)
+    if (cb && options.call) cb(fdata.join('\n'), null, true)
   })
 }
 

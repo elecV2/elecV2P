@@ -22,14 +22,17 @@ function sJson(str, force=false) {
 function sString(obj) {
   if (obj === undefined || obj === null) return ''
   if (typeof obj === 'string') return obj
-  if (/^(object|array)$/.test(sType(obj))) {
+  if ('object' === sType(obj)) {
     return JSON.stringify(obj)
+  }
+  if ('array' === sType(obj)) {
+    return obj.join(' ')
   }
   return String(obj)
 }
 
 function bEmpty(obj) {
-  if (obj === undefined || obj === null || obj.trim() === '' || (sType(obj) === 'object' && Object.keys(obj).length === 0)) return true
+  if (sString(obj).trim() === '' || (sType(obj) === 'object' && Object.keys(obj).length === 0)) return true
   return false
 }
 
