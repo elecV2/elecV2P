@@ -129,7 +129,7 @@ docker logs elecv2p -f
 
 - 直接打开 :80/crt
 - :80 -> MITM -> 安装证书
-- :8001 -> RootCA
+- :8002 -> RootCA
 
 根证书位于 `$HOME/.anyproxy/certificates` 目录，可用自签证书替换
 

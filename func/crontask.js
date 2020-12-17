@@ -27,13 +27,16 @@ module.exports = class {
   }
 
   stop(){
-    if(this.job) this.job.stop()
-    clog.log(this.task.name, 'stopped')
-    this.task.running = false
+    if (this.job) this.job.stop()
+    if (this.task) {
+      clog.log(this.task.name, 'stopped')
+      this.task.running = false
+      if(this.task.id) wsSer.send({type: 'task', data: {tid: this.task.id, op: 'stop'}})
+    }
   }
 
   delete(){
-    if(this.job) this.job.destroy()
+    if (this.job) this.job.destroy()
     if (this.task) {
       clog.log("delete cron task:", this.task.name)
       delete this.task

@@ -1,4 +1,4 @@
-const { logger, feedAddItem, sType } = require('../utils')
+const { logger, sType } = require('../utils')
 
 const { wsSer } = require('./websocket')
 
@@ -24,7 +24,6 @@ module.exports = class {
   }
 
   start(){
-    // 开始任务
     clog.log("start schedule task: ", this.task.name, `${this.repeat}/${this._Task.repeat}`)
     this.task.running = true
     if(this._Task.random) {
@@ -59,12 +58,10 @@ module.exports = class {
   }
   
   stop(flag = 'stopped'){
-    // 暂停任务
     if (this.task) {
       this.task.running = false
       clearInterval(this.temIntval)
       clog.log('schedule task:', this.task.name, flag)
-      feedAddItem('schedule task ' + this.task.name + ' ' + flag, 'time: ' + this.task.time)
       if(this.task.id) wsSer.send({type: 'task', data: {tid: this.task.id, op: 'stop'}})
     }
   }

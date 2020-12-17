@@ -75,8 +75,8 @@ function iftttPush(title, description, url) {
     axios.post('https://maker.ifttt.com/trigger/elecV2P/with/key/' + CONFIG_FEED.iftttid.key, body).then(res=>{
       clog.debug('iftttPush result:', res.data)
     }).catch(e=>{
-      if (e.response) clog.error(e.response.data)
-      else clog.error(e.message)
+      if (e.response) clog.error('iftttPush error:', e.response.data)
+      else clog.error('iftttPush error:', e.message)
     })
   } else {
     clog.debug('IFTTT not available yet, skip IFTTT push')
@@ -111,8 +111,8 @@ function barkPush(title, description, url) {
     }).then(res=>{
       clog.debug('barkPush result:', res.data)
     }).catch(e=>{
-      if (e.response) clog.error(e.response.data)
-      else clog.error(e.message)
+      if (e.response) clog.error('barkPush error:', e.response.data)
+      else clog.error('barkPush error:', e.message)
     })
   } else {
     clog.debug('bark not available yet, skip push bark notifications.')
@@ -151,8 +151,8 @@ function schanPush(title, description, url) {
     }).then(res=>{
       clog.debug('server chan result:', res.data)
     }).catch(e=>{
-      if (e.response) clog.error(e.response.data)
-      else clog.error(e.message)
+      if (e.response) clog.error('SERVERCHAN notify error:', e.response.data)
+      else clog.error('SERVERCHAN notify error:', e.message)
     })
   } else {
     clog.debug('server chan not available yet, skip server chan push.')

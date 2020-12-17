@@ -22,7 +22,7 @@ function handler(req, res){
   switch(rbody.type) {
   case 'runjs':
     let fn = rbody.fn || ''
-    if (!rbody.rawcode && !/^https?:/.test(fn) && JSLISTS.indexOf(fn) === -1) {
+    if (!rbody.rawcode && !/^https?:/.test(fn)) {
       clog.info('can\'t find js file', fn)
       res.end('no such js file ' + fn)
     } else {
@@ -126,8 +126,8 @@ function handler(req, res){
     res.end(rbody.tid + ' 任务不存在')
     break
   case 'taskstop':
-    clog.notify(clientip, 'stop task')
-    if (TASKS_INFO[rbody.tid] && TASKS_WORKER[rbody.tid]) {
+    clog.notify(clientip, 'stop task', rbody.tid)
+    if (rbody.tid && TASKS_INFO[rbody.tid] && TASKS_WORKER[rbody.tid]) {
       if (TASKS_INFO[rbody.tid].running === true) {
         TASKS_WORKER[rbody.tid].stop()
         res.end('停止任务 ' + TASKS_INFO[rbody.tid].name + '，任务内容： ' + JSON.stringify(TASKS_INFO[rbody.tid]))
@@ -136,7 +136,7 @@ function handler(req, res){
       }
       return
     }
-    res.end(rbody.rbody.tid + ' 任务不存在')
+    res.end(rbody.tid + ' 任务不存在')
     break
   case 'taskadd':
     clog.notify(clientip, 'add a new task')
@@ -155,6 +155,17 @@ function handler(req, res){
     clog.notify(clientip, 'save current task list.')
     if (list.put('task.list', TASKS_INFO)) res.end('success save current task list!\n' + Object.keys(TASKS_INFO).length)
     else res.end('fail to save current task list.')
+    break
+  case 'taskdel':
+  case 'taskdelete':
+    clog.notify(clientip, 'delete task', rbody.tid)
+    if (rbody.tid && TASKS_INFO[rbody.tid] && TASKS_WORKER[rbody.tid]) {
+      TASKS_WORKER[data.tid].delete()
+      delete TASKS_INFO[data.tid]
+      res.end("task deleted!")
+    } else {
+      res.end('no such task', rbody.tid)
+    }
     break
   case 'efssdelete':
     clog.notify(clientip, 'delete efss file')
