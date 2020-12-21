@@ -19,7 +19,7 @@ const CONFIG_RULE = (()=>{
     let rlist = list.get('rewrite.list')
     if (rlist) {
       rlist.split(/\r|\n/).forEach(l=>{
-        if (/^(#|\[)/.test(l) || l.length<2) return
+        if (/^(#|\[|\/\/)/.test(l) || l.length<2) return
         let item = l.split(" ")
         if (item.length === 2) {
           if (/^sub/.test(item[0])) {
@@ -40,7 +40,7 @@ const CONFIG_RULE = (()=>{
     let rstr = list.get('default.list')
     if (rstr) {
       rstr.split(/\n|\r/).forEach(l=>{
-        if (l.length<=8 || /^(#|\[)/.test(l)) return
+        if (l.length<=8 || /^(#|\[|\/\/)/.test(l)) return
         let item = l.split(",")
         if (item.length >= 4) {
           item = item.map(i=>i.trim())

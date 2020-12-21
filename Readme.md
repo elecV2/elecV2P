@@ -8,7 +8,7 @@
 - 运行 JS/SHELL 脚本
 - 定时任务（倒计时/cron 定时）
 - FEED/IFTTT 通知
-- EFSS 文件管理（优化中）
+- EFSS 基础文件管理(v0.1)
 
 ## 安装/INSTALL
 
@@ -60,14 +60,14 @@ docker pull elecv2/elecv2p     # 再下载新的镜像。镜像名注意要和�
 
 ### docker-compose （推荐）
 
-可选择操作
+启动命令
 ``` sh
-mkdir /elecv2p
-cd /elecv2p
-nano docker-compose.yaml
+mkdir /elecv2p && cd /elecv2p
+curl -sL https://git.io/JLw7s > docker-compose.yaml
+docker-compose up -d
 ```
 
-将以下内容保存为 docker-compose.yaml 文件。
+或者将以下内容手动保存为 docker-compose.yaml 文件。
 ``` yaml
 version: '3.7'
 services:

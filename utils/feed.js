@@ -95,7 +95,13 @@ function barkPush(title, description, url) {
     } else {
       description = sString(description).trim()
     }
-    let pushurl = `https://api.day.app/${CONFIG_FEED.barkkey.key}/`
+    let pushurl = ''
+    if (CONFIG_FEED.barkkey.key.startsWith('http')) {
+      pushurl = CONFIG_FEED.barkkey.key
+      if (pushurl.endsWith('/') === false) pushurl += '/'
+    } else {
+      pushurl = `https://api.day.app/${CONFIG_FEED.barkkey.key}/`
+    }
     url = formUrl(url)
     if (url) {
       pushurl += '?url=' + url

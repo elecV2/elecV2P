@@ -1,3 +1,3 @@
 cookieValue 
-这是个示例
-每个新的 cookie 请添加新的 KEY 和它对应的 value。
+这是一个示例，不需要可直接删除
+添加新的 cookie 时，直接修改 KEY 和它对应的 value 然后保存即可。
