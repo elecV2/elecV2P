@@ -1,7 +1,7 @@
 [elecV2P rules]
 url,adtest,block,reject,req
 url,adtest/(get|post),block,tinyimg,req
-url,httpbin.org,js,0json.js,res
+host,httpbin.org,js,0json.js,res
 url,httpbin.org/get,hold,0,res
 useragent,Chrome,ua,Quark,req
 resstatus,404,js,0body.js,res

@@ -22,11 +22,8 @@ function sJson(str, force=false) {
 function sString(obj) {
   if (obj === undefined || obj === null) return ''
   if (typeof obj === 'string') return obj
-  if ('object' === sType(obj)) {
+  if (/object|array/.test(sType(obj))) {
     return JSON.stringify(obj)
-  }
-  if ('array' === sType(obj)) {
-    return obj.join(' ')
   }
   return String(obj)
 }

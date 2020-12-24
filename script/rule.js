@@ -129,6 +129,7 @@ function getrules($request, $response, lists) {
 }
 
 function formBody(body) {
+  // 因为 null/undefined，不要用 sString 替换
   return sType(body) === 'object' ? JSON.stringify(body) : String(body)
 }
 
@@ -227,14 +228,9 @@ module.exports = {
     }
     // 通过 JS 文件修改请求体
     if ('js' === matchreq[2] ) {
-      return new Promise(async (resolve, reject)=>{
-        let jsres = runJSFile(matchreq[3], { $request: formRequest(requestDetail) })
-        if (sType(jsres) === 'promise') {
-          jsres = await jsres.catch(()=>{
-            clog.error('error on run js', matchreq[3])
-          })
-        }
-        if (jsres) {
+      return new Promise((resolve, reject)=>{
+        runJSFile(matchreq[3], { $request: formRequest(requestDetail) }).then(jsres=>{
+          if (sType(jsres) !== 'object') return
           if (jsres.response) {
             // 直接返回结果，不访问目标网址
             clog.notify(requestDetail.url, 'request force to local response')
@@ -254,8 +250,11 @@ module.exports = {
           } else {
             Object.assign(requestDetail.requestOptions, jsres)
           }
-        }
-        resolve(requestDetail)
+        }).catch(e=>{
+          clog.error('error on run js', matchreq[3], e)
+        }).finally(()=>{
+          resolve(requestDetail)
+        })
       })
     }
     if ("ua" === matchreq[2]) {
@@ -271,15 +270,14 @@ module.exports = {
     for (let r of CONFIG_RULE.rewritelists) {
       if ((new RegExp(r[0])).test($request.url)) {
         clog.info('match rewrite rules:', r[0], r[1])
-        return new Promise(async (resolve, reject)=>{
-          let jsres = runJSFile(r[1], { $request: formRequest($request), $response: formResponse($response) })
-          if (sType(jsres) === 'promise') {
-            jsres = await jsres.catch(()=>{
-              resolve({ response: $response })
-            })
-          }
-          Object.assign($response, jsres ? (jsres.response ? jsres.response : jsres) : {})
-          resolve({ response: $response })
+        return new Promise((resolve, reject)=>{
+          runJSFile(r[1], { $request: formRequest($request), $response: formResponse($response) }).then(jsres=>{
+            Object.assign($response, jsres ? (jsres.response ? jsres.response : jsres) : {})
+          }).catch(e=>{
+            clog.error('error on run js', r[1], e)
+          }).finally(()=>{
+            resolve({ response: $response })
+          })
         })
       }
     }
@@ -338,14 +336,13 @@ module.exports = {
     }
     if (matchres[2] === "js") {
       return new Promise(async (resolve, reject)=>{
-        let jsres = runJSFile(matchres[3], { $request: formRequest($request), $response: formResponse($response) })
-        if (sType(jsres) === 'promise') {
-          jsres = await jsres.catch(()=>{
-            resolve({ response: $response })
-          })
-        }
-        Object.assign($response, jsres ? (jsres.response ? jsres.response : jsres) : {})
-        resolve({ response: $response })
+        runJSFile(matchres[3], { $request: formRequest($request), $response: formResponse($response) }).then(jsres=>{
+          Object.assign($response, jsres ? (jsres.response ? jsres.response : jsres) : {})
+        }).catch(e=>{
+          clog.error('error on run js', matchres[3], e)
+        }).finally(()=>{
+          resolve({ response: $response })
+        })
       })
     }
   },

@@ -22,9 +22,9 @@ function handler(req, res){
   switch(rbody.type) {
   case 'runjs':
     let fn = rbody.fn || ''
-    if (!rbody.rawcode && !/^https?:/.test(fn)) {
-      clog.info('can\'t find js file', fn)
-      res.end('no such js file ' + fn)
+    if (!rbody.rawcode && !fn) {
+      clog.info('can\'t find any javascript code to run', fn)
+      res.end('can\'t find any javascript code to run ' + fn)
     } else {
       const addContext = {
         type: 'webhook'
@@ -47,22 +47,14 @@ function handler(req, res){
           addContext[env.startsWith('$') ? env : ('$' + env)] = senv[env]
         }
       }
-      const jsres = runJSFile(fn, { ...addContext })
-      const fullu = req.protocol + '://' + req.get('host')
-      if (sType(jsres) === 'promise') {
-        jsres.then(data=>{
-          if (data) res.write(sString(data))
-          else res.write(showfn + ' don\'t return any value')
-        }).catch(error=>{
-          res.write('error: ' + error)
-        }).finally(()=>{
-          res.end(`\n\nconsole log file: ${fullu}/logs/${showfn.split('/').join('-')}.log\n\n${LOGFILE.get(showfn+'.log')}`)
-        })
-      } else {
-        if(jsres) res.write(sString(jsres))
+      runJSFile(fn, { ...addContext }).then(data=>{
+        if (data) res.write(sString(data))
         else res.write(showfn + ' don\'t return any value')
-        res.end(`\n\nconsole log file: ${fullu}/logs/${showfn.split('/').join('-')}.log\n\n${LOGFILE.get(showfn+'.log')}`)
-      }
+      }).catch(error=>{
+        res.write('error: ' + error)
+      }).finally(()=>{
+        res.end(`\n\nconsole log file: ${req.protocol}://${req.get('host')}/logs/${showfn.split('/').join('-')}.log\n\n${LOGFILE.get(showfn+'.log')}`)
+      })
     }
     break
   case 'deletelog':

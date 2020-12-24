@@ -13,10 +13,7 @@ const CONFIG_RUNJS = {
   intervals: 86400,       // 远程 JS 更新时间，单位：秒。 默认：86400(一天)。0: 有则不更新
   numtofeed: 50,          // 每运行 { numtofeed } 次 JS, 添加一个 Feed item。0: 不通知
 
-  jslogfile: true,        // 是否将 JS 运行日志保存到 logs 文件夹
-
-  SurgeEnable: false,     // 兼容 Surge 脚本
-  QuanxEnable: false,     // 兼容 Quanx 脚本。都为 false 时，会进行自动判断
+  jslogfile: true,        // 是否将 JS 运行日志保存到 logs 文件夹    
 }
 
 if (CONFIG.CONFIG_RUNJS) {
@@ -88,13 +85,27 @@ function runJS(filename, jscode, addContext={}) {
   const fconsole = new logger({ head: filename, file: CONFIG_RUNJS.jslogfile ? filename : false, cb })
   const CONTEXT = new context({ fconsole })
 
-  if (CONFIG_RUNJS.SurgeEnable || (CONFIG_RUNJS.QuanxEnable === false && /\$httpClient|\$persistentStore|\$notification/.test(jscode))) {
-    clog.debug(`${filename} 使用 Surge 兼容模式运行`)
+  const compatible = {
+    surge: false,          // 兼容 Surge 脚本
+    quanx: false,          // 兼容 Quanx 脚本。都为 false 时，会进行自动判断
+    require: false         // 启用 NodeJS require 函数。不开启时会自动进行判断
+  }
+  if (/^\/\/ +@grant +surge/im.test(jscode)) {
+    compatible.surge = true
+  }
+  if (/^\/\/ +@grant +quanx/im.test(jscode)) {
+    compatible.quanx = true
+  }
+  if (compatible.surge || (compatible.quanx === false && /\$httpClient|\$persistentStore|\$notification/.test(jscode))) {
+    clog.debug(`${filename} compatible with Surge script`)
     CONTEXT.add({ surge: true })
-  } else if (CONFIG_RUNJS.QuanxEnable || /\$task|\$prefs|\$notify/.test(jscode)) {
-    clog.debug(`${filename} 使用 Quantumult X 兼容模式运行`)
+  } else if (compatible.quanx || /\$task|\$prefs|\$notify/.test(jscode)) {
+    clog.debug(`${filename} compatible with QuantumultX script`)
     CONTEXT.add({ quanx: true })
   } else if (/require\(/.test(jscode)) {
+    compatible.require = true
+  }
+  if (compatible.require || /^\/\/ +@grant +require/im.test(jscode)) {
     CONTEXT.final.require = (path)=>{
       const locfile = file.path(jsfile.get(filename, 'dir'), /\.js$/i.test(path) ? path : path + '.js')
       if (file.isExist(locfile)) return require(locfile)
@@ -122,7 +133,7 @@ function runJS(filename, jscode, addContext={}) {
  */
 function runJSFile(filename, addContext={}) {
   filename = filename.trim()
-  if (!filename) return
+  if (!filename) return Promise.reject('a js filename is expected.')
   if (/^https?:/.test(filename)) {
     const url = filename
     const sdurl = url.split(/\/|\?|#/)
@@ -151,7 +162,7 @@ function runJSFile(filename, addContext={}) {
   let rawjs = (addContext.type === 'rawcode') ? filename : jsfile.get(filename)
   if (!rawjs) {
     clog.error(filename, 'not exist.')
-    return filename + ' not exist.'
+    return Promise.reject(filename + ' not exist.')
   }
   if (addContext.type === 'rawcode') {
     filename = addContext.rename || addContext.from || 'rawcode.js'
