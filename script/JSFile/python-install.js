@@ -12,7 +12,7 @@ $exec('apk add python3', {
         }
       })
 
-      // 安装一些 python 库
+      // 安装一些 python 库。（具体需要的库以脚本为准，如无必要，可直接注释掉）
       $exec('pip3 install you-get youtube-dl numpy requests')
     } else {
       error ? console.error(error) : console.log(data)
