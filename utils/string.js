@@ -91,4 +91,13 @@ function nStatus() {
   return musage
 }
 
-module.exports = { euid, UUID, iRandom, sJson, sString, bEmpty, sUrl, sType, errStack, nStatus }
+function escapeHtml(str) {
+  const tagsToReplace = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;'
+  }
+  return str.replace(/[&<>]/g, tag=>tagsToReplace[tag] || tag);
+}
+
+module.exports = { euid, UUID, iRandom, sJson, sString, bEmpty, sUrl, sType, errStack, nStatus, escapeHtml }

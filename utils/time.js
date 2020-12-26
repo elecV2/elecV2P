@@ -5,12 +5,10 @@ module.exports = {
     // return new Date().toLocaleString('zh', { hour12: false })
   },
   wait(s, show=false, data=null){
-    console.log('waiting %s seconds', s)
+    console.log('waiting', s, 'seconds')
     return new Promise(resolve=>{
       let newit = setInterval(()=>{
-        if (show) {
-          console.log('waiting', s);
-        }
+        show && console.log('waiting', s);
         s--;
         if (s < 0) {
           clearInterval(newit);
