@@ -80,8 +80,11 @@ function handler(req, res){
     }
     break
   case 'status':
-    clog.info(clientip, 'get sever status')
-    res.end(JSON.stringify(nStatus()))
+    clog.info(clientip, 'get server status')
+    const status = nStatus()
+    status.start = new Date(CONFIG.start).toLocaleString('zh', { hour12:false })
+    status.version = CONFIG.version
+    res.end(JSON.stringify(status))
     break
   case 'taskinfo':
     clog.info(clientip, 'get taskinfo', rbody.tid)

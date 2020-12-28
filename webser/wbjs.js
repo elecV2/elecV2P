@@ -108,7 +108,7 @@ module.exports = app => {
   app.post('/uploadjs', (req, res) => {
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "uploading JS file")
     const uploadfile = new formidable.IncomingForm()
-    uploadfile.maxFieldsSize = 2 * 1024 * 1024 //限制为最大2M
+    uploadfile.maxFieldsSize = 20 * 1024 * 1024 //限制为最大20M
     uploadfile.keepExtensions = true
     uploadfile.multiples = true
     uploadfile.parse(req, (err, fields, files) => {
