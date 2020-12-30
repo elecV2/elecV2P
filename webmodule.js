@@ -58,8 +58,8 @@ module.exports = () => {
   wbhook(app)
 
   app.use((req, res, next) => {
-    res.end("404")
-    next()
+    res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })
+    res.end(`404<br>当前访问地址不存在<br><br><a href="/">返回首页</a><br><br><br><a target="_blank" href="https://github.com/elecV2/elecV2P">elecV2P 项目主页</a>`)
   })
 
   const server = http.createServer(app)

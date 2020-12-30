@@ -15,7 +15,7 @@ const clog = new logger({ head: 'eAxios' })
 const CONFIG_Axios = {
   proxy:   false,           // axios 请求代理
   timeout: 5000,            // axios 请求超时时间。单位：毫秒
-  uagent:  'iPhone'         // 通用 User-Agent，相关列表为 script/Lists/useragent.list
+  uagent:  'iPhone'         // 通用 User-Agent，相关列表位于 script/Lists/useragent.list
 }
 
 if (CONFIG.CONFIG_Axios) {

@@ -110,7 +110,7 @@ wsSer.recv.shell = command => {
  * @param  {string}    options.env      env 环境变量
  * @param  {number}    options.timeout  timeout，单位：毫秒
  * @param  {function}  options.cb       回调函数，接收参数为 stdout 的数据
- * @param  {boolean}   options.call     callback all, 是否等命令执行完成后一次返回所有输出
+ * @param  {boolean}   options.call     command finish flag, 是否等命令执行完成后一次性返回所有输出
  * @return {none}                 
  */
 function execFunc(command, options) {
@@ -140,8 +140,5 @@ function execFunc(command, options) {
     if (cb && options.call) cb(fdata.join('\n'), null, true)
   })
 }
-
-// windows 平台编码转换
-// if (/^win/.test(process.platform)) execFunc('CHCP 65001', { logout: false })
 
 module.exports = execFunc

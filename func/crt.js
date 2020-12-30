@@ -51,7 +51,7 @@ function newRootCrt(evoptions, cb) {
 
 function clearCrt() {
   // 清空所有证书（除了 rootCA）
-  clog.notify('开始清空所有证书（除 rootCA 外）：')
+  clog.notify('start to clear certificates.(except rootCA)')
   fs.readdir(anycrtpath, (err, files) => {
     if (err) clog.error(err)
 
@@ -59,7 +59,7 @@ function clearCrt() {
       if (/^rootCA/.test(file)) continue
       fs.unlink(path.join(anycrtpath, file), err => {
         if (err) clog.error(err)
-        else clog.notify("删除证书", file)
+        else clog.notify("delete crt file", file)
       })
     }
   })

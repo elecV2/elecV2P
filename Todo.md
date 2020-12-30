@@ -7,12 +7,14 @@
 - 后面偶尔修修 Bug，欢迎提交 Issue
 - Porject 的坑有时间再填
 - Thanks for using.
+- [ ] @grant silent/nologfile
 </pre>
 </div>
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
 - 说明文档 [1.0 基本完成，优化中...]
+- download process(cb)
 - EFSS 删除文件/文件管理模块
 - Lists 注释保存/单条标记(dirty)上传
 - Backup 备份导出/导入 (lists/store)

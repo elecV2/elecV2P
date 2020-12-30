@@ -3,7 +3,7 @@ const anyproxy = require('anyproxy')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'anyproxy' })
 
-function myAnyproxy(eoption) {
+module.exports = (eoption) => {
   if (eoption.rootCA) {
     if (require('../func/crt.js').rootCrtSync() === false) {
       anyproxy.utils.certMgr.generateRootCA((error, keyPath)=>{
@@ -39,5 +39,3 @@ function myAnyproxy(eoption) {
 
   return proxyServer
 }
-
-module.exports = myAnyproxy
