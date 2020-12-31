@@ -35,8 +35,8 @@ module.exports = class {
     clog.log(this.task.name, "total countdown second:", this.countdown)
     let step = this.countdown>100 ? parseInt(this.countdown/10) : parseInt(this.countdown/3)
     this.temIntval = setInterval(()=>{
+      this.countdown--
       if(this.countdown>0) {
-        this.countdown--
         if(this.countdown % step == 0) clog.debug(this.task.name, "countdown: ", this.countdown)
       } else {
         clearInterval(this.temIntval)

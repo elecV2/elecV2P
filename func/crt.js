@@ -59,7 +59,7 @@ function clearCrt() {
       if (/^rootCA/.test(file)) continue
       fs.unlink(path.join(anycrtpath, file), err => {
         if (err) clog.error(err)
-        else clog.notify("delete crt file", file)
+        else clog.notify("delete certificates", file)
       })
     }
   })
