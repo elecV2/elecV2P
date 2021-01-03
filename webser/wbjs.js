@@ -11,8 +11,8 @@ module.exports = app => {
   app.get("/jsfile", (req, res)=>{
     const jsfn = req.query.jsfn
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get js file", jsfn)
-    if (/\.\./.test(jsfn)) {
-      res.end('illegal request about ' + jsfn)
+    if (!jsfn || /\.\./.test(jsfn)) {
+      res.end('illegal request to get js file' + jsfn)
       return
     }
     const jscont = jsfile.get(jsfn)

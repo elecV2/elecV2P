@@ -5,15 +5,19 @@ function sType(obj) {
 
 /**
  * JSON 化输入值，成功返回 JSON 化后的值，不可转化则返回 false，
- * @param     {string}     str      需要转化的变量
+ * @param     {String}     str      需要转化的变量
  * @param     {Boolean}    force    强制转化为 JSON 返回。结果为 { 0: str }
- * @return    {object object}       返回 JSON object 或者 false
+ * @return    {Object}     返回 JSON object 或者 false
  */
 function sJson(str, force=false) {
   if (/^(object|array)$/.test(sType(str))) return str
   try {
     return JSON.parse(str)
   } catch(e) {
+    try {
+      let obj = (new Function("return " + str))()
+      if (/^(object|array)$/.test(sType(obj))) return obj
+    } catch (e) {}
     if (force) return { 0: str }
     return false
   }

@@ -82,7 +82,13 @@ function runJS(filename, jscode, addContext={}) {
     if (!cb) cb = wsSer.send.func(addContext.type)
     delete addContext.type
   }
-  const fconsole = new logger({ head: filename, file: CONFIG_RUNJS.jslogfile ? filename : false, cb })
+
+  let fconsole = null
+  if (/^\/\/ +@grant +quiet/im.test(jscode)) {
+    fconsole = { log(){},err(){},info(){},error(){},notify(){},debug(){} }
+  } else {
+    fconsole = new logger({ head: filename, file: CONFIG_RUNJS.jslogfile ? filename : false, cb })
+  }
   const CONTEXT = new context({ fconsole })
 
   const compatible = {
@@ -111,6 +117,11 @@ function runJS(filename, jscode, addContext={}) {
       if (file.isExist(locfile)) return require(locfile)
       else return require(path)
     }
+  }
+  if (/^\/\/ +@grant +silent/im.test(jscode)) {
+    CONTEXT.final.$feed = { push(){}, bark(){}, ifttt(){} }
+    if (CONTEXT.final.$notify) CONTEXT.final.$notify = ()=>{}
+    if (CONTEXT.final.$notification) CONTEXT.final.$notification.post = ()=>{}
   }
 
   if (sType(addContext) === 'object' && Object.keys(addContext).length) CONTEXT.add({ addContext })

@@ -153,7 +153,7 @@ class surgeContext {
   $notification = {
     post: (...data) => {
       this.fconsole.notify(data.map(arg=>sString(arg)).join(' '))
-      feedPush(data[0] + ' ' + data[1], data[2], data[3] ? data[3].url || data[3] : undefined)
+      feedPush(data[0] + ' ' + data[1], data[2], data[3])
     }
   }
 }
@@ -203,7 +203,7 @@ class quanxContext {
   }
   $notify = (...data)=>{
     this.fconsole.notify(data.map(arg=>sString(arg)).join(' '))
-    feedPush(data[0] + ' ' + data[1], data[2], data[3] ? data[3]["open-url"] || data[3]["media-url"] || data[3] : undefined)
+    feedPush(data[0] + ' ' + data[1], data[2], data[3])
   }
 }
 

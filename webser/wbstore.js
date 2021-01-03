@@ -20,7 +20,7 @@ module.exports = app => {
       return
     }
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) 
-      + " put store " + req.body.type)
+      + " put store " + req.body.type, data.key)
     switch (req.body.type) {
       case "get":
         res.end(store.get(data))

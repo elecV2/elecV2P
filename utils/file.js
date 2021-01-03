@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 
-const { errStack, sJson, sString, sType, iRandom } = require('./string')
+const { errStack, sJson, sString, sType, bEmpty, iRandom } = require('./string')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFile', level: 'debug' })
 
@@ -51,8 +51,8 @@ const list = {
 
 const jsfile = {
   get(name, type){
+    if (bEmpty(name)) return false
     name = name.trim()
-    if (!name) return false
     if (name === 'list') {
       const jslist = fs.readdirSync(fpath.js)
       let flist = []
@@ -108,7 +108,8 @@ const jsfile = {
 
 const store = {
   get(key, type) {
-    if (key === undefined) return
+    if (bEmpty(key)) return
+    key = key.trim()
     clog.debug('get value for', key)
     if (!fs.existsSync(path.join(fpath.store, key))) {
       clog.debug(key, 'not set yet.')
@@ -157,7 +158,7 @@ const store = {
     }
   },
   put(value, key, type) {
-    if (key === undefined || value === undefined) { 
+    if (bEmpty(key) || value === undefined) { 
       clog.error('store put error: no key or value')
       return false
     }
@@ -196,6 +197,7 @@ const store = {
     return true
   },
   delete(key) {
+    if (bEmpty(key)) return false
     clog.debug('delete store key:', key)
     const spath = path.join(fpath.store, key)
     if (fs.existsSync(spath)) {
@@ -217,7 +219,7 @@ const store = {
 
 const file = {
   get(pname, type){
-    if (!pname) {
+    if (bEmpty(pname)) {
       clog.info('parameters:', pname, 'was given, file.get no result')
       return ''
     }
@@ -252,7 +254,7 @@ const file = {
     }
   },
   isExist(filepath, isDir){
-    if (!filepath) return false
+    if (bEmpty(filepath)) return false
     if (fs.existsSync(filepath)) {
       return isDir ? fs.statSync(filepath).isDirectory() : true
     }

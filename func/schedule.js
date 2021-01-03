@@ -34,27 +34,35 @@ module.exports = class {
     }
     clog.log(this.task.name, "total countdown second:", this.countdown)
     let step = this.countdown>100 ? parseInt(this.countdown/10) : parseInt(this.countdown/3)
-    this.temIntval = setInterval(()=>{
-      this.countdown--
-      if(this.countdown>0) {
-        if(this.countdown % step == 0) clog.debug(this.task.name, "countdown: ", this.countdown)
-      } else {
-        clearInterval(this.temIntval)
-        clog.log("start run", this.task.name, 'job')
-        const jobres = this.job()
-
-        if (this.repeat < this._Task.repeat || this._Task.repeat >= 999) {
-          this.repeat++
-          this.start()
+    if (this.countdown <= 0) {
+      this.run()
+    } else {
+      this.temIntval = setInterval(()=>{
+        this.countdown--
+        if(this.countdown>0) {
+          if(this.countdown % step == 0) clog.debug(this.task.name, "countdown: ", this.countdown)
         } else {
-          if (sType(jobres) === 'promise') {
-            Promise.race([jobres, new Promise(resolve=>setTimeout(resolve, 5000))]).finally(res=>this.stop('finished'))
-          } else {
-            this.stop('finished')
-          }
+          clearInterval(this.temIntval)
+          this.run()
         }
+      }, 1000)
+    }
+  }
+
+  run(){
+    clog.log("start run", this.task.name, 'job')
+    const jobres = this.job()
+
+    if (this.repeat < this._Task.repeat || this._Task.repeat >= 999) {
+      this.repeat++
+      this.start()
+    } else {
+      if (sType(jobres) === 'promise') {
+        Promise.race([jobres, new Promise(resolve=>setTimeout(resolve, 5000))]).finally(res=>this.stop('finished'))
+      } else {
+        this.stop('finished')
       }
-    }, 1000)
+    }
   }
   
   stop(flag = 'stopped'){

@@ -1,0 +1,170 @@
+elecV2P 重要更新日志：
+
+v2.9.9
+ • 脚本 @grant 增加 quiet/silent 功能，用于屏蔽日志输出和通知
+ • schedule countdown bug fix
+
+v2.9.8
+ • 修复部分情况无法退出的问题
+ • 修复 webUI 表格部分单元格显示问题
+
+v2.9.7
+ • log 日志 html 标签转义
+ • webhook status 添加时间和版本信息
+
+v2.9.5
+ • 修复 webhook 无法删除任务的问题
+ • runJS Promise 化
+
+v2.9.4
+ • rule 规则 301->307
+ • 增加 bark 自定义服务器的功能
+
+v2.8.8
+ • 修复由 promise unhandledRejection 引发的服务重启问题
+
+v2.8.7
+ • efss 添加文件上传的功能
+
+v2.8.1
+ • 添加 bark/server酱 的通知方式
+ • webhook 增加文件下载
+
+v2.7.6
+ • 添加适用于 arm 平台 Docker
+
+v2.6.8
+ • 增加限制 IP 访问 webUI 的功能
+ • webhook 添加保存当前任务列表的接口
+
+v2.6.6
+ • rename js 自动保存
+ • 修复 JS 测试运行自动保存文件的 bug
+
+v2.5.7
+ • efss 功能上线
+ • webhook 添加保存当前任务列表的接口
+
+v2.4.9
+ • $exec 函数添加任务执行完成的标志
+ • context 严重 bug fix
+
+v2.4.8
+ • utils/string 添加 sString, sJson, sUrl, sType 函数
+ • $store.put 支持 type a(附加内容)
+
+v2.4.5
+ • webhook 接收运行 raw js code
+ • webhook 添加新增定时任务的接口
+ • $exec command 参数优化
+
+v2.4.2
+ • $store.get/put 增加 type 参数
+ • webhook 添加保存当前任务列表的接口
+
+v2.3.6
+ • webUI JSMANAGE 优化 js 查看
+
+v2.3.5
+ • 定时任务支持使用 -e 添加变量
+
+v2.3.3
+ • 生成根证书时同时生成 P12 证书
+
+v2.2.5
+ • 引入 cheerio 模块
+
+v2.2.0
+ • 彻底移除 antd vue
+
+v2.1.8
+ • eAxios 添加代理设置
+ • webUI log 插件
+
+v2.1.6
+ • config.js 独立
+
+v2.1.0
+ • 默认打开 store/cookie 设置
+ • $HOLD 增加直接返回的选项
+ • 添加 mock 模块
+
+v2.0.8
+ • webUI MITM 界面增加自签证书的功能
+
+v2.0.7
+ • CFILETER 列表增加 IP-CIDR 选项
+
+v2.0.2
+ • 增加远程 JS 的功能
+ • RULES 添加 $HOLD 选项
+ • 脚本网络请求优化
+
+v1.9.3
+ • dockerfile 添加 chmod
+
+v1.9.0
+ • 可上传本地 JS
+
+v1.8.8
+ • webhook 功能上线
+ • MITM 新增全局设置
+ • 可设置 webUI homepage 主页
+
+v1.8.7
+ • webser 文件分离
+
+v1.8.6
+ • // @require 增强优化
+
+v1.8.5
+ • webUI 页面增加显示脚本运行次数
+
+v1.8.4
+ • 各平台 exec 重启命令（reboot）统一化
+
+v1.8.0
+ • websocket 复用 webUI 端口
+
+v1.7.6
+ • minishell 上线
+
+v1.6.8
+ • 全局日志级别设置
+
+v1.6.5
+ • $store 增加 detete 函数
+ • 脚本基本执行环境 class 化
+
+v1.6.2
+ • webUI 增加 logo
+ • webUI 侧边栏收缩展开
+ • websocket 心跳检测（发送状态）
+
+v1.6.0
+ • websocket 自动重连
+ • FEED 通知合并增加 andor 选择
+
+v1.5.6
+ • 修改 feed 不更新的问题
+ • webUI 显示内存使用情况
+
+v1.5.0
+ • webmodule 拆分
+ • RULES 界面优化调整
+
+v1.4.2
+ • 自动启用 rootCA 目录下根证书
+ • webUI 显示内存使用情况
+
+v1.3.8
+ • webUI 移动端显示优化
+
+v1.3.x
+ • websocket 上线及优化
+
+v1.2.8
+ • 添加 IFTTT 通知模块
+
+v1.0.2
+ • 公开发布
