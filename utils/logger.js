@@ -28,6 +28,7 @@ class logger {
 
   log = this.info
   err = this.error
+  warn = this.notify
 
   constructor({ head, level, isalignHead, cb, file }) {
     if(head) this._head = head
@@ -96,6 +97,17 @@ class logger {
       if(this._file) LOGFILE.put(this._file, cont)
     }
   }
+
+  clear(){
+    let cont = null
+    if(this._file && LOGFILE.delete(this._file)) {
+      cont = `[${ this.infohead }][${ now() }]: ${ this._file } was cleared`
+    } else {
+      cont = `[${ this.infohead }][${ now() }]: no log file to clear`
+    }
+    console.log(cont)
+    if(this._cb) this._cb(cont)
+  }
 }
 
 const clog = new logger({ head: 'logger', level: 'debug' })
@@ -119,7 +131,7 @@ const LOGFILE = {
     if (fs.existsSync(logfpath)) {
       return fs.readFileSync(logfpath, "utf8")
     }
-    clog.info(filename, 'not exist yet')
+    clog.info(filename, 'don\'t existed')
   },
   delete(filename){
     if (!filename) return
@@ -143,12 +155,42 @@ const LOGFILE = {
 function formArgs(args) {
   try {
     args = [...args]
+    let res = '', skip = false
     if (args.length) {
-      return args.filter(arg=>!bEmpty(arg)).map(arg=>sString(arg).trim()).join(' ')
+      for (let ind in args) {
+        ind = Number(ind)
+        if (skip) {
+          skip = false
+          continue
+        }
+        if (bEmpty(args[ind])) continue
+        if (/%o|%O|%s/.test(args[ind])) {
+          res += (res ? ' ' : '') + args[ind].replace(/%o|%O|%s/, sString(args[ind+1]).trim())
+          skip = true
+        } else if (/%[.0-9]*d|%[.0-9]*i/.test(args[ind])) {
+          let mtnum = args[ind].match(/%(\.([0-9])*)d|%(\.([0-9]))*i/)
+          let secarg = parseInt(args[ind+1])
+          if (mtnum) {
+            mtnum = mtnum[2] || mtnum[4]
+            secarg = sString(secarg).padStart(Number(mtnum), '0')
+          }
+          res += (res ? ' ' : '') + args[ind].replace(/%[.0-9]*d|%[.0-9]*i/, secarg)
+          skip = true
+        } else if (/%[.0-9]*f/.test(args[ind])) {
+          let mtnum = args[ind].match(/%(\.([0-9])*)f/)
+          let secarg = parseFloat(args[ind+1])
+          if (mtnum && mtnum[2]) secarg = secarg.toFixed(Number(mtnum[2]))
+          res += (res ? ' ' : '') + args[ind].replace(/%[.0-9]*f/, secarg)
+          skip = true
+        } else {
+          res += (res ? ' ' : '') + sString(args[ind]).trim()
+        }
+      }
+      return res
     }
     return ''
   } catch(e) {
-    clog.error('wrong arguments')
+    clog.error('wrong arguments', e.stack)
     return 'there are some errors in logs arguments'
   }
 }

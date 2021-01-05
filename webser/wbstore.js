@@ -1,5 +1,5 @@
 const { wsSer } = require('../func/websocket')
-const { logger, store } = require('../utils')
+const { logger, store, sJson } = require('../utils')
 const clog = new logger({ head: 'wbstore', cb: wsSer.send.func('jsmanage'), lever: 'debug' })
 
 module.exports = app => {
@@ -32,30 +32,25 @@ module.exports = app => {
           const key = data.key
           const value = data.value
           let finalval = ''
-          try {
-            switch (value.type) {
-              case 'number':
-                finalval = Number(value.value)
-                break
-              case 'boolean':
-                finalval = Boolean(value.value)
-                break
-              case 'array':
-              case 'object':
-                finalval = JSON.parse(value.value)
-                break
-              default:{
-                finalval = value.value === undefined ? value : value.value
-                if (typeof finalval === 'object') finalval = JSON.stringify(finalval)
-              }
+          switch (value.type) {
+            case 'number':
+              finalval = Number(value.value)
+              break
+            case 'boolean':
+              finalval = Boolean(value.value)
+              break
+            case 'array':
+            case 'object':
+              finalval = sJson(value.value)
+              break
+            default:{
+              finalval = value.value === undefined ? value : value.value
+              if (typeof finalval === 'object') finalval = JSON.stringify(finalval)
             }
-            store.put(finalval, key, value.type)
-            clog.debug(`save ${ data.key } value: `, finalval)
-            res.end(data.key + ' saved')
-          } catch(e) {
-            clog.error(e.stack)
-            res.end('fail to save, ' + e.message)
           }
+          store.put(finalval, key, value.type)
+          clog.debug(`save ${ data.key } value: `, finalval)
+          res.end(data.key + ' saved')
         }
         break
       case "delete":

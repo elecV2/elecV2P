@@ -65,7 +65,7 @@ const jsfile = {
       })
       return flist.sort()
     }
-    if (!/\.js$/.test(name)) name += '.js'
+    if (!/\.js$/i.test(name)) name += '.js'
     if (type === 'path') {
       return path.join(fpath.js, name)
     }
@@ -82,7 +82,7 @@ const jsfile = {
     return false
   },
   put(name, cont){
-    if (!/\.js$/.test(name)) name += '.js'
+    if (!/\.js$/i.test(name)) name += '.js'
     try {
       if (typeof(cont) === 'object') {
         cont = JSON.stringify(cont)
@@ -94,7 +94,7 @@ const jsfile = {
     }
   },
   delete(name){
-    if (!/\.js$/.test(name)) name += '.js'
+    if (!/\.js$/i.test(name)) name += '.js'
     const jspath = path.join(fpath.js, name)
     if (fs.existsSync(jspath)) {
       fs.unlinkSync(jspath)

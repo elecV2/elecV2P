@@ -8,7 +8,9 @@ module.exports = app => {
     const logs = LOGFILE.get(filename)
     if (!logs) {
       res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
-      res.end(`404: ${filename} don't exist`)
+      logs === undefined 
+      ? res.end(`404: ${filename} don't exist`)
+      : res.end(`${filename} don't have any content.`)
       return
     }
     res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })

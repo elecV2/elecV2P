@@ -1,5 +1,9 @@
 elecV2P 重要更新日志：
 
+v3.0.0
+ • 增加 JS 脚本 console 函数对 %s/%f/%d 等参数的支持
+ • 增加 console.clear() 函数，用于删除当前脚本的日志
+
 v2.9.9
  • 脚本 @grant 增加 quiet/silent 功能，用于屏蔽日志输出和通知
  • schedule countdown bug fix
