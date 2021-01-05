@@ -82,7 +82,7 @@ function handler(req, res){
   case 'status':
     clog.info(clientip, 'get server status')
     const status = nStatus()
-    status.start = new Date(CONFIG.start).toLocaleString('zh', { hour12:false })
+    status.start = new Date(CONFIG.start).toISOString().slice(0, -1).replace('T', ' ')
     status.version = CONFIG.version
     res.end(JSON.stringify(status))
     break
