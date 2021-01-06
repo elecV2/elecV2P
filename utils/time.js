@@ -1,7 +1,7 @@
 module.exports = {
-  now(){
+  now(time){
     const tzoffset = (new Date()).getTimezoneOffset() * 60000
-    return new Date(Date.now() - tzoffset).toISOString().slice(0, -1).replace('T', ' ')
+    return new Date((time || Date.now()) - tzoffset).toISOString().slice(0, -1).replace('T', ' ')
     // return new Date().toLocaleString('zh', { hour12: false })
   },
   /**

@@ -1,7 +1,7 @@
 const { Task, TASKS_WORKER, TASKS_INFO, jobFunc } = require('../func')
 const { runJSFile, JSLISTS } = require('../script')
 
-const { logger, LOGFILE, nStatus, euid, sJson, sString, sType, file, list, downloadfile } = require('../utils')
+const { logger, LOGFILE, nStatus, euid, sJson, sString, sType, file, list, downloadfile, now } = require('../utils')
 const clog = new logger({ head: 'wbhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -82,7 +82,7 @@ function handler(req, res){
   case 'status':
     clog.info(clientip, 'get server status')
     const status = nStatus()
-    status.start = new Date(CONFIG.start).toISOString().slice(0, -1).replace('T', ' ')
+    status.start = now(CONFIG.start)
     status.version = CONFIG.version
     res.end(JSON.stringify(status))
     break
