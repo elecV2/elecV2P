@@ -52,3 +52,5 @@ echo "" > $(docker inspect --format='{{.LogPath}}' elecv2p)
 # 移除容器
 docker rm -f elecv2p
 ```
+
+### 更多说明参考：https://github.com/elecV2/elecV2P-dei/tree/master/docs/02-Docker.md

@@ -124,7 +124,7 @@ function jobFunc(job) {
     }
   } else if (job.type === 'exec') {
     return ()=>{
-      clog.notify('run exec cammand', job.target)
+      clog.notify('run shell command', job.target)
       exec(job.target, {
         cwd: file.get('script/Shell', 'path'),
         cb(data, error){

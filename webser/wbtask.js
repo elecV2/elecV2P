@@ -52,7 +52,7 @@ module.exports = app => {
         res.end("task deleted!")
         break
       default:{
-        res.end("task operation error")
+        res.end("unknow task operation " + req.body.op)
       }
     }
   })

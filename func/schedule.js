@@ -1,4 +1,4 @@
-const { logger, sType } = require('../utils')
+const { logger, sType, iRandom } = require('../utils')
 
 const { wsSer } = require('./websocket')
 
@@ -14,7 +14,7 @@ module.exports = class {
       this.repeat = 1
 
       let timea = this.task.time.split(' ')
-      let randomrepeat = timea[3] ? Math.floor(Math.random()*Number(timea[3])) : 0
+      let randomrepeat = timea[3] ? iRandom(Number(timea[3])) : 0
       this._Task.time = Number(timea[0]) || 0
       this._Task.repeat = timea[1] ? Number(timea[1]) + randomrepeat : 1
       this._Task.random = timea[2] ? Number(timea[2]) : 0
@@ -27,7 +27,7 @@ module.exports = class {
     clog.log("start schedule task: ", this.task.name, `${this.repeat}/${this._Task.repeat}`)
     this.task.running = true
     if(this._Task.random) {
-      let rand = Math.floor(Math.random()*Number(this._Task.random))
+      let rand = iRandom(Number(this._Task.random))
       this.countdown = Number(this.countdown || this._Task.time) + rand
     } else {
       this.countdown = this._Task.time
