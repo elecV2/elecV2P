@@ -113,13 +113,13 @@ wsSer.recv.shell = command => {
  * @param  {boolean}   options.call     command finish flag, 是否等命令执行完成后一次性返回所有输出
  * @return {none}                 
  */
-function execFunc(command, options) {
+function execFunc(command, options, cb) {
   const fev = commandSetup(command, options)
   const childexec = exec(fev.command, fev.options)
 
   clog.notify('start run command:', command)
 
-  const { cb } = options || {}
+  cb = cb || options.cb
   const fdata = []
   childexec.stdout.on('data', data => {
     data = data.toString()

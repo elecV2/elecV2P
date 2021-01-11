@@ -1,4 +1,4 @@
-const { Task, TASKS_WORKER, TASKS_INFO, jobFunc } = require('../func')
+const { Task, TASKS_WORKER, TASKS_INFO, jobFunc, exec } = require('../func')
 const { runJSFile, JSLISTS } = require('../script')
 
 const { logger, LOGFILE, nStatus, euid, sJson, sString, sType, file, list, downloadfile, now } = require('../utils')
@@ -187,6 +187,23 @@ function handler(req, res){
       })
     } else {
       res.end('wrong download url.')
+    }
+    break
+  case 'exec':
+  case 'shell':
+    clog.notify(clientip, 'exec shell command', rbody.command)
+    if (rbody.command) {
+      let command = decodeURI(rbody.command)
+      exec(command, {
+        call: true,
+        cb(data, error, finish) {
+          error ? clog.error(error) : clog.info(data)
+          if (finish) res.end(command + ' finished.')
+          else res.write(error || data)
+        }
+      })
+    } else {
+      res.end('command parameter is expected.')
     }
     break
   default:
