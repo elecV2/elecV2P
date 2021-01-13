@@ -22,6 +22,12 @@ if (CONFIG.CONFIG_RUNJS) {
   CONFIG.CONFIG_RUNJS = CONFIG_RUNJS
 }
 
+if (CONFIG.init && CONFIG.init.runjs) {
+  CONFIG.init.runjs.split(/,|，| /).filter(s=>s).forEach(js=>{
+    runJSFile(js, { from: 'initialization' })
+  })
+}
+
 const runstatus = {
   start: now(),
   times: CONFIG_RUNJS.numtofeed,
@@ -190,8 +196,12 @@ function runJSFile(filename, addContext={}) {
         clog.error(errStack(err))
         finalres = `run ${filename} error: ${err.message || err}`
         // reject(errStack(err))
-      }).finally(()=>resolve(finalres))
+      }).finally(()=>{
+        clog.info(`run ${filename} result:`, finalres)
+        resolve(finalres)
+      })
     } else {
+      clog.info(`run ${filename} result:`, JSres)
       resolve(JSres)
     }
   })

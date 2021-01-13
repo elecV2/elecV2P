@@ -54,7 +54,8 @@ module.exports = app => {
           wbrtoken: CONFIG.wbrtoken,
           minishell: CONFIG.minishell || false,
           efss: CONFIG.efss,
-          security: CONFIG.SECURITY || {}
+          security: CONFIG.SECURITY || {},
+          init: CONFIG.init
         }))
         break
       default:{
@@ -118,6 +119,10 @@ module.exports = app => {
         } else {
           res.end('updata saved!')
         }
+        break
+      case "init":
+        CONFIG.init = Object.assign(CONFIG.init || {}, req.body.data)
+        res.end('add initialization runjs: ' + req.body.data.runjs)
         break
       default:{
         res.end("data put error, unknow type: " + req.body.type)

@@ -18,7 +18,7 @@ function handler(req, res){
     return
   }
   const clientip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
-  clog.notify(clientip, "run webhook", rbody.type)
+  clog.notify(clientip, "run webhook type", rbody.type)
   switch(rbody.type) {
   case 'runjs':
     let fn = rbody.fn || ''

@@ -56,7 +56,7 @@ class logger {
   info(){
     const args = formArgs(arguments)
     if (!args) return
-    const cont = `[${ this.infohead }][${ now() }]: ${ args }`
+    const cont = `[${ this.infohead }][${ now() }] ${ args }`
     if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['info'] && CONFIG_LOG.levels['info'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
       console.log(cont)
     }
@@ -67,7 +67,7 @@ class logger {
   notify(){
     const args = formArgs(arguments)
     if (!args) return
-    const cont = `[${ this.notifyhead }][${ now() }]: ${ args }`
+    const cont = `[${ this.notifyhead }][${ now() }] ${ args }`
     if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['notify'] && CONFIG_LOG.levels['notify'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
       console.log(cont)
     }
@@ -78,7 +78,7 @@ class logger {
   error(){
     const args = formArgs(arguments)
     if (!args) return
-    const cont = `[${ this.errorhead }][${ now() }]: ${ args }`
+    const cont = `[${ this.errorhead }][${ now() }] ${ args }`
     if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['error'] && CONFIG_LOG.levels['error'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
       console.error(cont)
     }
@@ -91,7 +91,7 @@ class logger {
     const args = formArgs(arguments)
     if (!args) return
     if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['debug'] && CONFIG_LOG.levels['debug'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
-      const cont = `[${ this.debughead }][${ now() }]: ${ args }`
+      const cont = `[${ this.debughead }][${ now() }] ${ args }`
       console.log(cont)
       if(this._cb) this._cb(cont)
       if(this._file) LOGFILE.put(this._file, cont)
@@ -101,9 +101,9 @@ class logger {
   clear(){
     let cont = null
     if(this._file && LOGFILE.delete(this._file)) {
-      cont = `[${ this.infohead }][${ now() }]: ${ this._file } was cleared`
+      cont = `[${ this.infohead }][${ now() }] ${ this._file } was cleared`
     } else {
-      cont = `[${ this.infohead }][${ now() }]: no log file to clear`
+      cont = `[${ this.infohead }][${ now() }] no log file to clear`
     }
     console.log(cont)
     if(this._cb) this._cb(cont)
