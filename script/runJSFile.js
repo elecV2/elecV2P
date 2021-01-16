@@ -150,7 +150,7 @@ function runJS(filename, jscode, addContext={}) {
  */
 function runJSFile(filename, addContext={}) {
   filename = filename.trim()
-  if (!filename) return Promise.reject('a js filename is expected.')
+  if (!filename) return Promise.resolve('a js file is expected.')
   if (/^https?:/.test(filename)) {
     const url = filename
     const sdurl = url.split(/\/|\?|#/)
@@ -179,7 +179,7 @@ function runJSFile(filename, addContext={}) {
   let rawjs = (addContext.type === 'rawcode') ? filename : jsfile.get(filename)
   if (!rawjs) {
     clog.error(filename, 'not exist.')
-    return Promise.reject(filename + ' not exist.')
+    return Promise.resolve(filename + ' not exist.')
   }
   if (addContext.type === 'rawcode') {
     filename = addContext.rename || addContext.from || 'rawcode.js'
@@ -197,11 +197,11 @@ function runJSFile(filename, addContext={}) {
         finalres = `run ${filename} error: ${err.message || err}`
         // reject(errStack(err))
       }).finally(()=>{
-        clog.info(`run ${filename} result:`, finalres)
+        if (finalres) clog.info(`run ${filename} result:`, finalres)
         resolve(finalres)
       })
     } else {
-      clog.info(`run ${filename} result:`, JSres)
+      if (JSres) clog.info(`run ${filename} result:`, JSres)
       resolve(JSres)
     }
   })

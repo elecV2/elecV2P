@@ -13,6 +13,7 @@
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
 - 说明文档 [1.0 基本完成，优化中...]
+- 使用 JSON 重构 Lists 数据结构
 - download process(cb)
 - EFSS 删除文件/文件管理模块
 - Lists 注释保存/单条标记(dirty)上传

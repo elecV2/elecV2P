@@ -3,6 +3,8 @@
 elecV2P - customize personal network.
 一款基于 NodeJS，可通过 JS 修改网络请求，以及定时运行脚本或 SHELL 指令的网络工具。
 
+![](https://raw.githubusercontent.com/elecV2/elecV2P-dei/master/docs/res/overview.png)
+
 ### 基础功能
 
 - 查看/修改 网络请求 (MITM)
@@ -37,7 +39,7 @@ pm2 start index.js
 ### DOCKER
 
 - 基础镜像：elecv2/elecv2p
-- ARM 镜像：（适用于 N1/OPENWRT/树莓派等 ARM 架构的系统）
+- ARM镜像：（适用于 N1/OPENWRT/树莓派等 ARM 架构的系统）
     - elecv2/elecv2p:arm64
     - elecv2/elecv2p:arm32
 
@@ -67,7 +69,7 @@ mkdir /elecv2p && cd /elecv2p
 curl -sL https://git.io/JLw7s > docker-compose.yaml
 docker-compose up -d
 
-# 注意：默认的 docker-compose.yaml 文件已将 80/8001/8002 端口分别映射成了 8100/8101/8102，以防出现端口占用的情况。在访问时注意更改一下。如需调整为其他端口，可以自行修改下面手动保存的内容。
+# 注意：默认的 docker-compose.yaml 文件使用的是基础镜像，如果是 ARM 平台请手动进行修改。另外，默认把 80/8001/8002 端口分别映射成了 8100/8101/8102，以防出现端口占用的情况，在访问时注意一下。如需调整为其他端口，可以自行修改下面的内容然后手动保存。
 ```
 
 或者将以下内容手动保存为 docker-compose.yaml 文件。
@@ -225,4 +227,5 @@ IFTTT/BARK/SERVERCHAN 通知设置等其他详细说明参考: [07-feed&notify](
 - [node-cron](https://github.com/merencia/node-cron)
 - [node-rss](https://github.com/dylang/node-rss)
 - [vue](http://vuejs.org/)
+- [vue-draggable-resizable](https://github.com/mauricius/vue-draggable-resizable)
 - [Ant Design Vue](https://www.antdv.com)

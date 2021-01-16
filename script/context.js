@@ -3,9 +3,9 @@ const cheerio = require('cheerio')
 
 const { CONFIG } = require('../config')
 const { errStack, sType, sString, sJson, feedPush, iftttPush, barkPush, store, eAxios, jsfile, file, downloadfile } = require('../utils')
-// const clog = new logger({ head: 'context', level: 'debug' })
-
+const { wsSer } = require('../func/websocket')
 const exec = require('../func/exec')
+// const clog = new logger({ head: 'context', level: 'debug' })
 
 const formReq = {
   headers(req) {
@@ -54,11 +54,15 @@ class contextBase {
   __dirname = process.cwd()
   __home = CONFIG.homepage
   __efss = file.get(CONFIG.efss.directory, 'path')
-  $axios = eAxios
+  $ws = wsSer
   $exec = exec
+  $store = store
+  $axios = eAxios
   $cheerio = cheerio
   $download = downloadfile
-  $store = store
+  $evui = (obj) => {
+    wsSer.send({ type: 'evui', data: obj })
+  }
   $feed = {
     push(title, description, url) {
       feedPush(title, description, url)
