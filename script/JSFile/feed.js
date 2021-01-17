@@ -6,8 +6,10 @@ const x = 8
 
 if (x >= 6) {
   $feed.push('elecV2P rss notification',  x + ' is bigger than 6')
+} else if (x > 1) {
+  $feed.ifttt('elecV2P ifttt notification', x + ' is bigger than 6')
 } else {
-  $feed.ifttt('elecV2P ifttt notification', x + ' is smaller than 6')
+  $feed.bark('elecV2P bark notification', 'x value is ' + x)
 }
 
 console.log(x, '通知完成')

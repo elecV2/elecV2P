@@ -10,7 +10,7 @@ const wsSer = {
     wsSend(data)
   },
   recv(msg, ip){
-    clog.info('receive message from:', ip, msg)
+    clog.debug('receive message from:', ip, msg)
   }
 }
 

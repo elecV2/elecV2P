@@ -2,7 +2,7 @@ const qs = require('qs')
 const cheerio = require('cheerio')
 
 const { CONFIG } = require('../config')
-const { errStack, sType, sString, sJson, feedPush, iftttPush, barkPush, store, eAxios, jsfile, file, downloadfile } = require('../utils')
+const { errStack, euid, sType, sString, sJson, feedPush, iftttPush, barkPush, store, eAxios, jsfile, file, downloadfile } = require('../utils')
 const { wsSer } = require('../func/websocket')
 const exec = require('../func/exec')
 // const clog = new logger({ head: 'context', level: 'debug' })
@@ -60,8 +60,40 @@ class contextBase {
   $axios = eAxios
   $cheerio = cheerio
   $download = downloadfile
-  $evui = (obj) => {
-    wsSer.send({ type: 'evui', data: obj })
+  $evui = (obj, callback) => {
+    if (sType(obj) !== 'object') {
+      this.console.error('$evui expect a object in first arguments')
+      return
+    }
+    if (wsSer.recverlists.length === 0) {
+      return Promise.reject('websocket is not ready yet, cant transfer $evui data to client')
+    }
+    if (!obj.id) obj.id = euid()
+    wsSer.send({ type: 'evui', data: { type: 'neweu', data: obj }})
+
+    if (!callback && (obj.cb || obj.callback)) {
+      callback = obj.cb || obj.callback
+      delete obj.cb
+      delete obj.callback
+    }
+
+    return new Promise((resolve, reject)=>{
+      if (obj.cbable) {
+        wsSer.recv[obj.id] = data => {
+          this.console.debug('$evui', obj.title, 'return data', data)
+          if (data === 'close') {
+            wsSer.recv[obj.id] = null
+            resolve(obj.title + ' is closed')
+          } else if (typeof callback === 'function') {
+            callback(data)
+          } else {
+            this.console.debug('a callback function is expect to handle the data')
+          }
+        }
+      } else {
+        resolve('$evui run without a callback')
+      }
+    })
   }
   $feed = {
     push(title, description, url) {
