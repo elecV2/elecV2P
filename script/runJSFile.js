@@ -93,7 +93,7 @@ function runJS(filename, jscode, addContext={}) {
   if (/^\/\/ +@grant +quiet/im.test(jscode)) {
     fconsole = { log(){},err(){},info(){},error(){},notify(){},debug(){} }
   } else {
-    fconsole = new logger({ head: filename, file: CONFIG_RUNJS.jslogfile ? filename : false, cb })
+    fconsole = new logger({ head: filename, level: 'debug', file: CONFIG_RUNJS.jslogfile ? filename : false, cb })
   }
   const CONTEXT = new context({ fconsole })
 

@@ -80,7 +80,7 @@ class contextBase {
     return new Promise((resolve, reject)=>{
       if (obj.cbable) {
         wsSer.recv[obj.id] = data => {
-          this.console.debug('$evui', obj.title, 'return data', data)
+          this.console.debug('$evui id:', obj.id, ', title:', obj.title, ', return data', data)
           if (data === 'close') {
             wsSer.recv[obj.id] = null
             resolve(obj.title + ' is closed')
