@@ -53,7 +53,7 @@ function handler(req, res){
       }).catch(error=>{
         res.write('error: ' + error)
       }).finally(()=>{
-        res.end(`\n\nconsole log file: ${req.protocol}://${req.get('host')}/logs/${showfn.split('/').join('-')}.log\n\n${LOGFILE.get(showfn+'.log')}`)
+        res.end(`\n\nconsole log file: ${req.protocol}://${req.get('host')}/logs/${showfn.split('/').join('-')}.log\n\n${LOGFILE.get(showfn+'.log') || ''}`)
       })
     }
     break

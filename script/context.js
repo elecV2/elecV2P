@@ -3,7 +3,7 @@ const cheerio = require('cheerio')
 
 const { CONFIG } = require('../config')
 const { errStack, euid, sType, sString, sJson, feedPush, iftttPush, barkPush, store, eAxios, jsfile, file, downloadfile } = require('../utils')
-const { wsSer } = require('../func/websocket')
+const { wsSer, message } = require('../func/websocket')
 const exec = require('../func/exec')
 // const clog = new logger({ head: 'context', level: 'debug' })
 
@@ -59,6 +59,7 @@ class contextBase {
   $store = store
   $axios = eAxios
   $cheerio = cheerio
+  $message = message
   $download = downloadfile
   $evui = (obj, callback) => {
     if (sType(obj) !== 'object') {
@@ -80,7 +81,7 @@ class contextBase {
     return new Promise((resolve, reject)=>{
       if (obj.cbable) {
         wsSer.recv[obj.id] = data => {
-          this.console.debug('$evui id:', obj.id, ', title:', obj.title, ', return data', data)
+          this.console.debug('$evui id:', obj.id, ', title:', obj.title, ', return data:', data)
           if (data === 'close') {
             wsSer.recv[obj.id] = null
             resolve(obj.title + ' is closed')

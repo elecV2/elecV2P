@@ -106,4 +106,16 @@ function websocketSer({ server, path }) {
   })
 }
 
-module.exports = { websocketSer, wsSer }
+const message = {
+  success(data, secd) {
+    wsSer.send({ type: 'evui', data: { type: 'message', data: { type: 'success', data, secd } }})
+  },
+  error(data, secd) {
+    wsSer.send({ type: 'evui', data: { type: 'message', data: { type: 'error', data, secd } }})
+  },
+  loading(data, secd) {
+    wsSer.send({ type: 'evui', data: { type: 'message', data: { type: 'loading', data, secd } }})
+  }
+}
+
+module.exports = { websocketSer, wsSer, message }
