@@ -33,7 +33,7 @@ function sString(obj) {
 }
 
 function bEmpty(obj) {
-  if (sString(obj).trim() === '' || (sType(obj) === 'object' && Object.keys(obj).length === 0)) return true
+  if (sString(obj).trim() === '' || (/^(object|array)$/.test(sType(obj)) && Object.keys(obj).length === 0)) return true
   return false
 }
 

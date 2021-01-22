@@ -1,2 +1,5 @@
 another cookie
 一个新的存储常量
+
+每一个 cookie 都有一个独立对应的 KEY，这样脚本才能读取。
+在填写 cookie 时两个部分都得填写,KEY 和 VALUE。

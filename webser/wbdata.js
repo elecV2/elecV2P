@@ -34,8 +34,7 @@ module.exports = app => {
       case "rewritelists":
         res.end(JSON.stringify({
           rewritelists: CONFIG_RULE.rewritelists,
-          subrules: CONFIG_RULE.subrules,
-          jslists: JSLISTS
+          subrules: CONFIG_RULE.subrules
         }))
         break
       case "mitmhost":
