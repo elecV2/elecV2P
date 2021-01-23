@@ -92,7 +92,7 @@ class contextBase {
           }
         }
       } else {
-        resolve('$evui run without a callback')
+        resolve('$evui is finished')
       }
     })
   }
