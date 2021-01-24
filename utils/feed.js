@@ -151,13 +151,13 @@ function custPush(title, description, url) {
     url = formUrl(url)
     req.url = req.url.replaceAll('$title$', title)
     req.url = req.url.replaceAll('$body$', description)
-    req.url = req.url.replaceAll('$url$', url)
+    req.url = req.url.replaceAll('$url$', sString(url))
     if (req.type === 'GET') {
       req.data = null
     } else {
       req.data = req.data.replaceAll('$title$', title)
       req.data = req.data.replaceAll('$body$', description)
-      req.data = req.data.replaceAll('$url$', url)
+      req.data = req.data.replaceAll('$url$', sString(url))
       let tmprdata = sJson(req.data)
       if (tmprdata) {
         req.headers['Content-Type'] = 'application/json; charset=UTF-8'
