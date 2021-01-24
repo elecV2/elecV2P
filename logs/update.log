@@ -1,5 +1,8 @@
 elecV2P 重要更新日志：
 
+v3.0.9
+ • 增加自定义通知方式。（同时删除了默认的 SERVER 酱通知）
+
 v3.0.8
  • 通过脚本生成 UI 界面初版完成
  • 测试脚本：https://raw.githubusercontent.com/elecV2/elecV2P-dei/master/examples/JSTEST/evui-dou.js
