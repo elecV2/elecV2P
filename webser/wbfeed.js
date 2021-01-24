@@ -31,10 +31,10 @@ module.exports = app => {
         clog.notify(`BARK 通知功能已 ${ data.enable ? '开启' : '关闭' }`)
         res.end(`BARK 通知功能已 ${ data.enable ? '开启' : '关闭' }`)
         break
-      case "sckey":
-        CONFIG_FEED.sckey = data
-        clog.notify(`SERVERCHAN 通知功能已 ${ data.enable ? '开启' : '关闭' }`)
-        res.end(`SERVERCHAN 通知功能已 ${ data.enable ? '开启' : '关闭' }`)
+      case "custnotify":
+        CONFIG_FEED.custnotify = data
+        clog.notify(`自定义通知功能已 ${ data.enable ? '更新' : '关闭' }`)
+        res.end(`自定义通知功能已 ${ data.enable ? '更新' : '关闭' }`)
         break
       case "merge":
         CONFIG_FEED.merge = data
@@ -42,7 +42,8 @@ module.exports = app => {
         res.end(`FEED 通知合并功能已 ${ data.enable ? '开启' : '取消' }`)
         break
       default:{
-        res.end('FEED PUT 未知操作')
+        clog.error('FEED PUT 未知操作', req.body.type)
+        res.end('FEED PUT 未知操作 ' + req.body.type)
       }
     }
   })

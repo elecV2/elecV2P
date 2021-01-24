@@ -3,7 +3,7 @@ const RSS = require('rss')
 const axios = require('axios')
 
 const { now } = require('./time')
-const { sType, sString, bEmpty } = require('./string')
+const { sType, sString, sJson, bEmpty } = require('./string')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFeed', level: 'debug' })
 
@@ -14,7 +14,12 @@ const CONFIG_FEED = {
   homepage: 'https://github.com/elecV2/elecV2P',  // FEED 主页。
   iftttid: {enable: true, key: ''},               // 关闭/开启 IFTTT 通知
   barkkey: {enable: false, key: ''},              // 关闭/开启 BARK 通知
-  sckey:   {enable: false, key: ''},              // 关闭/开启 SERVER 酱通知
+  custnotify: {
+    enable: false,
+    url: '',
+    type: 'GET',
+    data: ''
+  },
   merge: {
     enable: true,              // 是否合并一定时间内的通知
     gaptime: 60,               // 合并多少时间内的通知，单位：秒
@@ -125,8 +130,8 @@ function barkPush(title, description, url) {
   }
 }
 
-function schanPush(title, description, url) {
-  if (CONFIG_FEED.sckey && CONFIG_FEED.sckey.enable && CONFIG_FEED.sckey.key) {
+function custPush(title, description, url) {
+  if (CONFIG_FEED.custnotify && CONFIG_FEED.custnotify.enable && CONFIG_FEED.custnotify.url) {
     if (bEmpty(title)) {
       title = 'elecV2P 通知'
     } else {
@@ -137,31 +142,40 @@ function schanPush(title, description, url) {
     } else {
       description = sString(description).trim()
     }
-    const body = {
-      "text": title,
-      "desp": description
+    let req = {
+      url: CONFIG_FEED.custnotify.url,
+      headers: {},
+      method: CONFIG_FEED.custnotify.type,
+      data: sString(CONFIG_FEED.custnotify.data)
     }
-    if (url) {
-      if (url["media-url"]) body.desp += '\n![](' + url["media-url"] + ')'
-      url = formUrl(url)
-      body.desp += `\n[${url}](${url})`
+    url = formUrl(url)
+    req.url = req.url.replaceAll('$title$', title)
+    req.url = req.url.replaceAll('$body$', description)
+    req.url = req.url.replaceAll('$url$', url)
+    if (req.type === 'GET') {
+      req.data = null
+    } else {
+      req.data = req.data.replaceAll('$title$', title)
+      req.data = req.data.replaceAll('$body$', description)
+      req.data = req.data.replaceAll('$url$', url)
+      let tmprdata = sJson(req.data)
+      if (tmprdata) {
+        req.headers['Content-Type'] = 'application/json; charset=UTF-8'
+        req.data = tmprdata
+      } else {
+        req.headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
+      }
     }
-    clog.notify('server chan push:', title, description, url)
-    axios({
-      url: `https://sc.ftqq.com/${CONFIG_FEED.sckey.key}.send`,
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
-      },
-      data: qs.stringify(body)
-    }).then(res=>{
-      clog.debug('server chan result:', res.data)
+    clog.notify('custnotify push:', title, description, url)
+    clog.debug('custnotify request', req)
+    axios(req).then(res=>{
+      clog.debug('custnotify result:', res.data)
     }).catch(e=>{
-      if (e.response) clog.error('SERVERCHAN notify error:', e.response.data)
-      else clog.error('SERVERCHAN notify error:', e.message)
+      if (e.response) clog.error('custnotify push error:', e.response.data)
+      else clog.error('custnotify push error:', e.message)
     })
   } else {
-    clog.debug('server chan not available yet, skip server chan push.')
+    clog.debug('custnotify push not available yet, skip custnotify push.')
   }
 }
 
@@ -190,7 +204,7 @@ function feedPush(title, description, url) {
   }
   iftttPush(title, description, url)
   barkPush(title, description, url)
-  schanPush(title, description, url)
+  custPush(title, description, url)
 }
 
 const mergefeed = {
@@ -239,4 +253,4 @@ function feedClear() {
   clog.notify('feed 内容已清空')
 }
 
-module.exports = { CONFIG_FEED, feedAddItem, iftttPush, barkPush, schanPush, feedPush, feedXml, feedClear }
+module.exports = { CONFIG_FEED, feedAddItem, iftttPush, barkPush, custPush, feedPush, feedXml, feedClear }
