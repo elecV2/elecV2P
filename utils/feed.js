@@ -51,7 +51,7 @@ function feedNew({ title = 'elecV2P notification', description = 'elecV2P 运行
 let feed = feedNew({})
 
 function formUrl(url) {
-  if (!url) return
+  if (bEmpty(url)) return
   if (sType(url) === 'object') {
     return Object.keys(url).length ? (url.url || url["open-url"] || url["media-url"] || url.openUrl || url.mediaUrl) : undefined
   }
@@ -140,7 +140,7 @@ function custPush(title, description, url) {
     if (bEmpty(description)) {
       description = 'a empty message.\n没有任何通知内容。'
     } else {
-      description = sString(description).trim()
+      description = sString(description)
     }
     let req = {
       url: CONFIG_FEED.custnotify.url,

@@ -2,7 +2,7 @@ const qs = require('qs')
 const cheerio = require('cheerio')
 
 const { CONFIG } = require('../config')
-const { errStack, euid, sType, sString, sJson, feedPush, iftttPush, barkPush, store, eAxios, jsfile, file, downloadfile } = require('../utils')
+const { errStack, euid, sType, sString, sJson, feedPush, iftttPush, barkPush, custPush, store, eAxios, jsfile, file, downloadfile } = require('../utils')
 const { wsSer, message } = require('../func/websocket')
 const exec = require('../func/exec')
 // const clog = new logger({ head: 'context', level: 'debug' })
@@ -105,6 +105,9 @@ class contextBase {
     },
     bark(title, description, url) {
       barkPush(title, description, url)
+    },
+    cust(title, description, url) {
+      custPush(title, description, url)
     }
   }
   $done = (data) => {

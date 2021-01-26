@@ -25,11 +25,11 @@ function sJson(str, force=false) {
 
 function sString(obj) {
   if (obj === undefined || obj === null) return ''
-  if (typeof obj === 'string') return obj
+  if (typeof obj === 'string') return obj.trim()
   if (/object|array/.test(sType(obj))) {
     return JSON.stringify(obj)
   }
-  return String(obj)
+  return String(obj).trim()
 }
 
 function bEmpty(obj) {

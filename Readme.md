@@ -217,6 +217,10 @@ IFTTT/BARK/SERVERCHAN 通知设置等其他详细说明参考: [07-feed&notify](
 
 说明文档及一些例程：[https://github.com/elecV2/elecV2P-dei](https://github.com/elecV2/elecV2P-dei)
 
+TG 交流群：https://t.me/elecV2G (主要为方便群友使用交流，群主24小时不在线，也不负责解答任何问题。)
+
+如果遇到问题还是建议开一个 issue，并注明使用平台，版本，以及附上相关的错误日志。
+
 ### 简单声明
 
 *该项目仅用于学习交流，任何使用，风险自负。*

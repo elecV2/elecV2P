@@ -17,9 +17,9 @@
 - download process(cb)
 - EFSS 删除文件/文件管理模块
 - Lists 注释保存/单条标记(dirty)上传
-- Backup 备份导出/导入 (lists/store)
+- Backup 备份导出/导入(lists/store)
 - minishell 上传/下载文件（编辑?）
-- 文件编辑器（component || libery)
+- 文件编辑器（component || libery）
 - 多语言 [一个可能永远不填的坑..., start ready...]
 </pre>
 </div>
@@ -27,6 +27,7 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [x] 实现自定义通知
 - [x] $evui 实现基础的前后端数据交互
 - [x] $evui 通过脚本生成图形 UI
 - [x] @grant silent/quiet
