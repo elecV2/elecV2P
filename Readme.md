@@ -7,17 +7,16 @@ elecV2P - customize personal network.
 
 ### 基础功能
 
-- 查看/修改 网络请求 (MITM)
-- 运行 JS/SHELL 脚本
-- 定时执行任务（倒计时/cron 定时）
-- FEED/IFTTT 通知
+- 查看/修改网络请求 (MITM)
+- 定时执行 JS/SHELL 脚本
+- FEED/IFTTT/自定义 通知
 - EFSS 基础文件管理(v0.1)
 
 ## 安装/INSTALL
 
-**程序使用权限较大，建议局域网使用。网络部署，风险自负**
+**程序开放权限较大，建议局域网使用。网络部署，风险自负**
 
-### NODEJS （不推荐）
+### 方法一：直接 NODEJS 运行
 
 ``` sh
 git clone https://github.com/elecV2/elecV2P.git
@@ -36,12 +35,12 @@ pm2 start index.js
 # - 最后再把备份好的文件复制到原来的位置
 ```
 
-### DOCKER
+### 方法二：DOCKER
 
 - 基础镜像：elecv2/elecv2p
 - ARM镜像：（适用于 N1/OPENWRT/树莓派等 ARM 架构的系统）
-    - elecv2/elecv2p:arm64
-    - elecv2/elecv2p:arm32
+  - elecv2/elecv2p:arm64
+  - elecv2/elecv2p:arm32
 
 ``` sh
 # 基础使用命令
@@ -61,7 +60,7 @@ docker pull elecv2/elecv2p     # 再下载新的镜像。镜像名注意要和�
 # 再使用之前的 docker run xxxx 命令重新启动一下
 ```
 
-### docker-compose （推荐）
+### 方法三：DOCKER-COMPOSE （推荐）
 
 启动命令
 ``` sh
@@ -69,7 +68,7 @@ mkdir /elecv2p && cd /elecv2p
 curl -sL https://git.io/JLw7s > docker-compose.yaml
 docker-compose up -d
 
-# 注意：默认的 docker-compose.yaml 文件使用的是基础镜像，如果是 ARM 平台请手动进行修改。
+# 注意：默认的 docker-compose.yaml 文件使用的是基础镜像，如果是 ARM 平台请使用下面的文件手动进行修改。
 # 另外，默认把 80/8001/8002 端口分别映射成了 8100/8101/8102，以防出现端口占用的情况，访问时注意。
 # 如果需要调整为其他端口，可以自行修改下面的内容然后手动保存。
 ```
@@ -97,7 +96,9 @@ services:
       - "/elecv2p/efss:/usr/local/app/efss"
 ```
 
-*具体的端口映射和 volumes 目录，根据个人情况进行调整*
+*具体使用的镜像 image、端口映射和 volumes 目录，根据个人情况进行调整*
+
+*部分用户反映，在某些设备上需要调整 version 的版本才能启动。如果启动出现问题，可以尝试把 docker-compose.yaml 文件开头的 version: '3.7' 更改为 version: '3.3'。*
 
 然后在 docker-compose.yaml 同目录下执行以下任一命令
 ``` sh
@@ -123,12 +124,12 @@ docker logs elecv2p -f
 - 8001：  anyproxy 代理端口
 - 8002：  anyproxy 代理请求查看端口
 
-*80 端口可使用环境变量 **PORT** 进行修改，其他等可在 config.js 文件中进行修改。如果是使用 Docker 相关的安装方式，建议修改对应的映射端口，而不是直接修改源文件。*
+*80 端口可使用环境变量 **PORT** 进行修改，其他端口的修改可在 config.js 文件中进行。如果是使用 Docker 相关的安装方式，建议修改对应的映射端口，而不是直接修改源文件。*
 
 ## 根证书相关 - HTTPS 解密
 
-*如果不使用 RULES/REWRITE 相关功能，此步骤可跳过。*
-*升级启动后，如果不是使用之前的证书，需要重新下载安装信任根证书。*
+- *如果不使用 RULES/REWRITE 相关功能，此步骤可跳过。*
+- *升级启动后，如果不是使用之前的证书，需要重新下载安装信任根证书。*
 
 ### 安装证书
 
@@ -138,7 +139,7 @@ docker logs elecv2p -f
 - :80 -> MITM -> 安装证书
 - :8002 -> RootCA
 
-根证书位于 `$HOME/.anyproxy/certificates` 目录，可用自签证书替换
+根证书物理存储目录位于 `$HOME/.anyproxy/certificates`，可用自签证书进行替换。
 
 *windows 平台的证书存储位置选择 浏览->受信任的根证书颁发机构*
 
@@ -146,7 +147,7 @@ docker logs elecv2p -f
 
 任选一种方式
 
-- 将根证书（rootCA.crt/rootCA.key）复制到本项目 **rootCA** 目录，然后 :80 -> MITM -> 启用自签证书
+- 将根证书（rootCA.crt/rootCA.key）复制到本项目 **rootCA** 目录，然后打开 webUI -> MITM -> 启用自签证书
 - 直接将根证书复制到 **$HOME/.anyproxy/certificates** 目录下
 
 然后重启服务。使用新的证书后，记得重新下载安装信任证书，并清除由之前根证书签发的域名证书。
@@ -176,12 +177,11 @@ docker logs elecv2p -f
 
 *当重复次数大于等于 **999** 时，无限循环。*
 
-示例： 400 8 10 3 ，表示倒计时40秒，随机10秒，所以具体倒计时时间位于 40-50 秒之间，重复运行 8-11 次
+示例： 40 8 10 3 ，表示倒计时40秒，随机10秒，所以具体倒计时时间位于 40-50 秒之间，重复运行 8-11 次
 
 - cron 定时 
 
 时间格式：* * * * * * （五/六位 cron 时间格式）
-
 
 | * (0-59)   |  * (0-59)  |  * (0-23)  |  * (1-31)  |  * (1-12)  |  * (0-7)      
 :----------: | :--------: | :--------: | :--------: | :--------: | :---------:
@@ -202,7 +202,7 @@ docker logs elecv2p -f
 - FEED/RSS 订阅
 - IFTTT WEBHOOK
 - BARK 通知
-- SERVERCHAN 通知
+- 自定义通知
 
 FEED/RSS 订阅地址为 :80/feed。
 
@@ -211,7 +211,7 @@ FEED/RSS 订阅地址为 :80/feed。
 - 定时任务 JS 运行次数
 - 脚本中的自主调用通知
 
-IFTTT/BARK/SERVERCHAN 通知设置等其他详细说明参考: [07-feed&notify](https://github.com/elecV2/elecV2P-dei/tree/master/docs/07-feed&notify.md)
+IFTTT/BARK/自定义通知等相关设置参考: [07-feed&notify](https://github.com/elecV2/elecV2P-dei/tree/master/docs/07-feed&notify.md)
 
 ## DOCUMENTS&EXAMPLES
 

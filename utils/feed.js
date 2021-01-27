@@ -1,7 +1,7 @@
 const qs = require('qs')
 const RSS = require('rss')
-const axios = require('axios')
 
+const { eAxios: axios } = require('./eaxios')
 const { now } = require('./time')
 const { sType, sString, sJson, bEmpty } = require('./string')
 const { logger } = require('./logger')
