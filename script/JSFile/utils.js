@@ -1,6 +1,7 @@
 // 一些常用函数，可在其他 JS 文件中使用 require 进行调用
 // 比如 const { wait } = require('utils.js'); wait(3).then(()=>console.log('done'))
 // 默认函数仅供参考，可随意删除或者添加自己常用的函数
+// require 有缓存，本文件修改后，可能在其他引用脚本中并不会马上生效
 
 function now(){
   const tzoffset = (new Date()).getTimezoneOffset() * 60000

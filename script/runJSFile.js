@@ -123,6 +123,8 @@ function runJS(filename, jscode, addContext={}) {
       if (file.isExist(locfile)) return require(locfile)
       else return require(path)
     }
+    CONTEXT.final.require.cache = require.cache
+    CONTEXT.final.require.resolve = require.resolve
   }
   if (/^\/\/ +@grant +silent/im.test(jscode)) {
     CONTEXT.final.$feed = { push(){}, bark(){}, ifttt(){} }
