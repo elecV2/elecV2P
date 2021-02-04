@@ -29,8 +29,6 @@ const CONFIG_FEED = {
 }
 
 if (CONFIG.CONFIG_FEED) {
-  // 兼容 2.8.1 之前的版本
-  if (typeof CONFIG.CONFIG_FEED.iftttid === 'string') CONFIG.CONFIG_FEED.iftttid = { enable: true, key: CONFIG.CONFIG_FEED.iftttid }
   Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
 } else {
   CONFIG.CONFIG_FEED = CONFIG_FEED

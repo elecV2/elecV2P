@@ -52,17 +52,16 @@ docker run --restart=always -d --name elecv2p -e TZ=Asia/Shanghai -p 8100:80 -p 
 # 使用 ARM 镜像及持久化存储
 docker run --restart=always -d --name elecv2p -e TZ=Asia/Shanghai -p 8100:80 -p 8101:8001 -p 8102:8002 -v /elecv2p/JSFile:/usr/local/app/script/JSFile -v /elecv2p/Store:/usr/local/app/script/Store elecv2/elecv2p:arm64
 
-# 以上命令仅供参考，执行任意一条即可，根据实际需求进行调整。
+# 以上命令仅供参考，根据实际情况更改映射端口/时区/镜像等参数。
 
 # 升级 Docker 镜像。（如果没有使用持久化存储，升级后所有个人数据会丢失，请提前备份）
-docker rm elecv2p              # 先删除旧的容器
+docker rm -f elecv2p           # 先删除旧的容器
 docker pull elecv2/elecv2p     # 再下载新的镜像。镜像名注意要和之前使用的相对应
 # 再使用之前的 docker run xxxx 命令重新启动一下
 ```
 
 ### 方法三：DOCKER-COMPOSE （推荐）
 
-启动命令
 ``` sh
 mkdir /elecv2p && cd /elecv2p
 curl -sL https://git.io/JLw7s > docker-compose.yaml
@@ -96,9 +95,8 @@ services:
       - "/elecv2p/efss:/usr/local/app/efss"
 ```
 
-*具体使用的镜像 image、端口映射和 volumes 目录，根据个人情况进行调整*
-
-*部分用户反映，在某些设备上需要调整 version 的版本才能启动。如果启动出现问题，可以尝试把 docker-compose.yaml 文件开头的 version: '3.7' 更改为 version: '3.3'。*
+- *具体使用的镜像 image、端口映射和 volumes 目录，根据个人情况进行调整*
+- *部分用户反映，在某些设备上需要调整 version 的版本才能启动。如果启动出现问题，可以尝试把文件开头的 version: '3.7' 更改为 version: '3.3'。*
 
 然后在 docker-compose.yaml 同目录下执行以下任一命令
 ``` sh
@@ -121,8 +119,8 @@ docker logs elecv2p -f
 ## 默认端口
 
 - 80：    后台管理界面。添加规则/JS 文件管理/定时任务管理/MITM 证书 等
-- 8001：  anyproxy 代理端口
-- 8002：  anyproxy 代理请求查看端口
+- 8001：  ANYPROXY 代理端口
+- 8002：  ANYPROXY 代理请求查看端口
 
 *80 端口可使用环境变量 **PORT** 进行修改，其他端口的修改可在 config.js 文件中进行。如果是使用 Docker 相关的安装方式，建议修改对应的映射端口，而不是直接修改源文件。*
 
@@ -163,7 +161,7 @@ docker logs elecv2p -f
 ![task](https://raw.githubusercontent.com/elecV2/elecV2P-dei/master/docs/res/taskall.png)
 
 目前支持两种定时方式：
-- 倒计时 schedule
+- 倒计时
 - cron 定时
 
 ### 时间格式：

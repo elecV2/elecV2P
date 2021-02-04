@@ -8,7 +8,7 @@ const anycrtpath = require('os').homedir() + '/.anyproxy/certificates'
 const rootCApath = path.join(__dirname, "../rootCA")
 if(!fs.existsSync(rootCApath)) fs.mkdirSync(rootCApath)
 
-const { logger } = require('../utils/')
+const { logger } = require('../utils')
 const clog = new logger({ head: 'crtFunc' })
 
 /**

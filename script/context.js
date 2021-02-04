@@ -9,7 +9,7 @@ const exec = require('../func/exec')
 
 const formReq = {
   headers(req) {
-    const newheaders = req.headers ? sJson(req.headers, true) : {}
+    const newheaders = sJson(req.headers, true)
     delete newheaders['Content-Length']
     delete newheaders['content-length']
     if (!newheaders['Content-Type'] && !newheaders['content-type']) newheaders['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
