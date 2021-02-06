@@ -1,4 +1,8 @@
-elecV2P 重要更新日志：
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志：(最新版本 v3.1.3)
+
+v3.1.3
+ • 优化通过 token 访问 webUI，用于绕过 IP 屏蔽
+ • 访问方式：http://xxx:80/?token=webhook token(在 SETTING 界面获取)
 
 v3.0.9
  • 增加自定义通知方式。（同时删除了默认的 SERVER 酱通知）

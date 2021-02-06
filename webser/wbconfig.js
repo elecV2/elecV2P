@@ -122,6 +122,7 @@ module.exports = app => {
         break
       case "init":
         CONFIG.init = Object.assign(CONFIG.init || {}, req.body.data)
+        list.put('config.json', JSON.stringify(CONFIG, null, 2))
         res.end('add initialization runjs: ' + req.body.data.runjs)
         break
       default:{

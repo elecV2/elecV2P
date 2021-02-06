@@ -12,7 +12,7 @@ const CONFIG = {
   wbrtoken: 'a8c259b2-67fe-4c64-8700-7bfdf1f55cb3',    // webhook token（建议修改）
   efss: {                    // elecV2P file storage system
     enable: true,            // 默认开启。关闭： false
-    directory: './efss'      // 文件存储位置  
+    directory: './efss'      // 文件存储位置
   }
 };
 
@@ -28,7 +28,7 @@ const CONFIG = {
 
   if (CONFIG.efss.enable) {
     const efssF = path.resolve(__dirname, CONFIG.efss.directory)
-    if(!fs.existsSync(efssF)) fs.mkdirSync(efssF)
+    if(!fs.existsSync(efssF)) fs.mkdirSync(efssF, {recursive: true})
   }
 
   CONFIG.version = require('./package.json').version

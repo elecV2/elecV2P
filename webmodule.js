@@ -7,7 +7,7 @@ const { CONFIG, CONFIG_Port } = require('./config')
 const { websocketSer } = require('./func/websocket')
 
 const { logger } = require('./utils/logger')
-const clog = new logger({ head: 'webServer' })
+const clog = new logger({ head: 'webServer', level: 'debug' })
 
 const { wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook, wbefss } = require('./webser')
 
@@ -21,20 +21,31 @@ module.exports = () => {
       next()
       return
     }
-    if (CONFIG.wbrtoken && (req.query.token === CONFIG.wbrtoken || req.body.token === CONFIG.wbrtoken)) {
-      next()
-      return
+    let ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress
+    if (CONFIG.wbrtoken) {
+      let token = req.query.token || req.body.token
+      if (!token) {
+        let ref = req.get('Referer')
+        if (ref) {
+          ref = new URL(ref)
+          token = new URLSearchParams(ref.search).get('token')
+        }
+      }
+      if (token === CONFIG.wbrtoken) {
+        clog.debug(ipAddress, 'is access elecV2P server by webhook token')
+        next()
+        return
+      }
     }
     const blacklist = CONFIG.SECURITY.blacklist || []
     const whitelist = CONFIG.SECURITY.whitelist || []
 
-    let ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress
     if (ipAddress.substr(0, 7) == "::ffff:") ipAddress = ipAddress.substr(7)
     if(whitelist.indexOf(ipAddress) !== -1 || (blacklist.indexOf('*') === -1 && blacklist.indexOf(ipAddress) === -1)) {
       next()
     } else {
-      clog.error(ipAddress, 'is try to access sever.')
-      res.send('don\'t allow to access.')
+      clog.error(ipAddress, 'is try to access elecV2P sever.')
+      res.send('don\'t allow to access. \n\nPowered BY elecV2P: https://github.com/elecV2/elecV2P')
     }
   })
 
