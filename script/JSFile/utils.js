@@ -3,11 +3,6 @@
 // 默认函数仅供参考，可随意删除或者添加自己常用的函数
 // require 有缓存，本文件修改后，可能在其他引用脚本中并不会马上生效
 
-function now(){
-  const tzoffset = (new Date()).getTimezoneOffset() * 60000
-  return new Date(Date.now() - tzoffset).toISOString().slice(0, -1).replace('T', ' ')
-}
-
 /**
  * 等待 s 秒，返回数据 data
  * @param     {Number}     s       等待时间，单位：秒。
@@ -29,6 +24,11 @@ function wait(s, show=false, data=null) {
       }
     }, 1000)
   })
+}
+
+function sTime(time, ms=false){
+  const tzoffset = (new Date()).getTimezoneOffset() * 60000
+  return new Date((time || Date.now()) - tzoffset).toISOString().slice(0, ms ? -1 : -5).replace('T', ' ')
 }
 
 function sType(obj) {
@@ -57,4 +57,4 @@ function sJson(str, force=false) {
   }
 }
 
-module.exports = { now, wait, sType, sJson }
+module.exports = { wait, sTime, sType, sJson }

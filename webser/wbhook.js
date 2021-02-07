@@ -82,7 +82,7 @@ function handler(req, res){
   case 'status':
     clog.info(clientip, 'get server status')
     const status = nStatus()
-    status.start = now(CONFIG.start)
+    status.start = now(CONFIG.start, false)
     status.version = CONFIG.version
     res.end(JSON.stringify(status))
     break

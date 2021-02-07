@@ -3,9 +3,13 @@
 function execP(command, env={}) {
   return new Promise((resolve, reject)=>{
     $exec(command, {
-      cwd: './script/Shell', env,
-      cb(data, error){
-        error ? reject(error) : resolve(data)
+      cwd: './script/Shell', env, call: true,
+      cb(data, error, finish){
+        if (finish) {
+          console.log(command, 'finished.')
+          resolve(data)
+        }
+        error ? reject(error) : console.log(data)
       }
     })
   })

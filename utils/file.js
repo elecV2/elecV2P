@@ -204,7 +204,7 @@ const store = {
       fs.unlinkSync(spath)
       return true
     }
-    clog.error('store key', key, 'no exist.')
+    clog.debug('store key', key, 'no exist.')
     return false
   },
   all() {

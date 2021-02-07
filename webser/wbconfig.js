@@ -70,7 +70,7 @@ module.exports = app => {
       case "config":
         let data = req.body.data
         Object.assign(CONFIG, data)
-        if (data.efss.enable !== false) efssSet(CONFIG.efss)
+        if (data.efss && data.efss.enable !== false) efssSet(CONFIG.efss)
         if (CONFIG.CONFIG_FEED) CONFIG.CONFIG_FEED.homepage = CONFIG.homepage
         Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
         Object.assign(CONFIG_RUNJS, CONFIG.CONFIG_RUNJS)
