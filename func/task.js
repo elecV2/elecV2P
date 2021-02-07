@@ -112,12 +112,23 @@ function jobFunc(job) {
     }
   } else if (job.type === 'taskstart') {
     return ()=>{
+      if (!TASKS_INFO[job.target]) {
+        clog.error('job', job.target, 'not exist.')
+        return
+      }
+      if (!TASKS_WORKER[job.target]) {
+        TASKS_WORKER[job.target] = new Task(TASKS_INFO[job.target], jobFunc(TASKS_INFO[job.target].job))
+      }
       TASKS_WORKER[job.target].start()
       TASKS_INFO[job.target].running = true
       wsSer.send({type: 'task', data: {tid: job.target, op: 'start'}})
     }
   } else if (job.type === 'taskstop') {
     return ()=>{
+      if (!TASKS_INFO[job.target] || !TASKS_WORKER[job.target]) {
+        clog.error('job', job.target, 'not exist.')
+        return
+      }
       TASKS_WORKER[job.target].stop()
       TASKS_INFO[job.target].running = false
       wsSer.send({type: 'task', data: {tid: job.target, op: 'stop'}})

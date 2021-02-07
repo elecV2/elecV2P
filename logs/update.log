@@ -1,4 +1,7 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志：(最新版本 v3.1.4)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志：(最新版本 v3.1.5)
+
+v3.1.5
+ • 优化 TASK 列表保存逻辑
 
 v3.1.3
  • 优化通过 token 访问 webUI，用于绕过 IP 屏蔽

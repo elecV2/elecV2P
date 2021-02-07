@@ -59,7 +59,15 @@ module.exports = app => {
 
   app.post("/task", (req, res)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), `save task list`)
-    if (sType(req.body) === 'object' && list.put('task.list', req.body)) {
+    if (sType(req.body) === 'object') {
+      for (let tid in req.body) {
+        if (req.body[tid].running === false && TASKS_INFO[tid]) {
+          TASKS_INFO[tid] = req.body[tid]
+          TASKS_INFO[tid].id = tid
+          TASKS_WORKER[tid] = new Task(TASKS_INFO[tid], jobFunc(req.body[tid].job))
+        }
+      }
+      list.put('task.list', req.body)
       res.end('task list success saved!')
     } else {
       clog.error('fail to save', req.body, 'to task.list')
