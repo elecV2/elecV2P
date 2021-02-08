@@ -25,7 +25,8 @@ const CONFIG_FEED = {
     gaptime: 60,               // 合并多少时间内的通知，单位：秒
     number: 10,                // 最大合并通知条数
     andor: false,              // 上面两项的逻辑。 true: 同时满足，false: 满足任一项
-  }          
+  },
+  maxbLength: 1200,            // 通知主体最大长度。（超过后会分段发送）
 }
 
 if (CONFIG.CONFIG_FEED) {
@@ -200,9 +201,19 @@ function feedPush(title, description, url) {
       date: guid,
     })
   }
-  iftttPush(title, description, url)
-  barkPush(title, description, url)
-  custPush(title, description, url)
+  if (description.length > CONFIG_FEED.maxbLength) {
+    let pieces = Math.ceil(description.length / CONFIG_FEED.maxbLength)
+    for (let i=0; i<pieces; i++) {
+      let pdes = description.slice(i*CONFIG_FEED.maxbLength, (i+1)*CONFIG_FEED.maxbLength)
+      iftttPush(`${title} ${i+1}`, pdes, url)
+      barkPush(`${title} ${i+1}`, pdes, url)
+      custPush(`${title} ${i+1}`, pdes, url)
+    }
+  } else {
+    iftttPush(title, description, url)
+    barkPush(title, description, url)
+    custPush(title, description, url)
+  }
 }
 
 const mergefeed = {

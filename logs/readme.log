@@ -2,16 +2,16 @@ elecV2P 运行日志文件夹。
 
 该目录下所有文件可随时删除，并不影响运行。
 
-手动删除：
+手动删除（在 shell 环境下执行以下命令）：
 cd logs
-rm -f *  (该指令会删除当前目录下所有文件，请不在其他目录随意使用)
+rm -f *  (该指令会删除当前目录下所有文件，请不要在其他目录随意使用)
 
 清除单个日志文件：
 rm -f 日志文件名
 
 自动删除：
 使用自带的 deletelog.js 配合定时任务进行删除。
-在 webUI -> TASK 界面添加一个定时任务，名称随意，时间自行选择，任务选择执行 JS，后面填写 deletelog.js。
+在 webUI -> TASK 界面添加一个定时任务，名称随意，时间自行选择，任务选择执行 JS，后面填写 deletelog.js 或远程链接 https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/deletelog.js。
 
-例如，设置每天23点59分清除一下日志文件：
-清空日志 | cron定时 | 59 23 * * * | 运行 JS | deletelog.js
+例如，设置每天23点59分清空日志：
+清空日志 | cron定时 | 59 23 * * * | 运行 JS | https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/deletelog.js
