@@ -1,6 +1,4 @@
-const { logger, sType, iRandom } = require('../utils')
-
-const { wsSer } = require('./websocket')
+const { logger, feedAddItem, sType, iRandom, wsSer } = require('../utils')
 
 const clog = new logger({ head: 'schedule', level: 'debug', cb: wsSer.send.func('tasklog')  })
 
@@ -70,12 +68,19 @@ module.exports = class {
       this.task.running = false
       clearInterval(this.temIntval)
       clog.log('schedule task:', this.task.name, flag)
-      if(this.task.id) wsSer.send({type: 'task', data: {tid: this.task.id, op: 'stop'}})
+      if (this.task.id) {
+        wsSer.send({type: 'task', data: {tid: this.task.id, op: 'stop'}})
+      }
+      if (flag === 'finished') {
+        feedAddItem(`scheduletask ${this.task.name} finished`, 'time: ' + this.task.time)
+      }
     }
   }
 
   delete(){
-    if (this.temIntval) clearInterval(this.temIntval)
+    if (this.temIntval) {
+      clearInterval(this.temIntval)
+    }
     if (this.task) {
       clog.log("delete schedule task:", this.task.name)
       delete this.task

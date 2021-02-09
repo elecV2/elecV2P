@@ -1,7 +1,11 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志：(最新版本 v3.1.6)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志：(最新版本 v3.1.7)
+
+v3.1.7
+ • 增加通知主体内容最大长度的设置选项
+ • 增加在前端网页显示通知的选项
 
 v3.1.6
- • 当通知主体内容长度超过 1200 时，自动分段通知
+ • 当通知主体内容长度超过 1200 时，自动分段发送
 
 v3.1.5
  • 优化 TASK 列表保存逻辑

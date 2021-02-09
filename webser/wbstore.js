@@ -1,5 +1,4 @@
-const { wsSer } = require('../func/websocket')
-const { logger, store, sJson } = require('../utils')
+const { logger, store, sJson, wsSer } = require('../utils')
 const clog = new logger({ head: 'wbstore', cb: wsSer.send.func('jsmanage'), lever: 'debug' })
 
 module.exports = app => {

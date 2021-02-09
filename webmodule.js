@@ -4,9 +4,8 @@ const express = require('express')
 const compression = require('compression')
 
 const { CONFIG, CONFIG_Port } = require('./config')
-const { websocketSer } = require('./func/websocket')
 
-const { logger } = require('./utils/logger')
+const { logger, websocketSer } = require('./utils')
 const clog = new logger({ head: 'webServer', level: 'debug' })
 
 const { wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook, wbefss } = require('./webser')

@@ -1,9 +1,8 @@
 const vm = require('vm')
 
-const { logger, feedAddItem, now, sType, errStack, downloadfile, jsfile, file } = require('../utils')
+const { logger, feedAddItem, now, sType, errStack, downloadfile, jsfile, file, wsSer } = require('../utils')
 const clog = new logger({ head: 'runJSFile', level: 'debug' })
 
-const { wsSer } = require('../func/websocket')
 const { context } = require('./context')
 
 const { CONFIG } = require('../config')

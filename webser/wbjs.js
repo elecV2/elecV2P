@@ -1,8 +1,6 @@
 const formidable = require('formidable')
 
-const { wsSer } = require('../func/websocket')
-
-const { logger, downloadfile, eAxios, errStack, sString, sType, jsfile, file } = require('../utils')
+const { logger, downloadfile, eAxios, errStack, sString, sType, jsfile, file, wsSer } = require('../utils')
 const clog = new logger({ head: 'wbjsfile', cb: wsSer.send.func('jsmanage') })
 
 const { runJSFile, JSLISTS, CONFIG_RUNJS } = require('../script')

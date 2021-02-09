@@ -13,9 +13,11 @@ module.exports = app => {
     let data = req.body.data
     switch(req.body.type){
       case "op":
-        CONFIG_FEED.enable = data
-        clog.notify(`FEED 已 ${ data ? '开启' : '关闭' }`)
-        res.end(`FEED 已 ${ data ? '开启' : '关闭' }`)
+        CONFIG_FEED.enable = data.enable
+        CONFIG_FEED.maxbLength = data.maxbLength
+        CONFIG_FEED.webmessage = data.webmessage
+        clog.notify(`FEED 已 ${ data.enable ? '开启' : '关闭' }`)
+        res.end(`FEED 已 ${ data.enable ? '开启' : '关闭' }`)
         break
       case "clear":
         feedClear()

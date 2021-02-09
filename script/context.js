@@ -2,9 +2,9 @@ const qs = require('qs')
 const cheerio = require('cheerio')
 
 const { CONFIG } = require('../config')
-const { errStack, euid, sType, sString, sJson, feedPush, iftttPush, barkPush, custPush, store, eAxios, jsfile, file, downloadfile } = require('../utils')
-const { wsSer, message } = require('../func/websocket')
-const exec = require('../func/exec')
+const { errStack, euid, sType, sString, sJson, feedPush, iftttPush, barkPush, custPush, store, eAxios, jsfile, file, downloadfile, wsSer, message } = require('../utils')
+
+const { exec } = require('../func/exec')
 // const clog = new logger({ head: 'context', level: 'debug' })
 
 const formReq = {

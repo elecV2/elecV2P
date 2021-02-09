@@ -1,6 +1,7 @@
 const qs = require('qs')
 const RSS = require('rss')
 
+const { message } = require('./websocket')
 const { eAxios: axios } = require('./eaxios')
 const { now } = require('./time')
 const { sType, sString, sJson, bEmpty } = require('./string')
@@ -27,6 +28,9 @@ const CONFIG_FEED = {
     andor: false,              // 上面两项的逻辑。 true: 同时满足，false: 满足任一项
   },
   maxbLength: 1200,            // 通知主体最大长度。（超过后会分段发送）
+  webmessage: {
+    enable: false,             // 是否在网页前端显示通知
+  }
 }
 
 if (CONFIG.CONFIG_FEED) {
@@ -189,7 +193,9 @@ function feedPush(title, description, url) {
   } else {
     description = sString(description).trim()
   }
-
+  if (CONFIG_FEED.webmessage && CONFIG_FEED.webmessage.enable) {
+    message.success(`${title}\n${description}\n${url || ''}`, 10)
+  }
   if (CONFIG_FEED.enable) {
     const date = new Date()
     const guid = date.getTime() - date.getTimezoneOffset()*60*1000
@@ -201,7 +207,7 @@ function feedPush(title, description, url) {
       date: guid,
     })
   }
-  if (description.length > CONFIG_FEED.maxbLength) {
+  if (CONFIG_FEED.maxbLength > 0 && description.length > CONFIG_FEED.maxbLength) {
     let pieces = Math.ceil(description.length / CONFIG_FEED.maxbLength)
     for (let i=0; i<pieces; i++) {
       let pdes = description.slice(i*CONFIG_FEED.maxbLength, (i+1)*CONFIG_FEED.maxbLength)

@@ -2,11 +2,10 @@ const nodecron = require('node-cron')
 
 const cron = require('./crontask.js')
 const schedule = require('./schedule')
-const exec = require('./exec')
-const { wsSer } = require('./websocket')
+const { exec } = require('./exec')
 const { runJSFile } = require('../script/runJSFile')
 
-const { logger, feedAddItem, sJson, list, file } = require('../utils')
+const { logger, feedAddItem, sJson, list, file, wsSer } = require('../utils')
 const clog = new logger({ head: 'funcTask', cb: wsSer.send.func('tasklog'), file: 'funcTask' })
 
 class Task {
@@ -24,11 +23,11 @@ class Task {
     if (this.info.type === 'cron') {
       this.task = new cron(this.info, this.job)
       this.task.start()
-      feedAddItem(`start crontask ${this.info.name} `, 'time: ' + this.info.time)
+      feedAddItem(`start crontask ${this.info.name}`, 'time: ' + this.info.time)
     } else if (this.info.type === 'schedule') {
       this.task = new schedule(this.info, this.job)
       this.task.start()
-      feedAddItem('start scheduletask' + this.info.name, 'time: ' + this.info.time)
+      feedAddItem(`start scheduletask ${this.info.name}`, 'time: ' + this.info.time)
     } else {
       clog.error('task type only support: cron/schedule')
     }

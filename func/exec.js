@@ -1,9 +1,7 @@
 const { exec } = require('child_process')
 
-const { logger, file } = require('../utils')
+const { logger, file, wsSer } = require('../utils')
 const clog = new logger({ head: 'funcExec', file: 'funcExec' })
-
-const { wsSer } = require('./websocket')
 
 const CONFIG_exec = {
   shellcwd: process.cwd(),       // minishell cwd
@@ -141,4 +139,4 @@ function execFunc(command, options, cb) {
   })
 }
 
-module.exports = execFunc
+module.exports = { exec: execFunc }
