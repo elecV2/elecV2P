@@ -20,7 +20,8 @@
     "cheerio": "^1.0.0-rc.5",
     "formidable": "^1.2.2",
     "node-cron": "^2.0.3",
-    "rss": "^1.2.2"
+    "rss": "^1.2.2",
+    "pm2": "^4.5.4"
   },
   "devDependencies": {},
   "nodemonConfig": {
