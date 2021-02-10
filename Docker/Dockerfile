@@ -8,7 +8,7 @@ RUN yarn install --prod
 RUN chmod -R 777 /usr/local/app
 
 ENV PATH /usr/local/app/node_modules/.bin:$PATH
-USER node
+
 EXPOSE 80 8001 8002
 
 CMD ["pm2-runtime", "index.js"]

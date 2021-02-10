@@ -13,7 +13,7 @@ WORKDIR /usr/local/app
 COPY --from=builder /usr/local/app/node_modules /usr/local/app/node_modules
 
 ENV PATH /usr/local/app/node_modules/.bin:$PATH
-USER node
+
 EXPOSE 80 8001 8002
 
 CMD ["pm2-runtime", "index.js"]
