@@ -1,4 +1,8 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志：(最新版本 v3.1.7)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志：(最新版本 v3.1.8)
+
+v3.1.8
+ • 尝试默认以 PM2 的方式启动。(调试中，不建议更新)
+ • 添加默认脚本 <a href='https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js' target='_blank'>softupdate.js</a> , 用于软更新升级
 
 v3.1.7
  • 增加通知主体内容最大长度的设置选项
@@ -19,7 +23,7 @@ v3.0.9
 
 v3.0.8
  • 通过脚本生成 UI 界面初版完成
- • 测试脚本：https://raw.githubusercontent.com/elecV2/elecV2P-dei/master/examples/JSTEST/evui-dou.js
+ • 测试脚本：<a href='https://raw.githubusercontent.com/elecV2/elecV2P-dei/master/examples/JSTEST/evui-dou.js' target='_blank'>evui-dou.js</a>
 
 v3.0.3
  • 测试通过脚本生成 UI 界面的功能（$evui）
