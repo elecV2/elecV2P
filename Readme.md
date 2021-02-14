@@ -230,6 +230,7 @@ TG 交流群：https://t.me/elecV2G (主要为方便群友使用交流，群主2
 - [expressjs](https://expressjs.com)
 - [node-cron](https://github.com/merencia/node-cron)
 - [node-rss](https://github.com/dylang/node-rss)
-- [vue](http://vuejs.org/)
+- [pm2](http://pm2.keymetrics.io)
+- [vue](http://vuejs.org)
 - [vue-draggable-resizable](https://github.com/mauricius/vue-draggable-resizable)
 - [Ant Design Vue](https://www.antdv.com)

@@ -193,6 +193,7 @@ function feedPush(title, description, url) {
   } else {
     description = sString(description).trim()
   }
+  url = formUrl(url)
   if (CONFIG_FEED.webmessage && CONFIG_FEED.webmessage.enable) {
     message.success(`${title}\n${description}\n${url || ''}`, 10)
   }
@@ -202,7 +203,7 @@ function feedPush(title, description, url) {
     clog.notify('add feed item', title, description)
     feed.item({
       title: title, description,
-      url: formUrl(url) || CONFIG_FEED.homepage + '/feed/?new=' + guid,
+      url: url || CONFIG_FEED.homepage + '/feed/?new=' + guid,
       guid, author: 'elecV2P',
       date: guid,
     })

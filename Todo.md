@@ -26,7 +26,7 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
-- [x] Docker 环境下默认以 pm2 的方式启动
+- [x] Docker 默认启动方式更改为 PM2
 - [x] 增加在前端网页显示通知的功能
 - [x] 优化通过 token 访问 webUI（绕过 IP 屏蔽）
 - [x] 实现自定义通知

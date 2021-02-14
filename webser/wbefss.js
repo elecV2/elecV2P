@@ -11,14 +11,15 @@ const CONFIG_efss = {
 }
 
 module.exports = app => {
-  app.get('/efss', (req, res)=>{
+  app.get('/efss/:subpath?', (req, res)=>{
+    const subpath = req.params.subpath ? '/' + req.params.subpath : ''
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'get efss resource')
 
     if (CONFIG.efss.enable === false) {
       res.end('efss is closed!')
       return
     }
-    const efssF = file.get(CONFIG.efss.directory, 'path')
+    const efssF = file.get(CONFIG.efss.directory + subpath, 'path')
     if (!file.isExist(efssF)) {
       clog.error('efss folder dont exist')
       res.end(efssF + ' dont exist')
@@ -35,20 +36,27 @@ module.exports = app => {
       .efss_file::-webkit-file-upload-button {visibility: hidden;}
       .efss_file:before {content: '选择文件';display: inline-flex;width: 108px;padding: 6px 12px;align-items: center;justify-content: space-around;vertical-align: middle;border-radius: 8px;outline: none;white-space: nowrap;-webkit-user-select: none;cursor: pointer;font-size: 18px;text-align: center;box-sizing: border-box;background: var(--btn-bk);color: var(--secd-fc);}
       .efss_submit {border: none;background: var(--main-bk);color: var(--main-fc);padding: 6px 16px;border-radius: 8px;font-size: 16px;}
-      .efssa{display: flex;justify-content: space-between;align-items: center;word-break: break-all;margin: 6px 0;padding: 1px;font-size: 18px;font-family: 'Microsoft YaHei', -apple-system, Arial;text-decoration: none;background: #FFF;color: #003153;border-bottom: 1px solid #00315388;}
+      .efssa{display: flex;justify-content: space-between;align-items: center;word-break: break-all;margin: 6px 0;padding: 1px 8px;font-size: 18px;font-family: 'Microsoft YaHei', -apple-system, Arial;text-decoration: none;background: #FFF;color: #003153;border-bottom: 1px solid #00315388;}
       .efss_span{font-size:14px;width: 86px;text-align: right;}
       .efssa:hover>.efss_span{opacity:.6}
+      .efsslist {border: 1px solid;border-radius: 8px;}
+      .efsslist :last-child {border-bottom: none;}
     </style>
     </head>
-    <body><div class='efss'><form action="/efss" enctype="multipart/form-data" method="post" class="efss_form"><input type="file" name="efss" multiple="multiple" class="efss_file"><input type="submit" value="开始上传" class="efss_submit"></form>`)
+    <body>
+      <div class='efss'>
+        <form action="/efss${subpath}" enctype="multipart/form-data" method="post" class="efss_form"><input type="file" name="efss" multiple="multiple" class="efss_file"><input type="submit" value="开始上传" class="efss_submit">
+        </form>
+        <div class='efsslist'>`)
     file.aList(efssF, { deep: CONFIG_efss.deep, limit: CONFIG_efss.max }).forEach(fpath=>{
       const spath = fpath.path.replace(efssF, '').slice(1).replace(/\\/g, '/')
-      res.write(`<a class='efssa' href='/efss/${ spath }' target='_blank'>${ spath } <span class='efss_span'>${ fpath.size }</span></a>`)
+      res.write(`<a class='efssa' href='/efss${subpath}/${ spath }' target='_blank'>${ spath } <span class='efss_span'>${ fpath.size }</span></a>`)
     })
-    res.end('</div></body>')
+    res.end('</div></div></body>')
   })
 
-  app.post('/efss', (req, res)=>{
+  app.post('/efss/:subpath?', (req, res)=>{
+    const subpath = req.params.subpath ? '/' + req.params.subpath : ''
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "uploading efss file")
     const uploadfile = new formidable.IncomingForm()
     uploadfile.maxFieldsSize = 200 * 1024 * 1024 // 限制为最大 200M
@@ -67,7 +75,7 @@ module.exports = app => {
         res.end('a file is expect.')
         return
       }
-      const efssF = file.get(CONFIG.efss.directory, 'path')
+      const efssF = file.get(CONFIG.efss.directory + subpath, 'path')
       if (files.efss.length) {
         files.efss.forEach(sgfile=>{
           clog.notify('upload file:', sgfile.name, 'to efss')
@@ -78,15 +86,16 @@ module.exports = app => {
         file.copy(files.efss.path, efssF + '/' + files.efss.name)
       }
       // res.end('upload success!')
-      res.redirect('/efss')
+      res.redirect('/efss'+subpath)
     })
   })
 
-  app.delete('/efss', (req, res)=>{
+  app.delete('/efss/:subpath?', (req, res)=>{
+    const subpath = req.params.subpath ? '/' + req.params.subpath : ''
     const fn = req.body.fn
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "delete efss file", fn)
     if (fn) {
-      if (file.delete(fn, file.get(CONFIG.efss.directory, 'path'))) {
+      if (file.delete(fn, file.get(CONFIG.efss.directory + subpath, 'path'))) {
         res.end(fn + ' is deleted!')
         clog.info(fn, 'is deleted!')
       } else {
