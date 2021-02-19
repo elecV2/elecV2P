@@ -15,7 +15,6 @@
 - 说明文档 [1.0 基本完成，优化中...]
 - 使用 JSON 重构 Lists 数据结构
 - download process(cb)
-- EFSS 删除文件/文件管理模块
 - Backup 备份导出/导入(lists/store)
 - minishell 上传/下载文件（编辑?）
 - 文件编辑器（component || libery）
@@ -26,6 +25,7 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [X] EFSS 删除文件/文件管理模块（初版完成）
 - [x] Docker 默认启动方式更改为 PM2
 - [x] 增加在前端网页显示通知的功能
 - [x] 优化通过 token 访问 webUI（绕过 IP 屏蔽）

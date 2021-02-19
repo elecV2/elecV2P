@@ -12,10 +12,9 @@ module.exports = app => {
 
   function dynStatic(path) {
     let static = express.static(path)
-    const dyn = function (req, res, next) {
-      return static(req, res, next)
-    }
-    dyn.setPath = function(newPath) {
+    const dyn = (req, res, next) => static(req, res, next)
+
+    dyn.setPath = (newPath) => {
       static = express.static(newPath)
     }
     return dyn
@@ -25,7 +24,7 @@ module.exports = app => {
     if (cefss.enable === false) {
       clog.notify('efss is closed')
       CONFIG.efss.enable = false
-      return 'efss is closed'
+      return {rescode: 0, message: 'efss is closed'}
     } else {
       const efssF = file.get(cefss.directory, 'path')
       if (file.isExist(efssF)) {
@@ -33,10 +32,10 @@ module.exports = app => {
         dyn.setPath(efssF)
         CONFIG.efss.enable = true
         CONFIG.efss.directory = cefss.directory
-        return 'reset efss directory success!'
+        return {rescode: 0, message: 'reset efss directory success!'}
       } else {
         clog.error(cefss.directory + ' dont exist')
-        return cefss.directory + ' dont exist'
+        return {rescode: 404, message: cefss.directory + ' dont exist'}
       }
     }
   }
@@ -53,7 +52,6 @@ module.exports = app => {
           uagent: CONFIG_RULE.uagent,
           wbrtoken: CONFIG.wbrtoken,
           minishell: CONFIG.minishell || false,
-          efss: CONFIG.efss,
           security: CONFIG.SECURITY || {},
           init: CONFIG.init
         }))
@@ -70,7 +68,6 @@ module.exports = app => {
       case "config":
         let data = req.body.data
         Object.assign(CONFIG, data)
-        if (data.efss && data.efss.enable !== false) efssSet(CONFIG.efss)
         if (CONFIG.CONFIG_FEED) CONFIG.CONFIG_FEED.homepage = CONFIG.homepage
         Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
         Object.assign(CONFIG_RUNJS, CONFIG.CONFIG_RUNJS)
@@ -110,7 +107,9 @@ module.exports = app => {
         }
         break
       case "efss":
-        res.end(efssSet(req.body.data))
+        let msg = efssSet(req.body.data)
+        if (msg.rescode === 0) list.put('config.json', JSON.stringify(CONFIG, null, 2))
+        res.end(JSON.stringify(msg))
         break
       case "security":
         CONFIG.SECURITY = req.body.data

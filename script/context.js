@@ -131,6 +131,9 @@ class surgeContext {
         status: response.status,
         headers: response.headers,
       }
+      if (resps['headers'] && resps['headers']['set-cookie'] && sType(resps['headers']['set-cookie']) === 'array') {
+        resps['headers']['Set-Cookie'] = resps['headers']['set-cookie'].join(',')
+      }
       sbody = sString(response.data)
     }).catch(err=>{
       this.fconsole.error('$httpClient', req.method, req.url, err.message)
@@ -209,10 +212,13 @@ class quanxContext {
       return new Promise((resolve, reject) => {
         eAxios(formReq.uest(req)).then(response=>{
           resp = {
-                statusCode: response.status,
-                headers: response.headers,
-                body: sString(response.data)
-              }
+            statusCode: response.status,
+            headers: response.headers,
+            body: sString(response.data)
+          }
+          if (resp['headers'] && resp['headers']['set-cookie'] && sType(resp['headers']['set-cookie']) === 'array') {
+            resp['headers']['Set-Cookie'] = resp['headers']['set-cookie'].join(',')
+          }
           resolve(resp)
         }).catch(error=>{
           this.fconsole.error('$task.fetch', req.url, error.stack)
