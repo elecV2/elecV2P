@@ -2,6 +2,7 @@
 
 v3.2.0
  • EFSS 文件管理模块优化
+ • <a href='https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js' target='_blank'>softupdate.js</a> bug fix
 
 v3.1.8
  • Docker 环境下默认以 pm2 的方式启动 node

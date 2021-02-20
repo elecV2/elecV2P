@@ -6,8 +6,7 @@ const clog = new logger({ head: 'wbefss' })
 const { CONFIG } = require('../config')
 
 const CONFIG_efss = {
-  max: 200,        // 最大文件显示数。 v3.2.0 改版后无效，待删除。
-  deep: -1,        // 显示文件的最大目录深度。-1: 所有子文件夹，0: 不显示，1: 显示1级目录文件。
+  max: 600,        // 最大文件显示数。默认：600，-1 表示不限制
 }
 
 module.exports = app => {
@@ -17,7 +16,7 @@ module.exports = app => {
     const efssF = file.get(CONFIG.efss.directory, 'path')
     res.end(JSON.stringify({
       config: CONFIG.efss,
-      list: CONFIG.efss.enable ? file.aList(efssF) : {},
+      list: CONFIG.efss.enable ? file.aList(efssF, CONFIG_efss.max) : {},
     }))
   })
 

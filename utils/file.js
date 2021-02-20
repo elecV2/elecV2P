@@ -283,18 +283,31 @@ const file = {
     }
     return 0
   },
-  aList(folder){
-    if (!fs.existsSync(folder)) return {}
+  aList(folder, limitnum = -1, progress = { num: 0 }){
+    if (!fs.existsSync(folder)) {
+      clog.error('directory', folder, 'not existed.')
+      return {}
+    }
     folder = path.resolve(folder)
     let fstat = fs.statSync(folder)
     if (fstat.isDirectory()) {
       const rlist = fs.readdirSync(folder)
+      let flist = []
+      for (let fo of rlist) {
+        if (limitnum !== -1 && progress.num >= limitnum) {
+          break
+        }
+        flist.push(this.aList(path.join(folder, fo), limitnum, progress))
+      }
       return {
         type: 'directory',
         name: path.basename(folder),
-        list: rlist.map(fo=>this.aList(path.join(folder, fo)))
+        list: flist
       }
     } else {
+      if (limitnum !== -1) {
+        progress.num++
+      }
       return {
         type: 'file',
         name: path.basename(folder),
