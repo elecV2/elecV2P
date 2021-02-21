@@ -9,9 +9,8 @@
     "url": "https://github.com/elecV2/elecV2P"
   },
   "scripts": {
-    "dev": "set port=12521 && nodemon index.js",
-    "start": "node index.js",
-    "pm": "pm2 start index.js --name elecV2P"
+    "start": "pm2 start index.js --name elecV2P",
+    "dev": "set port=12521 && nodemon index.js"
   },
   "license": "Apache-2.0",
   "dependencies": {

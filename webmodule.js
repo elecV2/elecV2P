@@ -40,7 +40,7 @@ module.exports = () => {
     const whitelist = CONFIG.SECURITY.whitelist || []
 
     if (ipAddress.substr(0, 7) == "::ffff:") ipAddress = ipAddress.substr(7)
-    if(whitelist.indexOf(ipAddress) !== -1 || (blacklist.indexOf('*') === -1 && blacklist.indexOf(ipAddress) === -1)) {
+    if (whitelist.indexOf(ipAddress) !== -1 || (blacklist.indexOf('*') === -1 && blacklist.indexOf(ipAddress) === -1)) {
       next()
     } else {
       clog.error(ipAddress, 'is try to access elecV2P sever.')

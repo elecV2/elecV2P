@@ -148,8 +148,11 @@ function handler(req, res){
     break
   case 'tasksave':
     clog.notify(clientip, 'save current task list.')
-    if (list.put('task.list', TASKS_INFO)) res.end('success save current task list!\n' + Object.keys(TASKS_INFO).length)
-    else res.end('fail to save current task list.')
+    if (list.put('task.list', TASKS_INFO)) {
+      res.end('success save current task list!\n' + Object.keys(TASKS_INFO).length)
+    } else {
+      res.end('fail to save current task list.')
+    }
     break
   case 'taskdel':
   case 'taskdelete':

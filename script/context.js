@@ -52,6 +52,7 @@ class contextBase {
   clearInterval = clearInterval
 
   __dirname = process.cwd()
+  __version = CONFIG.version
   __home = CONFIG.homepage
   __efss = file.get(CONFIG.efss.directory, 'path')
   $ws = wsSer

@@ -22,17 +22,32 @@ elecV2P - customize personal network.
 git clone https://github.com/elecV2/elecV2P.git
 cd elecV2P
 
+# 安装依赖库
 yarn
+
+# 3.2.0 版本后默认 start 是以 pm2 的方式启动，需要先设置 pm2 执行环境
+# 添加目录 elecV2P目录/node_modules/.bin 到系统环境变量 PATH 中，或者直接执行 yarn global add pm2，再执行
 yarn start
 
-# 或者使用 PM2 运行，方便状态查看及管理
-yarn global add pm2
-pm2 start index.js
+# 如果要使用基础方式启动，执行命令
+node index.js
 
 # 升级
 # - 先备份好个人数据，比如 script 中的 JSFile/Store/Lists/Shell 等文件夹，和 efss 文件夹等
 # - 然后再从 Github 拉取最新的代码进行覆盖升级
 # - 最后再把备份好的文件复制到原来的位置
+# 【3.1.8 版本后，推荐使用自带的 [softupdate.js](https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js) 脚本进行软更新升级】
+```
+
+其他 pm2 相关指令
+``` sh
+pm2 stop elecV2P  # 停止 elecV2P
+pm2 stop all      # 停止所有程序
+
+pm2 restart all   # 重启所有程序
+
+pm2 ls      # 查看运行状态
+pm2 logs    # 查看运行日志
 ```
 
 ### 方法二：DOCKER

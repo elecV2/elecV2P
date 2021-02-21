@@ -44,7 +44,7 @@ function eAxios(request, proxy) {
     request.headers = {
       "User-Agent": getUagent()
     }
-  } else if (request.headers['User-Agent'] === undefined) {
+  } else if (request.headers['User-Agent'] === undefined && request.headers['user-agent'] === undefined) {
     request.headers['User-Agent'] = getUagent()
   }
 

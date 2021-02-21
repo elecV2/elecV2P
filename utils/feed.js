@@ -80,7 +80,13 @@ function iftttPush(title, description, url) {
     url = formUrl(url)
     if (url) body.value3 = encodeURI(url)
     clog.notify('ifttt webhook trigger, send data:', body)
-    axios.post('https://maker.ifttt.com/trigger/elecV2P/with/key/' + CONFIG_FEED.iftttid.key, body).then(res=>{
+    axios({
+      url: 'https://maker.ifttt.com/trigger/elecV2P/with/key/' + CONFIG_FEED.iftttid.key,
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8'
+      },
+      data: body
+    }).then(res=>{
       clog.debug('iftttPush result:', res.data)
     }).catch(e=>{
       if (e.response) clog.error('iftttPush error:', e.response.data)

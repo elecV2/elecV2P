@@ -22,7 +22,7 @@ module.exports = class {
   }
 
   start(){
-    clog.log("start schedule task: ", this.task.name, `${this.repeat}/${this._Task.repeat}`)
+    clog.log("start schedule task:", this.task.name, `${this.repeat}/${this._Task.repeat}, time: ${this.task.time}`)
     this.task.running = true
     if(this._Task.random) {
       let rand = iRandom(Number(this._Task.random))
