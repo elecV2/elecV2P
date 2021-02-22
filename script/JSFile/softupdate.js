@@ -38,7 +38,7 @@ async function checkUpdate(){
     console.log('开始获取最新版本号。。。')
     let res = await $axios(CONFIG.cdngit + '/elecV2/elecV2P/master/package.json')
     let newversion = res.data.version
-    console.log('当前版本：', __version, '最新版本', newversion)
+    console.log('当前版本:', __version, '最新版本:', newversion)
     if (__version !== newversion) {
       console.log('检测到有新的版本:', newversion)
       return true
