@@ -302,7 +302,8 @@ const file = {
       return {
         type: 'directory',
         name: path.basename(folder),
-        list: flist
+        list: flist,
+        mtime: fstat.mtimeMs
       }
     } else {
       if (limitnum !== -1) {
@@ -312,7 +313,7 @@ const file = {
         type: 'file',
         name: path.basename(folder),
         size: this.size(folder),
-        mtime: fstat.mtime
+        mtime: fstat.mtimeMs
       }
     }
   }

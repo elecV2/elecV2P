@@ -36,10 +36,9 @@ node index.js
 # - 先备份好个人数据，比如 script 中的 JSFile/Store/Lists/Shell 等文件夹，和 efss 文件夹等
 # - 然后再从 Github 拉取最新的代码进行覆盖升级
 # - 最后再把备份好的文件复制到原来的位置
-# 【3.1.8 版本后，推荐使用自带的 [softupdate.js](https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js) 脚本进行软更新升级】
 ```
 
-其他 pm2 相关指令
+其他 PM2 相关指令
 ``` sh
 pm2 stop elecV2P  # 停止 elecV2P
 pm2 stop all      # 停止所有程序
@@ -48,7 +47,11 @@ pm2 restart all   # 重启所有程序
 
 pm2 ls      # 查看运行状态
 pm2 logs    # 查看运行日志
+
+pm2 -h      # 查看 PM2 帮助列表
 ```
+
+**【3.1.8 版本后，推荐使用自带的 [softupdate.js](https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js) 脚本进行软更新升级】**
 
 ### 方法二：DOCKER
 
@@ -65,9 +68,22 @@ docker run --restart=always -d --name elecv2p -p 80:80 -p 8001:8001 -p 8002:8002
 docker run --restart=always -d --name elecv2p -e TZ=Asia/Shanghai -p 8100:80 -p 8101:8001 -p 8102:8002 elecv2/elecv2p:arm32
 
 # 使用 ARM 镜像及持久化存储
-docker run --restart=always -d --name elecv2p -e TZ=Asia/Shanghai -p 8100:80 -p 8101:8001 -p 8102:8002 -v /elecv2p/JSFile:/usr/local/app/script/JSFile -v /elecv2p/Store:/usr/local/app/script/Store elecv2/elecv2p:arm64
+docker run --restart=always -d --name elecv2p -e TZ=Asia/Shanghai -p 8100:80 -p 8101:8001 -p 8102:8002 -v /elecv2p/JSFile:/usr/local/app/script/JSFile -v /elecv2p/Store:/usr/local/app/script/Store -v /elecv2p/Lists:/usr/local/app/script/Lists elecv2/elecv2p:arm64
 
 # 以上命令仅供参考，根据实际情况更改映射端口/时区/镜像等参数。
+
+# 最终推荐使用命令（最后镜像根据使用平台进行调整）
+docker run --restart=always \
+  -d --name elecv2p \
+  -e TZ=Asia/Shanghai \
+  -p 8100:80 -p 8101:8001 -p 8102:8002 \
+  -v /elecv2p/JSFile:/usr/local/app/script/JSFile \
+  -v /elecv2p/Lists:/usr/local/app/script/Lists \
+  -v /elecv2p/Store:/usr/local/app/script/Store \
+  -v /elecv2p/Shell:/usr/local/app/script/Shell \
+  -v /elecv2p/rootCA:/usr/local/app/rootCA \
+  -v /elecv2p/efss:/usr/local/app/efss \
+  elecv2/elecv2p
 
 # 升级 Docker 镜像。（如果没有使用持久化存储，升级后所有个人数据会丢失，请提前备份）
 docker rm -f elecv2p           # 先删除旧的容器

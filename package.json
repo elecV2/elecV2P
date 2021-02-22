@@ -3,13 +3,13 @@
   "version": "3.2.0",
   "description": "customize personal network",
   "main": "index.js",
-  "author": "elecV2",
+  "author": "https://github.com/elecV2",
   "repository": {
     "type": "git",
     "url": "https://github.com/elecV2/elecV2P"
   },
   "scripts": {
-    "start": "pm2 start index.js --name elecV2P",
+    "start": "pm2 start index.js -n elecV2P -o logs/pm2.log -e logs/pm2-error.log --no-daemon",
     "dev": "set port=12521 && nodemon index.js"
   },
   "license": "Apache-2.0",

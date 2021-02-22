@@ -1,8 +1,8 @@
-// （先看完说明，再决定是否执行！操作不可恢复，谨慎使用。执行前，根据自身需求修改 CONFIG 里的内容。）
+// （先看完说明，再决定是否执行！操作不可恢复，谨慎使用。执行前，先根据自身需求修改下面 CONFIG 变量里的内容。）
 // 该脚本用于获取 https://github.com/elecV2/elecV2P 库的最新文件，并进行本地替换。（软更新升级）
 // 更新后会自动重启，以应用新的版本（请确定已保存任务列表及做好了储存映射数据备份等工作）
-// 脚本会先尝试以 PM2 的方式重启，如果失败，将直接重启容器(Docekr 模式下)或服务器(Nodejs 模式下)。
-// 3.1.8 版本后 Docker 默认使用 PM2 的方式启动，建议在此版本后使用。
+// 脚本会先尝试以 PM2 的方式重启，如果失败，将直接重启容器(Docekr 模式下)或服务器(pm2 指令不可用的情况下)。
+// 3.1.8 版本后 elecV2P 默认启动方式更改为 PM2，建议在此版本后使用。
 // 
 // 该文件更新地址：https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
 
@@ -78,9 +78,9 @@ function update() {
       if (file.type === 'blob') {
         if (CONFIG.noupdate.filter(item=>file.path.match(item)).length === 0) {
           let durl = CONFIG.cdngit + '/elecV2/elecV2P/master/' + file.path
-          console.log('获取更新：' + durl)
+          console.log('获取更新:', durl)
           try {
-            await $download(durl, { folder: './', name: file.path }).then(d=>console.log('同步文件: ' + d))
+            await $download(durl, { folder: './', name: file.path }).then(d=>console.log('同步文件:', d))
           } catch(e) {
             console.error(e.message || e)
             console.error('更新出错，请检查网络后重试。')
