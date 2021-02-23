@@ -273,40 +273,43 @@ const file = {
   size(filepath){
     if (fs.existsSync(filepath)) {
       const fsize = fs.statSync(filepath).size
-      if (fsize > 1000000) {
-        return (fsize/1000000).toFixed(2) + ' MB'
-      } else if (fsize > 1000) {
-        return (fsize/1000).toFixed(2) + ' KB'
+      if (fsize > 1024*1024) {
+        return (fsize/(1024*1024)).toFixed(2) + ' M'
+      } else if (fsize > 1024) {
+        return (fsize/1024).toFixed(2) + ' K'
       } else {
         return fsize + ' B'
       }
     }
     return 0
   },
-  aList(folder, limitnum = -1, progress = { num: 0 }){
+  aList(folder, option = { max: -1, dot: true }, progress = { num: 0 }){
     if (!fs.existsSync(folder)) {
       clog.error('directory', folder, 'not existed.')
-      return {}
+      return null
     }
     folder = path.resolve(folder)
+    if (option.dot === false && path.basename(folder).startsWith('.')) {
+      return null
+    }
     let fstat = fs.statSync(folder)
     if (fstat.isDirectory()) {
       const rlist = fs.readdirSync(folder)
       let flist = []
       for (let fo of rlist) {
-        if (limitnum !== -1 && progress.num >= limitnum) {
+        if (option.max !== -1 && progress.num >= option.max) {
           break
         }
-        flist.push(this.aList(path.join(folder, fo), limitnum, progress))
+        flist.push(this.aList(path.join(folder, fo), option, progress))
       }
       return {
         type: 'directory',
         name: path.basename(folder),
-        list: flist,
+        list: flist.filter(f=>f),
         mtime: fstat.mtimeMs
       }
     } else {
-      if (limitnum !== -1) {
+      if (option.max !== -1) {
         progress.num++
       }
       return {

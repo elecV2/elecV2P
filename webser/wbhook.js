@@ -86,6 +86,10 @@ function handler(req, res){
     status.version = CONFIG.version
     res.end(JSON.stringify(status))
     break
+  case 'task':
+    clog.info(clientip, 'get all task')
+    res.end(JSON.stringify(TASKS_INFO, null, 2))
+    break
   case 'taskinfo':
     clog.info(clientip, 'get taskinfo', rbody.tid)
     if (rbody.tid === 'all') {

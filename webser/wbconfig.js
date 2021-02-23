@@ -11,11 +11,11 @@ module.exports = app => {
   app.use('/efss', dyn)
 
   function dynStatic(path) {
-    let static = express.static(path)
+    let static = express.static(path, { dotfiles: (CONFIG.efss.dotshow && CONFIG.efss.dotshow.enable) ?  'allow' : 'deny' })
     const dyn = (req, res, next) => static(req, res, next)
 
     dyn.setPath = (newPath) => {
-      static = express.static(newPath)
+      static = express.static(newPath, { dotfiles: (CONFIG.efss.dotshow && CONFIG.efss.dotshow.enable) ?  'allow' : 'deny' })
     }
     return dyn
   }
@@ -23,19 +23,25 @@ module.exports = app => {
   function efssSet(cefss){
     if (cefss.enable === false) {
       clog.notify('efss is closed')
-      CONFIG.efss.enable = false
-      return {rescode: 0, message: 'efss is closed'}
+      return {
+        rescode: 0,
+        message: 'efss is closed'
+      }
     } else {
       const efssF = file.get(cefss.directory, 'path')
       if (file.isExist(efssF)) {
         clog.notify('efss directory set to', cefss.directory)
         dyn.setPath(efssF)
-        CONFIG.efss.enable = true
-        CONFIG.efss.directory = cefss.directory
-        return {rescode: 0, message: 'reset efss directory success!'}
+        return {
+          rescode: 0,
+          message: 'reset efss directory success!'
+        }
       } else {
         clog.error(cefss.directory + ' dont exist')
-        return {rescode: 404, message: cefss.directory + ' dont exist'}
+        return {
+          rescode: 404,
+          message: cefss.directory + ' dont exist'
+        }
       }
     }
   }
@@ -108,7 +114,10 @@ module.exports = app => {
         break
       case "efss":
         let msg = efssSet(req.body.data)
-        if (msg.rescode === 0) list.put('config.json', JSON.stringify(CONFIG, null, 2))
+        if (msg.rescode === 0) {
+          Object.assign(CONFIG.efss, req.body.data)
+          list.put('config.json', JSON.stringify(CONFIG, null, 2))
+        }
         res.end(JSON.stringify(msg))
         break
       case "security":

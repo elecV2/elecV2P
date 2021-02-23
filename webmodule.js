@@ -8,7 +8,7 @@ const { CONFIG, CONFIG_Port } = require('./config')
 const { logger, websocketSer } = require('./utils')
 const clog = new logger({ head: 'webServer', level: 'debug' })
 
-const { wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook, wbefss } = require('./webser')
+const { wbefss, wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook } = require('./webser')
 
 module.exports = () => {
   const app = express()
@@ -52,9 +52,7 @@ module.exports = () => {
 
   app.use(express.static(path.resolve(__dirname, 'web/dist'), { maxAge: ONEMONTH }))
 
-  if (CONFIG.efss) {
-    wbefss(app)
-  }
+  wbefss(app)
 
   wbconfig(app)
   wbfeed(app)

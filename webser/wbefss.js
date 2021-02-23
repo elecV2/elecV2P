@@ -6,8 +6,15 @@ const clog = new logger({ head: 'wbefss' })
 const { CONFIG } = require('../config')
 
 const CONFIG_efss = {
-  max: 600,        // 最大文件显示数。默认：600，-1 表示不限制
+  enable: true,            // 默认开启。关闭： false
+  directory: './efss',     // 文件存储位置
+  dotshow: {
+    enable: false,         // 显示 dot(.) 开头文件
+  },
+  max: 600,                // 最大文件显示数。默认：600，-1 表示不限制
 }
+
+CONFIG.efss = Object.assign(CONFIG_efss, CONFIG.efss)
 
 module.exports = app => {
   app.get('/sefss', (req, res)=>{
@@ -16,13 +23,21 @@ module.exports = app => {
     const efssF = file.get(CONFIG.efss.directory, 'path')
     res.end(JSON.stringify({
       config: CONFIG.efss,
-      list: CONFIG.efss.enable ? file.aList(efssF, CONFIG_efss.max) : {},
+      list: CONFIG.efss.enable ? file.aList(efssF, { max: CONFIG.efss.max, dot: CONFIG.efss.dotshow.enable }) : {},
     }))
   })
 
   app.post('/sefss', (req, res)=>{
-    const subpath = decodeURI(req.query.subpath)
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "uploading efss file")
+
+    if (!(CONFIG.efss && CONFIG.efss.enable)) {
+      res.end({
+        rescode: 403,
+        message: 'efss is closed.'
+      })
+      return
+    }
+    const subpath = decodeURI(req.query.subpath)
     const uploadfile = new formidable.IncomingForm()
     uploadfile.maxFieldsSize = 200 * 1024 * 1024 // 限制为最大 200M
     uploadfile.keepExtensions = true
@@ -60,6 +75,14 @@ module.exports = app => {
   })
 
   app.delete('/sefss', (req, res)=>{
+    if (!(CONFIG.efss && CONFIG.efss.enable)) {
+      res.end({
+        rescode: 403,
+        message: 'efss is closed.'
+      })
+      return
+    }
+
     const fn = req.body.fn
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "delete efss file", fn)
     if (fn) {

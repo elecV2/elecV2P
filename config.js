@@ -10,10 +10,6 @@ const CONFIG_Port = {
 const CONFIG = {
   path: path.join(__dirname, 'script', 'Lists', 'config.json'),
   wbrtoken: 'a8c259b2-67fe-4c64-8700-7bfdf1f55cb3',    // webhook token（可在 webUI->SETTING 界面修改）
-  efss: {                    // elecV2P file storage system
-    enable: true,            // 默认开启。关闭： false
-    directory: './efss'      // 文件存储位置
-  }
 };
 
 (()=>{
@@ -24,11 +20,6 @@ const CONFIG = {
     } catch(e) {
       console.log(`[CONFIG     error][${new Date().toLocaleString('zh', { hour12:false })}]: JSON.parse config file error`, e.stack)
     }
-  }
-
-  if (CONFIG.efss.enable) {
-    const efssF = path.resolve(__dirname, CONFIG.efss.directory)
-    if(!fs.existsSync(efssF)) fs.mkdirSync(efssF, {recursive: true})
   }
 
   CONFIG.version = require('./package.json').version
