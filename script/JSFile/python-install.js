@@ -1,4 +1,5 @@
 // 在 Docker 下安装 python 执行环境。
+// 远程地址：https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/python-install.js
 
 checkCmd('python3 -V').then(data=>console.log(data, 'python 已安装')).catch(e=>{
   // 开始安装 python

@@ -168,7 +168,7 @@ function runJSFile(filename, addContext={}) {
           clog.info(`success download ${filename}, ready to run...`)
         }).catch(error=>{
           clog.error('run', url, 'error:', error)
-          clog.info('tring run', filename, 'from local...')
+          clog.info('try to run', filename, 'locally')
           // reject(error)
         }).finally(()=>{
           resolve(runJS(filename, jsfile.get(filename), addContext))
@@ -198,11 +198,15 @@ function runJSFile(filename, addContext={}) {
         finalres = `run ${filename} error: ${err.message || err}`
         // reject(errStack(err))
       }).finally(()=>{
-        if (finalres) clog.info(`run ${filename} result:`, finalres)
+        if (finalres !== undefined) {
+          clog.info(`run ${filename} result:`, finalres)
+        }
         resolve(finalres)
       })
     } else {
-      if (JSres) clog.info(`run ${filename} result:`, JSres)
+      if (JSres !== undefined) {
+        clog.info(`run ${filename} result:`, JSres)
+      }
       resolve(JSres)
     }
   })

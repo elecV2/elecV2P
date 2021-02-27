@@ -26,15 +26,21 @@ module.exports = app => {
         }
         if (TASKS_WORKER[data.tid]) {
           clog.info('delete task old data')
-          if (TASKS_WORKER[data.tid].stat()) TASKS_WORKER[data.tid].stop()
+          if (TASKS_WORKER[data.tid].stat()) {
+            TASKS_WORKER[data.tid].stop()
+          }
           TASKS_WORKER[data.tid].delete()
         }
 
         TASKS_INFO[data.tid] = data.task
         TASKS_INFO[data.tid].id = data.tid
         TASKS_WORKER[data.tid] = new Task(TASKS_INFO[data.tid], jobFunc(data.task.job))
-        TASKS_WORKER[data.tid].start()
-        res.end('task: ' + data.task.name + ' started!')
+        if (data.task.running !== false) {
+          TASKS_WORKER[data.tid].start()
+          res.end('task: ' + data.task.name + ' started!')
+        } else {
+          res.end('add task: ' + data.task.name)
+        }
         break
       case "stop":
         if(TASKS_WORKER[data.tid]) {
@@ -47,8 +53,8 @@ module.exports = app => {
       case "delete":
         if(TASKS_WORKER[data.tid]) {
           TASKS_WORKER[data.tid].delete()
-          delete TASKS_INFO[data.tid]
         }
+        delete TASKS_INFO[data.tid]
         res.end("task deleted!")
         break
       default:{
@@ -61,10 +67,12 @@ module.exports = app => {
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), `save task list`)
     if (sType(req.body) === 'object') {
       for (let tid in req.body) {
-        if (req.body[tid].running === false) {
+        if (req.body[tid].type === 'sub' || req.body[tid].running === false) {
           TASKS_INFO[tid] = req.body[tid]
-          TASKS_INFO[tid].id = tid
-          TASKS_WORKER[tid] = new Task(TASKS_INFO[tid], jobFunc(req.body[tid].job))
+          if (req.body[tid].type !== 'sub') {
+            TASKS_INFO[tid].id = tid
+            TASKS_WORKER[tid] = new Task(TASKS_INFO[tid], jobFunc(req.body[tid].job))
+          }
         }
       }
       list.put('task.list', req.body)

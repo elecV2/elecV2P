@@ -1,0 +1,57 @@
+{
+  "name": "elecV2P 定时任务订阅",
+  "desc": "订阅描述，可省略。该订阅仅可用于 elecV2P, 与其他软件并不兼容。详细说明参考：https://github.com/elecV2/elecV2P-dei/tree/master/docs/06-task.md",
+  "author": "elecV2",
+  "date": "2021-02-26 23:32:04",
+  "surl": "https://raw.githubusercontent.com/elecV2/elecV2P/master/efss/tasksub.json",
+  "list": [
+    {
+      "name": "清空日志",
+      "type": "cron",
+      "time": "30 18 23 * * *",
+      "job": {
+        "type": "runjs",
+        "target": "https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/deletelog.js"
+      }
+    },
+    {
+      "name": "软更新升级",
+      "type": "cron",
+      "time": "30 58 23 * * *",
+      "running": true,
+      "job": {
+        "type": "runjs",
+        "target": "https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js"
+      }
+    },
+    {
+      "name": "Python 安装(Docker下)",
+      "type": "schedule",
+      "time": "0",
+      "running": false,
+      "job": {
+        "type": "runjs",
+        "target": "https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/python-install.js"
+      }
+    },
+    {
+      "name": "Shell任务(不执行)",
+      "type": "cron",
+      "time": "10 0 * * *",
+      "running": false,
+      "job": {
+        "type": "exec",
+        "target": "python -V"
+      }
+    },
+    {
+      "name": "Shell任务(执行)",
+      "type": "schedule",
+      "time": "10",
+      "job": {
+        "type": "exec",
+        "target": "node -v"
+      }
+    }
+  ]
+}

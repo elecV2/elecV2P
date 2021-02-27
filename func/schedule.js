@@ -1,4 +1,4 @@
-const { logger, feedAddItem, sType, iRandom, wsSer } = require('../utils')
+const { logger, feedAddItem, sType, sString, iRandom, wsSer } = require('../utils')
 
 const clog = new logger({ head: 'schedule', level: 'debug', cb: wsSer.send.func('tasklog')  })
 
@@ -49,25 +49,28 @@ module.exports = class {
 
   run(){
     clog.log("start run", this.task.name, 'job')
-    const jobres = this.job()
+    let jobres = this.job()
 
     if (this.repeat < this._Task.repeat || this._Task.repeat >= 999) {
       this.repeat++
       this.start()
     } else {
       if (sType(jobres) === 'promise') {
-        Promise.race([jobres, new Promise(resolve=>setTimeout(resolve, 5000))]).finally(res=>this.stop('finished'))
+        Promise.race([jobres, new Promise(resolve=>setTimeout(resolve, 5000))]).then(res=>jobres=res).finally(res=>this.stop('finished', jobres))
       } else {
-        this.stop('finished')
+        this.stop('finished', jobres)
       }
     }
   }
   
-  stop(flag = 'stopped'){
+  stop(flag = 'stopped', data){
     if (this.task) {
       this.task.running = false
       clearInterval(this.temIntval)
-      clog.log('schedule task:', this.task.name, flag)
+      clog.log(this.task.name, flag)
+      if (data) {
+        clog.log(this.task.name, 'result:', sString(data))
+      }
       if (this.task.id) {
         wsSer.send({type: 'task', data: {tid: this.task.id, op: 'stop'}})
       }

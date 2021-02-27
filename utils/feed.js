@@ -158,15 +158,15 @@ function custPush(title, description, url) {
       data: sString(CONFIG_FEED.custnotify.data)
     }
     url = formUrl(url)
-    req.url = req.url.replaceAll('$title$', title)
-    req.url = req.url.replaceAll('$body$', description)
-    req.url = req.url.replaceAll('$url$', sString(url))
+    req.url = req.url.replace(/\$title\$/g, title)
+    req.url = req.url.replace(/\$body\$/g, description)
+    req.url = req.url.replace(/\$url\$/g, sString(url))
     if (req.type === 'GET') {
       req.data = null
     } else {
-      req.data = req.data.replaceAll('$title$', title)
-      req.data = req.data.replaceAll('$body$', description)
-      req.data = req.data.replaceAll('$url$', sString(url))
+      req.data = req.data.replace(/\$title\$/g, title)
+      req.data = req.data.replace(/\$body\$/g, description)
+      req.data = req.data.replace(/\$url\$/g, sString(url))
       let tmprdata = sJson(req.data)
       if (tmprdata) {
         req.headers['Content-Type'] = 'application/json; charset=UTF-8'

@@ -30,7 +30,11 @@ function sString(obj) {
   if (obj === undefined || obj === null) return ''
   if (typeof obj === 'string') return obj.trim()
   if (/object|array/.test(sType(obj))) {
-    return JSON.stringify(obj)
+    try {
+      return JSON.stringify(obj)
+    } catch(e) {
+      return e.message
+    }
   }
   return String(obj).trim()
 }

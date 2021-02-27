@@ -53,16 +53,20 @@ const TASKS_WORKER = {}           // 执行任务列表
 
 const taskInit = function() {
   // 初始化任务列表
-  const tlist = list.get('task.list')
-  if (tlist && sJson(tlist)) {
-    Object.assign(TASKS_INFO, JSON.parse(tlist))
+  const tlist = sJson(list.get('task.list'))
+  if (tlist) {
+    Object.assign(TASKS_INFO, tlist)
   }
 
-  if (Object.keys(TASKS_INFO).length) clog.info('retrieve task from Lists/task.list')
+  if (Object.keys(TASKS_INFO).length) {
+    clog.info('retrieve task from Lists/task.list')
+  }
   for(let tid in TASKS_INFO) {
-    TASKS_WORKER[tid] = new Task(TASKS_INFO[tid], jobFunc(TASKS_INFO[tid].job))
-    if (TASKS_INFO[tid].running) {
-      TASKS_WORKER[tid].start()
+    if (TASKS_INFO[tid].type !== 'sub') {
+      TASKS_WORKER[tid] = new Task(TASKS_INFO[tid], jobFunc(TASKS_INFO[tid].job))
+      if (TASKS_INFO[tid].running) {
+        TASKS_WORKER[tid].start()
+      }
     }
   }
 }();
@@ -73,7 +77,7 @@ function bIsValid(info) {
     clog.error('no task name')
     return false
   }
-  if (!/cron|schedule|exec/.test(info.type)) {
+  if (!/cron|schedule/.test(info.type)) {
     clog.error(info.name, 'unknow task type', info.type)
     return false
   }

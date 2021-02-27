@@ -1,4 +1,9 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志：(最新版本 v3.2.0)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志：(最新版本 v3.2.1)
+
+v3.2.1
+ • 添加定时任务订阅功能
+ • 相关说明：https://github.com/elecV2/elecV2P-dei/tree/master/docs/06-task.md
+ • 测试订阅：https://raw.githubusercontent.com/elecV2/elecV2P/master/efss/tasksub.json
 
 v3.2.0
  • EFSS 文件管理模块优化
