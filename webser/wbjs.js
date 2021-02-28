@@ -46,14 +46,25 @@ module.exports = app => {
     switch(op){
       case 'jsdownload':
         downloadfile(req.body.url, jsfile.get(req.body.name, 'path')).then(jsl=>{
-          res.end('download js file to: ' + jsl)
-          if (JSLISTS.indexOf(req.body.name) === -1) JSLISTS.push(req.body.name)
+          res.end(JSON.stringify({
+            rescode: 0,
+            message: 'download js file to: ' + jsl
+          }))
+          if (JSLISTS.indexOf(req.body.name) === -1) {
+            JSLISTS.push(req.body.name)
+          }
         }).catch(e=>{
-          res.end(req.body.name + ' download error!' + errStack(e))
+          res.end(JSON.stringify({
+            rescode: -1,
+            message: req.body.name + ' ' + errStack(e)
+          }))
         })
         break
       default: {
-        res.end(op + " - wrong operation on js file")
+        res.end(JSON.stringify({
+          rescode: -1,
+          message: op + " - wrong operation on js file"
+        }))
         break
       }
     }
@@ -93,13 +104,22 @@ module.exports = app => {
     if (jsfn) {
       if (jsfile.delete(jsfn)) {
         JSLISTS.splice(JSLISTS.indexOf(jsfn), 1)
-        res.end(jsfn + ' is deleted!')
+        res.end(JSON.stringify({
+          rescode: 0,
+          message: jsfn + ' is deleted'
+        }))
       } else {
-        res.end(jsfn + ' not existed!')
+        res.end(JSON.stringify({
+          rescode: 404,
+          message: jsfn + ' not existed'
+        }))
       }
     } else {
-      clog.error('a js file name is expect!')
-      res.end('a parameter jsfn is expect.')
+      clog.error('a js file name is expect')
+      res.end(JSON.stringify({
+        rescode: -1,
+        message: 'a parameter jsfn is expect'
+      }))
     }
   })
 
@@ -112,7 +132,10 @@ module.exports = app => {
     uploadfile.parse(req, (err, fields, files) => {
       if (err) {
         clog.error('Error', errStack(err))
-        res.end('js upload fail!' + err.message)
+        res.end(JSON.stringify({
+          rescode: -1,
+          message: 'js upload fail ' + err.message
+        }))
         return
       }
 
@@ -124,15 +147,22 @@ module.exports = app => {
         files.js.forEach(sgfile=>{
           clog.notify('upload js file:', sgfile.name)
           file.copy(sgfile.path, jsfile.get(sgfile.name, 'path'))
-          if (JSLISTS.indexOf(sgfile.name) === -1) JSLISTS.push(sgfile.name)
+          if (JSLISTS.indexOf(sgfile.name) === -1) {
+            JSLISTS.push(sgfile.name)
+          }
         })
       } else {
         clog.notify('upload js file:', files.js.name)
         file.copy(files.js.path, jsfile.get(files.js.name, 'path'))
-        if (JSLISTS.indexOf(files.js.name) === -1) JSLISTS.push(files.js.name)
+        if (JSLISTS.indexOf(files.js.name) === -1) {
+          JSLISTS.push(files.js.name)
+        }
       }
     })
-    res.end('upload success!')
+    res.end(JSON.stringify({
+      rescode: 0,
+      message: 'upload success'
+    }))
   })
 
   app.put('/mock', (req, res)=>{
