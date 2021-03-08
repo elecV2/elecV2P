@@ -1,9 +1,9 @@
 const formidable = require('formidable')
 
-const { logger, downloadfile, eAxios, errStack, sString, sType, jsfile, file, wsSer } = require('../utils')
+const { logger, downloadfile, eAxios, errStack, sString, sType, Jsfile, file, wsSer } = require('../utils')
 const clog = new logger({ head: 'wbjsfile', cb: wsSer.send.func('jsmanage') })
 
-const { runJSFile, JSLISTS, CONFIG_RUNJS } = require('../script')
+const { runJSFile, JSLISTS } = require('../script')
 
 module.exports = app => {
   app.get("/jsfile", (req, res)=>{
@@ -13,7 +13,7 @@ module.exports = app => {
       res.end('illegal request to get js file' + jsfn)
       return
     }
-    const jscont = jsfile.get(jsfn)
+    const jscont = Jsfile.get(jsfn)
     if (jscont) {
       res.end(jscont)
     } else {
@@ -26,18 +26,8 @@ module.exports = app => {
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get js manage data")
     res.end(JSON.stringify({
       storemanage: true,
-      jslists: Object.assign(JSLISTS, jsfile.get('list'))
+      jslists: Object.assign(JSLISTS, Jsfile.get('list'))
     }))
-  })
-
-  app.put("/runjsconfig", (req, res)=>{
-    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "put runjsconfig")
-    try {
-      Object.assign(CONFIG_RUNJS, req.body.data)
-      res.end('RUNJS config changed')
-    } catch {
-      res.end('fail to change RUNJS config')
-    }
   })
 
   app.put("/jsfile", (req, res)=>{
@@ -45,7 +35,7 @@ module.exports = app => {
     const op = req.body.op
     switch(op){
       case 'jsdownload':
-        downloadfile(req.body.url, jsfile.get(req.body.name, 'path')).then(jsl=>{
+        downloadfile(req.body.url, Jsfile.get(req.body.name, 'path')).then(jsl=>{
           res.end(JSON.stringify({
             rescode: 0,
             message: 'download js file to: ' + jsl
@@ -79,19 +69,18 @@ module.exports = app => {
       return
     }
     if (req.body.type === 'totest') {
-      const jsres = runJSFile(req.body.jscontent, { type: 'rawcode', from: jsname.split('.js')[0] + '-test.js', cb: wsSer.send.func('jsmanage') })
-      if (sType(jsres) === 'promise') {
-        jsres.then(data=>{
-          res.end(sString(data))
-        }).catch(error=>{
-          res.end('error: ' + error)
-          clog.error(errStack(error))
-        })
-      } else {
-        res.end(sString(jsres))
-      }
+      runJSFile(req.body.jscontent, {
+        type: 'rawcode',
+        from: jsname.split('.js')[0] + '-test.js',
+        cb: wsSer.send.func('jsmanage')
+      }).then(data=>{
+        res.end(sString(data))
+      }).catch(error=>{
+        res.end('error: ' + error)
+        clog.error(errStack(error))
+      })
     } else {
-      jsfile.put(jsname, req.body.jscontent)
+      Jsfile.put(jsname, req.body.jscontent)
       clog.notify(`${jsname} success saved`)
       res.end(`${jsname} success saved`)
       if (JSLISTS.indexOf(jsname) === -1) JSLISTS.push(jsname)
@@ -102,7 +91,7 @@ module.exports = app => {
     const jsfn = req.body.jsfn
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "delete js file " + jsfn)
     if (jsfn) {
-      if (jsfile.delete(jsfn)) {
+      if (Jsfile.delete(jsfn)) {
         JSLISTS.splice(JSLISTS.indexOf(jsfn), 1)
         res.end(JSON.stringify({
           rescode: 0,
@@ -146,14 +135,14 @@ module.exports = app => {
       if (files.js.length) {
         files.js.forEach(sgfile=>{
           clog.notify('upload js file:', sgfile.name)
-          file.copy(sgfile.path, jsfile.get(sgfile.name, 'path'))
+          file.copy(sgfile.path, Jsfile.get(sgfile.name, 'path'))
           if (JSLISTS.indexOf(sgfile.name) === -1) {
             JSLISTS.push(sgfile.name)
           }
         })
       } else {
         clog.notify('upload js file:', files.js.name)
-        file.copy(files.js.path, jsfile.get(files.js.name, 'path'))
+        file.copy(files.js.path, Jsfile.get(files.js.name, 'path'))
         if (JSLISTS.indexOf(files.js.name) === -1) {
           JSLISTS.push(files.js.name)
         }
@@ -196,7 +185,7 @@ $axios(request).then(res=>{
 }).catch(e=>{
   console.error(e)
 })`
-        jsfile.put(jsname, jscont)
+        Jsfile.put(jsname, jscont)
         res.end(`success save ${jsname}!`)
         clog.notify(`success save ${jsname}!`)
         if (JSLISTS.indexOf(jsname) === -1) JSLISTS.push(jsname)

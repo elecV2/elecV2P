@@ -9,3 +9,5 @@ $exec('rm -f *.log', {
     if (finish) console.log('日志已删除')
   }
 })
+
+// 如果是在 windows powershell 下使用 nodejs 的方式运行，使用 rm * 命令替换，即 $exec('rm *', {...})

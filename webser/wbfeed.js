@@ -1,5 +1,7 @@
-const { logger, CONFIG_FEED, feedXml, feedClear } = require('../utils')
+const { logger, CONFIG_FEED, feedXml, feedClear, list } = require('../utils')
 const clog = new logger({ head: 'wbfeed' })
+
+const { CONFIG } = require('../config')
 
 module.exports = app => {
   app.get(['/feed', '/rss'], (req, res)=>{
@@ -11,6 +13,7 @@ module.exports = app => {
   app.put("/feed", (req, res)=>{
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "put feed")
     let data = req.body.data
+    let bSave = true
     switch(req.body.type){
       case "op":
         CONFIG_FEED.enable = data.enable
@@ -22,6 +25,7 @@ module.exports = app => {
       case "clear":
         feedClear()
         res.end('FEED 已清空')
+        bSave = false
         break
       case "ifttt":
         CONFIG_FEED.iftttid = data
@@ -46,7 +50,13 @@ module.exports = app => {
       default:{
         clog.error('FEED PUT 未知操作', req.body.type)
         res.end('FEED PUT 未知操作 ' + req.body.type)
+        bSave = false
       }
+    }
+    if (bSave) {
+      CONFIG.CONFIG_FEED = CONFIG_FEED
+      list.put('config.json', JSON.stringify(CONFIG, null, 2))
+      clog.info('current config save to script/Lists/config.json')
     }
   })
 }

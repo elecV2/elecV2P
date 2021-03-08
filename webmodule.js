@@ -44,7 +44,7 @@ module.exports = () => {
       next()
     } else {
       clog.error(ipAddress, 'is try to access elecV2P sever.')
-      res.send('don\'t allow to access. \n\nPowered BY elecV2P: https://github.com/elecV2/elecV2P')
+      res.send('you don\'t have permission to access. <br><br>Powered BY elecV2P: https://github.com/elecV2/elecV2P')
     }
   })
 

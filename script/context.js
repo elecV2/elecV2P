@@ -113,8 +113,10 @@ class contextBase {
   }
   $done = (data) => {
     this.console.debug('$done:', data)
-    this.$result = data !== undefined ? sType(data) === 'object' ? data : { body: data } : {}
-    return this.$result
+    if (this.$vmEvent) {
+      this.$vmEvent.emit(this.ok, data)
+    }
+    return data
   }
 }
 

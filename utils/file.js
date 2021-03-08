@@ -49,7 +49,7 @@ const list = {
   }
 }
 
-const jsfile = {
+const Jsfile = {
   get(name, type){
     if (bEmpty(name)) return false
     name = name.trim()
@@ -322,4 +322,4 @@ const file = {
   }
 }
 
-module.exports = { list, jsfile, store, file }
+module.exports = { list, Jsfile, store, file }

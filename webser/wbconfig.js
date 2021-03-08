@@ -79,7 +79,6 @@ module.exports = app => {
         Object.assign(CONFIG_RUNJS, CONFIG.CONFIG_RUNJS)
         Object.assign(CONFIG_Axios, CONFIG.CONFIG_Axios)
         if (data.gloglevel !== CONFIG.gloglevel) setGlog(data.gloglevel)
-        list.put('config.json', JSON.stringify(CONFIG, null, 2))
         res.end("save config to " + CONFIG.path)
         break
       case "homepage":
@@ -106,17 +105,32 @@ module.exports = app => {
       case "eAxios":
         try {
           Object.assign(CONFIG_Axios, req.body.data)
+          CONFIG.CONFIG_Axios = CONFIG_Axios
           res.end('success! set eAxios')
         } catch(e) {
           res.end('fail to change eAxios setting')
           console.error(e)
         }
         break
+      case "runjs":
+        try {
+          Object.assign(CONFIG_RUNJS, req.body.data)
+          CONFIG.CONFIG_RUNJS = CONFIG_RUNJS
+          res.end(JSON.stringify({
+            rescode: 0,
+            message: 'RUNJS config changed'
+          }))
+        } catch(e) {
+          res.end(JSON.stringify({
+            rescode: -1,
+            message: 'fail to change RUNJS config' + e.message
+          }))
+        }
+        break
       case "efss":
         let msg = efssSet(req.body.data)
         if (msg.rescode === 0) {
           Object.assign(CONFIG.efss, req.body.data)
-          list.put('config.json', JSON.stringify(CONFIG, null, 2))
         }
         res.end(JSON.stringify(msg))
         break
@@ -130,12 +144,13 @@ module.exports = app => {
         break
       case "init":
         CONFIG.init = Object.assign(CONFIG.init || {}, req.body.data)
-        list.put('config.json', JSON.stringify(CONFIG, null, 2))
         res.end('add initialization runjs: ' + req.body.data.runjs)
         break
       default:{
         res.end("data put error, unknow type: " + req.body.type)
       }
     }
+    clog.info('current config save to script/Lists/config.json')
+    list.put('config.json', JSON.stringify(CONFIG, null, 2))
   })
 }

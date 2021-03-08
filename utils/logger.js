@@ -88,9 +88,9 @@ class logger {
   }
 
   debug(){
-    const args = formArgs(arguments)
-    if (!args) return
     if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['debug'] && CONFIG_LOG.levels['debug'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
+      const args = formArgs(arguments)
+      if (!args) return
       const cont = `[${ this.debughead }][${ now() }] ${ args }`
       console.log(cont)
       if(this._cb) this._cb(cont)

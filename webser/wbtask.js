@@ -1,4 +1,4 @@
-const { Task, TASKS_WORKER, TASKS_INFO, jobFunc } = require('../func/task')
+const { Task, TASKS_WORKER, TASKS_INFO, jobFunc, bIsValid } = require('../func/task')
 
 const { logger, list, sType } = require('../utils')
 const clog = new logger({ head: 'wbtask' })
@@ -13,41 +13,62 @@ module.exports = app => {
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), req.body.op, `task`)
     let data = req.body.data
     if (!data.tid) {
-      clog.info('modify task fail! parameter tid is not present.')
-      res.end('modify task fail!')
+      clog.info('modify task fail, a tid parameter is expect')
+      res.end(JSON.stringify({
+        rescode: -1,
+        message: 'a tid parameter is expect'
+      }))
       return
     }
     switch(req.body.op){
       case "start":
         if (!data.task || sType(data.task) !== 'object') {
+          res.end(JSON.stringify({
+            rescode: -1,
+            message: 'a json task information is expect'
+          }))
           clog.error('start task error, unknow task info:', data.task)
-          res.end('start task error.')
+          return
+        }
+        if (!bIsValid(data.task)) {
+          res.end(JSON.stringify({
+            rescode: -1,
+            message: 'some parameters may be invalid'
+          }))
           return
         }
         if (TASKS_WORKER[data.tid]) {
-          clog.info('delete task old data')
+          clog.info('delete old task data')
           if (TASKS_WORKER[data.tid].stat()) {
-            TASKS_WORKER[data.tid].stop()
+            TASKS_WORKER[data.tid].stop('restart')
           }
-          TASKS_WORKER[data.tid].delete()
+          TASKS_WORKER[data.tid].delete('restart')
         }
 
         TASKS_INFO[data.tid] = data.task
         TASKS_INFO[data.tid].id = data.tid
         TASKS_WORKER[data.tid] = new Task(TASKS_INFO[data.tid], jobFunc(data.task.job))
+        let message = 'add task: ' + data.task.name
         if (data.task.running !== false) {
           TASKS_WORKER[data.tid].start()
-          res.end('task: ' + data.task.name + ' started!')
-        } else {
-          res.end('add task: ' + data.task.name)
+          message = 'task: ' + data.task.name + ' started!'
         }
+        res.end(JSON.stringify({
+          rescode: 0, message
+        }))
         break
       case "stop":
         if(TASKS_WORKER[data.tid]) {
           TASKS_WORKER[data.tid].stop()
-          res.end("task stopped!")
+          res.end(JSON.stringify({
+            rescode: 0,
+            message: "task stopped!"
+          }))
         } else {
-          res.end("no such task")
+          res.end(JSON.stringify({
+            rescode: 404,
+            message: "task no existed yet"
+          }))
         }
         break
       case "delete":
@@ -55,10 +76,16 @@ module.exports = app => {
           TASKS_WORKER[data.tid].delete()
         }
         delete TASKS_INFO[data.tid]
-        res.end("task deleted!")
+        res.end(JSON.stringify({
+          rescode: 0,
+          message: "task deleted!"
+        }))
         break
       default:{
-        res.end("unknow task operation " + req.body.op)
+        res.end(JSON.stringify({
+          rescode: -1,
+          message: "unknow task operation " + req.body.op
+        }))
       }
     }
   })
@@ -76,10 +103,16 @@ module.exports = app => {
         }
       }
       list.put('task.list', req.body)
-      res.end('task list success saved!')
+      res.end(JSON.stringify({
+        rescode: 0,
+        message: 'task list success saved!'
+      }))
     } else {
       clog.error('fail to save', req.body, 'to task.list')
-      res.end('fail to save task list.')
+      res.end(JSON.stringify({
+        rescode: -1,
+        message: 'fail to save task list.'
+      }))
     }
   })
 }

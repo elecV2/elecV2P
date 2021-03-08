@@ -1,4 +1,9 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志：(最新版本 v3.2.2)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志：(最新版本 v3.2.3)
+
+v3.2.3
+ • RUNJS 执行逻辑优化，移除 $result 参数，增强 $done 函数功能
+ • // @grant 日志及通知控制优化。具体说明查看 <a href='https://github.com/elecV2/elecV2P-dei/tree/master/docs/04-JS.md' target='_blank'> 04-JS.md </a> 相关部分
+ • webUI 优化，移除设置中 保存所有 的按钮，每次保存都会储存当前设置
 
 v3.2.1
  • 添加定时任务订阅功能

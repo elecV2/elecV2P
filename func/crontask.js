@@ -15,7 +15,7 @@ module.exports = class {
 
   start(){
     if (this.task) {
-      clog.log(`start cron task ${this.task.name}, time: ${this.task.time}`)
+      clog.log(`start cron task: ${this.task.name}, time: ${this.task.time}`)
       
       this.job = cron.schedule(this.task.time, this.job)
       this.task.running = true
@@ -24,19 +24,23 @@ module.exports = class {
     }
   }
 
-  stop(){
-    if (this.job) this.job.stop()
+  stop(flag = 'stopped'){
+    if (this.job) {
+      this.job.stop()
+    }
     if (this.task) {
-      clog.log(this.task.name, 'stopped')
+      clog.log(this.task.name, flag)
       this.task.running = false
-      if(this.task.id) wsSer.send({type: 'task', data: {tid: this.task.id, op: 'stop'}})
+      if(this.task.id && flag !== 'restart') {
+        wsSer.send({type: 'task', data: {tid: this.task.id, op: 'stop'}})
+      }
     }
   }
 
-  delete(){
+  delete(flag = 'delete'){
     if (this.job) this.job.destroy()
     if (this.task) {
-      clog.log("delete cron task:", this.task.name)
+      clog.log(flag, "cron task:", this.task.name)
       delete this.task
     }
   }

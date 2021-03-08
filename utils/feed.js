@@ -201,7 +201,7 @@ function feedPush(title, description, url) {
   }
   url = formUrl(url)
   if (CONFIG_FEED.webmessage && CONFIG_FEED.webmessage.enable) {
-    message.success(`${title}\n${description}\n${url || ''}`, 10)
+    message.success(`【elecV2P 网页通知】 ${title}\n${description}\n${url || ''}`, 10)
   }
   if (CONFIG_FEED.enable) {
     const date = new Date()

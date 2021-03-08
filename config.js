@@ -18,7 +18,7 @@ const CONFIG = {
       const saveconfig = JSON.parse(fs.readFileSync(CONFIG.path, "utf8"))
       Object.assign(CONFIG, saveconfig)
     } catch(e) {
-      console.log(`[CONFIG     error][${new Date().toLocaleString('zh', { hour12:false })}]: JSON.parse config file error`, e.stack)
+      console.log(`[CONFIG     error][${new Date().toLocaleString('zh', { hour12:false })}] JSON.parse config file error`, e.stack)
     }
   }
 

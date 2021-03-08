@@ -33,17 +33,21 @@ class Task {
     }
   }
 
-  stop(){
+  stop(flag = 'stopped'){
     if(this.task) {
-      feedAddItem(this.info.name + ' stopped', 'time: ' + this.info.time)
-      this.task.stop()
+      if (flag === 'stopped') {
+        feedAddItem(this.info.name + ' stopped', 'time: ' + this.info.time)
+      }
+      this.task.stop(flag)
     }
   }
 
-  delete(){
+  delete(flag = 'delete'){
     if(this.task) {
-      feedAddItem(this.info.name + ' deleted', 'time: ' + this.info.time)
-      this.task.delete()
+      if (flag === 'delete') {
+        feedAddItem(this.info.name + ' deleted', 'time: ' + this.info.time)
+      }
+      this.task.delete(flag)
     }
   }
 }
@@ -73,7 +77,7 @@ const taskInit = function() {
 
 function bIsValid(info) {
   // 任务合法性检测
-  if (!info.name) {
+  if (info.name === undefined) {
     clog.error('no task name')
     return false
   }

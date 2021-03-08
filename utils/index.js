@@ -1,6 +1,6 @@
 const { now, wait } = require('./time')
 const { logger, setGlog, LOGFILE } = require('./logger')
-const { list, jsfile, store, file } = require('./file')
+const { list, Jsfile, store, file } = require('./file')
 const { websocketSer, wsSer, message } = require('./websocket')
 const { eAxios, downloadfile, CONFIG_Axios } = require('./eaxios')
 const { euid, sJson, sString, bEmpty, sUrl, sType, errStack, nStatus, UUID, iRandom, escapeHtml } = require('./string')
@@ -32,7 +32,7 @@ module.exports = {
   eAxios, CONFIG_Axios,
   logger, setGlog, LOGFILE,
   websocketSer, wsSer, message,
-  list, jsfile, store, file, downloadfile,
+  list, Jsfile, store, file, downloadfile,
   euid, sJson, sString, bEmpty, sUrl, sType, errStack, nStatus, UUID, iRandom, escapeHtml,
   CONFIG_FEED, feedAddItem, iftttPush, barkPush, custPush, feedPush, feedXml, feedClear
 }

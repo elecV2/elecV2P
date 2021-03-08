@@ -55,10 +55,16 @@ module.exports = app => {
       case "delete":
         if (store.delete(data)) {
           clog.notify(data, 'deleted')
-          res.end(data + ' deleted')
+          res.end(JSON.stringify({
+            rescode: 0,
+            message: data + ' deleted'
+          }))
         } else {
-          clog.error('delete fail!', e)
-          res.end('delete fail' + e.message)
+          clog.error('delete fail')
+          res.end(JSON.stringify({
+            rescode: -1,
+            message: 'delete fail'
+          }))
         }
         break
       default:{

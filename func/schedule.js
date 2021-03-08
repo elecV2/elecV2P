@@ -71,7 +71,7 @@ module.exports = class {
       if (data) {
         clog.log(this.task.name, 'result:', sString(data))
       }
-      if (this.task.id) {
+      if (this.task.id && flag !== 'restart') {
         wsSer.send({type: 'task', data: {tid: this.task.id, op: 'stop'}})
       }
       if (flag === 'finished') {
@@ -80,12 +80,12 @@ module.exports = class {
     }
   }
 
-  delete(){
+  delete(flag = 'delete'){
     if (this.temIntval) {
       clearInterval(this.temIntval)
     }
     if (this.task) {
-      clog.log("delete schedule task:", this.task.name)
+      clog.log(flag, "schedule task:", this.task.name)
       delete this.task
     }
   }

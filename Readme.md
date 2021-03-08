@@ -149,7 +149,7 @@ docker logs elecv2p -f
 
 ## 默认端口
 
-- 80：    后台管理界面。添加规则/JS 文件管理/定时任务管理/MITM 证书 等
+- 80：    webUI 后台管理界面。添加规则/JS 文件管理/定时任务管理/MITM 证书 等
 - 8001：  ANYPROXY 代理端口
 - 8002：  ANYPROXY 代理请求查看端口
 
