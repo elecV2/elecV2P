@@ -91,6 +91,7 @@ function update() {
     console.log('文件更新完成')
     if (CONFIG.restart) {
       console.log('开始重启以应用更新。稍等一下刷新前端网页，查看是否生效')
+      autoFresh()
       restart()
     } else {
       console.log('此次软更新设置为不重启，所以该更新并没有应用。如需应用，请手动重启一下 elecV2P')
@@ -116,7 +117,6 @@ function restart() {
       } else {
         console.log(data)
       }
-      autoFresh()
     }
   })
 }
