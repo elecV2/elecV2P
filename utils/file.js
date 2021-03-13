@@ -10,7 +10,8 @@ const { CONFIG } = require('../config')
 const fpath = {
   list: path.join(__dirname, '../script', 'Lists'),
   js: path.join(__dirname, '../script', 'JSFile'),
-  store: path.join(__dirname, '../script', 'Store')
+  store: path.join(__dirname, '../script', 'Store'),
+  homedir: require('os').homedir()
 }
 
 if (!fs.existsSync(fpath.list)) {
@@ -107,6 +108,7 @@ const Jsfile = {
 }
 
 const store = {
+  maxByte: 1024*1024*2,
   get(key, type) {
     if (bEmpty(key)) return
     key = key.trim()
@@ -193,6 +195,10 @@ const store = {
     } else {
       value = String(value)
     }
+    if (Buffer.byteLength(value, 'utf8') > this.maxByte) {
+      clog.error('store put error, data length is over limit', this.maxByte)
+      return false
+    }
     fs.writeFileSync(path.join(fpath.store, key), value, 'utf8')
     return true
   },
@@ -223,12 +229,13 @@ const file = {
       clog.info('parameters:', pname, 'was given, file.get no result')
       return ''
     }
-    const fpath = path.resolve(__dirname, '../', pname)
+    pname = pname.replace(/^(\$home|~)/i, fpath.homedir)
+    const filepath = path.resolve(__dirname, '../', pname)
     if (type === 'path') {
-      return fpath
+      return filepath
     }
-    if (fs.existsSync(fpath)) {
-      return fs.readFileSync(fpath, 'utf8')
+    if (fs.existsSync(filepath)) {
+      return fs.readFileSync(filepath, 'utf8')
     }
     clog.error(pname, 'not exist')
   },

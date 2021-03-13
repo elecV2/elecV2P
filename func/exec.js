@@ -31,7 +31,7 @@ function commandCross(command) {
 /**
  * command 参数处理 -c/-e，可执行化命令
  * @param     {string}    command    exec 命令
- * @param     {object}    options    命令执行环境
+ * @param     {object}    options    命令执行参数
  * @return    {string}               处理后命令
  */
 function commandSetup(command, options={}) {
@@ -109,9 +109,10 @@ wsSer.recv.shell = command => {
  * @param  {number}    options.timeout  timeout，单位：毫秒
  * @param  {function}  options.cb       回调函数，接收参数为 stdout 的数据
  * @param  {boolean}   options.call     command finish flag, 是否等命令执行完成后一次性返回所有输出
+ * @param  {function}  cb               回调函数，优化级高于 options.cb
  * @return {none}                 
  */
-function execFunc(command, options, cb) {
+function execFunc(command, options={}, cb) {
   const fev = commandSetup(command, options)
   const childexec = exec(fev.command, fev.options)
 
@@ -122,20 +123,29 @@ function execFunc(command, options, cb) {
   childexec.stdout.on('data', data => {
     data = data.toString()
     clog.info(data)
-    if (cb) cb(data)
-    if (options.call) fdata.push(data)
+    if (cb) {
+      cb(data)
+    }
+    if (options.call) {
+      fdata.push(data)
+    }
   })
 
   childexec.stderr.on('data', err => {
     err = err.toString()
     clog.error(err)
-    if (cb) cb(null, err)
+    if (cb) {
+      cb(null, err)
+    }
     wsSer.send({ type: 'minishell', data: err })
   })
 
   childexec.on('exit', ()=>{
-    clog.notify(command, 'finished')
-    if (cb && options.call) cb(fdata.join('\n'), null, true)
+    let fstr = command + ' finished'
+    clog.info(fstr)
+    if (cb) {
+      cb(options.call ? fdata.join('\n') : fstr, null, true)
+    }
   })
 }
 

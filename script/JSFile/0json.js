@@ -1,8 +1,8 @@
-var body = $response.body;
-var url = $request.url;
+let body = $response.body
+let url = $request.url
 
-let obj = JSON.parse(body);
-obj.data = "1";
-body = JSON.stringify(obj);
+let obj = JSON.parse(body)
+obj.data = $store.get('cookieKEY') || "1"
+body = JSON.stringify(obj)
 
-$done({body});
+$done({ body })

@@ -65,18 +65,18 @@ class contextBase {
   $evui = (obj, callback) => {
     if (sType(obj) !== 'object') {
       this.console.error('$evui expect a object in first arguments')
-      return
+      return Promise.reject('$evui expect a object in first argument')
     }
     if (wsSer.recverlists.length === 0) {
       return Promise.reject('websocket is not ready yet, cant transfer $evui data to client')
     }
-    if (!obj.id) obj.id = euid()
+    if (obj.id === undefined) {
+      obj.id = euid()
+    }
     wsSer.send({ type: 'evui', data: { type: 'neweu', data: obj }})
 
-    if (!callback && (obj.cb || obj.callback)) {
+    if (sType(callback) !== 'function' && (obj.cb || obj.callback)) {
       callback = obj.cb || obj.callback
-      delete obj.cb
-      delete obj.callback
     }
 
     return new Promise((resolve, reject)=>{
@@ -86,7 +86,8 @@ class contextBase {
           if (data === 'close') {
             wsSer.recv[obj.id] = null
             resolve(obj.title + ' is closed')
-          } else if (typeof callback === 'function') {
+          } else if (sType(callback) === 'function') {
+            // 保持和前端的持续交互，不 resolve
             callback(data)
           } else {
             this.console.debug('a callback function is expect to handle the data')

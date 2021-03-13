@@ -1,7 +1,7 @@
 const { Task, TASKS_WORKER, TASKS_INFO, jobFunc, exec } = require('../func')
 const { runJSFile, JSLISTS } = require('../script')
 
-const { logger, LOGFILE, nStatus, euid, sJson, sString, sType, file, list, downloadfile, now } = require('../utils')
+const { logger, LOGFILE, nStatus, euid, sJson, sString, sType, list, downloadfile, now } = require('../utils')
 const clog = new logger({ head: 'wbhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -169,18 +169,6 @@ function handler(req, res){
       res.end('no such task', rbody.tid)
     }
     break
-  case 'efssdelete':
-    clog.notify(clientip, 'delete efss file')
-    let filename = rbody.fn || rbody.filename
-    if (filename) {
-      filename = decodeURI(filename)
-      if (file.delete(filename, file.get(CONFIG.efss, 'path'))) res.end(filename + ' is deleted!')
-      else res.end(filename + ' not existed.')
-    } else {
-      clog.info('a name of file(parameter fn) is expected.')
-      res.end('a name of file(parameter fn) is expected.')
-    }
-    break
   case 'download':
   case 'downloadfile':
     clog.notify(clientip, 'ready download file to efss')
@@ -193,22 +181,32 @@ function handler(req, res){
         res.end('fail to download ' + rbody.url + 'error: ' + e)
       })
     } else {
-      res.end('wrong download url.')
+      res.end('wrong download url')
     }
     break
   case 'exec':
   case 'shell':
-    clog.notify(clientip, 'exec shell command', rbody.command)
+    clog.notify(clientip, 'exec shell command from webhook', rbody.command)
     if (rbody.command) {
       let command = decodeURI(rbody.command)
-      exec(command, {
-        call: true,
+      let option  = {
+        call: true, timeout: 5000,
         cb(data, error, finish) {
           error ? clog.error(error) : clog.info(data)
-          if (finish) res.end(command + ' finished.')
-          else res.write(error || data)
+          if (finish) {
+            res.end('\ncommand: ' + command + ' finished.')
+          } else {
+            res.write(error || data)
+          }
         }
-      })
+      }
+      if (rbody.timeout !== undefined) {
+        option.timeout = Number(rbody.timeout)
+      }
+      if (rbody.cwd !== undefined) {
+        option.cwd = rbody.cwd
+      }
+      exec(command, option)
     } else {
       res.end('command parameter is expected.')
     }

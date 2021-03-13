@@ -44,12 +44,20 @@ module.exports = app => {
               break
             default:{
               finalval = value.value === undefined ? value : value.value
-              if (typeof finalval === 'object') finalval = JSON.stringify(finalval)
+              if (typeof finalval === 'object') {
+                finalval = JSON.stringify(finalval)
+              }
             }
           }
-          store.put(finalval, key, value.type)
-          clog.debug(`save ${ data.key } value: `, finalval)
-          res.end(data.key + ' saved')
+          if (store.put(finalval, key, value.type)) {
+            clog.debug(`save ${ data.key } value: `, finalval)
+            res.end(data.key + ' saved')
+          } else {
+            res.end(JSON.stringify({
+              rescode: -1,
+              message: data.key + ' fail to save. maybe data length is over limit'
+            }))
+          }
         }
         break
       case "delete":

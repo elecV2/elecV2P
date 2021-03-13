@@ -1,7 +1,6 @@
 // $evui 简单使用范例
 
 const ui = {
-  id: 'wogowjdl',      // 给图形界面一个独一无二的 ID。可省略（以下所有参数都可省略，不再重复说明）
   title: 'elecV2P windows',    // 窗口标题
   width: 800,          // 窗口宽度
   height: 600,         // 窗口高度
@@ -17,6 +16,7 @@ const ui = {
   cbable: true,        // 是否启用 callback 函数，用于接收前端 UI 提交的数据
   cbdata: 'hello',     // 提供给前端 UI 界面的初始数据
   cblabel: '提交数据', // 提交按钮显示文字
+  script: `console.log('hello $evui');alert('hi, elecV2P')`,     // v3.2.4 增加支持在前端网页中插入 javascript 代码
 }
 
 $evui(ui, data=>{

@@ -243,7 +243,10 @@ const mergefeed = {
 }
 
 function feedAddItem(title = 'elecV2P notification', description =  '通知内容', url) {
-  if (/test/.test(title)) return
+  if (/test/.test(title)) {
+    clog.debug(title, 'match key word: test, skip add feed item')
+    return
+  }
   if (CONFIG_FEED.merge.enable) {
     mergefeed.content.push(title + ' - ' + now() + '\n' + description + '\n')
     if (!(mergefeed.timefulled || mergefeed.setTime)) {

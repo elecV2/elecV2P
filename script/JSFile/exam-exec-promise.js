@@ -17,12 +17,13 @@ function execP(command, env={}) {
 
 const data = 'hello'
 
-$result = new Promise((resolve, reject)=>{
+new Promise((resolve, reject)=>{
   execP('sh data.sh', { data }).then(res=>{
     console.log('shell result:', res)
     execP(`python data.py ${ encodeURI(res) }`).then(res=>{
       console.log('python result:', res)
       resolve(res)
+      $done(res)
     }).catch(e=>reject(e))
   }).catch(e=>{
     reject(e)

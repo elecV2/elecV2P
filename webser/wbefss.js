@@ -86,18 +86,19 @@ module.exports = app => {
     const fn = req.body.fn
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "delete efss file", fn)
     if (fn) {
-      if (file.delete(fn, file.get(CONFIG.efss.directory, 'path'))) {
+      let fpath = file.get(CONFIG.efss.directory, 'path')
+      if (file.delete(fn, fpath)) {
         res.end(JSON.stringify({
           rescode: 0,
-          message: fn + ' is deleted!'
+          message: fpath + fn + ' is deleted!'
         }))
-        clog.info(fn, 'is deleted!')
+        clog.info(fpath + fn, 'is deleted!')
       } else {
         res.end(JSON.stringify({
           rescode: 404,
-          message: fn + ' fail to deleted!'
+          message: fpath + fn + ' fail to deleted!'
         }))
-        clog.info(fn, 'fail to deleted!')
+        clog.info(fpath + fn, 'fail to deleted!')
       }
     } else {
       res.end(JSON.stringify({

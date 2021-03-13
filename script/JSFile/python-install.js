@@ -7,16 +7,18 @@ checkCmd('python3 -V').then(data=>console.log(data, 'python 已安装')).catch(e
     call: true, timeout: 0,
     cb(data, error, finish){
       if (!error && finish) {
-        // pyhton 和库安装完成后可直接在系统或其他脚本中调用，不需要再次安装。
-        $exec('python3 test.py', {
+        // 安装一些 python 库，根据需要自行选择更改
+        // $exec('pip3 install you-get youtube-dl requests', { cb(data, error){error ? console.error(error) : console.log(data)} })
+
+        // python 和库安装完成后可直接在系统或其他脚本中调用，不需要再次安装
+        // 下面这段代码可在新的脚本中单独运行
+        $exec('python3 -u test.py', {
           cwd: './script/Shell',    // test.py 所在目录
           cb(data, error){
             error ? console.error(error) : console.log(data)
           }
         })
 
-        // 安装一些 python 库，根据需要自行选择更改
-        // $exec('pip3 install you-get youtube-dl ffmpeg requests', { cb(data, error){error ? console.error(error) : console.log(data)} })
       } else {
         error ? console.error(error) : console.log(data)
       }

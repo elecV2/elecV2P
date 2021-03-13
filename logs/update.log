@@ -1,4 +1,9 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志：(最新版本 v3.2.3)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志：(最新版本 v3.2.4)
+
+v3.2.4
+ • $evui 增加支持插入 script
+ • EFSS 目录支持使用 $HOME/~ 变量
+ • 限制单个 store 最大储存数据量为 2m
 
 v3.2.3
  • RUNJS 执行逻辑优化，移除 $result 参数，增强 $done 函数功能

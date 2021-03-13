@@ -144,7 +144,11 @@ module.exports = app => {
         break
       case "init":
         CONFIG.init = Object.assign(CONFIG.init || {}, req.body.data)
-        res.end('add initialization runjs: ' + req.body.data.runjs)
+        if (req.body.data.runjs) {
+          res.end('add initialization runjs: ' + req.body.data.runjs)
+        } else {
+          res.end('initialization runjs is cleared')
+        }
         break
       default:{
         res.end("data put error, unknow type: " + req.body.type)

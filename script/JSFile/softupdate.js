@@ -24,9 +24,7 @@ if (CONFIG.forceupdate) {
   update()
 } else {
   checkUpdate().then(bres=>{
-    if (bres) {
-      update()
-    }
+    bres && update()
   })
 }
 
@@ -92,7 +90,7 @@ function update() {
 
     console.log('文件更新完成')
     if (CONFIG.restart) {
-      console.log('开始重启以应用更新。稍等刷新一下前端网页，查看是否生效。')
+      console.log('开始重启以应用更新。稍等一下刷新前端网页，查看是否生效')
       restart()
     } else {
       console.log('此次软更新设置为不重启，所以该更新并没有应用。如需应用，请手动重启一下 elecV2P')
@@ -101,15 +99,38 @@ function update() {
 }
 
 function restart() {
-  $exec('pm2 restart all', {
+  $exec('pm2 restart index', {
     cb(data, error){
       if (error) {
         console.error(error)
-        console.log('尝试使用 pm2 的方式重启失败，将直接重启服务器。')
-        $exec('reboot')
+        if (/not found/.test(error)) {
+          $exec('pm2 restart elecV2P', {
+            cb(data, error){
+              console.log(error || data)
+            }
+          })
+        } else {
+          console.log('尝试使用 pm2 的方式重启失败，将直接重启服务器')
+          $exec('reboot')
+        }
       } else {
         console.log(data)
       }
+      autoFresh()
     }
   })
+}
+
+function autoFresh() {
+  $evui({
+    title: '软更新完成',
+    width: 800,
+    height: 200,
+    content: `<p>软更新已完成，elecV2P 将在 3 秒后尝试自动刷新前端页面（v3.2.4 后）</p><p>如长时间没有反应，请点击 <a href="/">手动刷新</a></p>`,
+    style: {
+      content: "font-size: 26px; text-align: center",
+    },
+    resizable: false,
+    script: `console.log("将在 3 秒后自动刷新页面");setTimeout(()=>location.href = '/', 3000)`
+  }).then(data=>console.log(data)).catch(e=>console.log(e))
 }

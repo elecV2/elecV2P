@@ -11,4 +11,4 @@ ENV PATH /usr/local/app/node_modules/.bin:$PATH
 
 EXPOSE 80 8001 8002
 
-CMD ["pm2-runtime", "index.js"]
+CMD ["pm2-runtime", "index.js", "-n", "elecV2P"]
