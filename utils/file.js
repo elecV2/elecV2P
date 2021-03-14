@@ -38,10 +38,12 @@ const list = {
       return fs.readFileSync(path.join(fpath.list, name), "utf8")
     }
     clog.error('no list', name)
+    return false
   },
   put(name, cont){
     try {
       fs.writeFileSync(path.join(fpath.list, name), sString(cont), 'utf8')
+      clog.info(name, 'updated')
       return true
     } catch(e) {
       clog.error('put list file error', name, e.stack)

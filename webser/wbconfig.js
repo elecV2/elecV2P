@@ -70,6 +70,7 @@ module.exports = app => {
 
   app.put("/config", (req, res)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " put config " + req.body.type)
+    let bSave = true
     switch(req.body.type){
       case "config":
         let data = req.body.data
@@ -112,6 +113,16 @@ module.exports = app => {
           console.error(e)
         }
         break
+      case "uagent":
+        if (req.body.data) {
+          CONFIG_RULE.uagent = req.body.data
+          list.put('useragent.list', JSON.stringify(req.body.data, null, 2))
+          res.end('success update User-Agent list')
+        } else {
+          res.end('no data to update')
+        }
+        bSave = false
+        break
       case "runjs":
         try {
           Object.assign(CONFIG_RUNJS, req.body.data)
@@ -151,10 +162,13 @@ module.exports = app => {
         }
         break
       default:{
+        bSave = false
         res.end("data put error, unknow type: " + req.body.type)
       }
     }
-    clog.info('current config save to script/Lists/config.json')
-    list.put('config.json', JSON.stringify(CONFIG, null, 2))
+    if (bSave) {
+      clog.info('current config save to script/Lists/config.json')
+      list.put('config.json', JSON.stringify(CONFIG, null, 2))
+    }
   })
 }

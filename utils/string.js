@@ -1,5 +1,7 @@
 function sType(obj) {
-  if (typeof obj !== 'object') return typeof obj
+  if (typeof obj !== 'object') {
+    return typeof obj
+  }
   return Object.prototype.toString.call(obj).slice(8, -1).toLocaleLowerCase()
 }
 
@@ -10,10 +12,12 @@ function sType(obj) {
  * @return    {Object}     返回 JSON object 或者 false
  */
 function sJson(str, force=false) {
-  if (bEmpty(str)) {
+  if (!str) {
     return force ? {} : false
   }
-  if (/^(object|array)$/.test(sType(str))) return str
+  if (/^(object|array)$/.test(sType(str))) {
+    return str
+  }
   try {
     return JSON.parse(str)
   } catch(e) {
@@ -27,8 +31,12 @@ function sJson(str, force=false) {
 }
 
 function sString(obj) {
-  if (obj === undefined || obj === null) return ''
-  if (typeof obj === 'string') return obj.trim()
+  if (obj === undefined || obj === null) {
+    return ''
+  }
+  if (typeof obj === 'string') {
+    return obj.trim()
+  }
   if (/object|array/.test(sType(obj))) {
     try {
       return JSON.stringify(obj)
@@ -40,7 +48,9 @@ function sString(obj) {
 }
 
 function bEmpty(obj) {
-  if (sString(obj).trim() === '' || (/^(object|array)$/.test(sType(obj)) && Object.keys(obj).length === 0)) return true
+  if (sString(obj).trim() === '' || (/^(object|array)$/.test(sType(obj)) && Object.keys(obj).length === 0)) {
+    return true
+  }
   return false
 }
 
@@ -81,16 +91,22 @@ function iRandom(min, max) {
 }
 
 function errStack(error, stack = false) {
-  if (error === undefined) return 'no error information'
+  if (error === undefined) {
+    return 'no error information'
+  }
   if (error.stack) {
-    if (stack) return error.stack
+    if (stack) {
+      return error.stack
+    }
     let errline = error.stack.match(/evalmachine\.<anonymous>:([0-9]+(:[0-9]+)?)/)
     if (errline && errline[1]) {
       return 'line ' + errline[1] + ' error: ' + error.message
     }
     return error.stack
   }
-  if (error.message) return error.message
+  if (error.message) {
+    return error.message
+  }
   return error
 }
 
