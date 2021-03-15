@@ -37,7 +37,7 @@ module.exports = app => {
       })
       return
     }
-    const subpath = decodeURI(req.query.subpath)
+    const subpath = decodeURI(req.query.subpath || '')
     const uploadfile = new formidable.IncomingForm()
     uploadfile.maxFieldsSize = 200 * 1024 * 1024 // 限制为最大 200M
     uploadfile.keepExtensions = true

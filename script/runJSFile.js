@@ -44,6 +44,7 @@ const runstatus = {
  */
 async function taskCount(filename) {
   if (/test/.test(filename) || CONFIG_RUNJS.numtofeed === 0) {
+    clog.debug(filename, 'match key word: test, or by set, skip count run times')
     return
   }
   if (runstatus.detail[filename]) {
@@ -59,14 +60,14 @@ async function taskCount(filename) {
     data: { total: runstatus.total, detail: runstatus.detail }
   })
 
-  clog.debug('JS 脚本运行次数统计：', runstatus)
+  clog.debug('JS run status：', runstatus)
   if (runstatus.times === 0) {
     let des = []
     for (let jsname in runstatus.detail) {
-      des.push(`${jsname}: ${runstatus.detail[jsname]} 次`)
+      des.push(`${jsname}: ${runstatus.detail[jsname]}`)
     }
     runstatus.detail = {}
-    feedAddItem('运行 JS ' + CONFIG_RUNJS.numtofeed + ' 次啦！', `从 ${runstatus.start} 开始： ` + des.join(', '))
+    feedAddItem('run javascript ' + CONFIG_RUNJS.numtofeed + ' times', des.join(', ') + ` from ${runstatus.start}`)
     runstatus.times = CONFIG_RUNJS.numtofeed
     runstatus.start = now()
   }
@@ -135,8 +136,12 @@ function runJS(filename, jscode, addContext={}) {
   }
   if (/^\/\/ +@grant +(quiet|silent)$/m.test(jscode)) {
     CONTEXT.final.$feed = { push(){}, bark(){}, ifttt(){} }
-    if (CONTEXT.final.$notify) CONTEXT.final.$notify = ()=>{}
-    if (CONTEXT.final.$notification) CONTEXT.final.$notification.post = ()=>{}
+    if (CONTEXT.final.$notify) {
+      CONTEXT.final.$notify = ()=>{}
+    }
+    if (CONTEXT.final.$notification) {
+      CONTEXT.final.$notification.post = ()=>{}
+    }
   }
 
   if (sType(addContext) === 'object' && Object.keys(addContext).length) {

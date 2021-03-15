@@ -1,23 +1,36 @@
-// （先看完说明，再决定是否执行！操作不可恢复，谨慎使用。执行前，先根据自身需求修改下面 CONFIG 变量里的内容。）
+// （先看完说明，再决定是否执行！操作不可恢复，谨慎使用。执行前，先根据自身需求修改下面 CONFIG 变量里的内容）
 // 该脚本用于获取 https://github.com/elecV2/elecV2P 库的最新文件，并进行本地替换。（软更新升级）
 // 更新后会自动重启，以应用新的版本（请确定已保存任务列表及做好了储存映射数据备份等工作）
-// 脚本会先尝试以 PM2 的方式重启，如果失败，将直接重启容器(Docekr 模式下)或服务器(pm2 指令不可用的情况下)。
-// 3.1.8 版本后 elecV2P 默认启动方式更改为 PM2，建议在此版本后使用。
+// 脚本会先尝试以 PM2 的方式重启，如果失败，将直接重启容器(Docekr 模式下)或服务器(pm2 指令不可用的情况下)
+// 3.1.8 版本后 elecV2P 默认启动方式更改为 PM2，建议在此版本后使用
 // 
-// 该文件更新地址：https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
+// 该文件更新地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
+// 最近更新时间: 2021-03-15 18:40:06
 
-const CONFIG = {
+let CONFIG = {
+  store: 'softupdate_CONFIG',    // 将当前配置内容(CONFIG 值) 常量储存。留空: 表示使用下面的参数进行更新，否则将会读取 store 中的 softupdate_CONFIG 对应值进行更新。如果 softupdate_CONFIG 尚未设置(首次运行)，会先按下面参数执行，并储存当前 CONFIG 内容
   forceupdate: false,      // false: 检测到有新的版本时才更新。 true: 不检测版本直接更新
   restart: true,           // false: 只更新文件，不重启不应用。 true: 更新完成后自动重启并应用
   noupdate: [
-    // 'script/JSFile',    // 设置一些不覆盖更新的文件夹（保留个人数据）。根据个人需求进行调整
-    'script/Lists',        // 如果不设置，也只会覆盖更新 elecV2P 自带的同名文件，对其他文件无影响
-    'script/Store',
+    'script/Store',        // 设置一些不覆盖更新的文件夹（保留个人数据）。根据个人需求进行调整
+    // 'script/JSFile',    // 如果不设置，也只会覆盖更新 elecV2P 自带的同名文件，对其他文件无影响
+    'script/Lists',
     'script/Shell',
     'Todo',                // 排除单个文件，使用文件名包含的关键字即可
+    '^\\.',                // 也可以使用正则表示式。匹配方式为 new RegExp(str).test(fileurl)
   ],
   wbtoken: 'a8c259b2-67fe-4c64-8700-7bfdf1f55cb3',    // webhook token（在 SETTING 界面查看）用于发送保存当前任务列表的网络请求，可省略。
   cdngit: 'https://raw.githubusercontent.com',        // 可自定义 raw.githubusercontent.com 加速站点
+  about: 'elecV2P 软更新配置文件，详情: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js'
+}
+
+if (CONFIG.store) {
+  let sConf = $store.get(CONFIG.store)
+  if (sConf && typeof sConf === 'object') {
+    CONFIG = sConf
+  } else {
+    $store.put(CONFIG, CONFIG.store)
+  }
 }
 
 if (CONFIG.forceupdate) {
@@ -33,7 +46,7 @@ async function checkUpdate(){
     return true
   }
   try {
-    console.log('开始获取最新版本号。。。')
+    console.log('开始获取最新版本号...')
     let res = await $axios(CONFIG.cdngit + '/elecV2/elecV2P/master/package.json')
     let newversion = res.data.version
     console.log('当前版本:', __version, '最新版本:', newversion)
@@ -74,7 +87,15 @@ function update() {
 
     for (let file of tree) {
       if (file.type === 'blob') {
-        if (CONFIG.noupdate.filter(item=>file.path.match(item)).length === 0) {
+        let btoUP = true
+        for (let item of CONFIG.noupdate) {
+          if (new RegExp(item).test(file.path)) {
+            btoUP = false
+            console.debug('根据 CONFIG.noupdate', item, '设置，跳过', file.path, '更新')
+            break
+          }
+        }
+        if (btoUP) {
           let durl = CONFIG.cdngit + '/elecV2/elecV2P/master/' + file.path
           console.log('获取更新:', durl)
           try {
@@ -126,7 +147,7 @@ function autoFresh() {
     title: '软更新完成',
     width: 800,
     height: 200,
-    content: `<p>软更新已完成，elecV2P 将在 3 秒后尝试自动刷新前端页面（v3.2.4 后）</p><p>如长时间没有反应，请点击 <a href="/">手动刷新</a></p>`,
+    content: `<p>软更新已完成，elecV2P 将在 3 秒后尝试自动刷新前端页面<small>（v3.2.4 后）</small></p><p>如长时间没有反应，请点击 <a href="/">手动刷新</a></p>`,
     style: {
       content: "font-size: 26px; text-align: center",
     },

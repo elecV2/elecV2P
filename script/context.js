@@ -9,17 +9,21 @@ const { exec } = require('../func/exec')
 
 const formReq = {
   headers(req) {
-    const newheaders = sJson(req.headers, true)
+    let newheaders = sJson(req.headers, true)
     delete newheaders['Content-Length']
     delete newheaders['content-length']
-    if (!newheaders['Content-Type'] && !newheaders['content-type']) newheaders['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
+    if (!newheaders['Content-Type'] && !newheaders['content-type']) {
+      newheaders['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
+    }
     return newheaders
   },
   body(req) {
     // if (sType(req) === 'string' || !req.method || req.method.toLowerCase() === 'get') return null
-    const reqb = req.data || req.body
-    if (reqb) {
-      if (!req.headers || Object.keys(req.headers).length === 0) return reqb
+    let reqb = req.data === undefined ? req.body : req.data
+    if (reqb !== undefined) {
+      if (!req.headers || Object.keys(req.headers).length === 0) {
+        return reqb
+      }
       if (sType(reqb) === 'string' && /json/i.test(req.headers["Content-Type"])) {
         return sJson(reqb, true)
       }
@@ -31,7 +35,6 @@ const formReq = {
     return null
   },
   uest(req, method) {
-    delete req.opts
     return {
       url: req.url || req,
       headers: this.headers(req),
@@ -130,7 +133,8 @@ class surgeContext {
     let error = null,
         resps = {},
         sbody  = ''
-    eAxios(formReq.uest(req)).then(response=>{
+    req = formReq.uest(req)
+    eAxios(req).then(response=>{
       resps = {
         status: response.status,
         headers: response.headers,
@@ -174,17 +178,23 @@ class surgeContext {
       this.surgeRequest(req, cb)
     },
     post: (req, cb) => {
-      if (sType(req) === 'string') req = { url: req }
+      if (sType(req) === 'string') {
+        req = { url: req }
+      }
       req.method = 'post'
       this.surgeRequest(req, cb)
     },
     put: (req, cb) => {
-      if (sType(req) === 'string') req = { url: req }
+      if (sType(req) === 'string') {
+        req = { url: req }
+      }
       req.method = 'put'
       this.surgeRequest(req, cb)
     },
     delete: (req, cb) => {
-      if (sType(req) === 'string') req = { url: req }
+      if (sType(req) === 'string') {
+        req = { url: req }
+      }
       req.method = 'delete'
       this.surgeRequest(req, cb)
     }
@@ -213,8 +223,9 @@ class quanxContext {
   $task = {
     fetch: (req, cb) => {
       let resp = null
+      req = formReq.uest(req)
       return new Promise((resolve, reject) => {
-        eAxios(formReq.uest(req)).then(response=>{
+        eAxios(req).then(response=>{
           resp = {
             statusCode: response.status,
             headers: response.headers,
