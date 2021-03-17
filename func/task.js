@@ -156,4 +156,18 @@ function jobFunc(job) {
   }
 }
 
-module.exports = { Task, TASKS_WORKER, TASKS_INFO, jobFunc, bIsValid }
+function taskStatus(){
+  let status = {
+    total: 0,
+    running: 0
+  }
+  for (let tid in TASKS_INFO) {
+    status.total++
+    if (TASKS_INFO[tid].running) {
+      status.running++
+    }
+  }
+  return status
+}
+
+module.exports = { Task, TASKS_WORKER, TASKS_INFO, jobFunc, bIsValid, taskStatus }

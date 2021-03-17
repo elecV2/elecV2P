@@ -29,18 +29,18 @@ function commandCross(command) {
 }
 
 /**
- * command 参数处理 -c/-e，可执行化命令
+ * command 参数处理 -cwd/-env，可执行化命令
  * @param     {string}    command    exec 命令
  * @param     {object}    options    命令执行参数
  * @return    {string}               处理后命令
  */
 function commandSetup(command, options={}) {
-  let cwd = command.match(/-c (\S+)/)
+  let cwd = command.match(/ -cwd (\S+)/)
   if (cwd) {
     options.cwd = file.path(process.cwd(), cwd[1])
   }
 
-  let envrough = command.replace(/ -c (\S+)/g, '').match(/-e ([^-]+)/)
+  let envrough = command.replace(/ -cwd (\S+)/g, '').match(/ -env ([^-]+)/)
   if (envrough) {
     let envlist = envrough[1].trim().split(' ')
     options.env = { ...options.env, ...envlist }
@@ -52,10 +52,13 @@ function commandSetup(command, options={}) {
       }
     })
   }
-  command = commandCross(command.split(/ -(c|e) /)[0])
+  command = commandCross(command.split(/ -(cwd|env) /)[0])
 
   if (options.timeout === undefined) {
     options.timeout = CONFIG_exec.timeout
+  }
+  if (options.windowsHide === undefined) {
+    options.windowsHide = true
   }
   options.encoding = 'buffer'
   return { command, options }
@@ -105,10 +108,11 @@ wsSer.recv.shell = command => {
  * exec 执行函数
  * @param  {string}    command          具体指令
  * @param  {string}    options.cwd      当前工作目录
- * @param  {string}    options.env      env 环境变量
+ * @param  {object}    options.env      env 环境变量
  * @param  {number}    options.timeout  timeout，单位：毫秒
  * @param  {function}  options.cb       回调函数，接收参数为 stdout 的数据
  * @param  {boolean}   options.call     command finish flag, 是否等命令执行完成后一次性返回所有输出
+ * @param  {object}    options.stdin    延时交互数据自动输入
  * @param  {function}  cb               回调函数，优化级高于 options.cb
  * @return {none}                 
  */
@@ -147,6 +151,22 @@ function execFunc(command, options={}, cb) {
       cb(options.call ? fdata.join('\n') : fstr, null, true)
     }
   })
+
+  if (options.stdin && options.stdin.write !== undefined) {
+    if (options.stdin.delay === undefined) {
+      options.stdin.delay = 2000
+    }
+
+    let hint = 'input ' + options.stdin.write + ' after ' + options.stdin.delay + ' milliseconds'
+    clog.info(hint)
+    if (cb) {
+      cb(hint)
+    }
+    setTimeout(()=>{
+      childexec.stdin.write(options.stdin.write)
+      childexec.stdin.end()
+    }, options.stdin.delay)
+  }
 }
 
 module.exports = { exec: execFunc }

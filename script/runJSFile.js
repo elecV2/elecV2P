@@ -82,8 +82,8 @@ async function taskCount(filename) {
  */
 function runJS(filename, jscode, addContext={}) {
   if (!filename || !jscode) {
-    clog.error('don\'t have any code to run')
-    return Promise.resolve('no code to run')
+    clog.error('don\'t have any javascript code to run')
+    return Promise.resolve('no javascript code to run')
   }
   let cb = addContext.cb
   delete addContext.cb
@@ -199,7 +199,7 @@ function runJS(filename, jscode, addContext={}) {
 function runJSFile(filename, addContext={}) {
   filename = filename.trim()
   if (filename === undefined || filename === '') {
-    return Promise.resolve('a js file is expected')
+    return Promise.resolve('a javascript filename or code is expected')
   }
   if (/^https?:/.test(filename)) {
     const url = filename

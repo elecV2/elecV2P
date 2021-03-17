@@ -1,4 +1,8 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志：(最新版本 v3.2.5)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志：(最新版本 v3.2.6)
+
+v3.2.6
+ • $exec 增加延迟交互输入。 具体说明查看<a href='https://github.com/elecV2/elecV2P-dei/tree/master/docs/04-JS.md' target='_blank'> 04-JS.md </a>相关部分
+ • webhook 增加服务器<a href='/webhook?token=a8c259b2-67fe-4c64-8700-7bfdf1f55cb3&type=info&debug=true' target='_blank'> 信息查看接口</a>
 
 v3.2.4
  • $evui 增加支持插入 script

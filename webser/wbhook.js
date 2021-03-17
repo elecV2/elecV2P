@@ -1,4 +1,5 @@
-const { Task, TASKS_WORKER, TASKS_INFO, jobFunc, exec } = require('../func')
+const os = require('os')
+const { Task, TASKS_WORKER, TASKS_INFO, jobFunc, taskStatus, exec } = require('../func')
 const { runJSFile, JSLISTS } = require('../script')
 
 const { logger, LOGFILE, nStatus, euid, sJson, sString, sType, list, downloadfile, now } = require('../utils')
@@ -10,11 +11,11 @@ function handler(req, res){
   const rbody = req.method === 'GET' ? req.query : req.body
   res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
   if (!CONFIG.wbrtoken) {
-    res.end('no webhook token is set.')
+    res.end('no webhook token is set')
     return
   }
   if (rbody.token !== CONFIG.wbrtoken) {
-    res.end('token is illegal.')
+    res.end('token is illegal')
     return
   }
   const clientip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
@@ -61,7 +62,7 @@ function handler(req, res){
     const name = rbody.fn
     clog.info(clientip, 'delete log', name)
     if (LOGFILE.delete(name)) {
-      res.end(name + ' success deleted!')
+      res.end(name + ' success deleted')
     } else {
       res.end(name + ' log file don\'t exist')
     }
@@ -93,16 +94,9 @@ function handler(req, res){
   case 'taskinfo':
     clog.info(clientip, 'get taskinfo', rbody.tid)
     if (rbody.tid === 'all') {
-      let status = {
-        total: 0,
-        running: 0
-      }
-      for (let tid in TASKS_INFO) {
-        status.total++
-        if (TASKS_INFO[tid].running) status.running++
-        res.write(tid + ', ' + TASKS_INFO[tid].name + ', ' + TASKS_INFO[tid].time + ', ' + TASKS_INFO[tid].running + '\n')
-      }
-      res.end(status.running + '/' + status.total)
+      let status = taskStatus()
+      status.info = TASKS_INFO
+      res.end(JSON.stringify(status, null, 2))
     } else {
       if (TASKS_INFO[rbody.tid]) {
         res.end(JSON.stringify(TASKS_INFO[rbody.tid], null, 2))
@@ -210,6 +204,52 @@ function handler(req, res){
     } else {
       res.end('command parameter is expected.')
     }
+    break
+  case 'info':
+    let elecV2PInfo = {
+      elecV2P: {
+        version: CONFIG.version,
+        start: now(CONFIG.start, false),
+        taskStatus: taskStatus(),
+        memoryUsage: nStatus(),
+      },
+      system: {
+        platform: os.platform() + ' ' + os.version(),
+        homedir: os.homedir(),
+        freememory: (Math.round(os.freemem()/1024) / 1024).toFixed(2) + ' MB',
+        totalmemory: (Math.round(os.totalmem()/1024) / 1024).toFixed(2) + ' MB',
+        hostname: os.hostname(),
+      },
+      client: {
+        ip: clientip,
+        url: req.url,
+        method: req.method,
+        protocol: req.protocol,
+        hostname: req.hostname,
+        query: req.query,
+        'user-agent': req.headers['user-agent'],
+      }
+    }
+    if (req.body !== undefined) {
+      elecV2PInfo.client.body = req.body
+    }
+    if (req.headers['x-forwarded-for']) {
+      elecV2PInfo.client['x-forwarded-for'] = req.headers['x-forwarded-for']
+    }
+
+    if (rbody.debug) {
+      elecV2PInfo.elecV2P.webhooktoken = CONFIG.wbrtoken
+      elecV2PInfo.elecV2P.JSLISTSlen = JSLISTS.length
+
+      elecV2PInfo.system.userInfo = os.userInfo()
+      elecV2PInfo.system.uptime = (os.uptime()/60/60).toFixed(2) + ' hours'
+      elecV2PInfo.system.cpus = os.cpus()
+      elecV2PInfo.system.networkInterfaces = os.networkInterfaces()
+
+      elecV2PInfo.client.ips = req.ips
+      elecV2PInfo.client.headers = req.headers
+    }
+    res.end(JSON.stringify(elecV2PInfo, null, 2))
     break
   default:
     res.end('wrong webhook type' + rbody.type)

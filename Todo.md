@@ -25,6 +25,7 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [x] $exec 增加延迟输入交互内容
 - [x] $evui 增加支持插入 script
 - [x] EFSS 目录支持使用 $HOME/~ 变量
 - [x] 添加定时任务订阅功能
