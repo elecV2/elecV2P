@@ -3,13 +3,14 @@ cookieValue
 添加新的 cookie 时，直接修改 KEY 和它对应的 value 然后保存即可
 
 调用方法：
-在 JS 中使用 $store.get 方法进行获取，比如直接测试运行下面的代码:
+在 JS 中使用 $store.get(KEY) 方法进行获取，比如直接测试运行下面的代码:
 
 ``` JS
-let anv = $store.get('cookieValue')
+let anv = $store.get('cookieKEY')
 let anov = $store.get('newone')
 
-console.log('cookieValue:', anv, 'newone 对应值:', anov)
+console.log('cookieValue:', anv)
+console.log('newone 对应值:', anov)
 ```
 
 更详细使用方法查看: https://github.com/elecV2/elecV2P-dei/tree/master/docs/04-JS.md 相关部分

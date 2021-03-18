@@ -5,12 +5,12 @@
 // 3.1.8 版本后 elecV2P 默认启动方式更改为 PM2，建议在此版本后使用
 // 
 // 该文件更新地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
-// 最近更新时间: 2021-03-15 18:40:06
+// 最近更新时间: 2021-03-18 10:08:45
 
 let CONFIG = {
   store: 'softupdate_CONFIG',    // 将当前配置内容(CONFIG 值) 常量储存。留空: 表示使用下面的参数进行更新，否则将会读取 store 中的 softupdate_CONFIG 对应值进行更新。如果 softupdate_CONFIG 尚未设置(首次运行)，会先按下面参数执行，并储存当前 CONFIG 内容
   forceupdate: false,      // false: 检测到有新的版本时才更新。 true: 不检测版本直接更新
-  restart: true,           // false: 只更新文件，不重启不应用。 true: 更新完成后自动重启并应用
+  restart: 'all',          // false: 只更新文件，不重启不应用。 其他值表示 pm2 重启线程名，比如 all/elecV2P/index（暂时不清楚就保持不动）
   noupdate: [
     'script/Store',        // 设置一些不覆盖更新的文件夹（保留个人数据）。根据个人需求进行调整
     // 'script/JSFile',    // 如果不设置，也只会覆盖更新 elecV2P 自带的同名文件，对其他文件无影响
@@ -121,20 +121,12 @@ function update() {
 }
 
 function restart() {
-  $exec('pm2 restart index', {
+  $exec('pm2 restart ' + CONFIG.restart, {
     cb(data, error){
       if (error) {
         console.error(error)
-        if (/not found/.test(error)) {
-          $exec('pm2 restart elecV2P', {
-            cb(data, error){
-              console.log(error || data)
-            }
-          })
-        } else {
-          console.log('尝试使用 pm2 的方式重启失败，将直接重启服务器')
-          $exec('reboot')
-        }
+        console.log('尝试使用 pm2 的方式重启失败，将直接重启服务器')
+        $exec('reboot')
       } else {
         console.log(data)
       }
