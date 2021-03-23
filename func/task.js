@@ -9,9 +9,9 @@ const { logger, feedAddItem, sJson, list, file, wsSer } = require('../utils')
 const clog = new logger({ head: 'funcTask', cb: wsSer.send.func('tasklog'), file: 'funcTask' })
 
 class Task {
-  constructor(info, job){
+  constructor(info){
     this.info = info
-    this.job = job
+    this.job = jobFunc(info.job, info.name)
   }
 
   stat(){
@@ -67,7 +67,7 @@ const taskInit = function() {
   }
   for(let tid in TASKS_INFO) {
     if (TASKS_INFO[tid].type !== 'sub') {
-      TASKS_WORKER[tid] = new Task(TASKS_INFO[tid], jobFunc(TASKS_INFO[tid].job))
+      TASKS_WORKER[tid] = new Task(TASKS_INFO[tid])
       if (TASKS_INFO[tid].running) {
         TASKS_WORKER[tid].start()
       }
@@ -97,11 +97,11 @@ function bIsValid(info) {
   return true
 }
 
-function jobFunc(job) {
+function jobFunc(job, taskname) {
   // 任务信息转化为可执行函数
   if (job.type === 'runjs') {
     const options = { type: 'task', cb: wsSer.send.func('tasklog') }
-    const jobenvs = job.target.split(/ -e /)
+    const jobenvs = job.target.split(/ -env /)
     let envrough = jobenvs[1]
     if (envrough !== undefined) {
       let envlist = envrough.trim().split(' ')
@@ -124,7 +124,7 @@ function jobFunc(job) {
         return
       }
       if (!TASKS_WORKER[job.target]) {
-        TASKS_WORKER[job.target] = new Task(TASKS_INFO[job.target], jobFunc(TASKS_INFO[job.target].job))
+        TASKS_WORKER[job.target] = new Task(TASKS_INFO[job.target])
       }
       TASKS_WORKER[job.target].start()
       TASKS_INFO[job.target].running = true
@@ -147,7 +147,8 @@ function jobFunc(job) {
         cwd: file.get('script/Shell', 'path'),
         cb(data, error){
           error ? clog.error(error) : clog.info(data)
-        }
+        },
+        name: taskname
       })
     }
   } else {
@@ -170,4 +171,4 @@ function taskStatus(){
   return status
 }
 
-module.exports = { Task, TASKS_WORKER, TASKS_INFO, jobFunc, bIsValid, taskStatus }
+module.exports = { Task, TASKS_WORKER, TASKS_INFO, bIsValid, taskStatus }

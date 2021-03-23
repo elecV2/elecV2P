@@ -1,5 +1,5 @@
 const os = require('os')
-const { Task, TASKS_WORKER, TASKS_INFO, jobFunc, taskStatus, exec } = require('../func')
+const { Task, TASKS_WORKER, TASKS_INFO, taskStatus, exec } = require('../func')
 const { runJSFile, JSLISTS } = require('../script')
 
 const { logger, LOGFILE, nStatus, euid, sJson, sString, sType, list, downloadfile, now } = require('../utils')
@@ -137,7 +137,7 @@ function handler(req, res){
       const newtid = euid()
       TASKS_INFO[newtid] = rbody.task
       TASKS_INFO[newtid].id = newtid
-      TASKS_WORKER[newtid] = new Task(TASKS_INFO[newtid], jobFunc(TASKS_INFO[newtid].job))
+      TASKS_WORKER[newtid] = new Task(TASKS_INFO[newtid])
       res.end('success add task: ' + TASKS_INFO[newtid].name)
       if (rbody.task.running) TASKS_WORKER[newtid].start()
       return

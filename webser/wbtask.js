@@ -1,4 +1,4 @@
-const { Task, TASKS_WORKER, TASKS_INFO, jobFunc, bIsValid } = require('../func/task')
+const { Task, TASKS_WORKER, TASKS_INFO, bIsValid } = require('../func/task')
 
 const { logger, list, sType } = require('../utils')
 const clog = new logger({ head: 'wbtask' })
@@ -47,7 +47,7 @@ module.exports = app => {
 
         TASKS_INFO[data.tid] = data.task
         TASKS_INFO[data.tid].id = data.tid
-        TASKS_WORKER[data.tid] = new Task(TASKS_INFO[data.tid], jobFunc(data.task.job))
+        TASKS_WORKER[data.tid] = new Task(TASKS_INFO[data.tid])
         let message = 'add task: ' + data.task.name
         if (data.task.running !== false) {
           TASKS_WORKER[data.tid].start()
@@ -98,7 +98,7 @@ module.exports = app => {
           TASKS_INFO[tid] = req.body[tid]
           if (req.body[tid].type !== 'sub') {
             TASKS_INFO[tid].id = tid
-            TASKS_WORKER[tid] = new Task(TASKS_INFO[tid], jobFunc(req.body[tid].job))
+            TASKS_WORKER[tid] = new Task(TASKS_INFO[tid])
           }
         }
       }

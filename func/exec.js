@@ -20,6 +20,7 @@ function commandCross(command) {
     else if (/^cat /.test(command)) command = command.replace('cat', 'type')
     else if (command === 'reboot') command = 'powershell.exe restart-computer'
     else if (/^(rm|mv|cp|mkdir|rmdir)/.test(command)) command = 'powershell.exe ' + command
+    else if (/^apk add/.test(command)) command = command.replace('apk add', 'scoop install')
   } else {
     if (/^dir/.test(command)) command = command.replace('dir', 'ls')
     else if (/^type/.test(command)) command = command.replace('type', 'cat')
@@ -29,19 +30,24 @@ function commandCross(command) {
 }
 
 /**
- * command 参数处理 -cwd/-env，可执行化命令
+ * command 参数处理 -cwd/-env/-stdin，可执行化命令
  * @param     {string}    command    exec 命令
  * @param     {object}    options    命令执行参数
  * @return    {string}               处理后命令
  */
 function commandSetup(command, options={}) {
   let cwd = command.match(/ -cwd (\S+)/)
-  if (cwd) {
+  if (cwd && cwd[1]) {
     options.cwd = file.path(process.cwd(), cwd[1])
   }
 
+  let stdin = command.match(/ -stdin (\S+)/)
+  if (stdin && stdin[1]) {
+    options.stdin = Object.assign(options.stdin || {}, { write: decodeURI(stdin[1]) })
+  }
+
   let envrough = command.replace(/ -cwd (\S+)/g, '').match(/ -env ([^-]+)/)
-  if (envrough) {
+  if (envrough && envrough[1]) {
     let envlist = envrough[1].trim().split(' ')
     options.env = { ...options.env, ...envlist }
 
@@ -113,20 +119,25 @@ wsSer.recv.shell = command => {
  * @param  {function}  options.cb       回调函数，接收参数为 stdout 的数据
  * @param  {boolean}   options.call     command finish flag, 是否等命令执行完成后一次性返回所有输出
  * @param  {object}    options.stdin    延时交互数据自动输入
- * @param  {function}  cb               回调函数，优化级高于 options.cb
+ * @param  {function}  cb               回调函数，优先级高于 options.cb
  * @return {none}                 
  */
 function execFunc(command, options={}, cb) {
   const fev = commandSetup(command, options)
   const childexec = exec(fev.command, fev.options)
 
-  clog.notify('start run command:', command)
+  let execlog = clog
+  if (options.name) {
+    execlog = new logger({ head: 'taskExec', file: options.name })
+  }
+
+  execlog.notify('start run command:', command)
 
   cb = cb || options.cb
   const fdata = []
   childexec.stdout.on('data', data => {
     data = data.toString()
-    clog.info(data)
+    execlog.info(data)
     if (cb) {
       cb(data)
     }
@@ -137,7 +148,7 @@ function execFunc(command, options={}, cb) {
 
   childexec.stderr.on('data', err => {
     err = err.toString()
-    clog.error(err)
+    execlog.error(err)
     if (cb) {
       cb(null, err)
     }
@@ -146,7 +157,7 @@ function execFunc(command, options={}, cb) {
 
   childexec.on('exit', ()=>{
     let fstr = command + ' finished'
-    clog.info(fstr)
+    execlog.info(fstr)
     if (cb) {
       cb(options.call ? fdata.join('\n') : fstr, null, true)
     }
@@ -158,7 +169,7 @@ function execFunc(command, options={}, cb) {
     }
 
     let hint = 'input ' + options.stdin.write + ' after ' + options.stdin.delay + ' milliseconds'
-    clog.info(hint)
+    execlog.info(hint)
     if (cb) {
       cb(hint)
     }
