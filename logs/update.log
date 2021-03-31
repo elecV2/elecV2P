@@ -1,7 +1,13 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志：(最新版本 v3.2.7)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.2.8)
+
+v3.2.8
+ • shell 指令支持执行远程文件。具体说明查看<a href='https://github.com/elecV2/elecV2P-dei/blob/master/docs/06-task.md' target='_blank'> 06-task.md </a>相关部分
+ • TASK shell 远程指令测试: python3 https://raw.githubusercontent.com/elecV2/elecV2P/master/script/Shell/test.py
+ • script/Shell 文件夹默认新增 <a href='https://github.com/elecV2/elecV2P/blob/master/script/Shell/elecV2P.py' target='_blank'> elecV2P.py </a>PYTHON 库文件
+ • 通知 title 开头使用 $enable$ 关键字强制发送通知。详见: <a href='https://github.com/elecV2/elecV2P-dei/blob/master/docs/07-feed&notify.md' target='_blank'> 07-feed&notify.md </a>相关部分
 
 v3.2.6
- • $exec 增加延迟交互输入。 具体说明查看<a href='https://github.com/elecV2/elecV2P-dei/tree/master/docs/04-JS.md' target='_blank'> 04-JS.md </a>相关部分
+ • $exec 增加延迟交互输入。具体说明查看<a href='https://github.com/elecV2/elecV2P-dei/blob/master/docs/04-JS.md' target='_blank'> 04-JS.md </a>相关部分
  • webhook 增加服务器<a href='/webhook?token=a8c259b2-67fe-4c64-8700-7bfdf1f55cb3&type=info&debug=true' target='_blank'> 信息查看接口</a>
 
 v3.2.4
@@ -11,12 +17,12 @@ v3.2.4
 
 v3.2.3
  • RUNJS 执行逻辑优化，移除 $result 参数，增强 $done 函数功能
- • // @grant 日志及通知控制优化。具体说明查看 <a href='https://github.com/elecV2/elecV2P-dei/tree/master/docs/04-JS.md' target='_blank'> 04-JS.md </a> 相关部分
+ • // @grant 日志及通知控制优化。具体说明查看 <a href='https://github.com/elecV2/elecV2P-dei/blob/master/docs/04-JS.md' target='_blank'> 04-JS.md </a> 相关部分
  • webUI 优化，移除设置中 保存所有 的按钮，每次保存都会储存当前设置
 
 v3.2.1
  • 添加定时任务订阅功能
- • 相关说明：https://github.com/elecV2/elecV2P-dei/tree/master/docs/06-task.md
+ • 相关说明：https://github.com/elecV2/elecV2P-dei/blob/master/docs/06-task.md
  • 测试订阅：https://raw.githubusercontent.com/elecV2/elecV2P/master/efss/tasksub.json
 
 v3.2.0

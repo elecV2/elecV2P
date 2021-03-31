@@ -10,7 +10,7 @@
     "running": false
   },
   "m8LWPxDc": {
-    "name": "exec task",
+    "name": "执行 Shell 指令",
     "type": "cron",
     "job": {
       "type": "exec",
@@ -18,5 +18,23 @@
     },
     "time": "30 10 0 * * *",
     "running": false
+  },
+  "mkl7pwQn": {
+    "name": "Python安装(Docker下)",
+    "type": "schedule",
+    "time": "0",
+    "running": false,
+    "job": {
+      "type": "runjs",
+      "target": "https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/python-install.js"
+    }
+  },
+  "tJLRTl4t": {
+    "name": "elecV2P 任务订阅",
+    "type": "sub",
+    "job": {
+      "type": "addition",
+      "target": "https://raw.githubusercontent.com/elecV2/elecV2P/master/efss/tasksub.json"
+    }
   }
 }

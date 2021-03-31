@@ -39,12 +39,14 @@ module.exports = () => {
     const blacklist = CONFIG.SECURITY.blacklist || []
     const whitelist = CONFIG.SECURITY.whitelist || []
 
-    if (ipAddress.substr(0, 7) == "::ffff:") ipAddress = ipAddress.substr(7)
+    if (ipAddress.substr(0, 7) == "::ffff:") {
+      ipAddress = ipAddress.substr(7)
+    }
     if (whitelist.indexOf(ipAddress) !== -1 || (blacklist.indexOf('*') === -1 && blacklist.indexOf(ipAddress) === -1)) {
       next()
     } else {
       clog.error(ipAddress, 'is try to access elecV2P sever.')
-      res.send('you don\'t have permission to access. <br><br>Powered BY elecV2P: https://github.com/elecV2/elecV2P')
+      res.send('You don\'t have permission to access.<br>IP: ' + ipAddress + ' is recorded.<br><br>Powered BY elecV2P: https://github.com/elecV2/elecV2P')
     }
   })
 
@@ -67,7 +69,7 @@ module.exports = () => {
 
   app.use((req, res, next) => {
     res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })
-    res.end(`404<br>当前访问地址不存在<br><br><a href="/">返回首页</a><br><br><br><a target="_blank" href="https://github.com/elecV2/elecV2P">elecV2P 项目主页</a>`)
+    res.end(`404<br><br><a href="/">BACK TO HOME</a><br><br><br><a target="_blank" href="https://github.com/elecV2/elecV2P">elecV2P Github</a>`)
   })
 
   const server = http.createServer(app)

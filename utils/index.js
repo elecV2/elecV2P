@@ -3,7 +3,7 @@ const { logger, setGlog, LOGFILE } = require('./logger')
 const { list, Jsfile, store, file } = require('./file')
 const { websocketSer, wsSer, message } = require('./websocket')
 const { eAxios, downloadfile, CONFIG_Axios } = require('./eaxios')
-const { euid, sJson, sString, bEmpty, sUrl, sType, errStack, nStatus, UUID, iRandom, escapeHtml } = require('./string')
+const { euid, sJson, sString, bEmpty, sUrl, sType, errStack, nStatus, UUID, iRandom, escapeHtml, surlName } = require('./string')
 const { CONFIG_FEED, feedAddItem, iftttPush, barkPush, custPush, feedPush, feedXml, feedClear } = require('./feed')
 
 const clog = new logger({ head: 'elecV2Proc', file: 'elecV2Proc' })
@@ -33,6 +33,6 @@ module.exports = {
   logger, setGlog, LOGFILE,
   websocketSer, wsSer, message,
   list, Jsfile, store, file, downloadfile,
-  euid, sJson, sString, bEmpty, sUrl, sType, errStack, nStatus, UUID, iRandom, escapeHtml,
+  euid, sJson, sString, bEmpty, sUrl, sType, errStack, nStatus, UUID, iRandom, escapeHtml, surlName, 
   CONFIG_FEED, feedAddItem, iftttPush, barkPush, custPush, feedPush, feedXml, feedClear
 }

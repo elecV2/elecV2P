@@ -48,7 +48,7 @@ module.exports = class {
   }
 
   run(){
-    clog.log("start run", this.task.name, 'job')
+    clog.log(this.task.name, 'job start')
     let jobres = this.job()
 
     if (this.repeat < this._Task.repeat || this._Task.repeat >= 999) {
@@ -56,7 +56,7 @@ module.exports = class {
       this.start()
     } else {
       if (sType(jobres) === 'promise') {
-        Promise.race([jobres, new Promise(resolve=>setTimeout(resolve, 5000))]).then(res=>jobres=res).finally(res=>this.stop('finished', jobres))
+        Promise.race([jobres, new Promise(resolve=>setTimeout(resolve, 5000, 'job resolve is timeout of 5000ms'))]).then(res=>jobres=res).finally(res=>this.stop('finished', jobres))
       } else {
         this.stop('finished', jobres)
       }

@@ -7,6 +7,9 @@
 - 后面偶尔修修 Bug，欢迎提交 Issue
 - Porject 的坑有时间再填
 - Thanks for using.
+- [ ] 通知测试按钮
+- [ ] 通知触发 JS
+- [ ] User-Agent 强制替换
 </pre>
 </div>
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
@@ -14,6 +17,7 @@
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
 - 说明文档 [1.0 基本完成，优化中...]
 - 使用 JSON 重构 Lists 数据结构
+- EFSS favorite/site/backend
 - download process(cb)
 - Backup 备份导出/导入(lists/store)
 - minishell 上传/下载文件（编辑?）
@@ -25,6 +29,8 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [x] $feed title 开头使用 $enable$ 强制发送通知
+- [x] shell 指令支持执行远程文件
 - [x] $exec 增加延迟输入交互内容
 - [x] $evui 增加支持插入 script
 - [x] EFSS 目录支持使用 $HOME/~ 变量

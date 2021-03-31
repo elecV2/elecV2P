@@ -38,6 +38,7 @@ if (CONFIG.CONFIG_FEED) {
 } else {
   CONFIG.CONFIG_FEED = CONFIG_FEED
 }
+let feed = feedNew({})
 
 function feedNew({ title = 'elecV2P notification', description = 'elecV2P 运行记录通知', ttl = 10 }) {
   clog.debug('a new feed:', title)
@@ -51,7 +52,6 @@ function feedNew({ title = 'elecV2P notification', description = 'elecV2P 运行
     pubDate: date.getTime() - date.getTimezoneOffset()*60*1000
   })
 }
-let feed = feedNew({})
 
 function formUrl(url) {
   if (bEmpty(url)) return
@@ -62,25 +62,30 @@ function formUrl(url) {
 }
 
 function iftttPush(title, description, url) {
-  if (CONFIG_FEED.iftttid && CONFIG_FEED.iftttid.enable && CONFIG_FEED.iftttid.key) {
+  if (CONFIG_FEED.iftttid && CONFIG_FEED.iftttid.key && (CONFIG_FEED.iftttid.enable || /^\$enable\$/.test(title))) {
     if (bEmpty(title)) {
       title = 'elecV2P 通知'
     } else {
-      title = sString(title).trim()
+      title = sString(title).trim().replace(/^\$enable\$/, '')
     }
     if (bEmpty(description)) {
-      description = 'a empty message.\n没有任何通知内容。'
+      description = 'a empty message\n没有任何通知内容'
     } else {
       description = sString(description).trim()
     }
     const body = {
       value1: title
     }
-    if (description) body.value2 = description
+    if (description) {
+      body.value2 = description
+    }
     url = formUrl(url)
-    if (url) body.value3 = encodeURI(url)
+    if (url) {
+      body.value3 = encodeURI(url)
+    }
     clog.notify('ifttt webhook trigger, send data:', body)
     axios({
+      method: 'post',
       url: 'https://maker.ifttt.com/trigger/elecV2P/with/key/' + CONFIG_FEED.iftttid.key,
       headers: {
         'Content-Type': 'application/json; charset=UTF-8'
@@ -89,8 +94,11 @@ function iftttPush(title, description, url) {
     }).then(res=>{
       clog.debug('iftttPush result:', res.data)
     }).catch(e=>{
-      if (e.response) clog.error('iftttPush error:', e.response.data)
-      else clog.error('iftttPush error:', e.message)
+      if (e.response) {
+        clog.error('iftttPush error:', e.response.data)
+      } else {
+        clog.error('iftttPush error:', e.message)
+      }
     })
   } else {
     clog.debug('IFTTT not available yet, skip IFTTT push')
@@ -98,21 +106,23 @@ function iftttPush(title, description, url) {
 }
 
 function barkPush(title, description, url) {
-  if (CONFIG_FEED.barkkey && CONFIG_FEED.barkkey.enable && CONFIG_FEED.barkkey.key) {
+  if (CONFIG_FEED.barkkey && CONFIG_FEED.barkkey.key && (CONFIG_FEED.barkkey.enable || /^\$enable\$/.test(title))) {
     if (bEmpty(title)) {
       title = 'elecV2P 通知'
     } else {
-      title = sString(title).trim()
+      title = sString(title).trim().replace(/^\$enable\$/, '')
     }
     if (bEmpty(description)) {
-      description = 'a empty message.\n没有任何通知内容。'
+      description = 'a empty message\n没有任何通知内容'
     } else {
       description = sString(description).trim()
     }
     let pushurl = ''
     if (CONFIG_FEED.barkkey.key.startsWith('http')) {
       pushurl = CONFIG_FEED.barkkey.key
-      if (pushurl.endsWith('/') === false) pushurl += '/'
+      if (pushurl.endsWith('/') === false) {
+        pushurl += '/'
+      }
     } else {
       pushurl = `https://api.day.app/${CONFIG_FEED.barkkey.key}/`
     }
@@ -131,8 +141,11 @@ function barkPush(title, description, url) {
     }).then(res=>{
       clog.debug('barkPush result:', res.data)
     }).catch(e=>{
-      if (e.response) clog.error('barkPush error:', e.response.data)
-      else clog.error('barkPush error:', e.message)
+      if (e.response) {
+        clog.error('barkPush error:', e.response.data)
+      } else {
+        clog.error('barkPush error:', e.message)
+      }
     })
   } else {
     clog.debug('bark not available yet, skip push bark notifications.')
@@ -140,14 +153,14 @@ function barkPush(title, description, url) {
 }
 
 function custPush(title, description, url) {
-  if (CONFIG_FEED.custnotify && CONFIG_FEED.custnotify.enable && CONFIG_FEED.custnotify.url) {
+  if (CONFIG_FEED.custnotify && CONFIG_FEED.custnotify.url && (CONFIG_FEED.custnotify.enable || /^\$enable\$/.test(title))) {
     if (bEmpty(title)) {
       title = 'elecV2P 通知'
     } else {
-      title = sString(title).trim()
+      title = sString(title).trim().replace(/^\$enable\$/, '')
     }
     if (bEmpty(description)) {
-      description = 'a empty message.\n没有任何通知内容。'
+      description = 'a empty message\n没有任何通知内容'
     } else {
       description = sString(description)
     }
@@ -180,8 +193,11 @@ function custPush(title, description, url) {
     axios(req).then(res=>{
       clog.debug('custnotify result:', res.data)
     }).catch(e=>{
-      if (e.response) clog.error('custnotify push error:', e.response.data)
-      else clog.error('custnotify push error:', e.message)
+      if (e.response) {
+        clog.error('custnotify push error:', e.response.data)
+      } else {
+        clog.error('custnotify push error:', e.message)
+      }
     })
   } else {
     clog.debug('custnotify push not available yet, skip custnotify push.')
@@ -195,7 +211,7 @@ function feedPush(title, description, url) {
     title = sString(title).trim()
   }
   if (bEmpty(description)) {
-    description = 'a empty message.\n没有任何通知内容。'
+    description = 'a empty message\n没有任何通知内容'
   } else {
     description = sString(description).trim()
   }

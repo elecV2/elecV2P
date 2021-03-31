@@ -1,11 +1,11 @@
 const vm = require('vm')
 const EventEmitter = require('events')
 
-const { logger, feedAddItem, now, sType, sString, euid, errStack, downloadfile, Jsfile, file, wsSer } = require('../utils')
+const { logger, feedAddItem, now, sType, sString, surlName, euid, errStack, downloadfile, Jsfile, file, wsSer } = require('../utils')
 const clog = new logger({ head: 'runJSFile', level: 'debug' })
 
 const vmEvent = new EventEmitter()
-vmEvent.on('error', err=>clog.error(err))
+vmEvent.on('error', err=>clog.error(errStack(err)))
 
 const { context } = require('./context')
 const { CONFIG } = require('../config')
@@ -24,6 +24,7 @@ if (CONFIG.CONFIG_RUNJS) {
   CONFIG.CONFIG_RUNJS = CONFIG_RUNJS
 }
 
+// 初始化脚本运行
 if (CONFIG.init && CONFIG.init.runjs) {
   CONFIG.init.runjs.split(/,|，| /).filter(s=>s).forEach(js=>{
     runJSFile(js, { from: 'initialization' })
@@ -78,7 +79,7 @@ async function taskCount(filename) {
  * @param  {string} filename   JS 文件名
  * @param  {string} jscode     JS 执行代码
  * @param  {object} addContext 附加环境变量 context
- * @return {string/object}     JS 执行结果
+ * @return {promise}     JS 执行结果
  */
 function runJS(filename, jscode, addContext={}) {
   if (!filename || !jscode) {
@@ -196,57 +197,44 @@ function runJS(filename, jscode, addContext={}) {
  * @param     {object}    addContext    附加环境变量 context
  * @return    {Promise}                 runJS() 的结果
  */
-function runJSFile(filename, addContext={}) {
+async function runJSFile(filename, addContext={}) {
   filename = filename.trim()
   if (filename === undefined || filename === '') {
     return Promise.resolve('a javascript filename or code is expected')
   }
+  let runclog = clog
+  if (addContext.cb) {
+    runclog = new logger({ head: (addContext.from || addContext.type || 'rule') + 'RunJS', level: 'debug', cb: addContext.cb })
+  }
   if (/^https?:/.test(filename)) {
-    const url = filename
-    const sdurl = url.split(/\/|\?|#/)
-    do {
-      filename = sdurl.pop().trim()
-    } while (filename === '')
-    const jsIsExist = file.isExist(Jsfile.get(filename, 'path'))
-    if (!jsIsExist || addContext.type === 'webhook' || (CONFIG_RUNJS.intervals > 0 && new Date().getTime() - Jsfile.get(filename, 'date') > CONFIG_RUNJS.intervals*1000)) {
+    let url = filename
+    filename = surlName(url)
+    let jsIsExist = file.isExist(Jsfile.get(filename, 'path'))
+    if (jsIsExist && addContext.local) {
+      runclog.info('run', filename, 'locally')
+      delete addContext.local
+    } else if (!jsIsExist || addContext.type === 'webhook' || (CONFIG_RUNJS.intervals > 0 && new Date().getTime() - Jsfile.get(filename, 'date') > CONFIG_RUNJS.intervals*1000)) {
       if (addContext.rename) {
         filename = addContext.rename
       }
       if (!/\.js$/i.test(filename)) {
         filename += '.js'
       }
-      clog.info('downloading', filename, 'from', url)
-      return new Promise((resolve, reject)=>{
-        downloadfile(url, Jsfile.get(filename, 'path')).then(()=>{
-          clog.info(`success download ${filename}, ready to run`)
-        }).catch(error=>{
-          clog.error('run', url, 'error:', error)
-          clog.info('try to run', filename, 'locally')
-          // reject(error)
-        }).finally(()=>{
-          runJS(filename, Jsfile.get(filename), addContext).then(res=>{
-            resolve(res)
-            if (res !== undefined) {
-              res = sString(res)
-              if (res.length > 480) {
-                clog.debug(`run ${filename} result:`, res)
-                res = res.slice(0, 480) + '...'
-              }
-              clog.info(`run ${filename} result:`, res)
-            }
-          }).catch(e=>{
-            resolve(e.message)
-            clog.error('run', filename, 'error:', errStack(e))
-          })
-        })
-      })
+      runclog.info('downloading', filename, 'from', url)
+      try {
+        await downloadfile(url, Jsfile.get(filename, 'path'))
+        runclog.info(`success download ${filename}, ready to run`)
+      } catch(error) {
+        runclog.error(`run ${url}, error: ${error}`)
+        runclog.info(`try to run ${filename} locally`)
+      }
     }
   }
 
   let rawjs = (addContext.type === 'rawcode') ? filename : Jsfile.get(filename)
   if (rawjs === false) {
-    clog.error(filename, 'not exist.')
-    return Promise.resolve(filename + ' not exist.')
+    runclog.error(`${filename} not exist`)
+    return Promise.resolve(`${filename} not exist`)
   }
   if (addContext.type === 'rawcode') {
     filename = addContext.rename || addContext.from || 'rawcode.js'
@@ -261,14 +249,14 @@ function runJSFile(filename, addContext={}) {
       if (res !== undefined) {
         res = sString(res)
         if (res.length > 480) {
-          clog.debug(`run ${filename} result:`, res)
+          runclog.debug(`run ${filename} result: ${res}`)
           res = res.slice(0, 480) + '...'
         }
-        clog.info(`run ${filename} result:`, res)
+        runclog.info(`run ${filename} result: ${res}`)
       }
     }).catch(e=>{
-      clog.error('run', filename, 'error:', errStack(e))
       resolve(e.message)
+      runclog.error(`run ${filename}, 'error: ${errStack(e)}`)
     })
   })
 }

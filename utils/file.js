@@ -166,6 +166,10 @@ const store = {
       clog.error('store put error: no key or value')
       return false
     }
+    if (key.length > 100) {
+      clog.error('store put key is longer than 100, maybe put key and value in the wrong order. store.put(value, key)')
+      return false
+    }
     clog.debug('put value to', key)
     if (value === '') {
       return this.delete(key)

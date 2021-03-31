@@ -127,4 +127,16 @@ function escapeHtml(str) {
   return str.replace(/[&<>]/g, tag=>tagsToReplace[tag] || tag);
 }
 
-module.exports = { euid, UUID, iRandom, sJson, sString, bEmpty, sUrl, sType, errStack, nStatus, escapeHtml }
+function surlName(url) {
+  if (!url) {
+    return ''
+  }
+  let name = ''
+  let sdurl = url.split(/\/|\?|#/)
+  while (name === '' && sdurl.length) {
+    name = sdurl.pop()
+  }
+  return name
+}
+
+module.exports = { euid, UUID, iRandom, sJson, sString, bEmpty, sUrl, sType, errStack, nStatus, escapeHtml, surlName }

@@ -7,43 +7,6 @@ const { errStack, euid, sType, sString, sJson, feedPush, iftttPush, barkPush, cu
 const { exec } = require('../func/exec')
 // const clog = new logger({ head: 'context', level: 'debug' })
 
-const formReq = {
-  headers(req) {
-    let newheaders = sJson(req.headers, true)
-    delete newheaders['Content-Length']
-    delete newheaders['content-length']
-    if (!newheaders['Content-Type'] && !newheaders['content-type']) {
-      newheaders['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
-    }
-    return newheaders
-  },
-  body(req) {
-    // if (sType(req) === 'string' || !req.method || req.method.toLowerCase() === 'get') return null
-    let reqb = req.data === undefined ? req.body : req.data
-    if (reqb !== undefined) {
-      if (!req.headers || Object.keys(req.headers).length === 0) {
-        return reqb
-      }
-      if (sType(reqb) === 'string' && /json/i.test(req.headers["Content-Type"])) {
-        return sJson(reqb, true)
-      }
-      if (sType(reqb) === 'object' && /x-www-form-urlencoded/i.test(req.headers["Content-Type"])) {
-        return qs.stringify(reqb)
-      }
-      return reqb
-    }
-    return null
-  },
-  uest(req, method) {
-    return {
-      url: req.url || req,
-      headers: this.headers(req),
-      method: req.method || method || 'get',
-      data: this.body(req)
-    }
-  }
-}
-
 class contextBase {
   constructor({ fconsole }){
     this.console = fconsole
@@ -121,6 +84,43 @@ class contextBase {
       this.$vmEvent.emit(this.ok, data)
     }
     return data
+  }
+}
+
+const formReq = {
+  headers(req) {
+    let newheaders = sJson(req.headers, true)
+    delete newheaders['Content-Length']
+    delete newheaders['content-length']
+    if (!newheaders['Content-Type'] && !newheaders['content-type']) {
+      newheaders['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
+    }
+    return newheaders
+  },
+  body(req) {
+    // if (sType(req) === 'string' || !req.method || req.method.toLowerCase() === 'get') return null
+    let reqb = req.data === undefined ? req.body : req.data
+    if (reqb !== undefined) {
+      if (!req.headers || Object.keys(req.headers).length === 0) {
+        return reqb
+      }
+      if (sType(reqb) === 'string' && /json/i.test(req.headers["Content-Type"])) {
+        return sJson(reqb, true)
+      }
+      if (sType(reqb) === 'object' && /x-www-form-urlencoded/i.test(req.headers["Content-Type"])) {
+        return qs.stringify(reqb)
+      }
+      return reqb
+    }
+    return null
+  },
+  uest(req, method) {
+    return {
+      url: req.url || req,
+      headers: this.headers(req),
+      method: req.method || method || 'get',
+      data: this.body(req)
+    }
   }
 }
 

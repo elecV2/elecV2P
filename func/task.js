@@ -100,8 +100,8 @@ function bIsValid(info) {
 function jobFunc(job, taskname) {
   // 任务信息转化为可执行函数
   if (job.type === 'runjs') {
-    const options = { type: 'task', cb: wsSer.send.func('tasklog') }
-    const jobenvs = job.target.split(/ -env /)
+    let options = { type: 'task', cb: wsSer.send.func('tasklog') }
+    let jobenvs = job.target.split(/ -env /)
     let envrough = jobenvs[1]
     if (envrough !== undefined) {
       let envlist = envrough.trim().split(' ')
@@ -114,9 +114,12 @@ function jobFunc(job, taskname) {
       job.target = jobenvs[0]
     }
 
-    return ()=>{
-      return runJSFile(job.target, { ...options })
+    if (/ -local/.test(job.target)) {
+      options.local = true
+      job.target = job.target.replace(' -local', '')
     }
+
+    return ()=>runJSFile(job.target, { ...options })
   } else if (job.type === 'taskstart') {
     return ()=>{
       if (!TASKS_INFO[job.target]) {
@@ -141,16 +144,20 @@ function jobFunc(job, taskname) {
       wsSer.send({type: 'task', data: {tid: job.target, op: 'stop'}})
     }
   } else if (job.type === 'exec') {
-    return ()=>{
-      clog.notify('run shell command', job.target)
+    return ()=>new Promise((resolve)=>{
       exec(job.target, {
-        cwd: file.get('script/Shell', 'path'),
-        cb(data, error){
-          error ? clog.error(error) : clog.info(data)
+        cwd: file.get('script/Shell', 'path'), call: true,
+        cb(data, error, finish){
+          if (finish) {
+            resolve(data)
+          } else if (error) {
+            resolve(error)
+          }
         },
+        type: 'task',
         name: taskname
       })
-    }
+    })
   } else {
     clog.error('unknow job type')
     return false

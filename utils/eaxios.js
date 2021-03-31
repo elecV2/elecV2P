@@ -4,7 +4,7 @@ const axios = require('axios')
 
 const { CONFIG, CONFIG_Port } = require('../config')
 
-const { sJson, sType, errStack } = require('./string')
+const { sJson, sType, errStack, surlName } = require('./string')
 
 const { list, file } = require('./file')
 const uagent = sJson(list.get('useragent.list')) || {
@@ -70,7 +70,9 @@ function eAxios(request, proxy) {
 }
 
 function downloadfile(durl, dest) {
-  if (!durl.startsWith('http')) return Promise.reject(durl + ' is not a valid url')
+  if (!durl.startsWith('http')) {
+    return Promise.reject(durl + ' is not a valid url')
+  }
   let folder = '', fname = '', isFolder = false
   if (dest) {
     if (sType(dest) === 'object') {
@@ -81,11 +83,8 @@ function downloadfile(durl, dest) {
     dest = path.normalize(dest)
     isFolder = Boolean(folder) || file.isExist(dest, true)
   } 
-  if (!dest || isFolder) {
-    const sdurl = durl.split(/\/|\?|#/)
-    while (fname === '') {
-      fname = sdurl.pop().trim()
-    } 
+  if ((!dest || isFolder) && fname === '') {
+    fname = surlName(durl)
   }
   if (isFolder) {
     folder = folder || dest
@@ -96,7 +95,9 @@ function downloadfile(durl, dest) {
     folder = file.get(CONFIG.efss.directory || 'web/dist', 'path')
   }
   
-  if (!fs.existsSync(folder)) fs.mkdirSync(folder, {recursive: true})
+  if (!fs.existsSync(folder)) {
+    fs.mkdirSync(folder, {recursive: true})
+  }
   dest = path.join(folder, fname || dest)
   return new Promise((resolve, reject)=>{
     eAxios({
@@ -111,7 +112,7 @@ function downloadfile(durl, dest) {
       let file = fs.createWriteStream(dest)
       response.data.pipe(file)
       file.on('finish', ()=>{
-        clog.notify("download: " + durl + " to: " + dest)
+        clog.notify(`download ${durl} to ${dest}`)
         file.close()
         resolve(dest)
       })
