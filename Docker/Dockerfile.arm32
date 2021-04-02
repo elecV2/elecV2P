@@ -1,7 +1,7 @@
 FROM arm32v7/node:alpine
 
 ADD ./ /usr/local/app
-COPY /usr/bin/qemu-arm-static /usr/bin
+COPY ./Docker/qemu-arm-static /usr/bin
 WORKDIR /usr/local/app
 RUN apk add --update --no-cache tzdata \
     && chmod -R 777 /usr/local/app \
