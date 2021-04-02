@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# 2021-03-30
+# 最近更新: 2021-04-02
+# 更新地址: https://github.com/elecV2/elecV2P/blob/master/script/Shell/elecV2P.py
 
 '''
-elecV2P python module - elecV2P pyhton 库函数 v0.1
+elecV2P python module - elecV2P pyhton 库函数 v0.2
 
 说明:
   1. axios/feed 网络通信基于 httpx，使用前需提前安装好相关模块 (pip install httpx asyncio)
@@ -40,7 +41,8 @@ store:
   store.put(value, key)   - 新增一个 store/cookie 常量
   store.delete(key)       - 删除一个 store/cookie 常量
 
-# 注意: 在 python 中使用 store 函数对数据的修改是和 JS 同步的，即在 python 中使用 store.put('test string', 'apy') 新增一个 cookie 常量，是可以在 JS 中使用 $store.get('apy') 来直接获取的。反过来也一样
+# 注意: 在 python 中使用 store 函数对数据的修改是和 JS 同步的
+# 在 python 中使用 store.put('test string', 'apy') 新增一个 cookie 常量，可以在 JS 中使用 $store.get('apy') 来直接获取的。反过来也一样
 ********* store end *******
 
 ********* axios ***********
@@ -59,7 +61,7 @@ req = {
 res = axios(req)
 sPrint(res['data'], res['status'], res['headers'])
 
-# python 中 axios 没有 .then/.catch 等属性，不可进行链式调用
+# python 中 axios 没有 .then/.catch 等方法，不可进行链式调用
 # 当有错误时 status == -1
 ********* axios end ***********
 
@@ -70,6 +72,7 @@ feed:
   feed.bark(title, description, url)   - 发送一条 bark 通知
 
 # 自定义通知较复杂，暂未实现
+# feed.push 不会触发 JS
 ********* feed end ************
 
 done:
@@ -83,6 +86,7 @@ from elecV2P import *
 print(version)  # 打印当前 elecV2P 版本
 
 cook = store.get('CookieKEY')   # 使用 store 函数获取某个保存好的 cookie 值
+
 sPrint(cook)    # sPrint 是一个自定义的打印函数，也可以直接使用 print
 
 store.put('新的值，一个新的 cookie', 'apycookie')    # 使用 store.put 函数新增一个 cookie
@@ -288,7 +292,7 @@ def axios(req):
 
 class estore:
   """store/cookie 常量获取及修改"""
-  basepath = cwd + '/script/store/'
+  basepath = cwd + '/script/Store/'
 
   def get(self, key):
     try:
