@@ -1,0 +1,4 @@
+#!/bin/bash
+# downloads a local copy of qemu on docker-hub build machines
+curl -L https://github.com/balena-io/qemu/releases/download/v5.2.0%2Bbalena4/qemu-5.2.0.balena4-arm.tar.gz | tar zxvf - -C . && mv qemu-5.2.0+balena4-arm/qemu-arm-static .
+curl -L https://github.com/balena-io/qemu/releases/download/v5.2.0%2Bbalena4/qemu-5.2.0.balena4-aarch64.tar.gz | tar zxvf - -C . && mv qemu-5.2.0+balena4-aarch64/qemu-aarch64-static .

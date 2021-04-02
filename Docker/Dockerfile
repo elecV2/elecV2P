@@ -1,11 +1,11 @@
 FROM node:alpine
 
 ADD ./ /usr/local/app
-WORKDIR /usr/local/app
 
-RUN apk add --update --no-cache tzdata
-RUN yarn install --prod
-RUN chmod -R 777 /usr/local/app
+WORKDIR /usr/local/app
+RUN apk add --update --no-cache tzdata \
+    && chmod -R 777 /usr/local/app \
+    && yarn install --prod
 
 ENV PATH /usr/local/app/node_modules/.bin:$PATH
 
