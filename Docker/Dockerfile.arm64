@@ -1,7 +1,7 @@
 FROM arm64v8/node:alpine
 
 ADD ./ /usr/local/app
-COPY qemu-aarch64-static /usr/bin
+COPY /usr/bin/qemu-aarch64-static /usr/bin
 WORKDIR /usr/local/app
 RUN apk add --update --no-cache tzdata \
     && chmod -R 777 /usr/local/app \
