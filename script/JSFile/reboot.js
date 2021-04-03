@@ -10,7 +10,7 @@ config.restart ? restart() : reboot()
 function restart() {
   // 尝试以 PM2 的方式重启 elecV2P
   console.log('准备以 PM2 重启 elecV2P')
-  $exec('pm2 restart all', {
+  $exec('pm2 restart elecV2P', {
     cb(data, error){
       if (error) {
         console.log('重启 elecV2P 失败')

@@ -240,7 +240,7 @@ def axios(req):
       timeout = round(CONFIG['CONFIG_Axios']['timeout']/1000, 2)
   except Exception as e:
     console.error(e)
-  # console.debug(proxies, timeout, type(timeout))
+
   if isinstance(req, str):
     req = {
       'url': req,
@@ -259,7 +259,7 @@ def axios(req):
     req['data'] = ''
   if 'method' not in req:
     req['method'] = 'get'
-
+  console.debug('axios request:', req, 'proxies:', proxies, 'timeout:', timeout)
   try:
     req['method'] = req['method'].lower()
     if req['method'] == 'get':

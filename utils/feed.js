@@ -1,7 +1,7 @@
 const qs = require('qs')
 const RSS = require('rss')
 
-const { message } = require('./websocket')
+const { message, wsSer } = require('./websocket')
 const { eAxios: axios } = require('./eaxios')
 const { now } = require('./time')
 const { sType, sString, sJson, bEmpty } = require('./string')
@@ -20,6 +20,10 @@ const CONFIG_FEED = {
     url: '',
     type: 'GET',
     data: ''
+  },
+  runjs: {
+    enable: false,
+    list: ''
   },
   merge: {
     enable: true,              // 是否合并一定时间内的通知
@@ -228,6 +232,16 @@ function feedPush(title, description, url) {
       url: url || CONFIG_FEED.homepage + '/feed/?new=' + guid,
       guid, author: 'elecV2P',
       date: guid,
+    })
+  }
+  if (CONFIG_FEED.runjs && CONFIG_FEED.runjs.enable && CONFIG_FEED.runjs.list && wsSer.recv.runjs) {
+    CONFIG_FEED.runjs.list.split(/ ?, ?|，| /).filter(s=>s).forEach(fn=>{
+      wsSer.recv.runjs(fn, {
+        $title$: title,
+        $body$: description,
+        $url$: url,
+        from: 'feedPush'
+      })
     })
   }
   if (CONFIG_FEED.maxbLength > 0 && description.length > CONFIG_FEED.maxbLength) {

@@ -7,8 +7,8 @@ const aProxyOptions = {
   port: CONFIG_Port.proxy,
   rule: require('./script/rule.js'),
   webInterface: {
-    enable: true,          // 是否打开代理请求查看端口.(默认为 8002)
-    port: CONFIG_Port.webif
+    enable: true,          // 是否打开代理请求查看端口
+    webPort: CONFIG_Port.webif
   },
   rootCA: true             // 是否自动应用 rootCA 目录下根证书
 }

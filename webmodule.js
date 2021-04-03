@@ -5,8 +5,12 @@ const compression = require('compression')
 
 const { CONFIG, CONFIG_Port } = require('./config')
 
-const { logger, websocketSer } = require('./utils')
+const { logger, websocketSer, UUID } = require('./utils')
 const clog = new logger({ head: 'webServer', level: 'debug' })
+
+if (!CONFIG.wbrtoken) {
+  CONFIG.wbrtoken = UUID()
+}
 
 const { wbefss, wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook } = require('./webser')
 

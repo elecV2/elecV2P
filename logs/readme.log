@@ -15,3 +15,6 @@ rm -f 日志文件名
 
 例如，设置每天23点59分清空日志：
 清空日志 | cron定时 | 59 23 * * * | 运行 JS | https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/deletelog.js
+
+v3.2.9 增加支持二级目录，二级目录访问时在 url 中目录以两个下线(__) 开始和结束。 比如在当前 logs 文件夹下有一个二级目录 backup, backup 文件夹中有一个日志文件 test.js.log，那么要在浏览器中查看该文件时 url 应该为: http://127.0.0.1/logs/__backup__test.js.log （实际访问时不用手动输入，从首页开始直接点就可以了）。
+另外这里会导致的一个问题就是：如果原 JS 文件名是以两个下划线开始，且后面还有两个下划线，在读取该 JS 的运行日志时会出错，所以尽量不要用这种方式命名 JS 文件。如果必须要这样命名，或者想查看更多级的目录日志，可以在 EFSS 页面设置目录为 ./logs

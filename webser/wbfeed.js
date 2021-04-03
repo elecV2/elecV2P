@@ -1,4 +1,4 @@
-const { logger, CONFIG_FEED, feedXml, feedClear, list } = require('../utils')
+const { logger, CONFIG_FEED, feedPush, feedXml, feedClear, list } = require('../utils')
 const clog = new logger({ head: 'wbfeed' })
 
 const { CONFIG } = require('../config')
@@ -42,10 +42,20 @@ module.exports = app => {
         clog.notify(`自定义通知功能已 ${ data.enable ? '更新' : '关闭' }`)
         res.end(`自定义通知功能已 ${ data.enable ? '更新' : '关闭' }`)
         break
+      case "runjs":
+        CONFIG_FEED.runjs = data
+        clog.notify(`通知触发 JS 功能已 ${ data.enable ? '更新' : '关闭' }`)
+        res.end(`通知触发 JS 功能已 ${ data.enable ? '更新' : '关闭' }`)
+        break
       case "merge":
         CONFIG_FEED.merge = data
         clog.notify(`FEED 通知合并功能已 ${ data.enable ? '开启' : '取消' }`)
         res.end(`FEED 通知合并功能已 ${ data.enable ? '开启' : '取消' }`)
+        break
+      case "test":
+        feedPush('elecV2P 测试通知', '恭喜您，该通知方式设置正常\nCongratulations! this notification is enabled', 'https://github.com/elecV2/elecV2P')
+        res.end('通知已发送，请查看是否接收')
+        bSave = false
         break
       default:{
         clog.error('FEED PUT 未知操作', req.body.type)

@@ -1,4 +1,9 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.2.8)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.2.9)
+
+v3.2.9
+ • 增加通知触发 JS 的功能
+ • 初始 webhook token 更改为随机 uuid
+ • logs 支持二级目录
 
 v3.2.8
  • shell 指令支持执行远程文件。具体说明查看<a href='https://github.com/elecV2/elecV2P-dei/blob/master/docs/06-task.md' target='_blank'> 06-task.md </a>相关部分

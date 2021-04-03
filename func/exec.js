@@ -12,7 +12,7 @@ const CONFIG_exec = {
 /**
  * minishell 执行函数，执行命令及结果通过 websocket 传输
  * @param     {string}    command    exec 命令
- * @return    {none}               
+ * @return    {none}
  */
 wsSer.recv.shell = command => {
   if (command === 'cwd') {

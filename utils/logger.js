@@ -127,8 +127,15 @@ const LOGFILE = {
       return fs.readdirSync(CONFIG_LOG.logspath)
     }
     filename = filename.split(/\/|\\/).join('-')
+    let fnmatch = filename.match(/^__(.+)__/)
+    if (fnmatch && fnmatch[1]) {
+      filename = filename.replace('__' + fnmatch[1] + '__', fnmatch[1] + '/')
+    }
     let logfpath = path.join(CONFIG_LOG.logspath, filename)
     if (fs.existsSync(logfpath)) {
+      if (fs.statSync(logfpath).isDirectory()) {
+        return fs.readdirSync(logfpath)
+      }
       return fs.readFileSync(logfpath, "utf8")
     }
     clog.info(filename, 'don\'t existed')

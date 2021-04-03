@@ -130,7 +130,7 @@ function getrules($request, $response, lists) {
   }
   for (let mr of lists) {
     if ((new RegExp(mr[1])).test(matchstr[mr[0]])) {
-      clog.info("match rule:", mr.join(','))
+      clog.info("match rule:", mr.join(', '))
       return mr
     }
   }
@@ -164,7 +164,18 @@ module.exports = {
   JSLISTS,
   *beforeSendRequest(requestDetail) {
     let matchreq = getrules(requestDetail, null, CONFIG_RULE.reqlists)
-    if (!matchreq) return requestDetail
+    if (!matchreq) {
+      return requestDetail
+    }
+    if ("block" === matchreq[2]) {
+      clog.info("block - " + matchreq[3])
+      return { response: localResponse[matchreq[3]] }
+    }
+    if ("ua" === matchreq[2]) {
+      requestDetail.requestOptions.headers['User-Agent'] = CONFIG_RULE.uagent[matchreq[3]].header
+      clog.notify(requestDetail.url, "User-Agent set to", CONFIG_RULE.uagent[matchreq[3]].name)
+      return requestDetail
+    }
     if (matchreq[2] === 'hold') {
       if (wsSer.recverlists.length === 0) {
         clog.notify('no websocket connected, skip $HOLD rule')
@@ -217,10 +228,6 @@ module.exports = {
         }
       })
     }
-    if ("block" === matchreq[2]) {
-      clog.info("block - " + matchreq[3])
-      return { response: localResponse[matchreq[3]] }
-    }
     if (/^(30.)$/.test(matchreq[2])) {
       const orgurl = sUrl(requestDetail.url)
       const newurl = sUrl(matchreq[3], requestDetail.url)
@@ -239,7 +246,11 @@ module.exports = {
     if ('js' === matchreq[2] ) {
       return new Promise((resolve, reject)=>{
         runJSFile(matchreq[3], { $request: formRequest(requestDetail) }).then(jsres=>{
-          if (sType(jsres) !== 'object') return
+          if (sType(jsres) !== 'object') {
+            return resolve({
+              response: { ...localResponse.reject, ...{ body: jsres } }
+            })
+          }
           if (jsres.response) {
             // 直接返回结果，不访问目标网址
             clog.notify(requestDetail.url, 'request force to local response')
@@ -265,11 +276,6 @@ module.exports = {
           resolve(requestDetail)
         })
       })
-    }
-    if ("ua" === matchreq[2]) {
-      requestDetail.requestOptions.headers['User-Agent'] = CONFIG_RULE.uagent[matchreq[3]].header
-      clog.notify(requestDetail.url, "User-Agent set to", CONFIG_RULE.uagent[matchreq[3]].name)
-      return requestDetail
     }
   },
   *beforeSendResponse(requestDetail, responseDetail) {

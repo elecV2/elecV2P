@@ -26,10 +26,13 @@ if (CONFIG.CONFIG_RUNJS) {
 
 // 初始化脚本运行
 if (CONFIG.init && CONFIG.init.runjs) {
-  CONFIG.init.runjs.split(/,|，| /).filter(s=>s).forEach(js=>{
+  CONFIG.init.runjs.split(/ ?, ?|，| /).filter(s=>s).forEach(js=>{
     runJSFile(js, { from: 'initialization' })
   })
 }
+
+// websocket/通知触发 JS
+wsSer.recv.runjs = (fn, addContext)=>runJSFile(fn, addContext)
 
 const runstatus = {
   start: now(),
@@ -108,8 +111,8 @@ function runJS(filename, jscode, addContext={}) {
   const CONTEXT = new context({ fconsole })
 
   const compatible = {
-    surge: false,          // 兼容 Surge 脚本
-    quanx: false,          // 兼容 Quanx 脚本。都为 false 时，会进行自动判断
+    surge: false,          // Surge 脚本调试模式
+    quanx: false,          // Quanx 脚本调试模式。都为 false 时，会进行自动判断
     require: false         // 启用 NodeJS require 函数。不开启时会自动进行判断
   }
   if (/^\/\/ +@grant +surge$/m.test(jscode)) {
@@ -129,14 +132,16 @@ function runJS(filename, jscode, addContext={}) {
   if (compatible.require || /^\/\/ +@grant +require/m.test(jscode)) {
     CONTEXT.final.require = (path)=>{
       const locfile = file.path(Jsfile.get(filename, 'dir'), /\.js$/i.test(path) ? path : path + '.js')
-      if (file.isExist(locfile)) return require(locfile)
-      else return require(path)
+      if (file.isExist(locfile)) {
+        return require(locfile)
+      }
+      return require(path)
     }
     CONTEXT.final.require.cache = require.cache
     CONTEXT.final.require.resolve = require.resolve
   }
   if (/^\/\/ +@grant +(quiet|silent)$/m.test(jscode)) {
-    CONTEXT.final.$feed = { push(){}, bark(){}, ifttt(){} }
+    CONTEXT.final.$feed = { push(){}, bark(){}, ifttt(){}, cust(){} }
     if (CONTEXT.final.$notify) {
       CONTEXT.final.$notify = ()=>{}
     }
@@ -146,6 +151,9 @@ function runJS(filename, jscode, addContext={}) {
   }
 
   if (sType(addContext) === 'object' && Object.keys(addContext).length) {
+    if (addContext.from === 'feedPush') {
+      CONTEXT.final.$feed.push = ()=>fconsole.notify(filename, 'is triggered by notification, $feed.push is disabled to avoid circle callback')
+    }
     CONTEXT.add({ addContext })
   }
 

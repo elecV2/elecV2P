@@ -20,7 +20,7 @@ module.exports = app => {
       if (logs.length === 0) {
         res.write('<div class="item">暂无 LOGS 日志</div>')
       } else {
-        logs.forEach(log=>res.write(`<a class='item' href="/logs/${log}">${log}</a>`))
+        logs.forEach(log=>res.write(`<a class='item' href="/logs/${filename !== 'all' ? ('__' + filename + '__') : ''}${log}">${log}</a>`))
       }
       res.end()
     } else {
