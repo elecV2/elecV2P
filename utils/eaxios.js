@@ -4,7 +4,7 @@ const axios = require('axios')
 
 const { CONFIG, CONFIG_Port } = require('../config')
 
-const { sJson, sType, errStack, surlName } = require('./string')
+const { sJson, sType, errStack, surlName, progressBar } = require('./string')
 
 const { list, file } = require('./file')
 const uagent = sJson(list.get('useragent.list')) || {
@@ -19,7 +19,7 @@ const uagent = sJson(list.get('useragent.list')) || {
 }
 
 const { logger } = require('./logger')
-const clog = new logger({ head: 'eAxios' })
+const clog = new logger({ head: 'eAxios', level: 'debug' })
 
 const CONFIG_Axios = {
   proxy:   false,           // axios 请求代理
@@ -69,7 +69,7 @@ function eAxios(request, proxy) {
   })
 }
 
-function downloadfile(durl, dest) {
+function downloadfile(durl, dest, cb) {
   if (!durl.startsWith('http')) {
     return Promise.reject(durl + ' is not a valid url')
   }
@@ -79,6 +79,8 @@ function downloadfile(durl, dest) {
       folder = dest.folder || ''
       fname  = dest.name || ''
       dest   = path.join(folder, fname)
+    } else {
+      fname = dest
     }
     dest = path.normalize(dest)
     isFolder = Boolean(folder) || file.isExist(dest, true)
@@ -95,10 +97,11 @@ function downloadfile(durl, dest) {
     folder = file.get(CONFIG.efss.directory || 'web/dist', 'path')
   }
   
-  if (!fs.existsSync(folder)) {
-    fs.mkdirSync(folder, {recursive: true})
-  }
   dest = path.join(folder, fname || dest)
+  folder = path.dirname(dest)
+  if (!fs.existsSync(folder)) {
+    fs.mkdirSync(folder, { recursive: true })
+  }
   return new Promise((resolve, reject)=>{
     eAxios({
       url: durl,
@@ -109,12 +112,25 @@ function downloadfile(durl, dest) {
         reject('404! file dont exist')
         return
       }
+      const totalLength = response.headers['content-length']
+      let currentLength = 0
       let file = fs.createWriteStream(dest)
+      response.data.on('data', (chunk) => {
+        currentLength += chunk.length
+        let progress = progressBar({ step: currentLength, total: totalLength, name: fname })
+        clog.debug(progress)
+        if (cb) {
+          cb({ progress })
+        }
+      })
       response.data.pipe(file)
       file.on('finish', ()=>{
-        clog.notify(`download ${durl} to ${dest}`)
+        clog.notify(`success download ${durl} to ${dest}`)
         file.close()
         resolve(dest)
+        if (cb) {
+          cb({ finish: `success download ${durl} to ${dest}`})
+        }
       })
     }).catch(e=>{
       reject('download fail! ' + e.message)

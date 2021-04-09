@@ -18,7 +18,9 @@ const CONFIG_LOG = {
 
 CONFIG_LOG.logspath = function(){
   const logFolder = path.join(__dirname, '../logs')
-  if(!fs.existsSync(logFolder)) fs.mkdirSync(logFolder)
+  if(!fs.existsSync(logFolder)) {
+    fs.mkdirSync(logFolder)
+  }
   return logFolder
 }();
 
@@ -170,9 +172,9 @@ function formArgs(args) {
           skip = false
           continue
         }
-        if (bEmpty(args[ind])) continue
+        if (args[ind] !== '\r' && bEmpty(args[ind])) continue
         if (/%o|%O|%s/.test(args[ind])) {
-          res += (res ? ' ' : '') + args[ind].replace(/%o|%O|%s/, sString(args[ind+1]).trim())
+          res += (res.trim() ? ' ' : '') + args[ind].replace(/%o|%O|%s/, sString(args[ind+1]))
           skip = true
         } else if (/%[.0-9]*d|%[.0-9]*i/.test(args[ind])) {
           let mtnum = args[ind].match(/%(\.([0-9])*)d|%(\.([0-9]))*i/)
@@ -181,16 +183,18 @@ function formArgs(args) {
             mtnum = mtnum[2] || mtnum[4]
             secarg = sString(secarg).padStart(Number(mtnum), '0')
           }
-          res += (res ? ' ' : '') + args[ind].replace(/%[.0-9]*d|%[.0-9]*i/, secarg)
+          res += (res.trim() ? ' ' : '') + args[ind].replace(/%[.0-9]*d|%[.0-9]*i/, secarg)
           skip = true
         } else if (/%[.0-9]*f/.test(args[ind])) {
           let mtnum = args[ind].match(/%(\.([0-9])*)f/)
           let secarg = parseFloat(args[ind+1])
           if (mtnum && mtnum[2]) secarg = secarg.toFixed(Number(mtnum[2]))
-          res += (res ? ' ' : '') + args[ind].replace(/%[.0-9]*f/, secarg)
+          res += (res.trim() ? ' ' : '') + args[ind].replace(/%[.0-9]*f/, secarg)
           skip = true
+        } else if (/^\r|\r$/.test(args[ind])) {
+          res += (res.trim() ? ' ' : '') + args[ind]
         } else {
-          res += (res ? ' ' : '') + sString(args[ind]).trim()
+          res += (res.trim() ? ' ' : '') + sString(args[ind])
         }
       }
       return res

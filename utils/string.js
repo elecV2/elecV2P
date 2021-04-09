@@ -139,4 +139,37 @@ function surlName(url) {
   return name
 }
 
-module.exports = { euid, UUID, iRandom, sJson, sString, bEmpty, sUrl, sType, errStack, nStatus, escapeHtml, surlName }
+function progressBar({step=0, total, name='file', initLength=50}) {
+  // 简易下载进度条
+  let procbar = '', endtip = ''
+  if (total === undefined) {
+    endtip = 'downloading'
+    while(initLength > 0) {
+      procbar += Math.random() > 0.5 ? '>' : '='
+      initLength--
+    }
+    return `${name} [${procbar}] ${endtip}`
+  }
+  if (total < step) {
+    while(initLength > 0) {
+      procbar += '>'
+      initLength--
+    }
+    return `${name} [${procbar}] 100%`
+  }
+  let percent = Number(step)/Number(total)
+  let perdone = Math.round(percent * initLength)
+  let perundo = initLength - perdone
+  while(perdone > 0) {
+    procbar += '>'
+    perdone--
+  }
+  while(perundo > 0) {
+    procbar += '='
+    perundo--
+  }
+  endtip = (percent * 100).toFixed(2) + '%'
+  return `${name} [${procbar}] ${endtip}`
+}
+
+module.exports = { euid, UUID, iRandom, sJson, sString, bEmpty, sUrl, sType, errStack, nStatus, escapeHtml, surlName, progressBar }
