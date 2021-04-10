@@ -79,8 +79,6 @@ function downloadfile(durl, dest, cb) {
       folder = dest.folder || ''
       fname  = dest.name || ''
       dest   = path.join(folder, fname)
-    } else {
-      fname = dest
     }
     dest = path.normalize(dest)
     isFolder = Boolean(folder) || file.isExist(dest, true)

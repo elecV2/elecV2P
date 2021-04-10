@@ -236,12 +236,12 @@ function feedPush(title, description, url) {
   }
   if (CONFIG_FEED.runjs && CONFIG_FEED.runjs.enable && CONFIG_FEED.runjs.list && wsSer.recv.runjs) {
     CONFIG_FEED.runjs.list.split(/ ?, ?|，| /).filter(s=>s).forEach(fn=>{
-      wsSer.recv.runjs(fn, {
+      wsSer.recv.runjs({ fn, addContext: {
         $title$: title,
         $body$: description,
         $url$: url,
         from: 'feedPush'
-      })
+      }})
     })
   }
   if (CONFIG_FEED.maxbLength > 0 && description.length > CONFIG_FEED.maxbLength) {
@@ -305,7 +305,7 @@ function feedXml() {
 
 function feedClear() {
   feed = feedNew({})
-  clog.notify('feed 内容已清空')
+  clog.notify('feed/rss item is cleared')
 }
 
 module.exports = { CONFIG_FEED, feedAddItem, iftttPush, barkPush, custPush, feedPush, feedXml, feedClear }

@@ -249,7 +249,7 @@ IFTTT/BARK/自定义通知等相关设置参考: [07-feed&notify](https://github
 
 TG 交流群: https://t.me/elecV2G (主要为方便用户使用交流，开发者24小时不在线，也不负责解答任何问题。)
 
-如果遇到问题建议开一个 issue，并注明使用平台，版本，以及附上相关的错误日志。
+如果遇到问题还是建议开一个 [issue](https://github.com/elecV2/elecV2P/issues)，并注明使用平台，版本，以及附上相关的错误日志。
 
 ### 简单声明
 

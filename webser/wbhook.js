@@ -21,6 +21,10 @@ function handler(req, res){
   const clientip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
   clog.notify(clientip, "run webhook type", rbody.type)
   switch(rbody.type) {
+  case 'jslist':
+    res.end(JSON.stringify(JSLISTS))
+    break
+  case 'jsrun':
   case 'runjs':
     let fn = rbody.fn || ''
     if (!rbody.rawcode && !fn) {
@@ -63,6 +67,7 @@ function handler(req, res){
       })
     }
     break
+  case 'logdelete':
   case 'deletelog':
     const name = rbody.fn
     clog.info(clientip, 'delete log', name)
@@ -72,6 +77,7 @@ function handler(req, res){
       res.end(name + ' log file don\'t exist')
     }
     break
+  case 'logget':
   case 'getlog':
     clog.info(clientip, 'get log', rbody.fn)
     const logcont = LOGFILE.get(rbody.fn)
@@ -107,7 +113,7 @@ function handler(req, res){
         res.end(JSON.stringify(TASKS_INFO[rbody.tid], null, 2))
         return
       }
-      res.end(JSON.stringify({ error: 'no task' + rbody.tid }))
+      res.end(JSON.stringify({ error: 'no such task with taskid: ' + rbody.tid }))
     }
     break
   case 'taskstart':
@@ -257,7 +263,7 @@ function handler(req, res){
     res.end(JSON.stringify(elecV2PInfo, null, 2))
     break
   default:
-    res.end('wrong webhook type' + rbody.type)
+    res.end('wrong webhook type ' + rbody.type)
   }
 }
 

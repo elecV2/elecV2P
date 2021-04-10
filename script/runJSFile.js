@@ -32,7 +32,7 @@ if (CONFIG.init && CONFIG.init.runjs) {
 }
 
 // websocket/通知触发 JS
-wsSer.recv.runjs = (fn, addContext)=>runJSFile(fn, addContext)
+wsSer.recv.runjs = (data={})=>runJSFile(data.fn, data.addContext)
 
 const runstatus = {
   start: now(),
@@ -264,7 +264,7 @@ async function runJSFile(filename, addContext={}) {
       }
     }).catch(e=>{
       resolve(e.message)
-      runclog.error(`run ${filename}, 'error: ${errStack(e)}`)
+      runclog.error(`run ${filename}, error: ${errStack(e)}`)
     })
   })
 }
