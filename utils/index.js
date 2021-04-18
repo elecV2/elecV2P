@@ -1,8 +1,9 @@
-const { now, wait } = require('./time')
+const { eproxy } = require('./eproxy')
+const { now, wait, waituntil } = require('./time')
 const { logger, setGlog, LOGFILE } = require('./logger')
 const { list, Jsfile, store, file } = require('./file')
 const { websocketSer, wsSer, message } = require('./websocket')
-const { eAxios, downloadfile, CONFIG_Axios } = require('./eaxios')
+const { eAxios, axProxy, downloadfile, CONFIG_Axios, checkupdate } = require('./eaxios')
 const { euid, sJson, sString, bEmpty, sUrl, sType, errStack, nStatus, UUID, iRandom, escapeHtml, surlName, progressBar } = require('./string')
 const { CONFIG_FEED, feedAddItem, iftttPush, barkPush, custPush, feedPush, feedXml, feedClear } = require('./feed')
 
@@ -28,11 +29,12 @@ process
 })
 
 module.exports = {
-  now, wait,
-  eAxios, CONFIG_Axios,
+  eproxy,
+  now, wait, waituntil,
   logger, setGlog, LOGFILE,
+  list, Jsfile, store, file,
   websocketSer, wsSer, message,
-  list, Jsfile, store, file, downloadfile,
-  euid, sJson, sString, bEmpty, sUrl, sType, errStack, nStatus, UUID, iRandom, escapeHtml, surlName, 
+  eAxios, axProxy, downloadfile, CONFIG_Axios, checkupdate,
+  euid, sJson, sString, bEmpty, sUrl, sType, errStack, nStatus, UUID, iRandom, escapeHtml, surlName, progressBar, 
   CONFIG_FEED, feedAddItem, iftttPush, barkPush, custPush, feedPush, feedXml, feedClear
 }

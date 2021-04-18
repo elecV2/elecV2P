@@ -101,7 +101,7 @@ async function commandSetup(command, options={}, clog) {
   }
   command = commandCross(command.split(/ -(cwd|env|stdin) /)[0])
 
-  if (!/^(curl|wget|git|start)/.test(command)) {
+  if (!/^(curl|wget|git|start|you-get|youtube-dl) /.test(command)) {
     let remotesh = command.match(/ (https?\S+)/)
     if (remotesh && remotesh[1]) {
       let folder = file.path(process.cwd(), options.cwd || './script/Shell')

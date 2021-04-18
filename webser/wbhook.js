@@ -2,7 +2,7 @@ const os = require('os')
 const { Task, TASKS_WORKER, TASKS_INFO, taskStatus, exec } = require('../func')
 const { runJSFile, JSLISTS } = require('../script')
 
-const { logger, LOGFILE, nStatus, euid, sJson, sString, sType, list, downloadfile, now } = require('../utils')
+const { logger, LOGFILE, nStatus, euid, sJson, sString, sType, list, downloadfile, now, checkupdate } = require('../utils')
 const clog = new logger({ head: 'wbhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -261,6 +261,13 @@ function handler(req, res){
       elecV2PInfo.client.headers = req.headers
     }
     res.end(JSON.stringify(elecV2PInfo, null, 2))
+    break
+  case 'update':
+  case "newversion":
+  case 'checkupdate':
+    checkupdate(Boolean(rbody.force)).then(body=>{
+      res.end(JSON.stringify(body, null, 2))
+    })
     break
   default:
     res.end('wrong webhook type ' + rbody.type)

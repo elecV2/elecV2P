@@ -52,23 +52,164 @@ const list = {
   }
 }
 
+const file = {
+  get(pname, type){
+    if (bEmpty(pname)) {
+      clog.info('parameters:', pname, 'was given, file.get no result')
+      return ''
+    }
+    pname = pname.replace(/^(\$home|~)/i, fpath.homedir)
+    const filepath = path.resolve(__dirname, '../', pname)
+    if (type === 'path') {
+      return filepath
+    }
+    if (fs.existsSync(filepath)) {
+      return fs.readFileSync(filepath, 'utf8')
+    }
+    clog.error(pname, 'not exist')
+  },
+  delete(fname, basepath, option = { recursive: false }) {
+    basepath && (fname = path.join(basepath, fname))
+    if (fs.existsSync(fname)) {
+      if (fs.statSync(fname).isDirectory()) {
+        try {
+          if (option.recursive) {
+            fs.rmdirSync(fname, { recursive: true })
+            clog.info('delete directory', fname, 'recursively')
+          } else {
+            fs.rmdirSync(fname)
+            clog.info('delete a empty directory', fname)
+          }
+          return true
+        } catch(e) {
+          clog.info(fname, 'is a no empty directory, cant be delete.')
+          return false
+        }
+      }
+      fs.unlinkSync(fname)
+      clog.info('delete file', fname)
+      return true
+    } else {
+      clog.info(fname, 'no exist')
+      return false
+    }
+  },
+  copy(source, target){
+    fs.copyFileSync(source, target)
+  },
+  path(x1, x2){
+    if (!(x1 && x2)) return
+    const rpath = path.resolve(x1, x2)
+    if (fs.existsSync(rpath)) {
+      return rpath
+    }
+  },
+  isExist(filepath, isDir){
+    if (bEmpty(filepath)) return false
+    if (fs.existsSync(filepath)) {
+      return isDir ? fs.statSync(filepath).isDirectory() : true
+    }
+    return false
+  },
+  size(filepath){
+    if (fs.existsSync(filepath)) {
+      const fsize = fs.statSync(filepath).size
+      if (fsize > 1024*1024) {
+        return (fsize/(1024*1024)).toFixed(2) + ' M'
+      } else if (fsize > 1024) {
+        return (fsize/1024).toFixed(2) + ' K'
+      } else {
+        return fsize + ' B'
+      }
+    }
+    return 0
+  },
+  aList(folder, option = { max: -1, dot: true }, progress = { num: 0 }){
+    if (!fs.existsSync(folder)) {
+      clog.error('directory', folder, 'not existed.')
+      return null
+    }
+    folder = path.resolve(folder)
+    if (option.dot === false && path.basename(folder).startsWith('.')) {
+      return null
+    }
+    let fstat = fs.statSync(folder)
+    if (fstat.isDirectory()) {
+      const rlist = fs.readdirSync(folder)
+      let flist = []
+      for (let fo of rlist) {
+        if (option.max !== -1 && progress.num >= option.max) {
+          break
+        }
+        flist.push(this.aList(path.join(folder, fo), option, progress))
+      }
+      return {
+        type: 'directory',
+        name: path.basename(folder),
+        list: flist.filter(f=>f),
+        mtime: fstat.mtimeMs
+      }
+    } else {
+      if (option.max !== -1) {
+        progress.num++
+      }
+      return {
+        type: 'file',
+        name: path.basename(folder),
+        size: this.size(folder),
+        mtime: fstat.mtimeMs
+      }
+    }
+  },
+  list({ folder, max=1000 }) {
+    if (!(folder && fs.existsSync(folder))) {
+      return []
+    }
+    if (!fs.statSync(folder).isDirectory()) {
+      return [folder]
+    }
+    if (!(max>0)) {
+      return []
+    }
+
+    let curnum = 0, fnlist = [], subfolder = []
+    while (curnum<max) {
+      let subf = subfolder.length ? subfolder.shift() : ''
+      let newfolder = path.join(folder, subf)
+      let list = fs.readdirSync(newfolder)
+      for (let fd of list) {
+        if (fs.statSync(path.join(newfolder, fd)).isDirectory()) {
+          subfolder.push((subf ? subf + '/' : '') + fd)
+        } else {
+          fnlist.push((subf ? subf + '/' : '') + fd)
+          curnum++
+          if (curnum >= max) {
+            return fnlist
+          }
+        }
+      }
+
+      if (subfolder.length === 0) {
+        return fnlist
+      }
+    }
+
+    return fnlist
+  }
+}
+
 const Jsfile = {
   get(name, type){
-    if (bEmpty(name)) return false
+    if (bEmpty(name)) {
+      return false
+    }
     name = name.trim()
     if (name === 'list') {
-      const jslist = fs.readdirSync(fpath.js)
-      let flist = []
-      jslist.forEach(f=>{
-        if (fs.statSync(path.join(fpath.js, f)).isDirectory()) {
-          flist = flist.concat(fs.readdirSync(path.join(fpath.js, f)).map(secf=>f + '/' + secf))
-        } else {
-          flist.push(f)
-        }
-      })
-      return flist.sort()
+      return file.list({ folder: fpath.js }).sort()
     }
-    if (!/\.js$/i.test(name)) name += '.js'
+    if (!/\.js$/i.test(name)) {
+      name += '.js'
+    }
     if (type === 'path') {
       return path.join(fpath.js, name)
     }
@@ -85,19 +226,30 @@ const Jsfile = {
     return false
   },
   put(name, cont){
-    if (!/\.js$/i.test(name)) name += '.js'
+    if (!/\.js$/i.test(name)) {
+      name += '.js'
+    }
     try {
       if (typeof(cont) === 'object') {
         cont = JSON.stringify(cont)
       }
-      fs.writeFileSync(path.join(fpath.js, name), cont, 'utf8')
+      let fullpath = path.join(fpath.js, name)
+      let jsfolder = path.dirname(fullpath)
+      if (!fs.existsSync(jsfolder)) {
+        clog.info('mkdir', jsfolder, 'for', name)
+        fs.mkdirSync(jsfolder, { recursive: true })
+      }
+      fs.writeFileSync(fullpath, cont, 'utf8')
       return true
     } catch(e) {
       clog.error('put js file error', name, e.stack)
+      return false
     }
   },
   delete(name){
-    if (!/\.js$/i.test(name)) name += '.js'
+    if (!/\.js$/i.test(name)) {
+      name += '.js'
+    }
     const jspath = path.join(fpath.js, name)
     if (fs.existsSync(jspath)) {
       fs.unlinkSync(jspath)
@@ -221,117 +373,6 @@ const store = {
   },
   all() {
     return fs.readdirSync(fpath.store)
-    const storedata = {}
-    fs.readdirSync(fpath.store).forEach(s=>{
-      storedata[s] = this.get(s)
-    })
-    return storedata
-  }
-}
-
-const file = {
-  get(pname, type){
-    if (bEmpty(pname)) {
-      clog.info('parameters:', pname, 'was given, file.get no result')
-      return ''
-    }
-    pname = pname.replace(/^(\$home|~)/i, fpath.homedir)
-    const filepath = path.resolve(__dirname, '../', pname)
-    if (type === 'path') {
-      return filepath
-    }
-    if (fs.existsSync(filepath)) {
-      return fs.readFileSync(filepath, 'utf8')
-    }
-    clog.error(pname, 'not exist')
-  },
-  delete(fname, basepath) {
-    basepath && (fname = path.join(basepath, fname))
-    if (fs.existsSync(fname)) {
-      if (fs.statSync(fname).isDirectory()) {
-        try {
-          fs.rmdirSync(fname)
-          clog.debug('delete a empty directory', fname)
-          return true
-        } catch(e) {
-          clog.info(fname, 'is a no empty directory, cant be delete.')
-          return false
-        }
-      }
-      fs.unlinkSync(fname)
-      clog.info('delete file', fname)
-      return true
-    } else {
-      clog.info(fname, 'no existed.')
-      return false
-    }
-  },
-  copy(source, target){
-    fs.copyFileSync(source, target)
-  },
-  path(x1, x2){
-    if (!(x1 && x2)) return
-    const rpath = path.resolve(x1, x2)
-    if (fs.existsSync(rpath)) {
-      return rpath
-    }
-  },
-  isExist(filepath, isDir){
-    if (bEmpty(filepath)) return false
-    if (fs.existsSync(filepath)) {
-      return isDir ? fs.statSync(filepath).isDirectory() : true
-    }
-    return false
-  },
-  size(filepath){
-    if (fs.existsSync(filepath)) {
-      const fsize = fs.statSync(filepath).size
-      if (fsize > 1024*1024) {
-        return (fsize/(1024*1024)).toFixed(2) + ' M'
-      } else if (fsize > 1024) {
-        return (fsize/1024).toFixed(2) + ' K'
-      } else {
-        return fsize + ' B'
-      }
-    }
-    return 0
-  },
-  aList(folder, option = { max: -1, dot: true }, progress = { num: 0 }){
-    if (!fs.existsSync(folder)) {
-      clog.error('directory', folder, 'not existed.')
-      return null
-    }
-    folder = path.resolve(folder)
-    if (option.dot === false && path.basename(folder).startsWith('.')) {
-      return null
-    }
-    let fstat = fs.statSync(folder)
-    if (fstat.isDirectory()) {
-      const rlist = fs.readdirSync(folder)
-      let flist = []
-      for (let fo of rlist) {
-        if (option.max !== -1 && progress.num >= option.max) {
-          break
-        }
-        flist.push(this.aList(path.join(folder, fo), option, progress))
-      }
-      return {
-        type: 'directory',
-        name: path.basename(folder),
-        list: flist.filter(f=>f),
-        mtime: fstat.mtimeMs
-      }
-    } else {
-      if (option.max !== -1) {
-        progress.num++
-      }
-      return {
-        type: 'file',
-        name: path.basename(folder),
-        size: this.size(folder),
-        mtime: fstat.mtimeMs
-      }
-    }
   }
 }
 

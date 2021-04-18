@@ -38,7 +38,9 @@ module.exports = class {
   }
 
   delete(flag = 'delete'){
-    if (this.job) this.job.destroy()
+    if (this.job) {
+      this.job.destroy()
+    }
     if (this.task) {
       clog.log(flag, "cron task:", this.task.name)
       delete this.task

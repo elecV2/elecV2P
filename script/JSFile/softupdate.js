@@ -6,7 +6,7 @@
 // 3.1.8 版本后 elecV2P 默认启动方式更改为 PM2，建议在此版本后使用
 // 
 // 该文件更新地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
-// 最近更新时间: 2021-04-13 22:30:45
+// 最近更新时间: 2021-04-16 22:30:45
 
 let CONFIG = {
   store: 'softupdate_CONFIG',    // 将当前配置内容(CONFIG 值) 常量储存。留空: 表示使用下面的参数进行更新，否则将会读取 store 中的 softupdate_CONFIG 对应值进行更新。如果 softupdate_CONFIG 尚未设置(首次运行)，会先按下面参数执行，并储存当前 CONFIG 内容
@@ -55,7 +55,7 @@ async function checkUpdate(){
     if (newversion) {
       console.log('当前版本:', __version, '最新版本:', newversion)
     } else {
-      console.log('获取最新版本号失败，可能是网络存在问题，无法连接', CONFIG.cdngit)
+      console.log('获取最新版本号失败，可能是网络存在问题，elecV2P 服务器无法连接', CONFIG.cdngit)
       return false
     }
     if (__version !== newversion) {

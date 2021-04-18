@@ -255,18 +255,19 @@ module.exports = {
             // 直接返回结果，不访问目标网址
             clog.notify(requestDetail.url, 'request force to local response')
             clog.debug(requestDetail.url, 'response:', jsres.response)
+            jsres.response.body = formBody(jsres.response.body)
             return resolve({
               response: { ...localResponse.imghtml, ...jsres.response }
             })
           }
           // 请求信息修改
-          if (jsres["User-Agent"]) {
-            clog.notify(requestDetail.url, "User-Agent set to:", jsres["User-Agent"])
-            requestDetail.requestOptions.headers["User-Agent"] = jsres["User-Agent"]
+          if (jsres["User-Agent"] || jsres["user-agent"]) {
+            clog.notify(requestDetail.url, "User-Agent set to:", jsres["User-Agent"] || jsres["user-agent"])
+            requestDetail.requestOptions.headers["User-Agent"] = jsres["User-Agent"] || jsres["user-agent"]
           } else if (jsres.body) {
             clog.notify(requestDetail.url, "request body changed")
             clog.debug(requestDetail.url, 'request body change to', jsres.body)
-            requestDetail.requestData = jsres.body
+            requestDetail.requestData = formBody(jsres.body)
           } else {
             Object.assign(requestDetail.requestOptions, jsres)
           }

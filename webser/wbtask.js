@@ -1,4 +1,4 @@
-const { Task, TASKS_WORKER, TASKS_INFO, bIsValid } = require('../func/task')
+const { Task, TASKS_WORKER, TASKS_INFO, bIsValid, jobFunc } = require('../func/task')
 
 const { logger, list, sType } = require('../utils')
 const clog = new logger({ head: 'wbtask' })
@@ -9,7 +9,7 @@ module.exports = app => {
     res.end(JSON.stringify(TASKS_INFO))
   })
 
-  app.put("/task", (req, res)=>{
+  app.put("/task", async (req, res)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), req.body.op, `task`)
     let data = req.body.data
     if (!data.tid) {
@@ -80,6 +80,28 @@ module.exports = app => {
           rescode: 0,
           message: "task deleted!"
         }))
+        break
+      case "test":
+        if (!data.task) {
+          res.end(JSON.stringify({
+            rescode: -1,
+            message: "a task data is expect"
+          }))
+          return
+        }
+        let job = jobFunc(data.task.job, data.task.name + '-test')
+        try {
+          let jobres = await job()
+          res.end(JSON.stringify({
+            rescode: 0,
+            message: jobres
+          }))
+        } catch(e) {
+          res.end(JSON.stringify({
+            rescode: -1,
+            message: e.message || e
+          }))
+        }
         break
       default:{
         res.end(JSON.stringify({

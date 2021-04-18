@@ -39,6 +39,9 @@ function sString(obj) {
   }
   if (/object|array/.test(sType(obj))) {
     try {
+      if (obj[Symbol.toPrimitive]) {
+        return obj[Symbol.toPrimitive]()
+      }
       return JSON.stringify(obj)
     } catch(e) {
       return e.message

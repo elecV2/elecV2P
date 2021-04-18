@@ -1,6 +1,6 @@
 const express = require('express')
 
-const { logger, setGlog, CONFIG_FEED, CONFIG_Axios, list, file } = require('../utils')
+const { logger, setGlog, CONFIG_FEED, CONFIG_Axios, axProxy, list, file } = require('../utils')
 const clog = new logger({ head: 'wbconfig' })
 
 const { CONFIG } = require('../config')
@@ -59,11 +59,26 @@ module.exports = app => {
           wbrtoken: CONFIG.wbrtoken,
           minishell: CONFIG.minishell || false,
           security: CONFIG.SECURITY || {},
-          init: CONFIG.init
+          init: CONFIG.init,
+          anyproxy: CONFIG.anyproxy,
+          webUI: CONFIG.webUI,
+          newversion: CONFIG.newversion,
         }))
         break
       default:{
-        res.end('no config data to get')
+        let token = req.query.token || req.body.token
+        if (token === undefined) {
+          let ref = req.get('Referer')
+          if (ref) {
+            ref = new URL(ref)
+            token = new URLSearchParams(ref.search).get('token')
+          }
+        }
+        if (token === CONFIG.wbrtoken) {
+          res.download(list.get('config.json', 'path'))
+        } else {
+          res.end('no config data to get')
+        }
       }
     }
   })
@@ -79,6 +94,7 @@ module.exports = app => {
         Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
         Object.assign(CONFIG_RUNJS, CONFIG.CONFIG_RUNJS)
         Object.assign(CONFIG_Axios, CONFIG.CONFIG_Axios)
+        axProxy.update()
         if (data.gloglevel !== CONFIG.gloglevel) setGlog(data.gloglevel)
         res.end("save config to " + CONFIG.path)
         break
@@ -154,16 +170,50 @@ module.exports = app => {
         }
         break
       case "init":
-        CONFIG.init = Object.assign(CONFIG.init || {}, req.body.data)
-        if (req.body.data.runjs) {
-          res.end('add initialization runjs: ' + req.body.data.runjs)
+        CONFIG.init = Object.assign(CONFIG.init || {}, req.body.data.CONFIG_init)
+        let cktip = 'checkupdate is ' + (CONFIG.init.checkupdate === false ? 'off' : 'on')
+        if (req.body.data.CONFIG_init.runjs) {
+          res.end(cktip + '\nadd initialization runjs: ' + req.body.data.CONFIG_init.runjs)
         } else {
-          res.end('initialization runjs is cleared')
+          res.end(cktip + '\ninitialization runjs is cleared')
+        }
+        break
+      case "anyproxy":
+        try {
+          CONFIG.anyproxy = Object.assign(CONFIG.anyproxy || {}, req.body.data)
+          res.end(JSON.stringify({
+            rescode: 0,
+            message: 'anyproxy config success updated'
+          }))
+          axProxy.update()
+        } catch(e) {
+          res.end(JSON.stringify({
+            rescode: -1,
+            message: 'fail to change anyproxy config' + e.message
+          }))
+        }
+        break
+      case "webUI":
+        try {
+          CONFIG.webUI = Object.assign(CONFIG.webUI || {}, req.body.data)
+          res.end(JSON.stringify({
+            rescode: 0,
+            message: 'webUI config success updated'
+          }))
+        } catch(e) {
+          res.end(JSON.stringify({
+            rescode: -1,
+            message: 'fail to change webUI config' + e.message
+          }))
         }
         break
       default:{
+        clog.error('data put error, unknow type: ' + req.body.type)
         bSave = false
-        res.end("data put error, unknow type: " + req.body.type)
+        res.end(JSON.stringify({
+          rescode: -1,
+          message: 'data put error, unknow type: ' + req.body.type
+        }))
       }
     }
     if (bSave) {

@@ -25,5 +25,35 @@ module.exports = {
         }
       }, 1000)
     })
+  },
+  /**
+   * ms 级定时，等待到某个 ms 触发 then
+   * @param     {String}    time     最终触发时间，比如 2021-04-10 22:10:20.888。如留空，则表示下一个整点; '+1min': 表示下一个整分钟; '+1s': 表示下一个整秒
+   * @param     {Number}    ahead    提前多少 ms，默认 4 ms
+   * @param     {Number}    gap      间隔时间超过该值则不定时，单位: ms，默认 10000*6*2 ms (两分钟)
+   * @return    {Promise}
+   * 具体使用:
+   * waituntil('2021-04-10 22:10:20.888').then(()=>console.log('hello elecV2P, UTC time:', new Date().toISOString())).catch(e=>console.log(e))
+   * waituntil().catch(e=>console.log(e)).finally(()=>console.log('hello elecV2P, UTC time:', new Date().toISOString()))
+   */
+  waituntil(time='', ahead=4, gap=10000*6*2) {
+    let dms = 0
+    if (time === '+1s') {
+      time = new Date().setSeconds(new Date().getSeconds() + 1, 0)
+    } else if (time === '+1min') {
+      time = new Date().setMinutes(new Date().getMinutes() + 1, 0, 0)
+    } else if (Date.parse(time)) {
+      time = new Date(time)
+    } else {
+      time = new Date().setHours(new Date().getHours() + 1, 0, 0, 0)
+    }
+    dms = time - Date.now() - ahead
+    if (dms > gap) {
+      console.log(dms, 'is bigger than', gap, 'ms, skip setTimeout')
+      return Promise.reject(dms + ' is bigger than ' + gap + ' ms, skip setTimeout')
+    } else {
+      console.log('wait', dms, 'ms, until UTC time', new Date(time).toJSON())
+      return new Promise(resolve=>setTimeout(resolve, dms))
+    }
   }
 }

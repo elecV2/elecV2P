@@ -12,8 +12,8 @@ const { CONFIG } = require('../config')
 
 const CONFIG_FEED = {
   enable: true,              // 关闭/开启 FEED
-  homepage: 'https://github.com/elecV2/elecV2P',  // FEED 主页。
-  iftttid: {enable: true, key: ''},               // 关闭/开启 IFTTT 通知
+  homepage: 'https://github.com/elecV2/elecV2P',  // FEED 主页
+  iftttid: {enable: false, key: ''},              // 关闭/开启 IFTTT 通知
   barkkey: {enable: false, key: ''},              // 关闭/开启 BARK 通知
   custnotify: {
     enable: false,

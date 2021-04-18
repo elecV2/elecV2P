@@ -27,6 +27,7 @@ class contextBase {
   $axios = eAxios
   $cheerio = cheerio
   $message = message
+  alert = message.success
   $download = downloadfile
   $evui = (obj, callback) => {
     if (sType(obj) !== 'object') {

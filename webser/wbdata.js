@@ -1,6 +1,6 @@
 const { CONFIG, CONFIG_Port } = require('../config')
 
-const { logger, list } = require('../utils')
+const { logger, list, checkupdate } = require('../utils')
 const clog = new logger({ head: 'wbdata' })
 
 const { CONFIG_RULE, JSLISTS } = require('../script')
@@ -10,7 +10,7 @@ module.exports = app => {
     let type = req.query.type
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress) 
   + ` get data ${type}`)
-    res.writeHead(200,{ 'Content-Type' : 'text/plain;charset=utf-8' })
+    res.writeHead(200, { 'Content-Type' : 'text/plain;charset=utf-8' })
     switch (type) {
       case "overview":
         res.end(JSON.stringify({
@@ -22,6 +22,8 @@ module.exports = app => {
           mitmhostlen: CONFIG_RULE.mitmhost.length,
           version: CONFIG.version,
           start: CONFIG.start,
+          anyproxy: CONFIG_Port.anyproxy,
+          newversion: CONFIG.newversion,
         }))
         break
       case "rules":
@@ -46,7 +48,15 @@ module.exports = app => {
       case "filter":
         res.end(list.get('filter.list'))
         break
+      case "update":
+      case "newversion":
+      case 'checkupdate':
+        checkupdate(Boolean(req.query.force)).then(body=>{
+          res.end(JSON.stringify(body, null, 2))
+        })
+        break
       default: {
+        clog.error('unknow data get type', type)
         res.end("404")
       }
     }
@@ -78,9 +88,13 @@ module.exports = app => {
       case "mitmtype":
         let mtype = req.body.data
         CONFIG_RULE.mitmtype = mtype
-        if (mtype === 'all') clog.notify('MITM 设置为全局模式')
-        else if (mtype === 'none') clog.notify('MITM 已关闭')
-        else clog.notify('MITM 设置为按列表域名解析模式')
+        if (mtype === 'all') {
+          clog.notify('MITM 设置为全局模式')
+        } else if (mtype === 'none') {
+          clog.notify('MITM 已关闭')
+        } else {
+          clog.notify('MITM 设置为按列表域名解析模式')
+        }
         res.end('设置成功')
         break
       default:{

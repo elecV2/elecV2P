@@ -1,4 +1,11 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.2.9)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.3.0)
+
+v3.3.0
+ • ANYPROXY 快速打开/关闭
+ • 初始化自动检查更新检测及设置
+ • TASK 远程 JS 更新及快速测试运行
+ • eaxios 网络代理问题修复
+ • 本地 JS 支持多级目录
 
 v3.2.9
  • 增加通知触发 JS 的功能
@@ -8,8 +15,8 @@ v3.2.9
 v3.2.8
  • shell 指令支持执行远程文件。具体说明查看<a href='https://github.com/elecV2/elecV2P-dei/blob/master/docs/06-task.md' target='_blank'> 06-task.md </a>相关部分
  • TASK shell 远程指令测试: python3 https://raw.githubusercontent.com/elecV2/elecV2P/master/script/Shell/test.py
- • script/Shell 文件夹默认新增 <a href='https://github.com/elecV2/elecV2P/blob/master/script/Shell/elecV2P.py' target='_blank'> elecV2P.py </a>PYTHON 库文件
- • 通知 title 开头使用 $enable$ 关键字强制发送通知。详见: <a href='https://github.com/elecV2/elecV2P-dei/blob/master/docs/07-feed&notify.md' target='_blank'> 07-feed&notify.md </a>相关部分
+ • script/Shell 文件夹默认新增<a href='https://github.com/elecV2/elecV2P/blob/master/script/Shell/elecV2P.py' target='_blank'> elecV2P.py </a>PYTHON 库文件
+ • 通知 title 开头使用 $enable$ 关键字强制发送通知。详见:<a href='https://github.com/elecV2/elecV2P-dei/blob/master/docs/07-feed&notify.md' target='_blank'> 07-feed$notify.md </a>相关部分
 
 v3.2.6
  • $exec 增加延迟交互输入。具体说明查看<a href='https://github.com/elecV2/elecV2P-dei/blob/master/docs/04-JS.md' target='_blank'> 04-JS.md </a>相关部分
@@ -22,7 +29,7 @@ v3.2.4
 
 v3.2.3
  • RUNJS 执行逻辑优化，移除 $result 参数，增强 $done 函数功能
- • // @grant 日志及通知控制优化。具体说明查看 <a href='https://github.com/elecV2/elecV2P-dei/blob/master/docs/04-JS.md' target='_blank'> 04-JS.md </a> 相关部分
+ • // @grant 日志及通知控制优化。具体说明查看<a href='https://github.com/elecV2/elecV2P-dei/blob/master/docs/04-JS.md' target='_blank'> 04-JS.md </a> 相关部分
  • webUI 优化，移除设置中 保存所有 的按钮，每次保存都会储存当前设置
 
 v3.2.1

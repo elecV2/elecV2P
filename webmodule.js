@@ -27,7 +27,7 @@ module.exports = () => {
     let ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress
     if (CONFIG.wbrtoken) {
       let token = req.query.token || req.body.token
-      if (!token) {
+      if (token === undefined) {
         let ref = req.get('Referer')
         if (ref) {
           ref = new URL(ref)
@@ -78,10 +78,14 @@ module.exports = () => {
 
   const server = http.createServer(app)
 
+  server.on('clientError', (err, socket) => {
+    socket.end('HTTP/1.1 400 Bad Request\r\n\r\n')
+  })
+
   const webstPort = process.env.PORT || CONFIG_Port.webst || 80
 
   server.listen(webstPort, ()=>{
-    clog.notify("elecV2P", CONFIG.version, "on port", webstPort)
+    clog.notify("elecV2P", 'v' + CONFIG.version, "started on port", webstPort)
   })
 
   websocketSer({ server, path: '/elecV2P' })

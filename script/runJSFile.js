@@ -157,6 +157,8 @@ function runJS(filename, jscode, addContext={}) {
     CONTEXT.add({ addContext })
   }
 
+  CONTEXT.final.__name = filename
+
   let bDone = false     // 是否使用 $done 函数提前返回脚本执行结果
 
   if (/\$done/.test(jscode)) {

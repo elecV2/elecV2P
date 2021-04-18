@@ -1,1 +1,15 @@
-{"storemanage":true}
+{
+  "init": {
+    "checkupdate": true,
+    "runjs": ""
+  },
+  "webUI": {
+    "port": 80
+  },
+  "anyproxy": {
+    "enable": true,
+    "port": 8001,
+    "webPort": 8002
+  },
+  "gloglevel": "info"
+}

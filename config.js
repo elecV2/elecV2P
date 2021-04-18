@@ -14,6 +14,27 @@ const CONFIG = {
 
 if (fs.existsSync(CONFIG.path)) {
   Object.assign(CONFIG, sJson(fs.readFileSync(CONFIG.path, "utf8")))
+  if (CONFIG.webUI && CONFIG.webUI.port) {
+    CONFIG_Port.webst = CONFIG.webUI.port
+  }
+  if (CONFIG.anyproxy) {
+    if (CONFIG.anyproxy.port) {
+      CONFIG_Port.proxy = CONFIG.anyproxy.port
+    } else {
+      CONFIG.anyproxy.port = CONFIG_Port.proxy
+    }
+    if (CONFIG.anyproxy.webPort) {
+      CONFIG_Port.webif = CONFIG.anyproxy.webPort
+    } else {
+      CONFIG.anyproxy.webPort = CONFIG_Port.webif
+    }
+  } else {
+    CONFIG.anyproxy = {
+      enable: true,
+      port: CONFIG_Port.proxy,
+      webPort: CONFIG_Port.webif
+    }
+  }
 }
 
 CONFIG.version = require('./package.json').version

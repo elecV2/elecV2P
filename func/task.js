@@ -94,11 +94,19 @@ function bIsValid(info) {
     clog.error(info.time, 'wrong schedule time format')
     return false
   }
+  if (!(info.job && info.job.type && info.job.target)) {
+    clog.error('a task job is expect')
+    return false
+  }
   return true
 }
 
 function jobFunc(job, taskname) {
   // 任务信息转化为可执行函数
+  if (!(job && job.target)) {
+    clog.error('job target is empty')
+    return false
+  }
   if (job.type === 'runjs') {
     let options = { type: 'task', cb: wsSer.send.func('tasklog') }
     let jobenvs = job.target.split(/ -env /)
@@ -108,7 +116,7 @@ function jobFunc(job, taskname) {
       envlist.forEach(ev=>{
         let ei = ev.match(/(.*?)=(.*)/)
         if (ei.length === 3) {
-          options[ei[1].startsWith('$') ? ei[1] : ('$' + ei[1])] = ei[2]
+          options[ei[1].startsWith('$') ? ei[1] : ('$' + ei[1])] = decodeURI(ei[2])
         }
       })
       job.target = jobenvs[0]
@@ -178,4 +186,4 @@ function taskStatus(){
   return status
 }
 
-module.exports = { Task, TASKS_WORKER, TASKS_INFO, bIsValid, taskStatus }
+module.exports = { Task, TASKS_WORKER, TASKS_INFO, bIsValid, taskStatus, jobFunc }

@@ -31,22 +31,24 @@ module.exports = app => {
   })
 
   app.put("/jsfile", (req, res)=>{
-    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "put js file")
     const op = req.body.op
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), op, req.body.url)
     switch(op){
       case 'jsdownload':
-        downloadfile(req.body.url, Jsfile.get(req.body.name, 'path')).then(jsl=>{
+        downloadfile(req.body.url, Jsfile.get(req.body.name, 'path') || file.get('script/JSFile', 'path'), d=>{
+          clog.info(d.finish || d.progress + '\r')
+        }).then(jsl=>{
           res.end(JSON.stringify({
             rescode: 0,
             message: 'download js file to: ' + jsl
           }))
-          if (JSLISTS.indexOf(req.body.name) === -1) {
+          if (req.body.name && JSLISTS.indexOf(req.body.name) === -1) {
             JSLISTS.push(req.body.name)
           }
         }).catch(e=>{
           res.end(JSON.stringify({
             rescode: -1,
-            message: req.body.name + ' ' + errStack(e)
+            message: `${req.body.name ? req.body.name + ' ' : ''}${errStack(e)}`
           }))
         })
         break
@@ -63,9 +65,9 @@ module.exports = app => {
   app.post("/jsfile", (req, res)=>{
     let jsname = req.body.jsname
     let jscontent = req.body.jscontent
-    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "post js file", jsname)
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "post", jsname, req.body.type || 'to save')
     if (!(jsname && jscontent)) {
-      res.end("have no jsname or content")
+      res.end("a name of js and content is expect")
       return
     }
     if (req.body.type === 'totest') {
@@ -80,10 +82,21 @@ module.exports = app => {
         clog.error(errStack(error))
       })
     } else {
-      Jsfile.put(jsname, req.body.jscontent)
-      clog.notify(`${jsname} success saved`)
-      res.end(`${jsname} success saved`)
-      if (JSLISTS.indexOf(jsname) === -1) JSLISTS.push(jsname)
+      if (Jsfile.put(jsname, req.body.jscontent)) {
+        clog.notify(`${jsname} success saved`)
+        res.end(JSON.stringify({
+          rescode: 0,
+          message: `${jsname} success saved`
+        }))
+        if (JSLISTS.indexOf(jsname) === -1) {
+          JSLISTS.push(jsname)
+        }
+      } else {
+        res.end(JSON.stringify({
+          rescode: -1,
+          message: `${jsname} fail to save`
+        }))
+      }
     }
   })
 
@@ -120,17 +133,19 @@ module.exports = app => {
     uploadfile.multiples = true
     uploadfile.parse(req, (err, fields, files) => {
       if (err) {
-        clog.error('Error', errStack(err))
-        res.end(JSON.stringify({
+        clog.error('upload js Error', errStack(err))
+        return res.end(JSON.stringify({
           rescode: -1,
           message: 'js upload fail ' + err.message
         }))
-        return
       }
 
       if (!files.js) {
         clog.info('no js file to upload')
-        return
+        return res.end(JSON.stringify({
+          rescode: 404,
+          message: 'no js file upload'
+        }))
       }
       if (files.js.length) {
         files.js.forEach(sgfile=>{
@@ -147,11 +162,11 @@ module.exports = app => {
           JSLISTS.push(files.js.name)
         }
       }
+      return res.end(JSON.stringify({
+        rescode: 0,
+        message: 'upload success'
+      }))
     })
-    res.end(JSON.stringify({
-      rescode: 0,
-      message: 'upload success'
-    }))
   })
 
   app.put('/mock', (req, res)=>{
