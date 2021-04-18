@@ -7,25 +7,32 @@
 - 后面偶尔修修 Bug，欢迎提交 Issue
 - Porject 的坑有时间再填
 - Thanks for using.
+- [ ] 使用 JSON 重构 Lists 数据结构
 </pre>
 </div>
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
 - 说明文档 [1.0 基本完成，优化中...]
-- 使用 JSON 重构 Lists 数据结构
 - EFSS favorite/site/backend
-- download process(cb)
 - Backup 备份导出/导入(lists/store)
 - minishell 上传/下载文件（编辑?）
 - 文件编辑器（component || libery）
 - 多语言 [一个可能永远不填的坑..., start ready...]
+- elecV2Pflow: 不同语言的脚本执行流程可视化控制（大坑）
 </pre>
 </div>
 </div>
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [x] 增加 ANYPROXY 快速关闭/打开功能
+- [x] webUI 增加 elecV2P 重启/关闭按钮
+- [x] task 远程 JS 更新，以及 ctrl+enter 测试
+- [x] eaxios 网络代理问题修复
+- [x] 本地 JS 支持多级目录
+- [x] anyproxy temp cache 关闭时自动清理
+- [x] download process(cb)
 - [x] webhook token 初始值更改为随机
 - [x] 通知触发 JS
 - [x] 通知测试按钮

@@ -10,11 +10,11 @@ elecV2P - customize personal network.
 - 查看/修改网络请求 (MITM)
 - 定时执行 JS/SHELL 脚本
 - FEED/IFTTT/自定义 通知
-- EFSS 基础文件管理(v0.1)
+- EFSS 基础文件管理
 
 ## 安装/INSTALL
 
-**程序开放权限较大，建议局域网使用。网络部署，风险自负**
+**程序开放权限极大，建议局域网使用。网络部署，风险自负**
 
 ### 方法一：直接 NODEJS 运行
 
@@ -25,17 +25,23 @@ cd elecV2P
 # 安装依赖库
 yarn
 
-# 3.2.0 版本后默认 start 是以 pm2 的方式启动，需要先设置 pm2 执行环境
-# 添加目录 elecV2P目录/node_modules/.bin 到系统环境变量 PATH 中，或者直接执行 yarn global add pm2，再执行
+# 3.2.0 版本后默认 start 是以 pm2 的方式启动，需要先安装好 pm2
+# pm2 安装方式:
+# - 添加目录 elecV2P所在目录/node_modules/.bin 到系统环境变量 PATH 中
+# - 或者直接执行 yarn global add pm2
+# 安装完成后，就可以直接启动 elecV2P 了
 yarn start
 
 # 如果要使用基础方式启动，执行命令
 node index.js
 
-# 升级
-# - 先备份好个人数据，比如 script 中的 JSFile/Store/Lists/Shell 等文件夹，和 efss 文件夹等
-# - 然后再从 Github 拉取最新的代码进行覆盖升级
-# - 最后再把备份好的文件复制到原来的位置
+# 调试模式（webUI 端口为 12521，正常模式下端口为 80）
+yarn dev
+
+# 升级 *【3.1.8 版本后，推荐使用自带的 [softupdate.js](https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js) 脚本进行软更新升级】*
+# - 先备份好个人数据，比如 根证书，以及 script/JSFile、Store、Lists、Shell 等文件夹，和 efss 文件夹等
+# - 然后再从 Github 拉取最新的代码进行覆盖升级 git pull
+# - 最后再把备份好的文件复制还原到之前的位置
 ```
 
 其他 PM2 相关指令
@@ -62,17 +68,14 @@ pm2 -h      # 查看 PM2 帮助列表
 
 ``` sh
 # 基础使用命令
-docker run --restart=always -d --name elecv2p -p 80:80 -p 8001:8001 -p 8002:8002 elecv2/elecv2p
-
-# 更改时区和映射端口
-docker run --restart=always -d --name elecv2p -e TZ=Asia/Shanghai -p 8100:80 -p 8101:8001 -p 8102:8002 elecv2/elecv2p:arm32
+docker run --restart=always -d --name elecv2p -e TZ=Asia/Shanghai -p 80:80 -p 8001:8001 -p 8002:8002 elecv2/elecv2p
 
 # 使用 ARM 镜像及持久化存储
 docker run --restart=always -d --name elecv2p -e TZ=Asia/Shanghai -p 8100:80 -p 8101:8001 -p 8102:8002 -v /elecv2p/JSFile:/usr/local/app/script/JSFile -v /elecv2p/Store:/usr/local/app/script/Store -v /elecv2p/Lists:/usr/local/app/script/Lists elecv2/elecv2p:arm64
 
 # 以上命令仅供参考，根据实际情况更改映射端口/时区/镜像等参数。
 
-# 最终推荐使用命令（最后镜像根据使用平台进行调整）
+# 最终推荐使用命令（最后一行的镜像名称根据使用平台进行调整）
 docker run --restart=always \
   -d --name elecv2p \
   -e TZ=Asia/Shanghai \
@@ -153,13 +156,16 @@ docker logs elecv2p -f
 - 8001：  ANYPROXY HTTP代理端口。（*代理端口不是网页，不能通过浏览器直接访问*）
 - 8002：  ANYPROXY 代理请求查看端口
 
-*80 端口可使用环境变量 **PORT** 进行修改，也可以在 config.js 文件中更改其他所有端口。如果是使用 Docker 相关的安装方式，修改对应的映射端口即可*
+*80 端口可使用环境变量 **PORT** 进行修改，也可以在 config.js 文件中更改其他所有端口。*
+*如果是使用 Docker 相关的安装方式，修改对应的映射端口即可。*
+
+*v3.3.0 版本后，可直接在 webUI->SETTING 界面修改（非必要情况不建议随意更改）*
 
 ## 根证书相关 - HTTPS 解密
 
 - *如果不使用 RULES/REWRITE 相关功能，此步骤可跳过。*
 - *升级启动后，如果不是使用之前的证书，需要重新下载安装信任根证书。*
-- *根证书包含两个文件 rootCA.crt/rootCA.key，文件名不可修改*
+- *根证书包含两个文件 rootCA.crt/rootCA.key，文件名不可修改。*
 
 ### 安装证书
 
@@ -173,14 +179,11 @@ docker logs elecv2p -f
 
 *windows 平台的证书存储位置选择 浏览->受信任的根证书颁发机构*
 
-### 启用自签证书
+### 启用自签证书（如果不用，就直接忽略）
 
-任选一种方式
+直接将根证书（rootCA.crt/rootCA.key）复制到本项目 **rootCA** 目录，也可以在 webUI->MITM 进行上传，然后重启 elecV2P。
 
-- 将根证书（rootCA.crt/rootCA.key）复制到本项目 **rootCA** 目录，然后打开 webUI -> MITM -> 启用自签证书
-- 直接将根证书复制到 **$HOME/.anyproxy/certificates** 目录下
-
-然后重启服务。使用新的证书后，记得重新下载安装信任证书，并清除由之前根证书签发的域名证书。
+**注意：使用新的证书后，记得重新下载安装信任证书，并清除由之前根证书签发的域名证书。**
 
 ## RULES - 网络请求修改
 
@@ -205,9 +208,9 @@ docker logs elecv2p -f
 | 基础倒计时时间 | 重复次数（可选）| 增加随机时间（可选） | 增加随机重复次数（可选）  
 
 
-*当重复次数大于等于 **999** 时，无限循环。*
+- *当重复次数大于等于 **999** 时，无限循环*
 
-示例： 40 8 10 3 ，表示倒计时40秒，随机10秒，所以具体倒计时时间位于 40-50 秒之间，重复运行 8-11 次
+示例: 40 8 10 3 ，表示倒计时40秒，随机10秒，所以具体倒计时时间位于 40-50 秒之间，重复运行 8-11 次
 
 - cron 定时 
 
@@ -249,11 +252,7 @@ IFTTT/BARK/自定义通知等相关设置参考: [07-feed&notify](https://github
 
 TG 交流群: https://t.me/elecV2G (主要为方便用户使用交流，开发者24小时不在线，也不负责解答任何问题。)
 
-如果遇到问题还是建议开一个 [issue](https://github.com/elecV2/elecV2P/issues)，并注明使用平台，版本，以及附上相关的错误日志。
-
-### 简单声明
-
-*该项目仅用于学习交流，任何使用，风险自负。*
+如果遇到问题或Bug 可以开一个 [issue](https://github.com/elecV2/elecV2P/issues)，说明使用平台，版本，以及附上相关的错误日志（提供的信息越详细，越有助于解决问题）。
 
 ## 贡献参考
 
