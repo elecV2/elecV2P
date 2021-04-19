@@ -1,0 +1,19 @@
+version: '3.7'
+services:
+  elecv2p:
+    image: elecv2/elecv2p:arm64
+    container_name: elecv2p
+    restart: always
+    environment:
+      - TZ=Asia/Shanghai
+    ports:
+      - "8100:80"
+      - "8101:8001"
+      - "8102:8002"
+    volumes:
+      - "/elecv2p/JSFile:/usr/local/app/script/JSFile"
+      - "/elecv2p/Lists:/usr/local/app/script/Lists"
+      - "/elecv2p/Store:/usr/local/app/script/Store"
+      - "/elecv2p/Shell:/usr/local/app/script/Shell"
+      - "/elecv2p/rootCA:/usr/local/app/rootCA"
+      - "/elecv2p/efss:/usr/local/app/efss"
