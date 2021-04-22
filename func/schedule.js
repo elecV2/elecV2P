@@ -38,7 +38,9 @@ module.exports = class {
       this.temIntval = setInterval(()=>{
         this.countdown--
         if(this.countdown>0) {
-          if(this.countdown % step == 0) clog.debug(this.task.name, "countdown: ", this.countdown)
+          if(this.countdown % step == 0) {
+            clog.debug(this.task.name, "countdown:", this.countdown)
+          }
         } else {
           clearInterval(this.temIntval)
           this.run()
@@ -71,7 +73,7 @@ module.exports = class {
       if (data) {
         clog.log(this.task.name, 'result:', sString(data))
       }
-      if (this.task.id && flag !== 'restart') {
+      if (this.task.id && flag !== 'restart') {   // maybe 'stopped' or 'finished'
         wsSer.send({type: 'task', data: {tid: this.task.id, op: 'stop'}})
       }
       if (flag === 'finished') {
@@ -85,7 +87,9 @@ module.exports = class {
       clearInterval(this.temIntval)
     }
     if (this.task) {
-      clog.log(flag, "schedule task:", this.task.name)
+      if (flag !== 'stop') {
+        clog.log(flag, "schedule task:", this.task.name)
+      }
       delete this.task
     }
   }

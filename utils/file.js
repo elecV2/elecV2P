@@ -124,17 +124,22 @@ const file = {
     }
     return 0
   },
-  aList(folder, option = { max: -1, dot: true }, progress = { num: 0 }){
+  aList(folder, option = { max: -1, dot: true, skip: { folder: [], file: [] } }, progress = { num: 0 }){
     if (!fs.existsSync(folder)) {
       clog.error('directory', folder, 'not existed.')
       return null
     }
     folder = path.resolve(folder)
-    if (option.dot === false && path.basename(folder).startsWith('.')) {
+    let basename = path.basename(folder)
+    if (option.dot === false && basename.startsWith('.')) {
       return null
     }
     let fstat = fs.statSync(folder)
     if (fstat.isDirectory()) {
+      if (option.skip && option.skip.folder && option.skip.folder.indexOf(basename) !== -1) {
+        clog.info('file aList skip folder', basename)
+        return null
+      }
       const rlist = fs.readdirSync(folder)
       let flist = []
       for (let fo of rlist) {
@@ -145,17 +150,21 @@ const file = {
       }
       return {
         type: 'directory',
-        name: path.basename(folder),
+        name: basename,
         list: flist.filter(f=>f),
         mtime: fstat.mtimeMs
       }
     } else {
+      if (option.skip && option.skip.file && option.skip.file.indexOf(basename) !== -1) {
+        clog.info('file aList skip file', basename)
+        return null
+      }
       if (option.max !== -1) {
         progress.num++
       }
       return {
         type: 'file',
-        name: path.basename(folder),
+        name: basename,
         size: this.size(folder),
         mtime: fstat.mtimeMs
       }

@@ -196,7 +196,7 @@ function runJS(filename, jscode, addContext={}) {
       }
     } catch(error) {
       fconsole.error(error.stack)
-      resolve({ error: error.message })
+      resolve({ rescode: -1, error: error.message, stack: error.stack })
     }
   })
 }
@@ -212,6 +212,38 @@ async function runJSFile(filename, addContext={}) {
   if (filename === undefined || filename === '') {
     return Promise.resolve('a javascript filename or code is expected')
   }
+
+  // filename 附带参数处理
+  if (addContext.type !== 'rawcode') {
+    if (/ -local/.test(filename)) {
+      addContext.local = true
+      filename = filename.replace(' -local', '')
+    }
+
+    // -rename 参数处理
+    let ren = filename.match(/ -rename ([^\- ]+)/)
+    if (ren && ren[1]) {
+      if (!ren[1].endsWith('.js')) {
+        ren[1] = ren[1] + '.js'
+      }
+      addContext.rename = ren[1]
+      filename = filename.replace(/ -rename ([^\- ]+)/, '')
+    }
+
+    let jobenvs = filename.split(' -env ')
+    if (jobenvs[1] !== undefined) {
+      let envlist = jobenvs[1].trim().split(' ')
+      envlist.forEach(ev=>{
+        let ei = ev.match(/(.*?)=(.*)/)
+        if (ei.length === 3) {
+          addContext[ei[1].startsWith('$') ? ei[1] : ('$' + ei[1])] = decodeURI(ei[2])
+        }
+      })
+      filename = jobenvs[0]
+    }
+  }
+  // end filename 附带参数处理
+
   let runclog = clog
   if (addContext.cb) {
     runclog = new logger({ head: (addContext.from || addContext.type || 'rule') + 'RunJS', level: 'debug', cb: addContext.cb })
@@ -246,11 +278,11 @@ async function runJSFile(filename, addContext={}) {
     runclog.error(`${filename} not exist`)
     return Promise.resolve(`${filename} not exist`)
   }
-  if (addContext.type === 'rawcode') {
-    filename = addContext.rename || addContext.from || 'rawcode.js'
-  }
   if (addContext.rename) {
     Jsfile.put(addContext.rename, rawjs)
+    filename = addContext.rename
+  } else if (addContext.type === 'rawcode') {
+    filename = addContext.filename || addContext.from || 'rawcode.js'
   }
 
   return new Promise((resolve, reject)=>{

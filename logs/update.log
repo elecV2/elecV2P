@@ -1,8 +1,13 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.3.0)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.3.1)
+
+v3.3.1
+ • 修复 task 带参数保存的问题
+ • task 运行 JS 支持使用 -rename 参数重命名文件
+ • rule 运行 JS 错误返回结果显示
 
 v3.3.0
  • ANYPROXY 快速打开/关闭
- • 初始化自动检查更新检测及设置
+ • 启动时自动检测更新及设置
  • TASK 远程 JS 更新及快速测试运行
  • eaxios 网络代理问题修复
  • 本地 JS 支持多级目录

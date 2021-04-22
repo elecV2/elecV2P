@@ -43,6 +43,7 @@ module.exports = app => {
             TASKS_WORKER[data.tid].stop('restart')
           }
           TASKS_WORKER[data.tid].delete('restart')
+          delete TASKS_WORKER[data.tid]
         }
 
         TASKS_INFO[data.tid] = data.task
@@ -60,6 +61,8 @@ module.exports = app => {
       case "stop":
         if(TASKS_WORKER[data.tid]) {
           TASKS_WORKER[data.tid].stop()
+          TASKS_WORKER[data.tid].delete('stop')
+          delete TASKS_WORKER[data.tid]
           res.end(JSON.stringify({
             rescode: 0,
             message: "task stopped!"
@@ -74,6 +77,7 @@ module.exports = app => {
       case "delete":
         if(TASKS_WORKER[data.tid]) {
           TASKS_WORKER[data.tid].delete()
+          delete TASKS_WORKER[data.tid]
         }
         delete TASKS_INFO[data.tid]
         res.end(JSON.stringify({
@@ -117,10 +121,13 @@ module.exports = app => {
     if (sType(req.body) === 'object') {
       for (let tid in req.body) {
         if (req.body[tid].type === 'sub' || req.body[tid].running === false) {
+          if (TASKS_WORKER[tid]) {
+            TASKS_WORKER[tid].delete()
+            delete TASKS_WORKER[tid]
+          }
           TASKS_INFO[tid] = req.body[tid]
           if (req.body[tid].type !== 'sub') {
             TASKS_INFO[tid].id = tid
-            TASKS_WORKER[tid] = new Task(TASKS_INFO[tid])
           }
         }
       }

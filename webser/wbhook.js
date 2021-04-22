@@ -117,30 +117,35 @@ function handler(req, res){
     }
     break
   case 'taskstart':
-    clog.notify(clientip, 'start task')
-    if (TASKS_INFO[rbody.tid] && TASKS_WORKER[rbody.tid]) {
+    clog.notify(clientip, 'start task', rbody.tid)
+    if (TASKS_INFO[rbody.tid]) {
+      if (TASKS_WORKER[rbody.tid] === undefined) {
+        TASKS_WORKER[rbody.tid] = new Task(TASKS_INFO[rbody.tid])
+        TASKS_WORKER[rbody.tid].start()
+        return
+      }
       if (TASKS_INFO[rbody.tid].running === false) {
         TASKS_WORKER[rbody.tid].start()
-        res.end(TASKS_INFO[rbody.tid].name + ' 开始运行，任务内容： ' + JSON.stringify(TASKS_INFO[rbody.tid]))
+        res.end(TASKS_INFO[rbody.tid].name + ' started, info: ' + JSON.stringify(TASKS_INFO[rbody.tid]))
       } else {
-        res.end(TASKS_INFO[rbody.tid].name + ' 任务正在运行中，任务内容： ' + JSON.stringify(TASKS_INFO[rbody.tid]))
+        res.end(TASKS_INFO[rbody.tid].name + ' is running, info: ' + JSON.stringify(TASKS_INFO[rbody.tid]))
       }
       return
     }
-    res.end(rbody.tid + ' 任务不存在')
+    res.end('task ' + rbody.tid + ' not exist')
     break
   case 'taskstop':
     clog.notify(clientip, 'stop task', rbody.tid)
     if (rbody.tid && TASKS_INFO[rbody.tid] && TASKS_WORKER[rbody.tid]) {
       if (TASKS_INFO[rbody.tid].running === true) {
         TASKS_WORKER[rbody.tid].stop()
-        res.end('停止任务 ' + TASKS_INFO[rbody.tid].name + '，任务内容： ' + JSON.stringify(TASKS_INFO[rbody.tid]))
+        res.end('stop task ' + TASKS_INFO[rbody.tid].name + ', task info: ' + JSON.stringify(TASKS_INFO[rbody.tid]))
       } else {
-        res.end(TASKS_INFO[rbody.tid].name  + ' 任务已停止，任务内容： ' + JSON.stringify(TASKS_INFO[rbody.tid]))
+        res.end(TASKS_INFO[rbody.tid].name  + ' already stopped, task info: ' + JSON.stringify(TASKS_INFO[rbody.tid]))
       }
       return
     }
-    res.end(rbody.tid + ' 任务不存在')
+    res.end('task ' + rbody.tid + ' no exist')
     break
   case 'taskadd':
     clog.notify(clientip, 'add a new task')
@@ -148,9 +153,11 @@ function handler(req, res){
       const newtid = euid()
       TASKS_INFO[newtid] = rbody.task
       TASKS_INFO[newtid].id = newtid
-      TASKS_WORKER[newtid] = new Task(TASKS_INFO[newtid])
       res.end('success add task: ' + TASKS_INFO[newtid].name)
-      if (rbody.task.running) TASKS_WORKER[newtid].start()
+      if (rbody.task.running) {
+        TASKS_WORKER[newtid] = new Task(TASKS_INFO[newtid])
+        TASKS_WORKER[newtid].start()
+      }
       return
     }
     res.end('a task object is expected!')
@@ -166,9 +173,12 @@ function handler(req, res){
   case 'taskdel':
   case 'taskdelete':
     clog.notify(clientip, 'delete task', rbody.tid)
-    if (rbody.tid && TASKS_INFO[rbody.tid] && TASKS_WORKER[rbody.tid]) {
-      TASKS_WORKER[rbody.tid].delete()
+    if (rbody.tid && TASKS_INFO[rbody.tid]) {
       delete TASKS_INFO[rbody.tid]
+      if (TASKS_WORKER[rbody.tid]) {
+        TASKS_WORKER[rbody.tid].delete()
+        delete TASKS_WORKER[rbody.tid]
+      }
       res.end("task deleted!")
     } else {
       res.end('no such task', rbody.tid)

@@ -1,4 +1,4 @@
-const { logger, sJson, sUrl, sType, list, Jsfile, wsSer } = require('../utils')
+const { logger, sJson, sUrl, sType, list, Jsfile, wsSer, errStack } = require('../utils')
 const clog = new logger({ head: 'elecV2P', level: 'debug' })
 
 const { runJSFile } = require('./runJSFile')
@@ -248,7 +248,7 @@ module.exports = {
         runJSFile(matchreq[3], { $request: formRequest(requestDetail) }).then(jsres=>{
           if (sType(jsres) !== 'object') {
             return resolve({
-              response: { ...localResponse.reject, ...{ body: jsres } }
+              response: { ...localResponse.reject, body: jsres }
             })
           }
           if (jsres.response) {
@@ -258,6 +258,11 @@ module.exports = {
             jsres.response.body = formBody(jsres.response.body)
             return resolve({
               response: { ...localResponse.imghtml, ...jsres.response }
+            })
+          }
+          if (jsres.rescode === -1 && jsres.error) {
+            return resolve({
+              response: { ...localResponse.reject, body: 'error on elecV2P modify rule: ' + matchreq.join(', ') + '\n' + (jsres.stack || jsres.error) }
             })
           }
           // 请求信息修改
@@ -272,7 +277,7 @@ module.exports = {
             Object.assign(requestDetail.requestOptions, jsres)
           }
         }).catch(e=>{
-          clog.error('error on run js', matchreq[3], e)
+          clog.error('error on run js', matchreq[3], errStack(e))
         }).finally(()=>{
           resolve(requestDetail)
         })
@@ -285,12 +290,12 @@ module.exports = {
 
     for (let r of CONFIG_RULE.rewritelists) {
       if ((new RegExp(r[0])).test($request.url)) {
-        clog.info('match rewrite rules:', r[0], r[1])
+        clog.info('match rewrite rule:', r[0], r[1])
         return new Promise((resolve, reject)=>{
           runJSFile(r[1], { $request: formRequest($request), $response: formResponse($response) }).then(jsres=>{
             Object.assign($response, jsres ? (jsres.response ? jsres.response : jsres) : {})
           }).catch(e=>{
-            clog.error('error on run js', r[1], e)
+            clog.error('error on run js', r[1], errStack(e))
           }).finally(()=>{
             resolve({ response: $response })
           })
@@ -299,7 +304,9 @@ module.exports = {
     }
 
     let matchres = getrules($request, $response, CONFIG_RULE.reslists)
-    if (!matchres) return { response: $response }
+    if (!matchres) {
+      return { response: $response }
+    }
     if (matchres[2] === 'hold') {
       if (wsSer.recverlists.length === 0) {
         clog.notify('no websocket connected, skip $HOLD rule')
@@ -339,10 +346,16 @@ module.exports = {
     if (/^(30.)$/.test(matchres[2])) {
       const orgurl = sUrl(requestDetail.url)
       const newurl = sUrl(matchres[3], requestDetail.url)
-      if (newurl.hash === '') newurl.hash = orgurl.hash
-      if (newurl.search === '') newurl.search = orgurl.search
-      if (newurl.pathname === '/') newurl.pathname = orgurl.pathname
-      clog.info(requestDetail.url, matchres[2], "重定向至", newurl.href)
+      if (newurl.hash === '') {
+        newurl.hash = orgurl.hash
+      }
+      if (newurl.search === '') {
+        newurl.search = orgurl.search
+      }
+      if (newurl.pathname === '/') {
+        newurl.pathname = orgurl.pathname
+      }
+      clog.info(requestDetail.url, matchres[2], "redirect to", newurl.href)
       return {
         response: {
           statusCode: matchres[2],
@@ -355,22 +368,28 @@ module.exports = {
         runJSFile(matchres[3], { $request: formRequest($request), $response: formResponse($response) }).then(jsres=>{
           Object.assign($response, jsres ? (jsres.response ? jsres.response : jsres) : {})
         }).catch(e=>{
-          clog.error('error on run js', matchres[3], e)
+          clog.error('error on run js', matchres[3], errStack(e))
         }).finally(()=>{
           resolve({ response: $response })
         })
       })
     }
+    clog.info('unknown match rule type, return the orignal response')
+    return { response: $response }
   },
   *beforeDealHttpsRequest(requestDetail) {
-    if (CONFIG_RULE.mitmtype === 'all') return true
-    if (CONFIG_RULE.mitmtype === 'none') return false
+    if (CONFIG_RULE.mitmtype === 'all') {
+      return true
+    }
+    if (CONFIG_RULE.mitmtype === 'none') {
+      return false
+    }
     
     let host = requestDetail.host.split(":")[0]
     if (CONFIG_RULE.mitmhost.indexOf(host) !== -1) {
       return true
-    } else {
-      return (CONFIG_RULE.mitmhost.filter(h=>(/^\*/.test(h) && new RegExp('.' + h + '$').test(host))).length ? true : false)
     }
+    // 正则匹配，待优化
+    return (CONFIG_RULE.mitmhost.filter(h=>(/^\*/.test(h) && new RegExp('.' + h + '$').test(host))).length ? true : false)
   }
 }

@@ -248,9 +248,9 @@ function feedPush(title, description, url) {
     let pieces = Math.ceil(description.length / CONFIG_FEED.maxbLength)
     for (let i=0; i<pieces; i++) {
       let pdes = description.slice(i*CONFIG_FEED.maxbLength, (i+1)*CONFIG_FEED.maxbLength)
-      iftttPush(`${title} ${i+1}`, pdes, url)
-      barkPush(`${title} ${i+1}`, pdes, url)
-      custPush(`${title} ${i+1}`, pdes, url)
+      iftttPush(`${title} ${i+1}/${pieces}`, pdes, url)
+      barkPush(`${title} ${i+1}/${pieces}`, pdes, url)
+      custPush(`${title} ${i+1}/${pieces}`, pdes, url)
     }
   } else {
     iftttPush(title, description, url)

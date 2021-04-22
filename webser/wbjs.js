@@ -73,7 +73,8 @@ module.exports = app => {
     if (req.body.type === 'totest') {
       runJSFile(req.body.jscontent, {
         type: 'rawcode',
-        from: jsname.split('.js')[0] + '-test.js',
+        filename: jsname.split('.js')[0] + '-test.js',
+        from: 'test',
         cb: wsSer.send.func('jsmanage')
       }).then(data=>{
         res.end(sString(data))

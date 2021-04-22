@@ -66,11 +66,9 @@ const taskInit = function() {
     clog.info('retrieve task from Lists/task.list')
   }
   for(let tid in TASKS_INFO) {
-    if (TASKS_INFO[tid].type !== 'sub') {
+    if (TASKS_INFO[tid].type !== 'sub' && TASKS_INFO[tid].running) {
       TASKS_WORKER[tid] = new Task(TASKS_INFO[tid])
-      if (TASKS_INFO[tid].running) {
-        TASKS_WORKER[tid].start()
-      }
+      TASKS_WORKER[tid].start()
     }
   }
 }();
@@ -108,30 +106,11 @@ function jobFunc(job, taskname) {
     return false
   }
   if (job.type === 'runjs') {
-    let options = { type: 'task', cb: wsSer.send.func('tasklog') }
-    let jobenvs = job.target.split(/ -env /)
-    let envrough = jobenvs[1]
-    if (envrough !== undefined) {
-      let envlist = envrough.trim().split(' ')
-      envlist.forEach(ev=>{
-        let ei = ev.match(/(.*?)=(.*)/)
-        if (ei.length === 3) {
-          options[ei[1].startsWith('$') ? ei[1] : ('$' + ei[1])] = decodeURI(ei[2])
-        }
-      })
-      job.target = jobenvs[0]
-    }
-
-    if (/ -local/.test(job.target)) {
-      options.local = true
-      job.target = job.target.replace(' -local', '')
-    }
-
-    return ()=>runJSFile(job.target, { ...options })
+    return ()=>runJSFile(job.target, { type: 'task', cb: wsSer.send.func('tasklog') })
   } else if (job.type === 'taskstart') {
     return ()=>{
       if (!TASKS_INFO[job.target]) {
-        clog.error('job', job.target, 'not exist.')
+        clog.error('task start another task error: job', job.target, 'not exist')
         return
       }
       if (!TASKS_WORKER[job.target]) {
@@ -144,7 +123,7 @@ function jobFunc(job, taskname) {
   } else if (job.type === 'taskstop') {
     return ()=>{
       if (!TASKS_INFO[job.target] || !TASKS_WORKER[job.target]) {
-        clog.error('job', job.target, 'not exist.')
+        clog.error('task stop another task error: job', job.target, 'not exist')
         return
       }
       TASKS_WORKER[job.target].stop()
