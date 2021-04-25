@@ -174,10 +174,10 @@ function handler(req, res){
   case 'taskdelete':
     clog.notify(clientip, 'delete task', rbody.tid)
     if (rbody.tid && TASKS_INFO[rbody.tid]) {
-      delete TASKS_INFO[rbody.tid]
+      TASKS_INFO[rbody.tid] = null
       if (TASKS_WORKER[rbody.tid]) {
         TASKS_WORKER[rbody.tid].delete()
-        delete TASKS_WORKER[rbody.tid]
+        TASKS_WORKER[rbody.tid] = null
       }
       res.end("task deleted!")
     } else {

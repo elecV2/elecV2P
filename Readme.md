@@ -34,6 +34,8 @@ yarn start
 
 # 如果要使用基础方式启动，执行命令
 node index.js
+# 假如提示 80 端口不可用，尝试命令
+# PORT=8000 node index.js
 
 # 调试模式（webUI 端口为 12521，正常模式下端口为 80）
 yarn dev
@@ -156,10 +158,10 @@ docker logs elecv2p -f
 - 8001：  ANYPROXY HTTP代理端口。（*代理端口不是网页，不能通过浏览器直接访问*）
 - 8002：  ANYPROXY 代理请求查看端口
 
-*80 端口可使用环境变量 **PORT** 进行修改，也可以在 config.js 文件中更改其他所有端口。*
+*80 端口可使用环境变量 **PORT** 进行修改(比如: PORT=8000 node index.js)，也可以在 script/Lists/config.json 文件中更改其他所有端口。*
 *如果是使用 Docker 相关的安装方式，修改对应的映射端口即可。*
 
-*v3.3.0 版本后，可直接在 webUI->SETTING 界面修改（非必要情况不建议随意更改）*
+*v3.3.0 版本后，可在 webUI->SETTING 界面修改（非必要情况不建议随意更改）*
 
 ## 根证书相关 - HTTPS 解密
 

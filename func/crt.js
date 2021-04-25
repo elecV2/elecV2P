@@ -14,7 +14,7 @@ if(!fs.existsSync(rootCApath)) {
   fs.mkdirSync(rootCApath, { recursive: true })
 }
 
-const { logger, errStack } = require('../utils')
+const { logger, errStack, now } = require('../utils')
 const clog = new logger({ head: 'funcCrt' })
 
 /**
@@ -120,4 +120,23 @@ function cacheClear() {
   }
 }
 
-module.exports = { clearCrt, rootCrtSync, newRootCrt, cacheClear }
+function crtInfo(){
+  let crtPath = path.join(anycrtpath, "rootCA.crt")
+  if (!fs.existsSync(crtPath)) {
+    return {
+      rescode: -1,
+      message: crtPath + ' not exist'
+    }
+  }
+  let crt = fs.readFileSync(crtPath)
+  let pubcrt = forge.pki.certificateFromPem(crt.toString())
+
+  return {
+    rescode: 0,
+    commonName: pubcrt.subject.getField('CN').value,
+    notBefore: now(pubcrt.validity.notBefore, false),
+    notAfter: now(pubcrt.validity.notAfter, false)
+  }
+}
+
+module.exports = { clearCrt, rootCrtSync, newRootCrt, cacheClear, crtInfo }

@@ -19,7 +19,9 @@ class Task {
   }
 
   start(){
-    if (!bIsValid(this.info)) return false
+    if (!bIsValid(this.info)) {
+      return false
+    }
     if (this.info.type === 'cron') {
       this.task = new cron(this.info, this.job)
       this.task.start()
@@ -127,6 +129,8 @@ function jobFunc(job, taskname) {
         return
       }
       TASKS_WORKER[job.target].stop()
+      TASKS_WORKER[job.target].delete('stop')
+      TASKS_WORKER[job.target] = null
       TASKS_INFO[job.target].running = false
       wsSer.send({type: 'task', data: {tid: job.target, op: 'stop'}})
     }

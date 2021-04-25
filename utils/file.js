@@ -131,7 +131,7 @@ const file = {
     }
     folder = path.resolve(folder)
     let basename = path.basename(folder)
-    if (option.dot === false && basename.startsWith('.')) {
+    if (Boolean(option.dot) === false && basename.startsWith('.')) {
       return null
     }
     let fstat = fs.statSync(folder)

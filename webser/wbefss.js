@@ -23,7 +23,7 @@ module.exports = app => {
     const efssF = file.get(CONFIG.efss.directory, 'path')
     res.end(JSON.stringify({
       config: CONFIG.efss,
-      list: CONFIG.efss.enable ? file.aList(efssF, { max: CONFIG.efss.max, dot: CONFIG.efss.dotshow.enable }) : {},
+      list: CONFIG.efss.enable ? file.aList(efssF, { max: CONFIG.efss.max, dot: CONFIG.efss.dotshow.enable, skip: CONFIG.efss.skip }) : {},
     }))
   })
 

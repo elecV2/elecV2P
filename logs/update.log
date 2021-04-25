@@ -1,4 +1,8 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.3.1)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.3.2)
+
+v3.3.2
+ • EFSS 可设置跳过读取部分文件夹/文件
+ • webUI->MITM 显示当前正在使用的根证书
 
 v3.3.1
  • 修复 task 带参数保存的问题

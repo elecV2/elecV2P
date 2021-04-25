@@ -76,11 +76,11 @@ module.exports = app => {
       }
       if (files.crt.length) {
         files.crt.forEach(sgfile=>{
-          clog.notify('upload crt file:', sgfile.name)
+          clog.notify('upload rootCA file:', sgfile.name)
           file.copy(sgfile.path, file.get('rootCA/' + sgfile.name, 'path'))
         })
       } else {
-        clog.notify('upload crt file:', files.crt.name)
+        clog.notify('upload rootCA file:', files.crt.name)
         file.copy(files.crt.path, file.get('rootCA/' + files.crt.name, 'path'))
       }
       return res.end(JSON.stringify({

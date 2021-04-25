@@ -4,6 +4,7 @@ const { logger, list, checkupdate } = require('../utils')
 const clog = new logger({ head: 'wbdata' })
 
 const { CONFIG_RULE, JSLISTS } = require('../script')
+const { crtInfo } = require('../func')
 
 module.exports = app => {
   app.get("/data", (req, res)=>{
@@ -42,7 +43,8 @@ module.exports = app => {
       case "mitmhost":
         res.end(JSON.stringify({
           host: CONFIG_RULE.mitmhost,
-          type: CONFIG_RULE.mitmtype
+          type: CONFIG_RULE.mitmtype,
+          crtinfo: crtInfo()
         }))
         break
       case "filter":
