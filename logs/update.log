@@ -1,4 +1,8 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.3.2)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.3.3)
+
+v3.3.3
+ • TASK/EFSS null type error bug fix
+ • webhook 添加 type store
 
 v3.3.2
  • EFSS 可设置跳过读取部分文件夹/文件

@@ -2,7 +2,7 @@ const os = require('os')
 const { Task, TASKS_WORKER, TASKS_INFO, taskStatus, exec } = require('../func')
 const { runJSFile, JSLISTS } = require('../script')
 
-const { logger, LOGFILE, nStatus, euid, sJson, sString, sType, list, downloadfile, now, checkupdate } = require('../utils')
+const { logger, LOGFILE, nStatus, euid, sJson, sString, sType, list, downloadfile, now, checkupdate, store } = require('../utils')
 const clog = new logger({ head: 'wbhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -11,7 +11,7 @@ function handler(req, res){
   const rbody = req.method === 'GET' ? req.query : req.body
   res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
   if (!CONFIG.wbrtoken) {
-    res.end('no webhook token is set')
+    res.end('webhook token not set yet')
     return
   }
   if (rbody.token !== CONFIG.wbrtoken) {
@@ -273,11 +273,69 @@ function handler(req, res){
     res.end(JSON.stringify(elecV2PInfo, null, 2))
     break
   case 'update':
-  case "newversion":
+  case 'newversion':
   case 'checkupdate':
     checkupdate(Boolean(rbody.force)).then(body=>{
       res.end(JSON.stringify(body, null, 2))
     })
+    break
+  case 'store':
+    if (rbody.op === 'all') {
+      res.end(JSON.stringify(store.all()))
+      return
+    }
+    if (!rbody.key) {
+      clog.error('a key is expect on webhook store opration')
+      res.end(JSON.stringify({
+        rescode: -1,
+        message: 'a key is expect on webhook store opration'
+      }))
+      return
+    }
+    switch(rbody.op) {
+    case 'put':
+      clog.info('put store key', rbody.key, 'from webhook')
+      if (store.put(rbody.value, rbody.key, rbody.options)) {
+        clog.debug(`save ${ rbody.key } value: `, rbody.value, 'from webhook')
+        res.end(JSON.stringify({
+          rescode: 0,
+          message: rbody.key + ' saved'
+        }))
+      } else {
+        res.end(JSON.stringify({
+          rescode: -1,
+          message: rbody.key + ' fail to save. maybe data length is over limit'
+        }))
+      }
+      break
+    case 'delete':
+      clog.info('delete store key', rbody.key, 'from webhook')
+      if (store.delete(rbody.key)) {
+        clog.notify(rbody.key, 'deleted')
+        res.end(JSON.stringify({
+          rescode: 0,
+          message: rbody.key + ' deleted'
+        }))
+      } else {
+        clog.error('delete fail')
+        res.end(JSON.stringify({
+          rescode: -1,
+          message: 'delete fail'
+        }))
+      }
+      break
+    default:
+      clog.info('get store key', rbody.key, 'from webhook')
+      let storeres = store.get(req.query.key)
+      if (storeres !== false) {
+        res.end(sString(storeres))
+      } else {
+        res.end(JSON.stringify({
+          rescode: -1,
+          message: req.query.key + ' not exist'
+        }))
+      }
+    }
     break
   default:
     res.end('wrong webhook type ' + rbody.type)

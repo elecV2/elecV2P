@@ -50,7 +50,7 @@ module.exports = app => {
             }
           }
           if (store.put(finalval, key, value.type)) {
-            clog.debug(`save ${ data.key } value: `, finalval)
+            clog.debug(`save ${ data.key } value:`, finalval, 'from wbstore')
             res.end(data.key + ' saved')
           } else {
             res.end(JSON.stringify({

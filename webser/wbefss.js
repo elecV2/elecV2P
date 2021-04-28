@@ -83,29 +83,30 @@ module.exports = app => {
       return
     }
 
-    const fn = req.body.fn
-    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "delete efss file", fn)
+    let fn = req.body.fn
+    fn = fn.replace(/^\//, '')
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'delete efss file', fn)
     if (fn) {
-      let fpath = file.get(CONFIG.efss.directory, 'path')
-      if (file.delete(fn, fpath)) {
+      let fpath = file.get(CONFIG.efss.directory + '/' + fn, 'path')
+      if (file.delete(fpath)) {
         res.end(JSON.stringify({
           rescode: 0,
-          message: fpath + fn + ' is deleted!'
+          message: fpath + ' is deleted'
         }))
-        clog.info(fpath + fn, 'is deleted!')
+        clog.info(fpath, 'is deleted')
       } else {
         res.end(JSON.stringify({
           rescode: 404,
-          message: fpath + fn + ' fail to deleted!'
+          message: fpath + ' fail to deleted'
         }))
-        clog.info(fpath + fn, 'fail to deleted!')
+        clog.info(fpath, 'fail to deleted')
       }
     } else {
       res.end(JSON.stringify({
         rescode: 100,
-        message: 'a parameter fn is expect.'
+        message: 'a parameter fn is expect'
       }))
-      clog.error('a file name is expect.')
+      clog.error('efss delete file error: a file name is expect')
     }
   })
 }

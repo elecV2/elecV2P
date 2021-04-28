@@ -77,9 +77,9 @@ module.exports = app => {
       case "delete":
         if(TASKS_WORKER[data.tid]) {
           TASKS_WORKER[data.tid].delete()
-          TASKS_WORKER[data.tid] = null
+          delete TASKS_WORKER[data.tid]
         }
-        TASKS_INFO[data.tid] = null
+        delete TASKS_INFO[data.tid]
         res.end(JSON.stringify({
           rescode: 0,
           message: "task deleted!"

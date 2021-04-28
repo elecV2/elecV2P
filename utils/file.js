@@ -90,7 +90,7 @@ const file = {
       clog.info('delete file', fname)
       return true
     } else {
-      clog.info(fname, 'no exist')
+      clog.info('file', fname, 'no exist')
       return false
     }
   },
@@ -273,22 +273,26 @@ const Jsfile = {
 const store = {
   maxByte: 1024*1024*2,
   get(key, type) {
-    if (bEmpty(key)) return
+    if (bEmpty(key)) {
+      return false
+    }
     key = key.trim()
     clog.debug('get value for', key)
     if (!fs.existsSync(path.join(fpath.store, key))) {
-      clog.debug(key, 'not set yet.')
-      return
+      clog.debug(key, 'not set yet')
+      return false
     }
     let value = fs.readFileSync(path.join(fpath.store, key), 'utf8')
     if (type === 'raw') {
       return value
     }
-    const jsvalue = sJson(value)
+    let jsvalue = sJson(value)
     if (jsvalue && jsvalue.value !== undefined && /^(number|boolean|object|string|array)$/.test(jsvalue.type)) {
       value = jsvalue.value
     }
-    if (type === undefined) return value
+    if (type === undefined) {
+      return value
+    }
     switch (type) {
       case 'boolean':
         return Boolean(value)
@@ -322,26 +326,37 @@ const store = {
       }
     }
   },
-  put(value, key, type) {
+  put(value, key, options = {}) {
     if (bEmpty(key) || value === undefined) { 
       clog.error('store put error: no key or value')
       return false
     }
-    if (key.length > 100) {
-      clog.error('store put key is longer than 100, maybe put key and value in the wrong order. store.put(value, key)')
+    if (key.length > 64) {
+      clog.error('store put key: ' + key + ' is longer than 64, maybe put key and value in wrong order. store.put(value, key)')
       return false
     }
     clog.debug('put value to', key)
     if (value === '') {
       return this.delete(key)
     }
+    let type = ''
+    if (typeof options === 'string') {
+      type = options
+    } else {
+      type = options && options.type
+    }
     if (type === 'a') {
       const oldval = this.get(key)
       if (oldval !== undefined) {
-        if (typeof oldval === 'string') value = oldval + '\n' + sString(value)
-        else if (Array.isArray(oldval)) value = Array.isArray(value) ? [...oldval, ...value] : [...oldval, value]
-        else if (sType(oldval) === 'object') value = Object.assign(oldval, sJson(value, true))
-        else if (typeof oldval === 'number') value = oldval + Number(value)
+        if (typeof oldval === 'string') {
+          value = oldval + '\n' + sString(value)
+        } else if (Array.isArray(oldval)) {
+          value = Array.isArray(value) ? [...oldval, ...value] : [...oldval, value]
+        } else if (sType(oldval) === 'object') {
+          value = Object.assign(oldval, sJson(value, true))
+        } else if (typeof oldval === 'number') {
+          value = oldval + Number(value)
+        }
       }
       type = sType(value)
     } else if (type === 'number') {
@@ -355,13 +370,13 @@ const store = {
     } else {
       type = sType(value)
     }
-    if (/^(number|boolean|object|array)$/.test(type)) {
-      value = JSON.stringify({
-        type, value
-      })
-    } else {
+    if (!/^(number|boolean|object|array)$/.test(type)) {
+      type = 'string'
       value = String(value)
     }
+    value = JSON.stringify({
+      type, value, note: options.note, belong: options.belong
+    })
     if (Buffer.byteLength(value, 'utf8') > this.maxByte) {
       clog.error('store put error, data length is over limit', this.maxByte)
       return false
@@ -370,7 +385,9 @@ const store = {
     return true
   },
   delete(key) {
-    if (bEmpty(key)) return false
+    if (bEmpty(key)) {
+      return false
+    }
     clog.debug('delete store key:', key)
     const spath = path.join(fpath.store, key)
     if (fs.existsSync(spath)) {
