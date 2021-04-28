@@ -274,13 +274,13 @@ const store = {
   maxByte: 1024*1024*2,
   get(key, type) {
     if (bEmpty(key)) {
-      return false
+      return ''
     }
     key = key.trim()
     clog.debug('get value for', key)
     if (!fs.existsSync(path.join(fpath.store, key))) {
       clog.debug(key, 'not set yet')
-      return false
+      return ''
     }
     let value = fs.readFileSync(path.join(fpath.store, key), 'utf8')
     if (type === 'raw') {
