@@ -204,7 +204,9 @@ $axios(request).then(res=>{
         Jsfile.put(jsname, jscont)
         res.end(`success save ${jsname}!`)
         clog.notify(`success save ${jsname}!`)
-        if (JSLISTS.indexOf(jsname) === -1) JSLISTS.push(jsname)
+        if (JSLISTS.indexOf(jsname) === -1) {
+          JSLISTS.push(jsname)
+        }
         break
       default:{
         res.end("wrong mock type")

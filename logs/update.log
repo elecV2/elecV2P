@@ -1,4 +1,8 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.3.3)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.3.4)
+
+v3.3.4
+ • store/cookie 管理添加关联脚本及备注
+ • 定时任务支持本地订阅直接导入
 
 v3.3.3
  • TASK/EFSS null type error bug fix

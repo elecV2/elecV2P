@@ -40,8 +40,8 @@ module.exports = () => {
         return
       }
     }
-    const blacklist = CONFIG.SECURITY.blacklist || []
-    const whitelist = CONFIG.SECURITY.whitelist || []
+    let blacklist = CONFIG.SECURITY.blacklist || []
+    let whitelist = CONFIG.SECURITY.whitelist || []
 
     if (ipAddress.substr(0, 7) == "::ffff:") {
       ipAddress = ipAddress.substr(7)
@@ -49,7 +49,7 @@ module.exports = () => {
     if (whitelist.indexOf(ipAddress) !== -1 || (blacklist.indexOf('*') === -1 && blacklist.indexOf(ipAddress) === -1)) {
       next()
     } else {
-      clog.error(ipAddress, 'is try to access elecV2P sever.')
+      clog.error(ipAddress, 'trying to access elecV2P')
       res.send('You don\'t have permission to access.<br>IP: ' + ipAddress + ' is recorded.<br><br>Powered BY elecV2P: https://github.com/elecV2/elecV2P')
     }
   })
@@ -79,7 +79,7 @@ module.exports = () => {
   const server = http.createServer(app)
 
   server.on('clientError', (err, socket) => {
-    socket.end('HTTP/1.1 400 Bad Request\r\n\r\n')
+    socket.end('HTTP/1.1 400 Bad Request\r\n')
   })
 
   const webstPort = process.env.PORT || CONFIG_Port.webst || 80

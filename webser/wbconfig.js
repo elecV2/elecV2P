@@ -124,6 +124,7 @@ module.exports = app => {
           Object.assign(CONFIG_Axios, req.body.data)
           CONFIG.CONFIG_Axios = CONFIG_Axios
           res.end('success! set eAxios')
+          axProxy.update()
         } catch(e) {
           res.end('fail to change eAxios setting')
           console.error(e)
@@ -185,7 +186,6 @@ module.exports = app => {
             rescode: 0,
             message: 'anyproxy config success updated'
           }))
-          axProxy.update()
         } catch(e) {
           res.end(JSON.stringify({
             rescode: -1,

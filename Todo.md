@@ -15,6 +15,7 @@
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
 - 说明文档 [1.0 基本完成，优化中...]
 - EFSS favorite/site/backend
+- EFSS zip 压缩打包/解压
 - Backup 备份导出/导入(lists/store)
 - minishell 上传/下载文件（编辑?）
 - 文件编辑器（component || libery）
@@ -26,6 +27,9 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [x] 定时任务本地订阅导入
+- [x] store/cookie 管理添加关联脚本及备注
+- [x] EFSS 跳过显示部分文件夹/文件
 - [x] 增加 ANYPROXY 快速关闭/打开功能
 - [x] webUI 增加 elecV2P 重启/关闭按钮
 - [x] task 远程 JS 更新，以及 ctrl+enter 测试

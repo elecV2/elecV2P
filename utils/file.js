@@ -273,22 +273,32 @@ const Jsfile = {
 const store = {
   maxByte: 1024*1024*2,
   get(key, type) {
+    // empty key return undefined, don't change
     if (bEmpty(key)) {
-      return ''
+      clog.debug('store.get error: a key is expect')
+      return
     }
     key = key.trim()
     clog.debug('get value for', key)
-    if (!fs.existsSync(path.join(fpath.store, key))) {
+    let keypath = path.join(fpath.store, key)
+    if (!fs.existsSync(keypath)) {
       clog.debug(key, 'not set yet')
-      return ''
+      return
     }
-    let value = fs.readFileSync(path.join(fpath.store, key), 'utf8')
+    let keystat = fs.statSync(keypath)
+    if (keystat.isDirectory()) {
+      return key + ' is a folder'
+    }
+    if (keystat.size > this.maxByte) {
+      return 'the size of ' + key + ' is ' + keystat.size + ', over limit ' + this.maxByte
+    }
+    let value = fs.readFileSync(keypath, 'utf8')
     if (type === 'raw') {
       return value
     }
-    let jsvalue = sJson(value)
-    if (jsvalue && jsvalue.value !== undefined && /^(number|boolean|object|string|array)$/.test(jsvalue.type)) {
-      value = jsvalue.value
+    let objv = sJson(value)
+    if (objv && objv.value !== undefined && /^(number|boolean|object|string|array)$/.test(objv.type)) {
+      value = objv.value
     }
     if (type === undefined) {
       return value
@@ -321,7 +331,7 @@ const store = {
           }
         }
       default:{
-        clog.error('unknow store get type', type, 'return original value')
+        clog.error('unknow store.get type', type, 'return original value')
         return value
       }
     }
@@ -346,7 +356,7 @@ const store = {
       type = options && options.type
     }
     if (type === 'a') {
-      const oldval = this.get(key)
+      let oldval = this.get(key)
       if (oldval !== undefined) {
         if (typeof oldval === 'string') {
           value = oldval + '\n' + sString(value)
@@ -394,7 +404,7 @@ const store = {
       fs.unlinkSync(spath)
       return true
     }
-    clog.debug('store key', key, 'no exist.')
+    clog.debug('store key', key, 'no exist')
     return false
   },
   all() {

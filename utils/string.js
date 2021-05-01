@@ -23,9 +23,13 @@ function sJson(str, force=false) {
   } catch(e) {
     try {
       let obj = (new Function("return " + str))()
-      if (/^(object|array)$/.test(sType(obj))) return obj
-    } catch (e) {}
-    if (force) return { 0: str }
+      if (/^(object|array)$/.test(sType(obj))) {
+        return obj
+      }
+    } catch(e) {}
+    if (force) {
+      return { 0: str }
+    }
     return false
   }
 }

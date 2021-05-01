@@ -4,7 +4,7 @@ const { logger, list, checkupdate } = require('../utils')
 const clog = new logger({ head: 'wbdata' })
 
 const { CONFIG_RULE, JSLISTS } = require('../script')
-const { crtInfo } = require('../func')
+const { crtInfo, taskStatus } = require('../func')
 
 module.exports = app => {
   app.get("/data", (req, res)=>{
@@ -20,6 +20,7 @@ module.exports = app => {
           ruleslen: CONFIG_RULE.reqlists.length + CONFIG_RULE.reslists.length,
           rewriteslen: CONFIG_RULE.rewritelists.length,
           jslistslen: JSLISTS.length,
+          taskstatus: taskStatus(),
           mitmhostlen: CONFIG_RULE.mitmhost.length,
           version: CONFIG.version,
           start: CONFIG.start,

@@ -35,7 +35,7 @@ if (CONFIG.init && CONFIG.init.runjs) {
 wsSer.recv.runjs = (data={})=>runJSFile(data.fn, data.addContext)
 
 const runstatus = {
-  start: now(),
+  start: now(null, false),
   times: CONFIG_RUNJS.numtofeed,
   detail: {},
   total: 0
@@ -73,7 +73,7 @@ async function taskCount(filename) {
     runstatus.detail = {}
     feedAddItem('run javascript ' + CONFIG_RUNJS.numtofeed + ' times', des.join(', ') + ` from ${runstatus.start}`)
     runstatus.times = CONFIG_RUNJS.numtofeed
-    runstatus.start = now()
+    runstatus.start = now(null, false)
   }
 }
 
@@ -108,7 +108,7 @@ function runJS(filename, jscode, addContext={}) {
   } else {
     fconsole = new logger({ head: filename, level: 'debug', file: CONFIG_RUNJS.jslogfile ? filename : false, cb })
   }
-  const CONTEXT = new context({ fconsole })
+  const CONTEXT = new context({ fconsole, name: filename })
 
   const compatible = {
     surge: false,          // Surge 脚本调试模式
@@ -157,9 +157,9 @@ function runJS(filename, jscode, addContext={}) {
     CONTEXT.add({ addContext })
   }
 
-  CONTEXT.final.__name = filename
+  // CONTEXT.final.__name = filename
 
-  let bDone = false     // 是否使用 $done 函数提前返回脚本执行结果
+  let bDone = false     // 判断脚本中是否使用 $done 函数
 
   if (/\$done/.test(jscode)) {
     bDone = true
@@ -246,7 +246,7 @@ async function runJSFile(filename, addContext={}) {
 
   let runclog = clog
   if (addContext.cb) {
-    runclog = new logger({ head: (addContext.from || addContext.type || 'rule') + 'RunJS', level: 'debug', cb: addContext.cb })
+    runclog = new logger({ head: (addContext.from || addContext.type || 'rule') + 'RunJS', level: 'debug', file: CONFIG_RUNJS.jslogfile ? (addContext.rename || addContext.filename || (/^https?:/.test(filename) && surlName(filename)) || ((addContext.type === 'rawcode') && (addContext.from || 'rawcode.js')) || filename) : false, cb: addContext.cb })
   }
   if (/^https?:/.test(filename)) {
     let url = filename

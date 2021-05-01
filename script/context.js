@@ -8,8 +8,10 @@ const { exec } = require('../func/exec')
 // const clog = new logger({ head: 'context', level: 'debug' })
 
 class contextBase {
-  constructor({ fconsole }){
+  constructor({ fconsole, name }){
     this.console = fconsole
+    this.__name  = name
+    this.$store.put = this.$store.put.bind(this)
   }
 
   setTimeout = setTimeout
@@ -23,7 +25,14 @@ class contextBase {
   __efss = file.get(CONFIG.efss.directory, 'path')
   $ws = wsSer
   $exec = exec
-  $store = store
+  $store = {
+    get(key, type){
+      return store.get(key, type)
+    },
+    put(value, key, options) {
+      return store.put(value, key, { belong: this.__name, ...options })
+    }
+  }
   $axios = eAxios
   $cheerio = cheerio
   $message = message
@@ -105,10 +114,10 @@ const formReq = {
       if (!req.headers || Object.keys(req.headers).length === 0) {
         return reqb
       }
-      if (sType(reqb) === 'string' && /json/i.test(req.headers["Content-Type"])) {
+      if (sType(reqb) === 'string' && (/json/i.test(req.headers["Content-Type"]) || /json/i.test(req.headers["content-type"]))) {
         return sJson(reqb, true)
       }
-      if (sType(reqb) === 'object' && /x-www-form-urlencoded/i.test(req.headers["Content-Type"])) {
+      if (sType(reqb) === 'object' && (/x-www-form-urlencoded/i.test(req.headers["Content-Type"]) || /x-www-form-urlencoded/i.test(req.headers["content-type"]))) {
         return qs.stringify(reqb)
       }
       return reqb
@@ -126,8 +135,10 @@ const formReq = {
 }
 
 class surgeContext {
-  constructor({ fconsole }){
+  constructor({ fconsole, name }){
     this.fconsole = fconsole
+    this.name = name
+    this.$persistentStore.write = this.$persistentStore.write.bind(this)
   }
 
   surgeRequest(req, cb) {
@@ -202,10 +213,10 @@ class surgeContext {
   }
   $persistentStore = {
     read(key) {
-      return store.get(key)
+      return store.get(key, 'string')
     },
     write(value, key){
-      return store.put(value, key)
+      return store.put(value, key, { belong: this.name })
     }
   }
   $notification = {
@@ -217,8 +228,10 @@ class surgeContext {
 }
 
 class quanxContext {
-  constructor({ fconsole }){
+  constructor({ fconsole, name }){
     this.fconsole = fconsole
+    this.name = name
+    this.$prefs.setValueForKey = this.$prefs.setValueForKey.bind(this)
   }
 
   $task = {
@@ -257,10 +270,10 @@ class quanxContext {
   }
   $prefs = {
     valueForKey(key) {
-      return store.get(key)
+      return store.get(key, 'string')
     },
     setValueForKey(value, key) {
-      return store.put(value, key)
+      return store.put(value, key, { belong: this.name })
     }
   }
   $notify = (...data)=>{
@@ -270,17 +283,17 @@ class quanxContext {
 }
 
 class context {
-  constructor({ fconsole }){
-    this.final = new contextBase({ fconsole })
+  constructor({ fconsole, name }){
+    this.final = new contextBase({ fconsole, name })
   }
 
-  add({ surge, quanx, addContext, $require }){
+  add({ surge, quanx, addContext }){
     if (surge) {
       this.final.console.debug('启用 surge 兼容模式')
-      Object.assign(this.final, new surgeContext({ fconsole: this.final.console }))
+      Object.assign(this.final, new surgeContext({ fconsole: this.final.console, name: this.final.__name }))
     } else if (quanx) {
       this.final.console.debug('启用 quanx 兼容模式')
-      Object.assign(this.final, new quanxContext({ fconsole: this.final.console }))
+      Object.assign(this.final, new quanxContext({ fconsole: this.final.console, name: this.final.__name }))
     }
     if (addContext) {
       Object.assign(this.final, addContext)

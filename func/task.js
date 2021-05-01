@@ -158,12 +158,17 @@ function jobFunc(job, taskname) {
 function taskStatus(){
   let status = {
     total: 0,
-    running: 0
+    running: 0,
+    sub: 0
   }
   for (let tid in TASKS_INFO) {
-    status.total++
-    if (TASKS_INFO[tid].running) {
-      status.running++
+    if (TASKS_INFO[tid].type === 'sub') {
+      status.sub++
+    } else {
+      status.total++
+      if (TASKS_INFO[tid].running) {
+        status.running++
+      }
     }
   }
   return status
