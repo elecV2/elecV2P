@@ -38,10 +38,11 @@ function sString(obj) {
   if (obj === undefined || obj === null) {
     return ''
   }
-  if (typeof obj === 'string') {
+  let type = sType(obj)
+  if (type === 'string') {
     return obj.trim()
   }
-  if (/object|array/.test(sType(obj))) {
+  if (/object|array/.test(type)) {
     try {
       if (obj[Symbol.toPrimitive]) {
         return obj[Symbol.toPrimitive]()

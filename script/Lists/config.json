@@ -7,7 +7,7 @@
     "port": 80
   },
   "anyproxy": {
-    "enable": true,
+    "enable": false,
     "port": 8001,
     "webPort": 8002
   },

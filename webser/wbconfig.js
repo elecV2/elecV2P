@@ -90,28 +90,39 @@ module.exports = app => {
       case "config":
         let data = req.body.data
         Object.assign(CONFIG, data)
-        if (CONFIG.CONFIG_FEED) CONFIG.CONFIG_FEED.homepage = CONFIG.homepage
-        Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
+        if (CONFIG.CONFIG_FEED) {
+          CONFIG.CONFIG_FEED.rss.homepage = CONFIG.homepage
+          Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
+        }
         Object.assign(CONFIG_RUNJS, CONFIG.CONFIG_RUNJS)
         Object.assign(CONFIG_Axios, CONFIG.CONFIG_Axios)
         axProxy.update()
-        if (data.gloglevel !== CONFIG.gloglevel) setGlog(data.gloglevel)
+        if (data.gloglevel !== CONFIG.gloglevel) {
+          setGlog(data.gloglevel)
+        }
         res.end("save config to " + CONFIG.path)
         break
       case "homepage":
         let homepage = req.body.data.replace(/\/$/, '')
         CONFIG.homepage = homepage
-        CONFIG_FEED.homepage = homepage
+        CONFIG_FEED.rss.homepage = homepage
         res.end('set homepage success!')
         break
       case "gloglevel":
         try {
           CONFIG.gloglevel = req.body.data
           setGlog(CONFIG.gloglevel)
-          res.end('全局日志级别调整为 ' + CONFIG.gloglevel)
+          res.end(JSON.stringify({
+            rescode: 0,
+            message: 'global log level set to ' + CONFIG.gloglevel
+          }))
         } catch(e) {
-          res.end('全局日志级别调整失败 ' + e.message)
-          clog.error('全局日志级别调整失败 ' + e.message)
+          res.end(JSON.stringify({
+            rescode: -1,
+            message: 'global log level change fail ' + e.message
+          }))
+          clog.error('global log level change fail ' + e.message)
+          bSave = false
         }
         break
       case "wbrtoken":
@@ -123,11 +134,18 @@ module.exports = app => {
         try {
           Object.assign(CONFIG_Axios, req.body.data)
           CONFIG.CONFIG_Axios = CONFIG_Axios
-          res.end('success! set eAxios')
+          res.end(JSON.stringify({
+            rescode: 0,
+            message: 'success! set eAxios'
+          }))
           axProxy.update()
         } catch(e) {
-          res.end('fail to change eAxios setting')
+          res.end(JSON.stringify({
+            rescode: -1,
+            message: 'fail to change eAxios setting'
+          }))
           console.error(e)
+          bSave = false
         }
         break
       case "uagent":

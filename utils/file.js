@@ -35,7 +35,17 @@ const list = {
       return path.join(fpath.list, name)
     }
     if (fs.existsSync(path.join(fpath.list, name))) {
-      return fs.readFileSync(path.join(fpath.list, name), "utf8")
+      let liststr = fs.readFileSync(path.join(fpath.list, name), "utf8")
+      if (name === 'mitmhost.list' || name === 'mitmhost') {
+        let mstrobj = sJson(liststr)
+        if (mstrobj && mstrobj.mitmhost && mstrobj.mitmhost.list) {
+          return mstrobj.mitmhost
+        }
+        return {
+          list: liststr.split(/\r|\n/).filter(host=>!(/^(\[|#|;)/.test(host) || host.length < 3))
+        }
+      }
+      return liststr
     }
     clog.error('no list', name)
     return false
@@ -55,11 +65,11 @@ const list = {
 const file = {
   get(pname, type){
     if (bEmpty(pname)) {
-      clog.info('parameters:', pname, 'was given, file.get no result')
+      clog.info('a first parameter is expect, file.get no result')
       return ''
     }
     pname = pname.replace(/^(\$home|~)/i, fpath.homedir)
-    const filepath = path.resolve(__dirname, '../', pname)
+    let filepath = path.resolve(__dirname, '../', pname)
     if (type === 'path') {
       return filepath
     }

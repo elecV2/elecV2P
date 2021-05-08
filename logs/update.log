@@ -1,4 +1,9 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.3.4)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.3.5)
+
+v3.3.5
+ • ANYPROXY 调整为默认关闭(在 webUI 首页双击 ANYPROXY 可临时开启，在 webUI->SETTING->初始化相关设置 中可选择启动时自动开启)
+ • ANYPROXY 循环调用问题修复
+ • 增加默认通知开关
 
 v3.3.4
  • store/cookie 管理添加关联脚本及备注

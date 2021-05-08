@@ -80,7 +80,7 @@ function handler(req, res){
   case 'logget':
   case 'getlog':
     clog.info(clientip, 'get log', rbody.fn)
-    const logcont = LOGFILE.get(rbody.fn)
+    let logcont = LOGFILE.get(rbody.fn)
     if (logcont) {
       if (sType(logcont) === 'array') {
         res.end(JSON.stringify(logcont))
@@ -93,8 +93,9 @@ function handler(req, res){
     break
   case 'status':
     clog.info(clientip, 'get server status')
-    const status = nStatus()
+    let status = nStatus()
     status.start = now(CONFIG.start, false)
+    status.uptime = ((Date.now() - Date.parse(status.start))/1000/60/60).toFixed(2) + ' hours'
     status.version = CONFIG.version
     res.end(JSON.stringify(status))
     break
@@ -336,6 +337,51 @@ function handler(req, res){
         }))
       }
     }
+    break
+  case 'help':
+    // 待完成 unfinished
+    res.end(JSON.stringify({
+      title: 'elecV2P webhook help',
+      url: 'https://github.com/elecV2/elecV2P-dei/tree/master/docs/09-webhook.md',
+      api: [
+        {
+          type: 'status',
+          note: 'get elecV2P memoryUsage status and so on',
+          para: null
+        },
+        {
+          type: 'jslist',
+          note: 'get elecV2P local js file lists',
+          para: null
+        },
+        {
+          type: 'runjs',
+          note: 'run a javascript',
+          para: [
+            {
+              name: 'fn',
+              note: 'javascript file name or a http url of the javascript',
+              need: 'required'
+            },
+            {
+              name: 'rawcode',
+              note: 'this raw javascript code to run.(if fn is missing, the rawcode is required)',
+              need: 'optional'
+            },
+            {
+              name: 'rename',
+              note: 'rename the javascript file or code',
+              need: 'optional'
+            },
+            {
+              name: 'env',
+              note: 'the extra environment variable when run this javascript',
+              need: 'optional'
+            }
+          ]
+        }
+      ]
+    }))
     break
   default:
     res.end('wrong webhook type ' + rbody.type)

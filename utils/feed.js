@@ -11,10 +11,19 @@ const clog = new logger({ head: 'utilsFeed', level: 'debug' })
 const { CONFIG } = require('../config')
 
 const CONFIG_FEED = {
-  enable: true,              // 关闭/开启 FEED
-  homepage: 'https://github.com/elecV2/elecV2P',  // FEED 主页
-  iftttid: {enable: false, key: ''},              // 关闭/开启 IFTTT 通知
-  barkkey: {enable: false, key: ''},              // 关闭/开启 BARK 通知
+  enable: true,        // 默认通知开关
+  rss: {
+    enable: true,      // 关闭/开启 FEED/RSS
+    homepage: 'https://github.com/elecV2/elecV2P',  // FEED/RSS 主页
+  },
+  iftttid: {
+    enable: false,     // 关闭/开启 IFTTT 通知
+    key: ''
+  },
+  barkkey: {
+    enable: false,     // 关闭/开启 BARK 通知
+    key: ''
+  },
   custnotify: {
     enable: false,
     url: '',
@@ -38,6 +47,7 @@ const CONFIG_FEED = {
 }
 
 if (CONFIG.CONFIG_FEED) {
+  CONFIG_FEED.rss.homepage = CONFIG.homepage
   Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
 } else {
   CONFIG.CONFIG_FEED = CONFIG_FEED
@@ -49,8 +59,8 @@ function feedNew({ title = 'elecV2P notification', description = 'elecV2P 运行
   const date = new Date()
   return new RSS({
     title, description,
-    site_url: CONFIG_FEED.homepage,
-    feed_url: CONFIG_FEED.homepage + '/feed',
+    site_url: CONFIG_FEED.rss.homepage,
+    feed_url: CONFIG_FEED.rss.homepage + '/feed',
     docs: 'https://github.com/elecV2/elecV2P-dei/tree/master/docs/07-feed&notify.md',
     language: 'zh-CN', ttl,
     pubDate: date.getTime() - date.getTimezoneOffset()*60*1000
@@ -58,11 +68,15 @@ function feedNew({ title = 'elecV2P notification', description = 'elecV2P 运行
 }
 
 function formUrl(url) {
-  if (bEmpty(url)) return
+  if (bEmpty(url)) {
+    return
+  }
   if (sType(url) === 'object') {
     return Object.keys(url).length ? (url.url || url["open-url"] || url["media-url"] || url.openUrl || url.mediaUrl) : undefined
   }
-  if (sType(url) === 'string') return url.trim()
+  if (sType(url) === 'string') {
+    return url.trim()
+  }
 }
 
 function iftttPush(title, description, url) {
@@ -223,13 +237,13 @@ function feedPush(title, description, url) {
   if (CONFIG_FEED.webmessage && CONFIG_FEED.webmessage.enable) {
     message.success(`【elecV2P 网页通知】 ${title}\n${description}\n${url || ''}`, 10)
   }
-  if (CONFIG_FEED.enable) {
+  if (CONFIG_FEED.rss.enable) {
     const date = new Date()
     const guid = date.getTime() - date.getTimezoneOffset()*60*1000
     clog.notify('add feed item', title, description)
     feed.item({
       title: title, description,
-      url: url || CONFIG_FEED.homepage + '/feed/?new=' + guid,
+      url: url || CONFIG_FEED.rss.homepage + '/feed/?new=' + guid,
       guid, author: 'elecV2P',
       date: guid,
     })
@@ -262,6 +276,9 @@ function feedPush(title, description, url) {
 const mergefeed = {
   content: [],               // 合并通知的内容
   push(){
+    if (CONFIG_FEED.enable === false) {
+      return
+    }
     feedPush('elecV2P 合并通知 ' + this.content.length, this.content.join('\n'))
     this.content = []
     this.timefulled = false
@@ -273,12 +290,16 @@ const mergefeed = {
 }
 
 function feedAddItem(title = 'elecV2P notification', description =  '通知内容', url) {
+  // 默认通知
+  if (CONFIG_FEED.enable === false) {
+    return
+  }
   if (/test/.test(title)) {
     clog.debug(title, 'match key word: test, skip add feed item')
     return
   }
   if (CONFIG_FEED.merge.enable) {
-    mergefeed.content.push(title + ' - ' + now() + '\n' + description + '\n')
+    mergefeed.content.push(title + ' - ' + now(null, false) + '\n' + description + '\n')
     if (!(mergefeed.timefulled || mergefeed.setTime)) {
       mergefeed.setTime = setTimeout(()=>{
         if (!CONFIG_FEED.merge.andor || mergefeed.content.length >= Number(CONFIG_FEED.merge.number)) {
@@ -297,7 +318,7 @@ function feedAddItem(title = 'elecV2P notification', description =  '通知内�
 }
 
 function feedXml() {
-  if (CONFIG_FEED.enable) {
+  if (CONFIG_FEED.rss.enable) {
     return feed.xml()
   }
   return ''

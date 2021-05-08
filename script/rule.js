@@ -1,9 +1,35 @@
-const { logger, sJson, sUrl, sType, list, Jsfile, wsSer, errStack } = require('../utils')
+const { logger, sJson, sUrl, sType, sString, list, Jsfile, wsSer, errStack } = require('../utils')
 const clog = new logger({ head: 'elecV2P', level: 'debug' })
 
 const { runJSFile } = require('./runJSFile')
 
 const JSLISTS = Jsfile.get('list')
+
+const bCircle = {
+  max: 50,      // 单位时间内对同一个 host 最大的请求数
+  gap: 1000,    // 单位时间，ms
+  host: '',     // 上一个请求 host
+  start: Date.now(),
+  count: 0,     // 当前已请求数
+  check(host){
+    if (host !== this.host) {
+      this.host = host
+      this.count = 0
+      this.start = Date.now()
+      return false
+    }
+    if (Date.now() - this.start >= this.gap) {
+      this.count = 0
+      return false
+    }
+    this.count++
+    if (this.count >= this.max) {
+      this.count = 0
+      return true
+    }
+    return false
+  }
+}
 
 const CONFIG_RULE = (()=>{
   function getUserAgent() {
@@ -65,12 +91,9 @@ const CONFIG_RULE = (()=>{
     let mitmhost = []
     let mstr = list.get('mitmhost.list')
     if (mstr) {
-      mitmhost = mstr.split(/\r|\n/).filter(host=>{
-        if (/^(\[|#|;)/.test(host) || host.length < 3) {
-          return false
-        }
-        return true
-      })
+      mitmhost = mstr.list.filter(host=>{
+        return !(host[1] && host[1].enable === false)
+      }).map(host=>typeof host === 'string' ? host : host[0])
     }
     return { mitmhost }
   }
@@ -110,6 +133,27 @@ const localResponse = {
     statusCode: 200,
     header: { "Content-Type": "image/png" },
     body: Buffer.from('R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=', 'base64')
+  },
+  get(headers, body) {
+    if (!(headers && headers.Accept)) {
+      if (body) {
+        return {...this.reject, body: sString(body) }
+      }
+      return this.reject
+    }
+    if (headers.Accept.includes('json')) {
+      if (body) {
+        return {...this.json, body: sString(body) }
+      }
+      return this.json
+    }
+    if (headers.Accept.includes('image')) {
+      if (body) {
+        return {...this.tinyimg, body }
+      }
+      return this.tinyimg
+    }
+    return this.reject
   }
 }
 
@@ -163,6 +207,12 @@ module.exports = {
   CONFIG_RULE,
   JSLISTS,
   *beforeSendRequest(requestDetail) {
+    if (bCircle.check(requestDetail.requestOptions.hostname)) {
+      let error = 'access ' + requestDetail.requestOptions.hostname + ' be blocked, because of visiting over ' + bCircle.max + ' times in ' + bCircle.gap + ' milliseconds'
+      clog.error(error)
+      return { response: localResponse.get(requestDetail.requestOptions.headers, error) }
+    }
+    clog.debug(bCircle.max, bCircle.count, bCircle.host)
     let matchreq = getrules(requestDetail, null, CONFIG_RULE.reqlists)
     if (!matchreq) {
       return requestDetail
@@ -379,6 +429,9 @@ module.exports = {
   },
   *beforeDealHttpsRequest(requestDetail) {
     if (CONFIG_RULE.mitmtype === 'all') {
+      return true
+    }
+    if (bCircle.check(requestDetail.host)) {
       return true
     }
     if (CONFIG_RULE.mitmtype === 'none') {

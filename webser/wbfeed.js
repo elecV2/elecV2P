@@ -19,12 +19,12 @@ module.exports = app => {
         CONFIG_FEED.enable = data.enable
         CONFIG_FEED.maxbLength = data.maxbLength
         CONFIG_FEED.webmessage = data.webmessage
-        clog.notify(`FEED 已 ${ data.enable ? '开启' : '关闭' }`)
-        res.end(`FEED 已 ${ data.enable ? '开启' : '关闭' }`)
+        clog.notify(`默认通知已 ${ data.enable ? '开启' : '关闭' }`)
+        res.end(`默认通知已 ${ data.enable ? '开启' : '关闭' }`)
         break
       case "clear":
         feedClear()
-        res.end('FEED 已清空')
+        res.end('FEED/RSS 输出已清空')
         bSave = false
         break
       case "ifttt":
@@ -48,9 +48,11 @@ module.exports = app => {
         res.end(`通知触发 JS 功能已 ${ data.enable ? '更新' : '关闭' }`)
         break
       case "merge":
-        CONFIG_FEED.merge = data
-        clog.notify(`FEED 通知合并功能已 ${ data.enable ? '开启' : '取消' }`)
-        res.end(`FEED 通知合并功能已 ${ data.enable ? '开启' : '取消' }`)
+        CONFIG_FEED.merge = data.merge
+        CONFIG_FEED.rss.enable = data.rssenable
+        let message = `FEED 输出已 ${ data.rssenable ? '开启' : '关闭' }` + `\n默认通知合并已 ${ data.merge.enable ? '开启' : '取消' }`
+        clog.notify(message)
+        res.end(message)
         break
       case "test":
         feedPush('elecV2P 测试通知', '恭喜您，该通知方式设置正常\nCongratulations! this notification is enabled', 'https://github.com/elecV2/elecV2P')

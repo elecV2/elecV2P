@@ -30,7 +30,7 @@ if (fs.existsSync(CONFIG.path)) {
     }
   } else {
     CONFIG.anyproxy = {
-      enable: true,
+      enable: false,
       port: CONFIG_Port.proxy,
       webPort: CONFIG_Port.webif
     }

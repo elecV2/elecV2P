@@ -158,6 +158,8 @@ docker logs elecv2p -f
 - 8001：  ANYPROXY HTTP代理端口。（*代理端口不是网页，不能通过浏览器直接访问*）
 - 8002：  ANYPROXY 代理请求查看端口
 
+**v3.3.5 版本后 ANYPROXY 端口默认关闭。在 webUI 首页双击 ANYPROXY 可临时开启，在 webUI->SETTING->初始化相关设置 中可选择启动时自动开启。**
+
 *80 端口可使用环境变量 **PORT** 进行修改(比如: PORT=8000 node index.js)，也可以在 script/Lists/config.json 文件中更改其他所有端口。*
 *如果是使用 Docker 相关的安装方式，修改对应的映射端口即可。*
 

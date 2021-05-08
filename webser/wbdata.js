@@ -76,15 +76,18 @@ module.exports = app => {
         CONFIG_RULE.reqlists = []
         CONFIG_RULE.reslists = []
         fdata.forEach(r=>{
-          if (/req$/.test(r)) CONFIG_RULE.reqlists.push(r)
-          else CONFIG_RULE.reslists.push(r)
+          if (/req$/.test(r)) {
+            CONFIG_RULE.reqlists.push(r)
+          } else {
+            CONFIG_RULE.reslists.push(r)
+          }
         })
         clog.notify(`default 规则 ${ CONFIG_RULE.reqlists.length + CONFIG_RULE.reslists.length} 条`)
         break
       case "mitmhost":
         let mhost = req.body.data
         mhost = mhost.filter(host=>host.length>2)
-        list.put('mitmhost.list', "[mitmhost]\n" + mhost.join("\n"))
+        list.put('mitmhost.list', {mitmhost: { note: 'elecV2P mitmhost', list: mhost }}) // "[mitmhost]\n" + mhost.join("\n")
         res.end("success! mitmhost list saved: " + mhost.length)
         CONFIG_RULE.mitmhost = mhost
         break
