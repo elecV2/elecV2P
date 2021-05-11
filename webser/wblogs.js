@@ -3,14 +3,14 @@ const clog = new logger({ head: 'wblogs' })
 
 module.exports = app => {
   app.get("/logs/:filename?", (req, res)=>{
-    const filename = req.params.filename || 'all'
+    let filename = req.params.filename || 'all'
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get logs", filename)
-    const logs = LOGFILE.get(filename)
+    let logs = LOGFILE.get(filename)
     if (!logs) {
       res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
       logs === undefined 
       ? res.end(`404: ${filename} don't exist`)
-      : res.end(`${filename} don't have any content.`)
+      : res.end(`${filename} is empty`)
       return
     }
     res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })

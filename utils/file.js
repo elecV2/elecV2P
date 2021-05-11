@@ -2,6 +2,7 @@ const fs = require('fs')
 const path = require('path')
 
 const { errStack, sJson, sString, sType, bEmpty, iRandom } = require('./string')
+const { now } = require('./time')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFile', level: 'debug' })
 
@@ -266,10 +267,14 @@ const Jsfile = {
     }
   },
   delete(name){
+    if (bEmpty(name)) {
+      clog.info('first parameter is expect')
+      return false
+    }
     if (!/\.js$/i.test(name)) {
       name += '.js'
     }
-    const jspath = path.join(fpath.js, name)
+    let jspath = path.join(fpath.js, name)
     if (fs.existsSync(jspath)) {
       fs.unlinkSync(jspath)
       return true
@@ -395,7 +400,7 @@ const store = {
       value = String(value)
     }
     value = JSON.stringify({
-      type, value, note: options.note, belong: options.belong
+      type, value, note: options.note, belong: options.belong, update: now()
     })
     if (Buffer.byteLength(value, 'utf8') > this.maxByte) {
       clog.error('store put error, data length is over limit', this.maxByte)

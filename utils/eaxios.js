@@ -71,6 +71,10 @@ const eData = {
   }
 }
 
+function getUagent() {
+  return uagent[CONFIG_Axios.uagent] ? uagent[CONFIG_Axios.uagent].header : null
+}
+
 /**
  * axios 简易封装
  * @param     {object/string}    request      axios 请求内容
@@ -78,8 +82,6 @@ const eData = {
  * @return    {promise}                 axios promise
  */
 function eAxios(request, proxy=null) {
-  const getUagent = ()=>uagent[CONFIG_Axios.uagent] ? uagent[CONFIG_Axios.uagent].header : null
-
   if (typeof(request) === 'string') {
     request = {
       url: request
@@ -91,13 +93,15 @@ function eAxios(request, proxy=null) {
   if (request.timeout === undefined) {
     request.timeout = CONFIG_Axios.timeout
   }
-  if (request.headers === undefined) {
+  if (request.headers === undefined || typeof(request.headers) !== 'object') {
     request.headers = {
       "User-Agent": getUagent()
     }
   } else if (request.headers['User-Agent'] === undefined && request.headers['user-agent'] === undefined) {
     request.headers['User-Agent'] = getUagent()
   }
+  // 移除空参数 undefined
+  Object.keys(request.headers).forEach(key => request.headers[key] === undefined && delete request.headers[key])
 
   if (proxy !== false && (proxy || CONFIG_Axios.proxy)) {
     if (request.url.startsWith('https')) {

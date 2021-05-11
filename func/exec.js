@@ -1,6 +1,7 @@
+const os = require('os')
 const { exec } = require('child_process')
 
-const { logger, file, downloadfile, wsSer, surlName } = require('../utils')
+const { logger, file, downloadfile, wsSer, surlName, kSize } = require('../utils')
 const clog = new logger({ head: 'funcExec', file: 'funcExec', level: 'debug' })
 
 const CONFIG_exec = {
@@ -209,4 +210,14 @@ async function execFunc(command, options={}, cb) {
   }
 }
 
-module.exports = { exec: execFunc }
+function sysInfo() {
+  return {
+    arch: os.arch(),
+    platform: os.platform(),
+    memory: kSize(os.freemem()) + '/' + kSize(os.totalmem()),
+    uptime: (os.uptime()/60/60).toFixed(2) + ' hours',
+    nodever: process.version
+  }
+}
+
+module.exports = { exec: execFunc, sysInfo }

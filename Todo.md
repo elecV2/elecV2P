@@ -27,6 +27,8 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [x] 增加首页服务器相关信息显示
+- [x] 增加默认通知开关
 - [x] 定时任务本地订阅导入
 - [x] store/cookie 管理添加关联脚本及备注
 - [x] EFSS 跳过显示部分文件夹/文件

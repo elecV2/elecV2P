@@ -1,2 +1,8 @@
-[mitmhost]
-httpbin.org
+{
+  "mitmhost": {
+    "note": "elecV2P mitmhost list",
+    "list": [
+      "httpbin.org"
+    ]
+  }
+}

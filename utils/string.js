@@ -118,6 +118,19 @@ function errStack(error, stack = false) {
   return error
 }
 
+function kSize(size, k = 1024) {
+  if (size < k) {
+    return size + ' B'
+  }
+  if (size < k*k) {
+    return (size/k).toFixed(2) + ' K'
+  }
+  if (size < k*k*k) {
+    return (size/(k*k)).toFixed(2) + ' M'
+  }
+  return (size/(k*k*k)).toFixed(2) + ' G'
+}
+
 function nStatus() {
   let musage = process.memoryUsage()
   for (let key in musage) {
@@ -132,7 +145,7 @@ function escapeHtml(str) {
     '<': '&lt;',
     '>': '&gt;'
   }
-  return str.replace(/[&<>]/g, tag=>tagsToReplace[tag] || tag);
+  return str.replace(/[&<>]/g, tag=>tagsToReplace[tag] || tag)
 }
 
 function surlName(url) {
@@ -180,4 +193,4 @@ function progressBar({step=0, total, name='file', initLength=50}) {
   return `${name} [${procbar}] ${endtip}`
 }
 
-module.exports = { euid, UUID, iRandom, sJson, sString, bEmpty, sUrl, sType, errStack, nStatus, escapeHtml, surlName, progressBar }
+module.exports = { euid, UUID, iRandom, sJson, sString, bEmpty, sUrl, sType, errStack, kSize, nStatus, escapeHtml, surlName, progressBar }

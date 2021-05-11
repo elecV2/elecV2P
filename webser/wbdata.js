@@ -4,7 +4,7 @@ const { logger, list, checkupdate } = require('../utils')
 const clog = new logger({ head: 'wbdata' })
 
 const { CONFIG_RULE, JSLISTS } = require('../script')
-const { crtInfo, taskStatus } = require('../func')
+const { crtInfo, taskStatus, sysInfo } = require('../func')
 
 module.exports = app => {
   app.get("/data", (req, res)=>{
@@ -26,6 +26,7 @@ module.exports = app => {
           start: CONFIG.start,
           anyproxy: CONFIG_Port.anyproxy,
           newversion: CONFIG.newversion,
+          sysinfo: sysInfo(),
         }))
         break
       case "rules":

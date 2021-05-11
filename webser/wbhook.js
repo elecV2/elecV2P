@@ -2,7 +2,7 @@ const os = require('os')
 const { Task, TASKS_WORKER, TASKS_INFO, taskStatus, exec } = require('../func')
 const { runJSFile, JSLISTS } = require('../script')
 
-const { logger, LOGFILE, nStatus, euid, sJson, sString, sType, list, downloadfile, now, checkupdate, store } = require('../utils')
+const { logger, LOGFILE, Jsfile, nStatus, euid, sJson, sString, sType, list, downloadfile, now, checkupdate, store, kSize } = require('../utils')
 const clog = new logger({ head: 'wbhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -67,9 +67,20 @@ function handler(req, res){
       })
     }
     break
+  case 'deljs':
+  case 'deletejs':
+    let jsfn = rbody.fn
+    clog.info(clientip, 'delete javascript file', jsfn)
+    if (Jsfile.delete(jsfn)) {
+      JSLISTS.splice(JSLISTS.indexOf(jsfn), 1)
+      res.end(jsfn + ' success deleted')
+    } else {
+      res.end(jsfn + ' javascript file don\'t exist')
+    }
+    break
   case 'logdelete':
   case 'deletelog':
-    const name = rbody.fn
+    let name = rbody.fn
     clog.info(clientip, 'delete log', name)
     if (LOGFILE.delete(name)) {
       res.end(name + ' success deleted')
@@ -79,6 +90,10 @@ function handler(req, res){
     break
   case 'logget':
   case 'getlog':
+    if (!rbody.fn) {
+      res.end('parameter fn is expect')
+      return
+    }
     clog.info(clientip, 'get log', rbody.fn)
     let logcont = LOGFILE.get(rbody.fn)
     if (logcont) {
@@ -232,14 +247,17 @@ function handler(req, res){
       elecV2P: {
         version: CONFIG.version,
         start: now(CONFIG.start, false),
+        uptime: ((Date.now() - CONFIG.start)/1000/60/60).toFixed(2) + ' hours',
         taskStatus: taskStatus(),
         memoryUsage: nStatus(),
       },
       system: {
-        platform: os.platform() + ' ' + os.version(),
+        arch: os.arch(),
+        platform: os.platform(),
+        version: os.version(),
         homedir: os.homedir(),
-        freememory: (Math.round(os.freemem()/1024) / 1024).toFixed(2) + ' MB',
-        totalmemory: (Math.round(os.totalmem()/1024) / 1024).toFixed(2) + ' MB',
+        freememory: kSize(os.freemem()),
+        totalmemory: kSize(os.totalmem()),
         hostname: os.hostname(),
       },
       client: {
@@ -327,13 +345,13 @@ function handler(req, res){
       break
     default:
       clog.info('get store key', rbody.key, 'from webhook')
-      let storeres = store.get(req.query.key)
+      let storeres = store.get(rbody.key)
       if (storeres !== false) {
         res.end(sString(storeres))
       } else {
         res.end(JSON.stringify({
           rescode: -1,
-          message: req.query.key + ' not exist'
+          message: rbody.key + ' not exist'
         }))
       }
     }
