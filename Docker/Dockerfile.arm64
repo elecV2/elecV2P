@@ -5,8 +5,6 @@ COPY ./Docker/qemu-aarch64-static /usr/bin
 WORKDIR /usr/local/app
 RUN apk add --update --no-cache tzdata \
     && chmod -R 777 /usr/local/app \
-    && yarn config set strict-ssl false \
-    && yarn config set registry https://registry.npmjs.org \
     && yarn install --prod --network-timeout 300000
 
 ENV PATH /usr/local/app/node_modules/.bin:$PATH

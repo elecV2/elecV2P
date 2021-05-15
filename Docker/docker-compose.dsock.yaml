@@ -1,7 +1,7 @@
 version: '3.7'
 services:
   elecv2p:
-    image: elecv2/elecv2p:arm64
+    image: elecv2/elecv2p
     container_name: elecv2p
     restart: always
     logging:
@@ -16,6 +16,7 @@ services:
       - "8101:8001"
       - "8102:8002"
     volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
       - "/elecv2p/JSFile:/usr/local/app/script/JSFile"
       - "/elecv2p/Lists:/usr/local/app/script/Lists"
       - "/elecv2p/Store:/usr/local/app/script/Store"

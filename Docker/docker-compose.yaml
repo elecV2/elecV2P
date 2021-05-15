@@ -4,6 +4,11 @@ services:
     image: elecv2/elecv2p
     container_name: elecv2p
     restart: always
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       - TZ=Asia/Shanghai
     ports:
