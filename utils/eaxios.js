@@ -117,6 +117,25 @@ function eAxios(request, proxy=null) {
   })
 }
 
+function stream(url) {
+  return new Promise((resolve, reject)=>{
+    eAxios({
+      url: url,
+      responseType: 'stream'
+    }).then(response=>{
+      if (response.status !== 200) {
+        clog.error('stream ' + url + ' fail with status code ' + response.status)
+        reject('stream ' + url + ' status code: ' + response.status)
+        return
+      }
+      resolve(response.data)
+    }).catch(e=>{
+      reject('stream fail! ' + e.message)
+      clog.error(url, 'stream fail!', errStack(e))
+    })
+  })
+}
+
 function downloadfile(durl, dest, cb) {
   // 在 elecV2P 中占非常重要的部分，如无必要不要改动
   // very important, don't change if not necessary
@@ -214,7 +233,7 @@ async function checkupdate(force = false){
     }
   }
 
-  if (body.version && body.version !== CONFIG.version) {
+  if (body.version && Number(body.version.replace(/\.|v/g, '')) > Number(CONFIG.version.replace(/\.|v/g, ''))) {
     body.update = true
     body.updateversion = body.version
     CONFIG.newversion = body.updateversion
@@ -230,4 +249,4 @@ async function checkupdate(force = false){
   return eData.update.body
 }
 
-module.exports = { CONFIG_Axios, axProxy, eAxios, downloadfile, checkupdate }
+module.exports = { CONFIG_Axios, axProxy, eAxios, stream, downloadfile, checkupdate }

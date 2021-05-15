@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 
-const { errStack, sJson, sString, sType, bEmpty, iRandom } = require('./string')
+const { errStack, sJson, sString, sType, sBool, bEmpty, iRandom } = require('./string')
 const { now } = require('./time')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFile', level: 'debug' })
@@ -37,7 +37,7 @@ const list = {
     }
     if (fs.existsSync(path.join(fpath.list, name))) {
       let liststr = fs.readFileSync(path.join(fpath.list, name), "utf8")
-      if (name === 'mitmhost.list' || name === 'mitmhost') {
+      if (name === 'mitmhost.list') {
         let mstrobj = sJson(liststr)
         if (mstrobj && mstrobj.mitmhost && mstrobj.mitmhost.list) {
           return mstrobj.mitmhost
@@ -53,7 +53,7 @@ const list = {
   },
   put(name, cont){
     try {
-      fs.writeFileSync(path.join(fpath.list, name), sString(cont), 'utf8')
+      fs.writeFileSync(path.join(fpath.list, name), typeof(cont) === 'object' ? JSON.stringify(cont, null, 2) : sString(cont), 'utf8')
       clog.info(name, 'updated')
       return true
     } catch(e) {
@@ -320,7 +320,7 @@ const store = {
     }
     switch (type) {
       case 'boolean':
-        return Boolean(value)
+        return sBool(value)
       case 'number':
         return Number(value)
       case 'array':
@@ -387,7 +387,7 @@ const store = {
     } else if (type === 'number') {
       value = Number(value)
     } else if (type === 'boolean') {
-      value = Boolean(value)
+      value = sBool(value)
     } else if (type === 'object' || type === 'array') {
       value = sJson(value, true)
     } else if (type === 'string') {
@@ -411,15 +411,16 @@ const store = {
   },
   delete(key) {
     if (bEmpty(key)) {
+      clog.debug('store.delete first parameter is expect')
       return false
     }
     clog.debug('delete store key:', key)
-    const spath = path.join(fpath.store, key)
+    let spath = path.join(fpath.store, key)
     if (fs.existsSync(spath)) {
       fs.unlinkSync(spath)
       return true
     }
-    clog.debug('store key', key, 'no exist')
+    clog.info('store key', key, 'no exist')
     return false
   },
   all() {

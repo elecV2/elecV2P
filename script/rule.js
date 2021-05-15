@@ -91,9 +91,7 @@ const CONFIG_RULE = (()=>{
     let mitmhost = []
     let mstr = list.get('mitmhost.list')
     if (mstr && mstr.list) {
-      mitmhost = mstr.list.filter(host=>{
-        return !(host[1] && host[1].enable === false)
-      }).map(host=>typeof host === 'string' ? host : host[0])
+      mitmhost = mstr.list.filter(host=>host.enable !== false).map(host=>typeof host === 'string' ? host : host.host)
     }
     return { mitmhost }
   }

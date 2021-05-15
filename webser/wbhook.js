@@ -2,7 +2,7 @@ const os = require('os')
 const { Task, TASKS_WORKER, TASKS_INFO, taskStatus, exec } = require('../func')
 const { runJSFile, JSLISTS } = require('../script')
 
-const { logger, LOGFILE, Jsfile, nStatus, euid, sJson, sString, sType, list, downloadfile, now, checkupdate, store, kSize } = require('../utils')
+const { logger, LOGFILE, Jsfile, nStatus, euid, sJson, sString, sType, list, stream, downloadfile, now, checkupdate, store, kSize, errStack } = require('../utils')
 const clog = new logger({ head: 'wbhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -208,11 +208,31 @@ function handler(req, res){
         clog.info(rbody.url, 'download to', dest)
         res.end('success download ' + rbody.url + ' to efss')
       }).catch(e=>{
-        clog.error(rbody.url, e)
+        clog.error('download', rbody.url, 'error', e)
         res.end('fail to download ' + rbody.url + 'error: ' + e)
       })
     } else {
+      clog.error('wrong download url', rbody.url)
       res.end('wrong download url')
+    }
+    break
+  case 'stream':
+    clog.notify(clientip, 'stream from', rbody.url)
+    if (rbody.url && rbody.url.startsWith('http')) {
+      stream(rbody.url).then(response=>{
+        response.pipe(res)
+      }).catch(e=>{
+        res.end(JSON.stringify({
+          rescode: -1,
+          message: e
+        }))
+      })
+    } else {
+      clog.error('wrong stream url', rbody.url)
+      res.end(JSON.stringify({
+        rescode: -1,
+        message: 'wrong stream url ' + req.query.url
+      }))
     }
     break
   case 'exec':

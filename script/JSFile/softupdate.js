@@ -5,12 +5,13 @@
 // 脚本会先尝试以 PM2 的方式重启，如果失败，将直接重启容器(Docker 模式下)或服务器(pm2 指令不可用的情况下)
 // 3.1.8 版本后 elecV2P 默认启动方式更改为 PM2，建议在此版本后使用
 // 
-// 该文件更新地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
-// 最近更新时间: 2021-04-16 22:30:45
+// 文件更新地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
+// 最近更新时间: 2021-05-15
 
 let CONFIG = {
   store: 'softupdate_CONFIG',    // 将当前配置内容(CONFIG 值) 常量储存。留空: 表示使用下面的参数进行更新，否则将会读取 store 中的 softupdate_CONFIG 对应值进行更新。如果 softupdate_CONFIG 尚未设置(首次运行)，会先按下面参数执行，并储存当前 CONFIG 内容
-  forceupdate: false,            // false: 检测到有新的版本时才更新。 true: 不检测版本直接更新
+  forceupdate: false,            // 强制更新。false: 检测到新版本时才更新。 true: 不检测版本直接更新
+  notify: true,                  // 检测到新版本时是否进行通知。true: 通知, false: 不通知
   restart: 'elecV2P',            // false: 只更新文件，不重启不应用。 其他值表示 pm2 重启线程名，比如 all/elecV2P/index（暂时不清楚就保持不动）
   noupdate: [
     'script/Store',        // 设置一些不覆盖更新的文件夹（保留个人数据）。根据个人需求进行调整
@@ -27,10 +28,14 @@ let CONFIG = {
   about: 'elecV2P 软更新配置文件，详情: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js'
 }
 
+if (CONFIG.cdngit.endsWith('/')) {
+  CONFIG.cdngit = CONFIG.cdngit.slice(0, -1)
+}
+
 if (CONFIG.store) {
   let sConf = $store.get(CONFIG.store)
   if (sConf && typeof sConf === 'object') {
-    CONFIG = sConf
+    Object.assign(CONFIG, sConf)
   } else {
     $store.put(CONFIG, CONFIG.store)
   }
@@ -60,6 +65,9 @@ async function checkUpdate(){
     }
     if (__version !== newversion) {
       console.log('检测到有新的版本:', newversion)
+      if (CONFIG.notify) {
+        $feed.push('elecV2P 检测到新版本 ' + newversion, '当前版本 ' + __version +  '\n即将进行软更新升级', /127|192|172|10|localhost/.test(__home) ? '' : __home)
+      }
       return true
     }
     console.log('没有检测到新的版本。如果需要强制更新，请将脚本 forceupdate 参数对应值修改为 true')

@@ -1,6 +1,6 @@
 const { CONFIG, CONFIG_Port } = require('../config')
 
-const { logger, list, checkupdate } = require('../utils')
+const { logger, list, stream, checkupdate } = require('../utils')
 const clog = new logger({ head: 'wbdata' })
 
 const { CONFIG_RULE, JSLISTS } = require('../script')
@@ -43,8 +43,9 @@ module.exports = app => {
         }))
         break
       case "mitmhost":
+        let mlist = list.get('mitmhost.list')
         res.end(JSON.stringify({
-          host: CONFIG_RULE.mitmhost,
+          host: (mlist && mlist.list) || [],
           type: CONFIG_RULE.mitmtype,
           crtinfo: crtInfo()
         }))
@@ -56,8 +57,26 @@ module.exports = app => {
       case "newversion":
       case 'checkupdate':
         checkupdate(Boolean(req.query.force)).then(body=>{
-          res.end(JSON.stringify(body, null, 2))
+          res.end(JSON.stringify(body))
         })
+        break
+      case 'stream':
+        if (req.query.url && req.query.url.startsWith('http')) {
+          stream(req.query.url).then(response=>{
+            response.pipe(res)
+          }).catch(e=>{
+            res.end(JSON.stringify({
+              rescode: -1,
+              message: e
+            }))
+          })
+        } else {
+          clog.error('wrong stream url', req.query.url)
+          res.end(JSON.stringify({
+            rescode: -1,
+            message: 'wrong stream url ' + req.query.url
+          }))
+        }
         break
       default: {
         clog.error('unknow data get type', type)
@@ -87,10 +106,26 @@ module.exports = app => {
         break
       case "mitmhost":
         let mhost = req.body.data
-        mhost = mhost.filter(host=>host.length>2)
-        list.put('mitmhost.list', {mitmhost: { note: 'elecV2P mitmhost', list: mhost }}) // "[mitmhost]\n" + mhost.join("\n")
-        res.end("success! mitmhost list saved: " + mhost.length)
-        CONFIG_RULE.mitmhost = mhost
+        let enhost = mhost.filter(host=>host.enable !== false).map(host=>typeof host === 'string' ? host : host.host)
+        if (list.put('mitmhost.list', {
+          mitmhost: {
+            note: req.body.note || 'elecV2P mitmhost',
+            total: mhost.length,
+            active: enhost.length,
+            list: mhost
+          }
+        })){
+          res.end(JSON.stringify({
+            rescode: 0,
+            message: "success! mitmhost list saved: " + mhost.length
+          }))
+          CONFIG_RULE.mitmhost = enhost
+        } else {
+          res.end(JSON.stringify({
+            rescode: -1,
+            message: "fail to save mitmhost list"
+          }))
+        }
         break
       case "mitmtype":
         let mtype = req.body.data
@@ -105,6 +140,7 @@ module.exports = app => {
         res.end('设置成功')
         break
       default:{
+        clog.error('unknow data put type', req.body.type)
         res.end("data put error")
       }
     }

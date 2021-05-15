@@ -19,7 +19,11 @@ function sJson(str, force=false) {
     return str
   }
   try {
-    return JSON.parse(str)
+    let jobj = JSON.parse(str)
+    if (typeof(jobj) === 'object') {
+      return jobj
+    }
+    return force ? { 0: jobj } : false
   } catch(e) {
     try {
       let obj = (new Function("return " + str))()
@@ -53,6 +57,30 @@ function sString(obj) {
     }
   }
   return String(obj).trim()
+}
+
+function sBool(val) {
+  if (!val) {
+    return false
+  }
+  if (typeof val === 'boolean') {
+    return val
+  }
+  if (typeof val !== 'string') {
+    return true
+  }
+  val = val.trim()
+  switch(val) {
+  case '':
+  case '0':
+  case 'false':
+  case 'null':
+  case 'undefined':
+  case 'NaN':
+    return false
+  default:
+    return true
+  }
 }
 
 function bEmpty(obj) {
@@ -193,4 +221,4 @@ function progressBar({step=0, total, name='file', initLength=50}) {
   return `${name} [${procbar}] ${endtip}`
 }
 
-module.exports = { euid, UUID, iRandom, sJson, sString, bEmpty, sUrl, sType, errStack, kSize, nStatus, escapeHtml, surlName, progressBar }
+module.exports = { euid, UUID, iRandom, sJson, sString, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, escapeHtml, surlName, progressBar }
