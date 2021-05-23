@@ -1,4 +1,9 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.3.7)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.3.8)
+
+v3.3.8  2021.05.23
+ • REWRITE list JSON 化完成
+ • REWRITE 规则/订阅功能优化（详见说明文档: <a href='https://github.com/elecV2/elecV2P-dei/tree/master/docs/05-rewrite.md' target='_blank'> 05-rewrite.md </a>）
+ • TASK/REWRITE 订阅支持 efss 目录
 
 v3.3.7
  • MITM host list JSON 化

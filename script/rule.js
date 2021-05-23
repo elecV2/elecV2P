@@ -49,38 +49,32 @@ const CONFIG_RULE = (()=>{
   }
 
   function getRewriteList() {
-    let subrules = []
     let rewritelists = []
+    let rewritereject = []
     let rlist = list.get('rewrite.list')
-    if (rlist) {
-      rlist.split(/\r|\n/).forEach(l=>{
-        if (/^(#|\[|\/\/)/.test(l) || l.length<2) return
-        let item = l.split(" ")
-        if (item.length === 2) {
-          if (/^sub/.test(item[0])) {
-            subrules.push(item[1])
-          } else if (/js$/.test(item[1])) {
-            rewritelists.push([item[0], item[1]])
-          }
+    if (rlist && rlist.rewrite && rlist.rewrite.list) {
+      rlist.rewrite.list.filter(r=>r.enable !== false).forEach(r=>{
+        if (/^reject(-200|-dict|-json|-array|-img)?$/.test(r.target)) {
+          rewritereject.push(r)
+        } else {
+          rewritelists.push(r)
         }
       })
     }
 
-    return { subrules, rewritelists }
+    return { rewritereject, rewritelists }
   }
 
   function getRulesList(){
     let reqlists = []
     let reslists = []
-    let rstr = list.get('default.list')
-    if (rstr) {
-      rstr.split(/\n|\r/).forEach(l=>{
-        if (l.length<=8 || /^(#|\[|\/\/)/.test(l)) return
-        let item = l.split(",")
-        if (item.length >= 4) {
-          item = item.map(i=>i.trim())
-          if (item[4] === "req") reqlists.push(item)
-          else reslists.push(item)
+    let robj = list.get('default.list')
+    if (robj && robj.rules && robj.rules.list) {
+      robj.rules.list.filter(r=>r.enable !== false).forEach(r=>{
+        if (r.stage === 'req') {
+          reqlists.push(r)
+        } else {
+          reslists.push(r)
         }
       })
     }
@@ -156,23 +150,19 @@ const localResponse = {
 }
 
 function getrules($request, $response, lists) {
-  const $req = $request.requestOptions
-
-  const urlObj = new URL($request.url)
-  let matchstr = {
-    ip: urlObj.hostname,
+  let matchobj = {
     url: $request.url,
-    host: urlObj.hostname,
-    reqmethod: $req.method,
+    host: $request.requestOptions.hostname,
+    reqmethod: $request.requestOptions.method,
     reqbody: $request.requestData,
-    useragent: $req.headers["User-Agent"],
-    resstatus: $response?$response.statusCode:"",
-    restype: $response?$response.header["Content-Type"]:"",
-    resbody: $response?$response.body:""
+    useragent: $request.requestOptions.headers["User-Agent"],
+    resstatus: $response ? $response.statusCode : "",
+    restype: $response ? $response.header["Content-Type"] : "",
+    resbody: $response ? $response.body : ""
   }
   for (let mr of lists) {
-    if ((new RegExp(mr[1])).test(matchstr[mr[0]])) {
-      clog.info("match rule:", mr.join(', '))
+    if ((new RegExp(mr.match)).test(matchobj[mr.mtype])) {
+      clog.info("match rule:", mr.mtype, mr.match, mr.ctype, mr.target, mr.stage)
       return mr
     }
   }
@@ -211,20 +201,42 @@ module.exports = {
       return { response: localResponse.get(requestDetail.requestOptions.headers, error) }
     }
     clog.debug(bCircle.max, bCircle.count, bCircle.host)
+
+    for (let r of CONFIG_RULE.rewritereject) {
+      if ((new RegExp(r.match)).test(requestDetail.url)) {
+        clog.info('match rewrite reject rule:', r.match, r.target)
+        switch(r.target) {
+        case 'reject':
+        case 'reject-200':
+          return { response: localResponse.reject }
+        case 'reject-dict':
+        case 'reject-json':
+          return { response: localResponse.json }
+        case 'reject-array':
+          return { response: localResponse.get(requestDetail.requestOptions.headers, '[]') }
+        case 'reject-img':
+          return { response: localResponse.tinyimg }
+          break
+        default:
+          clog.error('unknow rewrite reject target', r.target)
+        }
+      }
+    }
+
     let matchreq = getrules(requestDetail, null, CONFIG_RULE.reqlists)
     if (!matchreq) {
       return requestDetail
     }
-    if ("block" === matchreq[2]) {
-      clog.info("block - " + matchreq[3])
-      return { response: localResponse[matchreq[3]] }
+    if ("block" === matchreq.ctype) {
+      clog.info("block - " + matchreq.target)
+      return { response: localResponse[matchreq.target] }
     }
-    if ("ua" === matchreq[2]) {
-      requestDetail.requestOptions.headers['User-Agent'] = CONFIG_RULE.uagent[matchreq[3]].header
-      clog.notify(requestDetail.url, "User-Agent set to", CONFIG_RULE.uagent[matchreq[3]].name)
+    if ("ua" === matchreq.ctype) {
+      requestDetail.requestOptions.headers['User-Agent'] = CONFIG_RULE.uagent[matchreq.target].header
+      clog.notify(requestDetail.url, "User-Agent set to", CONFIG_RULE.uagent[matchreq.target].name)
       return requestDetail
     }
-    if (matchreq[2] === 'hold') {
+    if (matchreq.ctype === 'hold') {
       if (wsSer.recverlists.length === 0) {
         clog.notify('no websocket connected, skip $HOLD rule')
         return requestDetail
@@ -232,7 +244,7 @@ module.exports = {
       wsSer.send({
         type: 'hold',
         data: {
-          title: matchreq[0] + ' - ' + matchreq[1] + ' (request)',
+          title: matchreq.mtype + ' - ' + matchreq.match + ' (request)',
           request: {
             method: requestDetail.requestOptions.method,
             hostname: requestDetail.requestOptions.hostname,
@@ -266,37 +278,43 @@ module.exports = {
           resolve(requestDetail)
         }
 
-        if (Number(matchreq[3]) > 0) {
+        if (Number(matchreq.target) > 0) {
           setTimeout(()=>{
             wsSer.recv.hold = null
             wsSer.send({ type: 'hold', data: 'over' })
             clog.notify(requestDetail.url, '$HOLD timeout, continue with orignal data')
             resolve(requestDetail)
-          }, Number(matchreq[3]) * 1000)
+          }, Number(matchreq.target) * 1000)
         }
       })
     }
-    if (/^(30.)$/.test(matchreq[2])) {
+    if (/^(30.)$/.test(matchreq.ctype)) {
       const orgurl = sUrl(requestDetail.url)
-      const newurl = sUrl(matchreq[3], requestDetail.url)
-      if (newurl.hash === '') newurl.hash = orgurl.hash
-      if (newurl.search === '') newurl.search = orgurl.search
-      if (newurl.pathname === '/') newurl.pathname = orgurl.pathname
-      clog.info(requestDetail.url, matchreq[2], "重定向至", newurl.href)
+      const newurl = sUrl(matchreq.target, requestDetail.url)
+      if (newurl.hash === '') {
+        newurl.hash = orgurl.hash
+      }
+      if (newurl.search === '') {
+        newurl.search = orgurl.search
+      }
+      if (newurl.pathname === '/') {
+        newurl.pathname = orgurl.pathname
+      }
+      clog.info(requestDetail.url, matchreq.ctype, "redirect to", newurl.href)
       return {
         response: {
-          statusCode: matchreq[2],
+          statusCode: matchreq.ctype,
           header: { Location: newurl.href }
         }
       }
     }
     // 通过 JS 文件修改请求体
-    if ('js' === matchreq[2] ) {
+    if ('js' === matchreq.ctype ) {
       return new Promise((resolve, reject)=>{
-        runJSFile(matchreq[3], { $request: formRequest(requestDetail) }).then(jsres=>{
+        runJSFile(matchreq.target, { $request: formRequest(requestDetail) }).then(jsres=>{
           if (sType(jsres) !== 'object') {
             return resolve({
-              response: { ...localResponse.reject, body: jsres }
+              response: { ...localResponse.reject, body: sString(jsres) }
             })
           }
           if (jsres.response) {
@@ -325,7 +343,7 @@ module.exports = {
             Object.assign(requestDetail.requestOptions, jsres)
           }
         }).catch(e=>{
-          clog.error('error on run js', matchreq[3], errStack(e))
+          clog.error('error on run js', matchreq.target, errStack(e))
         }).finally(()=>{
           resolve(requestDetail)
         })
@@ -337,13 +355,18 @@ module.exports = {
     const $response = responseDetail.response
 
     for (let r of CONFIG_RULE.rewritelists) {
-      if ((new RegExp(r[0])).test($request.url)) {
-        clog.info('match rewrite rule:', r[0], r[1])
+      if ((new RegExp(r.match)).test($request.url)) {
+        clog.info('match rewrite rule:', r.match, r.target)
         return new Promise((resolve, reject)=>{
-          runJSFile(r[1], { $request: formRequest($request), $response: formResponse($response) }).then(jsres=>{
-            Object.assign($response, jsres ? (jsres.response ? jsres.response : jsres) : {})
+          runJSFile(r.target, { $request: formRequest($request), $response: formResponse($response) }).then(jsres=>{
+            if (sType(jsres) === 'object') {
+              Object.assign($response, jsres.response || jsres)
+            } else {
+              $response.body = sString(jsres)
+            }
           }).catch(e=>{
-            clog.error('error on run js', r[1], errStack(e))
+            $response.body += '\nerror on run js' + r.target + errStack(e)
+            clog.error('error on run js', r.target, errStack(e))
           }).finally(()=>{
             resolve({ response: $response })
           })
@@ -355,7 +378,7 @@ module.exports = {
     if (!matchres) {
       return { response: $response }
     }
-    if (matchres[2] === 'hold') {
+    if (matchres.ctype === 'hold') {
       if (wsSer.recverlists.length === 0) {
         clog.notify('no websocket connected, skip $HOLD rule')
         return { response: $response }
@@ -363,7 +386,7 @@ module.exports = {
       wsSer.send({
         type: 'hold',
         data: {
-          title: matchres[0] + ' - ' + matchres[1] + ' (response)',
+          title: matchres.mtype + ' - ' + matchres.match + ' (response)',
           header: $response.header,
           body: $response.body.toString()
         }
@@ -377,23 +400,23 @@ module.exports = {
           resolve({ response: $response })
         }
 
-        if (Number(matchres[3]) > 0) {
+        if (Number(matchres.target) > 0) {
           setTimeout(()=>{
             wsSer.recv.hold = null
             wsSer.send({ type: 'hold', data: 'over' })
             clog.notify('$HOLD timeout, continue with orignal data')
             resolve({ response: $response })
-          }, Number(matchres[3]) * 1000)
+          }, Number(matchres.target) * 1000)
         }
       })
     }
-    if ("block" === matchres[2]) {
-      clog.info("block - " + matchres[3])
-      return { response: localResponse[matchres[3]] }
+    if ("block" === matchres.ctype) {
+      clog.info("block - " + matchres.target)
+      return { response: localResponse[matchres.target] }
     }
-    if (/^(30.)$/.test(matchres[2])) {
+    if (/^(30.)$/.test(matchres.ctype)) {
       const orgurl = sUrl(requestDetail.url)
-      const newurl = sUrl(matchres[3], requestDetail.url)
+      const newurl = sUrl(matchres.target, requestDetail.url)
       if (newurl.hash === '') {
         newurl.hash = orgurl.hash
       }
@@ -403,20 +426,24 @@ module.exports = {
       if (newurl.pathname === '/') {
         newurl.pathname = orgurl.pathname
       }
-      clog.info(requestDetail.url, matchres[2], "redirect to", newurl.href)
+      clog.info(requestDetail.url, matchres.ctype, "redirect to", newurl.href)
       return {
         response: {
-          statusCode: matchres[2],
+          statusCode: matchres.ctype,
           header: { Location: newurl.href }
         }
       }
     }
-    if (matchres[2] === "js") {
+    if (matchres.ctype === "js") {
       return new Promise(async (resolve, reject)=>{
-        runJSFile(matchres[3], { $request: formRequest($request), $response: formResponse($response) }).then(jsres=>{
-          Object.assign($response, jsres ? (jsres.response ? jsres.response : jsres) : {})
+        runJSFile(matchres.target, { $request: formRequest($request), $response: formResponse($response) }).then(jsres=>{
+          if (sType(jsres) === 'object') {
+            Object.assign($response, jsres.response || jsres)
+          } else {
+            $response.body = sString(jsres)
+          }
         }).catch(e=>{
-          clog.error('error on run js', matchres[3], errStack(e))
+          clog.error('error on run js', matchres.target, errStack(e))
         }).finally(()=>{
           resolve({ response: $response })
         })
@@ -441,6 +468,11 @@ module.exports = {
       return true
     }
     // 正则匹配，待优化
-    return (CONFIG_RULE.mitmhost.filter(h=>(/^\*/.test(h) && new RegExp('.' + h + '$').test(host))).length ? true : false)
+    for (let h of CONFIG_RULE.mitmhost) {
+      if (/\*/.test(h) && new RegExp(h.replace(/\./g, '\\.').replace(/\*/g, '.*')).test(host)) {
+        return true
+      }
+    }
+    return false
   }
 }

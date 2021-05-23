@@ -1,9 +1,9 @@
 const os = require('os')
-const { Task, TASKS_WORKER, TASKS_INFO, taskStatus, exec } = require('../func')
-const { runJSFile, JSLISTS } = require('../script')
+const { taskMa, exec } = require('../func')
+const { CONFIG_RULE, runJSFile, JSLISTS } = require('../script')
 
-const { logger, LOGFILE, Jsfile, nStatus, euid, sJson, sString, sType, list, stream, downloadfile, now, checkupdate, store, kSize, errStack } = require('../utils')
-const clog = new logger({ head: 'wbhook', level: 'debug' })
+const { logger, LOGFILE, Jsfile, nStatus, sJson, sString, sType, stream, downloadfile, now, checkupdate, store, kSize, errStack } = require('../utils')
+const clog = new logger({ head: 'webhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
 
@@ -116,17 +116,17 @@ function handler(req, res){
     break
   case 'task':
     clog.info(clientip, 'get all task')
-    res.end(JSON.stringify(TASKS_INFO, null, 2))
+    res.end(JSON.stringify(taskMa.info(), null, 2))
     break
   case 'taskinfo':
     clog.info(clientip, 'get taskinfo', rbody.tid)
     if (rbody.tid === 'all') {
-      let status = taskStatus()
-      status.info = TASKS_INFO
+      let status = taskMa.status()
+      status.info = taskMa.info()
       res.end(JSON.stringify(status, null, 2))
     } else {
-      if (TASKS_INFO[rbody.tid]) {
-        res.end(JSON.stringify(TASKS_INFO[rbody.tid], null, 2))
+      if (taskMa.info(rbody.tid)) {
+        res.end(JSON.stringify(taskMa.info(rbody.tid), null, 2))
         return
       }
       res.end(JSON.stringify({ error: 'no such task with taskid: ' + rbody.tid }))
@@ -134,71 +134,24 @@ function handler(req, res){
     break
   case 'taskstart':
     clog.notify(clientip, 'start task', rbody.tid)
-    if (TASKS_INFO[rbody.tid]) {
-      if (TASKS_WORKER[rbody.tid] === undefined) {
-        TASKS_WORKER[rbody.tid] = new Task(TASKS_INFO[rbody.tid])
-        TASKS_WORKER[rbody.tid].start()
-        return
-      }
-      if (TASKS_INFO[rbody.tid].running === false) {
-        TASKS_WORKER[rbody.tid].start()
-        res.end(TASKS_INFO[rbody.tid].name + ' started, info: ' + JSON.stringify(TASKS_INFO[rbody.tid]))
-      } else {
-        res.end(TASKS_INFO[rbody.tid].name + ' is running, info: ' + JSON.stringify(TASKS_INFO[rbody.tid]))
-      }
-      return
-    }
-    res.end('task ' + rbody.tid + ' not exist')
+    res.end(JSON.stringify(taskMa.start(rbody.tid)))
     break
   case 'taskstop':
     clog.notify(clientip, 'stop task', rbody.tid)
-    if (rbody.tid && TASKS_INFO[rbody.tid] && TASKS_WORKER[rbody.tid]) {
-      if (TASKS_INFO[rbody.tid].running === true) {
-        TASKS_WORKER[rbody.tid].stop()
-        res.end('stop task ' + TASKS_INFO[rbody.tid].name + ', task info: ' + JSON.stringify(TASKS_INFO[rbody.tid]))
-      } else {
-        res.end(TASKS_INFO[rbody.tid].name  + ' already stopped, task info: ' + JSON.stringify(TASKS_INFO[rbody.tid]))
-      }
-      return
-    }
-    res.end('task ' + rbody.tid + ' no exist')
+    res.end(JSON.stringify(taskMa.stop(rbody.tid)))
     break
   case 'taskadd':
     clog.notify(clientip, 'add a new task')
-    if (rbody.task && sType(rbody.task) === 'object') {
-      const newtid = euid()
-      TASKS_INFO[newtid] = rbody.task
-      TASKS_INFO[newtid].id = newtid
-      res.end('success add task: ' + TASKS_INFO[newtid].name)
-      if (rbody.task.running) {
-        TASKS_WORKER[newtid] = new Task(TASKS_INFO[newtid])
-        TASKS_WORKER[newtid].start()
-      }
-      return
-    }
-    res.end('a task object is expected!')
+    res.end(JSON.stringify(taskMa.add(rbody.task)))
     break
   case 'tasksave':
     clog.notify(clientip, 'save current task list.')
-    if (list.put('task.list', TASKS_INFO)) {
-      res.end('success save current task list!\n' + Object.keys(TASKS_INFO).length)
-    } else {
-      res.end('fail to save current task list.')
-    }
+    res.end(JSON.stringify(taskMa.save()))
     break
   case 'taskdel':
   case 'taskdelete':
     clog.notify(clientip, 'delete task', rbody.tid)
-    if (rbody.tid && TASKS_INFO[rbody.tid]) {
-      TASKS_INFO[rbody.tid] = null
-      if (TASKS_WORKER[rbody.tid]) {
-        TASKS_WORKER[rbody.tid].delete()
-        TASKS_WORKER[rbody.tid] = null
-      }
-      res.end("task deleted!")
-    } else {
-      res.end('no such task', rbody.tid)
-    }
+    res.end(JSON.stringify(taskMa.delete(rbody.tid)))
     break
   case 'download':
   case 'downloadfile':
@@ -268,7 +221,7 @@ function handler(req, res){
         version: CONFIG.version,
         start: now(CONFIG.start, false),
         uptime: ((Date.now() - CONFIG.start)/1000/60/60).toFixed(2) + ' hours',
-        taskStatus: taskStatus(),
+        taskStatus: taskMa.status(),
         memoryUsage: nStatus(),
       },
       system: {
@@ -375,6 +328,13 @@ function handler(req, res){
         }))
       }
     }
+    break
+  case 'devdebug':
+    // temp debug
+    if (rbody.get === 'rule') {
+      res.end(JSON.stringify(CONFIG_RULE))
+    }
+    res.end('dev debug')
     break
   case 'help':
     // 待完成 unfinished

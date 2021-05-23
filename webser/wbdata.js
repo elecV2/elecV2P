@@ -1,10 +1,10 @@
 const { CONFIG, CONFIG_Port } = require('../config')
 
-const { logger, list, stream, checkupdate } = require('../utils')
+const { logger, list, sType, stream, checkupdate } = require('../utils')
 const clog = new logger({ head: 'wbdata' })
 
 const { CONFIG_RULE, JSLISTS } = require('../script')
-const { crtInfo, taskStatus, sysInfo } = require('../func')
+const { crtInfo, taskMa, sysInfo } = require('../func')
 
 module.exports = app => {
   app.get("/data", (req, res)=>{
@@ -20,7 +20,7 @@ module.exports = app => {
           ruleslen: CONFIG_RULE.reqlists.length + CONFIG_RULE.reslists.length,
           rewriteslen: CONFIG_RULE.rewritelists.length,
           jslistslen: JSLISTS.length,
-          taskstatus: taskStatus(),
+          taskstatus: taskMa.status(),
           mitmhostlen: CONFIG_RULE.mitmhost.length,
           version: CONFIG.version,
           start: CONFIG.start,
@@ -30,17 +30,15 @@ module.exports = app => {
         }))
         break
       case "rules":
+        let rlist = list.get('default.list')
         res.end(JSON.stringify({
-          eplists: [...CONFIG_RULE.reqlists, ...CONFIG_RULE.reslists],
+          eplists: (rlist && rlist.rules) || {list: []},
           uagent: CONFIG_RULE.uagent,
           jslists: JSLISTS
         }))
         break
       case "rewritelists":
-        res.end(JSON.stringify({
-          rewritelists: CONFIG_RULE.rewritelists,
-          subrules: CONFIG_RULE.subrules
-        }))
+        res.end(JSON.stringify(list.get('rewrite.list')))
         break
       case "mitmhost":
         let mlist = list.get('mitmhost.list')
@@ -86,23 +84,83 @@ module.exports = app => {
   })
 
   app.put("/data", (req, res)=>{
-    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " put data " + req.body.type)
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "put data", req.body.type)
     switch(req.body.type){
       case "rules":
-        let fdata = req.body.data.eplists
-        list.put('default.list', "[elecV2P rules]\n" + fdata.join("\n"))
-
-        res.end("success! rules saved.")
-        CONFIG_RULE.reqlists = []
-        CONFIG_RULE.reslists = []
-        fdata.forEach(r=>{
-          if (/req$/.test(r)) {
-            CONFIG_RULE.reqlists.push(r)
+        let fdata = req.body.eplists
+        if (fdata && fdata.length) {
+          let renlist = fdata.filter(r=>r.enable !== false)
+          if (list.put('default.list', {
+            rules: {
+              note: req.body.note || "elecV2P RULES 规则列表",
+              total: fdata.length,
+              active: renlist.length,
+              list: fdata
+            }
+          })){
+            res.end(JSON.stringify({
+              rescode: 0,
+              message: "success! rules list saved: " + fdata.length
+            }))
+            CONFIG_RULE.reqlists = []
+            CONFIG_RULE.reslists = []
+            renlist.forEach(r=>{
+              if (r.stage === 'req') {
+                CONFIG_RULE.reqlists.push(r)
+              } else {
+                CONFIG_RULE.reslists.push(r)
+              }
+            })
           } else {
-            CONFIG_RULE.reslists.push(r)
+            res.end(JSON.stringify({
+              rescode: -1,
+              message: "fail to save rules list"
+            }))
           }
-        })
-        clog.notify(`default 规则 ${ CONFIG_RULE.reqlists.length + CONFIG_RULE.reslists.length} 条`)
+        } else {
+          res.end(JSON.stringify({
+            rescode: -1,
+            message: "some data is expect"
+          }))
+        }
+        break
+      case "rewrite":
+        if (req.body.rewritesub || req.body.rewritelists) {
+          let enlist = req.body.rewritelists.filter(r=>r.enable !== false)
+          if (list.put('rewrite.list', {
+            rewritesub: req.body.rewritesub,
+            rewrite: {
+              note: req.body.note || "elecV2P 重写规则",
+              total: req.body.rewritelists.length,
+              active: enlist.length,
+              list: req.body.rewritelists
+            }
+          })){
+            res.end(JSON.stringify({
+              rescode: 0,
+              message: "success! rewrite list saved: " + req.body.rewritelists.length
+            }))
+            CONFIG_RULE.rewritelists = []
+            CONFIG_RULE.rewritereject = []
+            enlist.forEach(r=>{
+              if (/^reject(-200|-dict|-json|-array|-img)?$/.test(r.target)) {
+                CONFIG_RULE.rewritereject.push(r)
+              } else {
+                CONFIG_RULE.rewritelists.push(r)
+              }
+            })
+          } else {
+            res.end(JSON.stringify({
+              rescode: -1,
+              message: "fail to save rewrite list"
+            }))
+          }
+        } else {
+          res.end(JSON.stringify({
+            rescode: -1,
+            message: "some data is expect"
+          }))
+        }
         break
       case "mitmhost":
         let mhost = req.body.data
@@ -124,6 +182,28 @@ module.exports = app => {
           res.end(JSON.stringify({
             rescode: -1,
             message: "fail to save mitmhost list"
+          }))
+        }
+        break
+      case "mitmhostadd":
+        if (req.body.data && sType(req.body.data) === 'array' && req.body.data.length) {
+          let faddhost = req.body.data.filter(host=>host.length>2 && CONFIG_RULE.mitmhost.indexOf(host) === -1)
+          if (list.put('mitmhost.list', faddhost, { type: 'add' })) {
+            res.end(JSON.stringify({
+              rescode: 0,
+              message: "success! mitmhost list update " + faddhost.length
+            }))
+            CONFIG_RULE.mitmhost.push(...faddhost)
+          } else {
+            res.end(JSON.stringify({
+              rescode: -1,
+              message: "fail to update mitmhost list"
+            }))
+          }
+        } else {
+          res.end(JSON.stringify({
+            rescode: -1,
+            message: "body data is expect"
           }))
         }
         break

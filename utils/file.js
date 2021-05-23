@@ -1,7 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 
-const { errStack, sJson, sString, sType, sBool, bEmpty, iRandom } = require('./string')
+const { errStack, sJson, sString, sType, sBool, bEmpty, iRandom, euid } = require('./string')
 const { now } = require('./time')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFile', level: 'debug' })
@@ -32,27 +32,128 @@ if (!fs.existsSync(fpath.store)) {
 
 const list = {
   get(name, type){
+    let listpath = path.join(fpath.list, name)
     if (type === 'path') {
-      return path.join(fpath.list, name)
+      return listpath
     }
-    if (fs.existsSync(path.join(fpath.list, name))) {
-      let liststr = fs.readFileSync(path.join(fpath.list, name), "utf8")
-      if (name === 'mitmhost.list') {
-        let mstrobj = sJson(liststr)
-        if (mstrobj && mstrobj.mitmhost && mstrobj.mitmhost.list) {
-          return mstrobj.mitmhost
+    if (fs.existsSync(listpath)) {
+      let liststr = fs.readFileSync(listpath, "utf8")
+      let listobj = sJson(liststr)
+      switch(name) {
+      case 'mitmhost.list':
+        if (listobj && listobj.mitmhost && listobj.mitmhost.list) {
+          return listobj.mitmhost
         }
         return {
           list: liststr.split(/\r|\n/).filter(host=>!(/^(\[|#|;)/.test(host) || host.length < 3))
         }
+        break
+      case 'rewrite.list':
+        if (listobj && listobj.rewrite && listobj.rewrite.list) {
+          return listobj
+        }
+        listobj = {
+          rewrite: {
+            note: 'elecV2P rewrite list',
+            list: []
+          }
+        }
+        liststr.split(/\r|\n/).forEach(l=>{
+          if (/^(#|\[|\/\/)/.test(l) || l.length<2) {
+            return
+          }
+          let item = l.split(" ")
+          if (item.length === 2) {
+            if (/^sub/.test(item[0])) {
+              if (!listobj.rewritesub) {
+                listobj.rewritesub = {}
+              }
+              listobj.rewritesub[euid()] = {
+                name: 'elecV2P 重写订阅',
+                resource: item[1],
+                enable: true
+              }
+            } else if (/^http|^reject|\.js$/.test(item[1])) {
+              listobj.rewrite.list.push({
+                match: item[0],
+                target: item[1],
+                enable: true
+              })
+            }
+          }
+        })
+        return listobj
+        break
+      case 'default.list':
+        if (listobj && listobj.rules && listobj.rules.list) {
+          return listobj
+        }
+        listobj = {
+          rules: {
+            note: 'elecV2P rules list',
+            list: []
+          }
+        }
+        liststr.split(/\n|\r/).forEach(l=>{
+          if (l.length<=8 || /^(#|\[|\/\/)/.test(l)) {
+            return
+          }
+          let item = l.split(/ *, */)
+          if (item.length >= 4) {
+            listobj.rules.list.push({
+              mtype: item[0],
+              match: item[1],
+              ctype: item[2],
+              target: item[3],
+              stage: item[4] || 'res',
+              enable: true
+            })
+          }
+        })
+        return listobj
+        break
+      default:
+        return liststr
       }
-      return liststr
     }
     clog.error('no list', name)
     return false
   },
-  put(name, cont){
+  put(name, cont, option = {}){
     try {
+      if (option.type === 'add') {
+        if (name === 'mitmhost.list') {
+          let orglist = this.get('mitmhost.list')
+          let listadd = (host, enable = true)=>{
+            let fhost = orglist.list.find(x=>x.host === host)
+            if (fhost) {
+              fhost.enable = sBool(enable)
+            } else {
+              orglist.list.push({
+                host, enable: sBool(enable)
+              })
+            }
+          }
+          let contype = sType(cont)
+          if (contype === 'string') {
+            if (cont.length > 2) {
+              listadd(cont)
+            }
+          } else if (contype === 'array') {
+            cont.forEach(host=>{
+              if (typeof(host) === 'string' && host.length>2) {
+                listadd(host)
+              } else if (typeof(host) === 'object' && host.host) {
+                listadd(host.host, host.enable)
+              }
+            })
+          } else {
+            clog.error('mitmhost.list addition put error: unknow cont type')
+            return false
+          }
+          cont = { mitmhost: orglist }
+        }
+      }
       fs.writeFileSync(path.join(fpath.list, name), typeof(cont) === 'object' ? JSON.stringify(cont, null, 2) : sString(cont), 'utf8')
       clog.info(name, 'updated')
       return true
@@ -400,7 +501,7 @@ const store = {
       value = String(value)
     }
     value = JSON.stringify({
-      type, value, note: options.note, belong: options.belong, update: now()
+      type, value, note: options.note, belong: options.belong, update: options.update || now(null, false)
     })
     if (Buffer.byteLength(value, 'utf8') > this.maxByte) {
       clog.error('store put error, data length is over limit', this.maxByte)
