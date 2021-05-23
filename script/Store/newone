@@ -1,9 +1,9 @@
-another cookie
-一个新的存储常量
-
-每一个 cookie 都有一个独立对应的 KEY，这样脚本才能识别读取
-在填写 cookie 时两个部分都得填写: KEY 和 VALUE
-
-当在这里修改值保存后，使用 $store.get 获取到的内容也会相应变化
-
-用不到的 cookie 也可以在这里直接删除（不可找回）
+{
+  "type": "object",
+  "value": {
+    "hello": "elecV2P",
+    "note": "another cookie，一个 object 类型的变量。当不知道保存类型的时候，请选择默认的 string 类型。",
+    "desc": "每一个 cookie 都有一个独立对应的 KEY，这样脚本才能识别读取。在填写 cookie 时两个部分都得填写: KEY 和 VALUE。当在这里修改值保存后，使用 $store.get 获取到的内容也会相应变化。用不到的 cookie 也可以在这里直接删除（不可找回）"
+  },
+  "update": "2021-05-23 19:49:36"
+}
