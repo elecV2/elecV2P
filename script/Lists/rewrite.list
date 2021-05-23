@@ -1,2 +1,18 @@
-[elecV2P rewrite.list]
-^https?:\/\/httpbin\.org/get\?body https://raw.githubusercontent.com/elecV2/elecV2P/master/runjs/JSFile/0body.js
+{
+  "rewritesub": {
+    "eSubUuid": {
+      "name": "elecV2P 重写订阅",
+      "resource": "https://raw.githubusercontent.com/elecV2/elecV2P/master/efss/rewritesub.json"
+    }
+  },
+  "rewrite": {
+    "note": "elecV2P 重写规则",
+    "list": [
+      {
+        "match": "^https?://httpbin\\.org/get\\?rewrite=elecV2P",
+        "target": "https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/0body.js",
+        "enable": true
+      }
+    ]
+  }
+}

@@ -33,7 +33,7 @@
     "name": "elecV2P 任务订阅",
     "type": "sub",
     "job": {
-      "type": "addition",
+      "type": "skip",
       "target": "https://raw.githubusercontent.com/elecV2/elecV2P/master/efss/tasksub.json"
     }
   }

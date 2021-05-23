@@ -2,7 +2,9 @@
   "mitmhost": {
     "note": "elecV2P mitmhost list",
     "list": [
-      "httpbin.org"
+      {
+        "host": "httpbin.org"
+      }
     ]
   }
 }
