@@ -5,7 +5,7 @@ const schedule = require('./schedule')
 const { exec } = require('./exec')
 const { runJSFile } = require('../script/runJSFile')
 
-const { logger, feedAddItem, sJson, list, file, wsSer } = require('../utils')
+const { logger, feedAddItem, sType, sJson, list, file, wsSer, euid } = require('../utils')
 const clog = new logger({ head: 'funcTask', cb: wsSer.send.func('tasklog'), file: 'funcTask' })
 
 class Task {
@@ -77,6 +77,10 @@ const taskInit = function() {
 
 function bIsValid(info) {
   // 任务合法性检测
+  if (!info) {
+    clog.error('task information is expect')
+    return false
+  }
   if (info.name === undefined) {
     clog.error('no task name')
     return false
@@ -104,8 +108,8 @@ function bIsValid(info) {
 function jobFunc(job, taskname) {
   // 任务信息转化为可执行函数
   if (!(job && job.target)) {
-    clog.error('job target is empty')
-    return false
+    clog.error('a job target is expect')
+    return ()=>'a job target is expect'
   }
   if (job.type === 'runjs') {
     return ()=>runJSFile(job.target, { type: 'task', cb: wsSer.send.func('tasklog') })
@@ -119,8 +123,7 @@ function jobFunc(job, taskname) {
         TASKS_WORKER[job.target] = new Task(TASKS_INFO[job.target])
       }
       TASKS_WORKER[job.target].start()
-      TASKS_INFO[job.target].running = true
-      wsSer.send({type: 'task', data: {tid: job.target, op: 'start'}})
+      wsSer.send({ type: 'task', data: {tid: job.target, op: 'start'} })
     }
   } else if (job.type === 'taskstop') {
     return ()=>{
@@ -151,27 +154,231 @@ function jobFunc(job, taskname) {
     })
   } else {
     clog.error('unknow job type')
-    return false
+    return ()=>'unknow job type'
   }
 }
 
-function taskStatus(){
-  let status = {
-    total: 0,
-    running: 0,
-    sub: 0
-  }
-  for (let tid in TASKS_INFO) {
-    if (TASKS_INFO[tid].type === 'sub') {
-      status.sub++
-    } else {
-      status.total++
-      if (TASKS_INFO[tid].running) {
-        status.running++
+const taskMa = {
+  add(taskinfo, options={}){
+    if (!bIsValid(taskinfo)) {
+      return {
+        rescode: -1,
+        message: 'some task parameters may be invalid'
       }
     }
+
+    let tid = options.tid || taskinfo.id
+    if (options.type) {
+      let tname = this.nameList()
+      if (tname[taskinfo.name]) {
+        clog.info(taskinfo.name, 'exist, new task add type', options.type)
+        switch(options.type) {
+        case 'skip':
+          return {
+            rescode: 0,
+            message: 'skip add task ' + taskinfo.name
+          }
+          break
+        case 'addition':
+          tid = euid()
+          break
+        case 'replace':
+          tid = tname[taskinfo.name]
+          break
+        default:
+          clog.error('unknow type of task add options')
+        }
+      }
+    }
+
+    if (!tid) {
+      tid = euid()
+    }
+    if (TASKS_WORKER[tid]) {
+      clog.info('delete old task data')
+      if (TASKS_WORKER[tid].stat()) {
+        TASKS_WORKER[tid].stop('restart')
+      }
+      TASKS_WORKER[tid].delete('restart')
+      TASKS_WORKER[tid] = null
+    }
+
+    TASKS_INFO[tid] = taskinfo
+    TASKS_INFO[tid].id = tid
+    TASKS_WORKER[tid] = new Task(TASKS_INFO[tid])
+    let message = 'add task: ' + taskinfo.name
+    if (taskinfo.running !== false) {
+      TASKS_WORKER[tid].start()
+      message = 'task: ' + taskinfo.name + ' started'
+    }
+    return {
+      rescode: 0, message, taskinfo
+    }
+  },
+  start(tid){
+    if (!tid) {
+      return {
+        rescode: -1,
+        message: 'a task tid is expect'
+      }
+    }
+
+    if (TASKS_INFO[tid]) {
+      if (!TASKS_WORKER[tid]) {
+        TASKS_WORKER[tid] = new Task(TASKS_INFO[tid])
+      }
+      if (TASKS_INFO[tid].running === false) {
+        TASKS_WORKER[tid].start()
+        return {
+          rescode: 0,
+          message: 'task started',
+          taskinfo: TASKS_INFO[tid]
+        }
+      } else {
+        return {
+          rescode: 0,
+          message: 'task is running',
+          taskinfo: TASKS_INFO[tid]
+        }
+      }
+    }
+    return {
+      rescode: 404,
+      message: 'task ' + tid + ' not exist'
+    }
+  },
+  stop(tid){
+    if (!tid) {
+      return {
+        rescode: -1,
+        message: 'a task tid is expect'
+      }
+    }
+    if (TASKS_WORKER[tid]) {
+      TASKS_WORKER[tid].stop()
+      TASKS_WORKER[tid].delete('stop')
+      TASKS_WORKER[tid] = null
+      return {
+        rescode: 0,
+        message: 'task stopped',
+        taskinfo: TASKS_INFO[tid]
+      }
+    }
+    if (TASKS_INFO[tid]) {
+      return {
+        rescode: 0,
+        message: 'task already stopped',
+        taskinfo: TASKS_INFO[tid]
+      }
+    }
+    return {
+      rescode: 404,
+      message: 'task no exist'
+    }
+  },
+  delete(tid){
+    if (!tid) {
+      return {
+        rescode: -1,
+        message: 'a task tid is expect'
+      }
+    }
+    if (TASKS_WORKER[tid]) {
+      TASKS_WORKER[tid].delete()
+      delete TASKS_WORKER[tid]
+    }
+    delete TASKS_INFO[tid]
+    return {
+      rescode: 0,
+      message: 'task deleted'
+    }
+  },
+  async test(taskinfo){
+    if (!bIsValid(taskinfo)) {
+      return {
+        rescode: -1,
+        message: 'some task parameters may be invalid'
+      }
+    }
+    try {
+      let job = jobFunc(taskinfo.job, taskinfo.name + '-test')
+      let jobres = await job()
+      return {
+        rescode: 0,
+        message: jobres
+      }
+    } catch(e) {
+      return {
+        rescode: -1,
+        message: e.message || e
+      }
+    }
+  },
+  nameList(){
+    let tname = {}
+    for (let tid in TASKS_INFO) {
+      tname[TASKS_INFO[tid].name] = tid
+    }
+    return tname
+  },
+  info(tid = 'all'){
+    if (tid === 'all') {
+      return TASKS_INFO
+    }
+    return TASKS_INFO[tid]
+  },
+  status(){
+    let status = {
+      total: 0,
+      running: 0,
+      sub: 0
+    }
+    for (let tid in TASKS_INFO) {
+      if (TASKS_INFO[tid].type === 'sub') {
+        status.sub++
+      } else {
+        status.total++
+        if (TASKS_INFO[tid].running) {
+          status.running++
+        }
+      }
+    }
+    return status
+  },
+  save(taskobj){
+    if (taskobj) {
+      // 保存 taskobj 到 task.list 待优化
+      if (sType(taskobj) !== 'object') {
+        clog.error('fail to save', taskobj, 'to task.list')
+        return {
+          rescode: -1,
+          message: 'a object task info is expect'
+        }
+      }
+      for (let tid in taskobj) {
+        if (taskobj[tid].type === 'sub' || taskobj[tid].running === false) {
+          if (TASKS_WORKER[tid]) {
+            TASKS_WORKER[tid].delete('stop')
+            TASKS_WORKER[tid] = null
+          }
+          TASKS_INFO[tid] = taskobj[tid]
+          if (taskobj[tid].type !== 'sub') {
+            TASKS_INFO[tid].id = tid
+          }
+        }
+      }
+    }
+    if (list.put('task.list', TASKS_INFO)) {
+      return {
+        rescode: 0,
+        message: 'success save current task list ' + Object.keys(TASKS_INFO).length
+      }
+    }
+    return {
+      rescode: -1,
+      message: 'fail to save current task list'
+    }
   }
-  return status
 }
 
-module.exports = { Task, TASKS_WORKER, TASKS_INFO, bIsValid, taskStatus, jobFunc }
+module.exports = { taskMa }

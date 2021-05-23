@@ -215,7 +215,7 @@ function sysInfo() {
     arch: os.arch(),
     platform: os.platform(),
     memory: kSize(os.freemem()) + '/' + kSize(os.totalmem()),
-    uptime: (os.uptime()/60/60).toFixed(2) + ' hours',
+    uptime: (os.uptime()/60/60/24).toFixed(2) + ' Days',
     nodever: process.version
   }
 }
