@@ -58,7 +58,7 @@ module.exports = class {
       this.start()
     } else {
       if (sType(jobres) === 'promise') {
-        Promise.race([jobres, new Promise(resolve=>setTimeout(resolve, 5000, 'job resolve is timeout of 5000ms'))]).then(res=>jobres=res).finally(res=>this.stop('finished', jobres))
+        Promise.race([jobres, new Promise(resolve=>setTimeout(resolve, 5000, `${this.task.name} still running...`))]).then(res=>jobres=res).finally(res=>this.stop('finished', jobres))
       } else {
         this.stop('finished', jobres)
       }

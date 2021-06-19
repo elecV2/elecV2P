@@ -103,7 +103,7 @@ async function commandSetup(command, options={}, clog) {
   command = commandCross(command.split(/ -(cwd|env|stdin) /)[0])
 
   if (!/^(curl|wget|git|start|you-get|youtube-dl) /.test(command)) {
-    let remotesh = command.match(/ (https?\S+)/)
+    let remotesh = command.match(/ (https?:\/\/\S{4,})/)
     if (remotesh && remotesh[1]) {
       let folder = file.path(process.cwd(), options.cwd || './script/Shell')
       let shname = surlName(remotesh[1])
@@ -211,10 +211,11 @@ async function execFunc(command, options={}, cb) {
 }
 
 function sysInfo() {
+  let tmem = os.totalmem()
   return {
     arch: os.arch(),
     platform: os.platform(),
-    memory: kSize(os.freemem()) + '/' + kSize(os.totalmem()),
+    memory: kSize(tmem - os.freemem()) + '/' + kSize(tmem),
     uptime: (os.uptime()/60/60/24).toFixed(2) + ' Days',
     nodever: process.version
   }
