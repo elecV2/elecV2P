@@ -1,12 +1,15 @@
 {
   "name": "elecV2P",
-  "version": "3.3.8",
+  "version": "3.4.0",
   "description": "customize personal network",
   "main": "index.js",
   "author": "https://github.com/elecV2",
   "repository": {
     "type": "git",
     "url": "https://github.com/elecV2/elecV2P"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   },
   "scripts": {
     "start": "pm2 start index.js -n elecV2P -o logs/pm2.log -e logs/pm2-error.log --no-daemon",

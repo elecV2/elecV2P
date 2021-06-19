@@ -50,7 +50,8 @@ module.exports = () => {
       next()
     } else {
       clog.error(ipAddress, 'trying to access elecV2P')
-      res.send('You don\'t have permission to access.<br>IP: ' + ipAddress + ' is recorded.<br><br>Powered BY elecV2P: https://github.com/elecV2/elecV2P')
+      res.writeHead(403, { 'Content-Type': 'text/html;charset=utf-8' })
+      res.end(`You don't have permission to access.<br>IP: ${ipAddress} is recorded.<br><br>Powered BY elecV2P: <a href='https://github.com/elecV2/elecV2P'>https://github.com/elecV2/elecV2P</a>`)
     }
   })
 
@@ -72,8 +73,8 @@ module.exports = () => {
   wbhook(app)
 
   app.use((req, res, next) => {
-    res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })
-    res.end(`404<br><br><a href="/">BACK TO HOME</a><br><br><br><a target="_blank" href="https://github.com/elecV2/elecV2P">elecV2P Github</a>`)
+    res.writeHead(404, { 'Content-Type': 'text/html;charset=utf-8' })
+    res.end(`404<br><br><a href="/">BACK TO HOME</a><br><br><br>Powered BY <a target="_blank" href="https://github.com/elecV2/elecV2P">elecV2P</a>`)
   })
 
   const server = http.createServer(app)

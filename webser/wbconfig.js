@@ -1,6 +1,6 @@
 const express = require('express')
 
-const { logger, setGlog, CONFIG_FEED, CONFIG_Axios, axProxy, list, file } = require('../utils')
+const { logger, setGlog, CONFIG_FEED, CONFIG_Axios, axProxy, list, file, sString } = require('../utils')
 const clog = new logger({ head: 'wbconfig' })
 
 const { CONFIG } = require('../config')
@@ -20,14 +20,15 @@ module.exports = app => {
     return dyn
   }
 
-  function efssSet(cefss){
+  function efssSet(cefss) {
     if (cefss.enable === false) {
       clog.notify('efss is closed')
       return {
         rescode: 0,
         message: 'efss is closed'
       }
-    } else {
+    }
+    if (cefss.directory) {
       const efssF = file.get(cefss.directory, 'path')
       if (file.isExist(efssF)) {
         clog.notify('efss directory set to', cefss.directory)
@@ -36,13 +37,16 @@ module.exports = app => {
           rescode: 0,
           message: 'reset efss directory success!'
         }
-      } else {
-        clog.error(cefss.directory + ' dont exist')
-        return {
-          rescode: 404,
-          message: cefss.directory + ' dont exist'
-        }
       }
+      clog.error(cefss.directory + ' dont exist')
+      return {
+        rescode: 404,
+        message: cefss.directory + ' dont exist'
+      }
+    }
+    return {
+      rescode: 0,
+      message: `efss set ${sString(cefss)}`
     }
   }
 
@@ -182,11 +186,14 @@ module.exports = app => {
         break
       case "security":
         CONFIG.SECURITY = req.body.data
-        if (CONFIG.SECURITY.enable === false) {
-          res.end('security access is cancelled.')
-        } else {
-          res.end('updata saved!')
+        let secmsg = {
+          rescode: 0,
+          message: 'security access is cancelled'
         }
+        if (CONFIG.SECURITY.enable) {
+          secmsg.message = 'security updated'
+        }
+        res.end(JSON.stringify(secmsg))
         break
       case "init":
         CONFIG.init = Object.assign(CONFIG.init || {}, req.body.data.CONFIG_init)

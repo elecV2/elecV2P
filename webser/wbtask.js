@@ -26,7 +26,10 @@ module.exports = app => {
         res.end(JSON.stringify(taskMa.delete(data.tid)))
         break
       case "test":
-        taskMa.test(data.task).then(tres=>{
+        Promise.race([
+          taskMa.test(data.task),
+          new Promise(resolve=>setTimeout(resolve, 5000, { rescode: 0, message: 'task still running...' }))
+        ]).then(tres=>{
           res.end(sString(tres))
         }).catch(e=>{
           res.end(sString(e.message || e))

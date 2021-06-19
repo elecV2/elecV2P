@@ -1,8 +1,7 @@
-const qs = require('qs')
 const cheerio = require('cheerio')
 
 const { CONFIG } = require('../config')
-const { errStack, euid, sType, sString, sJson, feedPush, iftttPush, barkPush, custPush, store, eAxios, jsfile, file, downloadfile, wsSer, message } = require('../utils')
+const { errStack, euid, sType, sString, sJson, bEmpty, feedPush, iftttPush, barkPush, custPush, store, eAxios, jsfile, file, downloadfile, wsSer, message } = require('../utils')
 
 const { exec } = require('../func/exec')
 // const clog = new logger({ head: 'context', level: 'debug' })
@@ -11,7 +10,6 @@ class contextBase {
   constructor({ fconsole, name }){
     this.console = fconsole
     this.__name  = name
-    this.$store.put = this.$store.put.bind(this)
   }
 
   setTimeout = setTimeout
@@ -29,11 +27,35 @@ class contextBase {
     get(key, type){
       return store.get(key, type)
     },
-    put(value, key, options) {
-      return store.put(value, key, { belong: this.__name, ...options })
+    put: (value, key, options) => {
+      if (sType(options) === 'object') {
+        if (!options.belong) {
+          options.belong = this.__name
+        }
+      } else {
+        options = {
+          belong: this.__name,
+          type: options
+        }
+      }
+      return store.put(value, key, options)
     }
   }
-  $axios = eAxios
+  $axios = (request)=>{
+    if (typeof(request) === 'string') {
+      request = {
+        url: request
+      }
+    }
+    if (CONFIG.CONFIG_RUNJS.white && CONFIG.CONFIG_RUNJS.white.enable && CONFIG.CONFIG_RUNJS.white.list && CONFIG.CONFIG_RUNJS.white.list.length && CONFIG.CONFIG_RUNJS.white.list.indexOf(this.__name) !== -1) {
+      // 白名单检测
+      request.token = CONFIG.wbrtoken
+    } else if (CONFIG.CONFIG_RUNJS.eaxioslog) {
+      // 白名单之外才显示 url
+      this.console.log(request.method || 'GET', request.url)
+    }
+    return eAxios(request, (CONFIG.CONFIG_RUNJS.proxy === false) ? false : null)
+  }
   $cheerio = cheerio
   $message = message
   alert = message.success
@@ -97,56 +119,27 @@ class contextBase {
   }
 }
 
-const formReq = {
-  headers(req) {
-    let newheaders = sJson(req.headers, true)
-    delete newheaders['Content-Length']
-    delete newheaders['content-length']
-    if (!newheaders['Content-Type'] && !newheaders['content-type']) {
-      newheaders['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
-    }
-    return newheaders
-  },
-  body(req) {
-    // if (sType(req) === 'string' || !req.method || req.method.toLowerCase() === 'get') return null
-    let reqb = req.data === undefined ? req.body : req.data
-    if (reqb !== undefined) {
-      if (!req.headers || Object.keys(req.headers).length === 0) {
-        return reqb
-      }
-      if (sType(reqb) === 'string' && (/json/i.test(req.headers["Content-Type"]) || /json/i.test(req.headers["content-type"]))) {
-        return sJson(reqb, true)
-      }
-      if (sType(reqb) === 'object' && (/x-www-form-urlencoded/i.test(req.headers["Content-Type"]) || /x-www-form-urlencoded/i.test(req.headers["content-type"]))) {
-        return qs.stringify(reqb)
-      }
-      return reqb
-    }
-    return null
-  },
-  uest(req, method) {
-    return {
-      url: req.url || req,
-      headers: this.headers(req),
-      method: req.method || method || 'get',
-      data: this.body(req)
-    }
-  }
-}
-
 class surgeContext {
   constructor({ fconsole, name }){
     this.fconsole = fconsole
-    this.name = name
-    this.$persistentStore.write = this.$persistentStore.write.bind(this)
+    this.__name = name
   }
 
   surgeRequest(req, cb) {
+    if (typeof(req) === 'string') {
+      req = {
+        url: req
+      }
+    }
+    if (CONFIG.CONFIG_RUNJS.white && CONFIG.CONFIG_RUNJS.white.enable && CONFIG.CONFIG_RUNJS.white.list && CONFIG.CONFIG_RUNJS.white.list.length && CONFIG.CONFIG_RUNJS.white.list.indexOf(this.__name) !== -1) {
+      req.token = CONFIG.wbrtoken
+    } else if (CONFIG.CONFIG_RUNJS.eaxioslog) {
+      this.fconsole.log(req.method || 'GET', req.url)
+    }
     let error = null,
         resps = {},
         sbody  = ''
-    req = formReq.uest(req)
-    eAxios(req).then(response=>{
+    eAxios(req, (CONFIG.CONFIG_RUNJS.proxy === false) ? false : null).then(response=>{
       resps = {
         status: response.status,
         headers: response.headers,
@@ -156,20 +149,19 @@ class surgeContext {
       }
       sbody = sString(response.data)
     }).catch(err=>{
-      this.fconsole.error('$httpClient', req.method, req.url, err.message)
+      error = errStack(err)
+      this.fconsole.error('$httpClient', req.method || 'GET', req.url || req, error)
       if (err.response) {
-        error = err.message
         resps = {
           status: err.response.status,
           headers: err.response.headers,
         }
         sbody = sString(err.response.data)
       } else if (err.request) {
-        error = `$httpClient ${req.method} ${req.url} error: ${err.message}`
+        error = `$httpClient ${req.method} ${req.url} error: ${error}`
         sbody = sString(req)
       } else {
-        error = err.message
-        sbody = errStack(err)
+        sbody = error
       }
     }).finally(()=>{
       if(cb && sType(cb) === 'function') {
@@ -215,8 +207,8 @@ class surgeContext {
     read(key) {
       return store.get(key, 'string')
     },
-    write(value, key){
-      return store.put(value, key, { belong: this.name })
+    write: (value, key) => {
+      return store.put(value, key, { belong: this.__name })
     }
   }
   $notification = {
@@ -230,16 +222,24 @@ class surgeContext {
 class quanxContext {
   constructor({ fconsole, name }){
     this.fconsole = fconsole
-    this.name = name
-    this.$prefs.setValueForKey = this.$prefs.setValueForKey.bind(this)
+    this.__name = name
   }
 
   $task = {
     fetch: (req, cb) => {
+      if (typeof(req) === 'string') {
+        req = {
+          url: req
+        }
+      }
+      if (CONFIG.CONFIG_RUNJS.white && CONFIG.CONFIG_RUNJS.white.enable && CONFIG.CONFIG_RUNJS.white.list && CONFIG.CONFIG_RUNJS.white.list.length && CONFIG.CONFIG_RUNJS.white.list.indexOf(this.__name) !== -1) {
+        req.token = CONFIG.wbrtoken
+      } else if (CONFIG.CONFIG_RUNJS.eaxioslog) {
+        this.fconsole.log(req.method || 'GET', req.url)
+      }
       let resp = null
-      req = formReq.uest(req)
       return new Promise((resolve, reject) => {
-        eAxios(req).then(response=>{
+        eAxios(req, (CONFIG.CONFIG_RUNJS.proxy === false) ? false : null).then(response=>{
           resp = {
             statusCode: response.status,
             headers: response.headers,
@@ -250,8 +250,8 @@ class quanxContext {
           }
           resolve(resp)
         }).catch(error=>{
-          this.fconsole.error('$task.fetch', req.url, error.stack)
           resp = errStack(error)
+          this.fconsole.error('$task.fetch', req.url, resp)
           reject({ error: resp })
         }).finally(()=>{
           if(cb && sType(cb) === 'function') {
@@ -272,8 +272,8 @@ class quanxContext {
     valueForKey(key) {
       return store.get(key, 'string')
     },
-    setValueForKey(value, key) {
-      return store.put(value, key, { belong: this.name })
+    setValueForKey: (value, key)=>{
+      return store.put(value, key, { belong: this.__name })
     }
   }
   $notify = (...data)=>{

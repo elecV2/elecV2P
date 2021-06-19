@@ -161,6 +161,7 @@ function getrules($request, $response, lists) {
     resbody: $response ? $response.body : ""
   }
   for (let mr of lists) {
+    // 逐行正则匹配，待优化
     if ((new RegExp(mr.match)).test(matchobj[mr.mtype])) {
       clog.info("match rule:", mr.mtype, mr.match, mr.ctype, mr.target, mr.stage)
       return mr
@@ -328,7 +329,7 @@ module.exports = {
           }
           if (jsres.rescode === -1 && jsres.error) {
             return resolve({
-              response: { ...localResponse.reject, body: 'error on elecV2P modify rule: ' + matchreq.join(', ') + '\n' + (jsres.stack || jsres.error) }
+              response: { ...localResponse.reject, body: 'error on elecV2P modify rule: ' + matchreq.target + '\n' + (jsres.stack || jsres.error) }
             })
           }
           // 请求信息修改

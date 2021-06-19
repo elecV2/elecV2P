@@ -2,7 +2,7 @@ const os = require('os')
 const { taskMa, exec } = require('../func')
 const { CONFIG_RULE, runJSFile, JSLISTS } = require('../script')
 
-const { logger, LOGFILE, Jsfile, nStatus, sJson, sString, sType, stream, downloadfile, now, checkupdate, store, kSize, errStack } = require('../utils')
+const { logger, LOGFILE, Jsfile, list, nStatus, sJson, sString, sType, surlName, sBool, stream, downloadfile, now, checkupdate, store, kSize, errStack } = require('../utils')
 const clog = new logger({ head: 'webhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -11,11 +11,17 @@ function handler(req, res){
   const rbody = req.method === 'GET' ? req.query : req.body
   res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
   if (!CONFIG.wbrtoken) {
-    res.end('webhook token not set yet')
+    res.end(JSON.stringify({
+      rescode: -1,
+      message: 'webhook token not set yet'
+    }))
     return
   }
   if (rbody.token !== CONFIG.wbrtoken) {
-    res.end('token is illegal')
+    res.end(JSON.stringify({
+      rescode: -1,
+      message: 'token is illegal'
+    }))
     return
   }
   const clientip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
@@ -28,20 +34,25 @@ function handler(req, res){
   case 'runjs':
     let fn = rbody.fn || ''
     if (!rbody.rawcode && !fn) {
-      clog.info('can\'t find any javascript code to run', fn)
-      res.end('can\'t find any javascript code to run ' + fn)
+      clog.info('can\'t find any javascript code to run')
+      res.end(JSON.stringify({
+        rescode: -1,
+        message: 'can\'t find any javascript code to run'
+      }))
     } else {
       const addContext = {
         type: 'webhook'
       }
-      let showfn = /^https?:/.test(fn) ? fn.split('/').pop() : fn
+      let showfn = surlName(fn)
       if (rbody.rawcode) {
         addContext.type = 'rawcode'
-        addContext.from = 'webhook'
         fn = rbody.rawcode
         showfn = 'rawcode.js'
       }
       if (rbody.rename) {
+        if (!/\.js$/i.test(rbody.rename)) {
+          rbody.rename += '.js'
+        }
         addContext.rename = rbody.rename
         showfn = rbody.rename
         if (JSLISTS.indexOf(rbody.rename) === -1) {
@@ -54,7 +65,9 @@ function handler(req, res){
           addContext[env.startsWith('$') ? env : ('$' + env)] = senv[env]
         }
       }
-      runJSFile(fn, { ...addContext }).then(data=>{
+      addContext.from = 'webhook'
+      addContext.timeout = 5000
+      runJSFile(fn, addContext).then(data=>{
         if (data) {
           res.write(sString(data))
         } else {
@@ -63,19 +76,73 @@ function handler(req, res){
       }).catch(error=>{
         res.write('error: ' + error)
       }).finally(()=>{
-        res.end(`\n\nconsole log file: ${req.protocol}://${req.get('host')}/logs/${showfn.split('/').join('-')}.log\n\n${LOGFILE.get(showfn+'.log') || ''}`)
+        res.write(`\n\nconsole log file: ${req.protocol}://${req.get('host')}/logs/${showfn.replace(/\/|\\/g, '-')}.log\n\n`)
+        let oldlog = LOGFILE.get(showfn+'.log')
+        if (oldlog) {
+          oldlog.pipe(res)
+        }
       })
     }
     break
   case 'deljs':
+  case 'jsdel':
   case 'deletejs':
+  case 'jsdelete':
     let jsfn = rbody.fn
     clog.info(clientip, 'delete javascript file', jsfn)
     if (Jsfile.delete(jsfn)) {
+      res.end(JSON.stringify({
+        rescode: 0,
+        message: jsfn + ' success deleted'
+      }))
       JSLISTS.splice(JSLISTS.indexOf(jsfn), 1)
-      res.end(jsfn + ' success deleted')
     } else {
-      res.end(jsfn + ' javascript file don\'t exist')
+      res.end(JSON.stringify({
+        rescode: -1,
+        message: jsfn + ' javascript file don\'t exist'
+      }))
+    }
+    break
+  case 'jsfile':
+    if (!rbody.fn) {
+      res.end(JSON.stringify({
+        rescode: -1,
+        message: 'a parameter fn is expect'
+      }))
+      return
+    }
+    switch (rbody.op) {
+    case 'put':
+      if (!rbody.rawcode) {
+        res.end(JSON.stringify({
+          rescode: -1,
+          message: 'a parameter rawcode is expect'
+        }))
+        return
+      }
+      if (Jsfile.put(rbody.fn, rbody.rawcode)) {
+        res.end(JSON.stringify({
+          rescode: 0,
+          message: 'success save ' + rbody.fn
+        }))
+      } else {
+        res.end(JSON.stringify({
+          rescode: -1,
+          message: 'fail to save ' + rbody.fn
+        }))
+      }
+      break
+    case 'get':
+    default:
+      let jsfilecont = Jsfile.get(rbody.fn)
+      if (jsfilecont) {
+        res.end(jsfilecont)
+      } else {
+        res.end(JSON.stringify({
+          rescode: -1,
+          message: rbody.fn + ' not exist'
+        }))
+      }
     }
     break
   case 'logdelete':
@@ -83,15 +150,24 @@ function handler(req, res){
     let name = rbody.fn
     clog.info(clientip, 'delete log', name)
     if (LOGFILE.delete(name)) {
-      res.end(name + ' success deleted')
+      res.end(JSON.stringify({
+        rescode: 0,
+        message: name + ' success deleted'
+      }))
     } else {
-      res.end(name + ' log file don\'t exist')
+      res.end(JSON.stringify({
+        rescode: 404,
+        message: name + ' log file don\'t exist'
+      }))
     }
     break
   case 'logget':
   case 'getlog':
     if (!rbody.fn) {
-      res.end('parameter fn is expect')
+      res.end(JSON.stringify({
+        rescode: -1,
+        message: 'parameter fn is expect'
+      }))
       return
     }
     clog.info(clientip, 'get log', rbody.fn)
@@ -100,10 +176,13 @@ function handler(req, res){
       if (sType(logcont) === 'array') {
         res.end(JSON.stringify(logcont))
       } else {
-        res.end(logcont)
+        logcont.pipe(res)
       }
     } else {
-      res.end(rbody.fn + ' log file don\'t exist')
+      res.end(JSON.stringify({
+        rescode: 404,
+        message: rbody.fn + ' log file don\'t exist'
+      }))
     }
     break
   case 'status':
@@ -155,18 +234,27 @@ function handler(req, res){
     break
   case 'download':
   case 'downloadfile':
-    clog.notify(clientip, 'ready download file to efss')
-    if (rbody.url && rbody.url.startsWith('http')) {
-      downloadfile(rbody.url).then(dest=>{
+    clog.notify(clientip, 'start download file to', rbody.folder || 'efss')
+    if (rbody.url && /^https?:\/\/\S{4,}/.test(rbody.url)) {
+      downloadfile(rbody.url, { folder: rbody.folder, name: rbody.name }).then(dest=>{
         clog.info(rbody.url, 'download to', dest)
-        res.end('success download ' + rbody.url + ' to efss')
+        res.end(JSON.stringify({
+          rescode: 0,
+          message: 'success download ' + rbody.url + ' to ' + dest
+        }))
       }).catch(e=>{
         clog.error('download', rbody.url, 'error', e)
-        res.end('fail to download ' + rbody.url + 'error: ' + e)
+        res.end(JSON.stringify({
+          rescode: -1,
+          message: 'fail to download ' + rbody.url + ' error: ' + e
+        }))
       })
     } else {
       clog.error('wrong download url', rbody.url)
-      res.end('wrong download url')
+      res.end(JSON.stringify({
+        rescode: -1,
+        message: 'wrong download url ' + rbody.url
+      }))
     }
     break
   case 'stream':
@@ -198,7 +286,7 @@ function handler(req, res){
         cb(data, error, finish) {
           error ? clog.error(error) : clog.info(data)
           if (finish) {
-            res.end('\ncommand: ' + command + ' finished.')
+            res.end('\ncommand: ' + command + ' finished')
           } else {
             res.write(error || data)
           }
@@ -212,7 +300,10 @@ function handler(req, res){
       }
       exec(command, option)
     } else {
-      res.end('command parameter is expected.')
+      res.end(JSON.stringify({
+        rescode: -1,
+        message: 'command parameter is expected'
+      }))
     }
     break
   case 'info':
@@ -256,6 +347,7 @@ function handler(req, res){
 
       elecV2PInfo.system.userInfo = os.userInfo()
       elecV2PInfo.system.uptime = (os.uptime()/60/60).toFixed(2) + ' hours'
+      elecV2PInfo.system.loadavg = os.loadavg()
       elecV2PInfo.system.cpus = os.cpus()
       elecV2PInfo.system.networkInterfaces = os.networkInterfaces()
 
@@ -329,12 +421,67 @@ function handler(req, res){
       }
     }
     break
+  case 'security':
+    if (rbody.op !== 'put') {
+      res.end(JSON.stringify(CONFIG.SECURITY))
+      return
+    }
+    let secMsg = ''
+    if (rbody.enable !== undefined) {
+      CONFIG.SECURITY.enable = sBool(rbody.enable)
+      secMsg = `SECURITY enable: ${CONFIG.SECURITY.enable}\n`
+    }
+    if (rbody.blacklist !== undefined) {
+      let secbltype = sType(rbody.blacklist)
+      if (secbltype === 'array') {
+        CONFIG.SECURITY.blacklist = rbody.blacklist
+      } else if (secbltype === 'string') {
+        CONFIG.SECURITY.blacklist = rbody.blacklist.split(/\r|\n|,/).filter(v=>v.trim())
+      } else {
+        res.end(JSON.stringify({
+          rescode: -1,
+          message: 'blacklist type is wrong'
+        }))
+        return
+      }
+      secMsg += `SECURITY blacklist is updated\n`
+    }
+    if (rbody.whitelist !== undefined) {
+      let secwltype = sType(rbody.whitelist)
+      if (secwltype === 'array') {
+        CONFIG.SECURITY.whitelist = rbody.whitelist
+      } else if (secwltype === 'string') {
+        CONFIG.SECURITY.whitelist = rbody.whitelist.split(/\r|\n|,/).filter(v=>v.trim())
+      } else {
+        res.end(JSON.stringify({
+          rescode: -1,
+          message: 'whitelist type is wrong'
+        }))
+        return
+      }
+      secMsg += `SECURITY whitelist is updated`
+    }
+    if (secMsg) {
+      list.put('config.json', CONFIG)
+    }
+    res.end(JSON.stringify({
+      rescode: 0,
+      message: secMsg.trim() || 'SECURITY config not changed',
+      SECURITY: CONFIG.SECURITY
+    }))
+    break
   case 'devdebug':
     // temp debug
-    if (rbody.get === 'rule') {
+    switch(rbody.get){
+    case 'rule':
       res.end(JSON.stringify(CONFIG_RULE))
+      break
+    case 'config':
+      res.end(JSON.stringify(CONFIG))
+      break
+    default:
+      res.end('dev debug')
     }
-    res.end('dev debug')
     break
   case 'help':
     // 待完成 unfinished
@@ -382,7 +529,10 @@ function handler(req, res){
     }))
     break
   default:
-    res.end('wrong webhook type ' + rbody.type)
+    res.end(JSON.stringify({
+      rescode: -1,
+      message: 'wrong webhook type ' + rbody.type
+    }))
   }
 }
 

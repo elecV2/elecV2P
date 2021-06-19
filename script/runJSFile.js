@@ -15,14 +15,21 @@ const CONFIG_RUNJS = {
   intervals: 86400,       // 远程 JS 更新时间，单位：秒。 默认：86400(一天)。0: 有则不更新
   numtofeed: 50,          // 每运行 { numtofeed } 次 JS, 添加一个 Feed item。0: 不通知
 
-  jslogfile: true,        // 是否将 JS 运行日志保存到 logs 文件夹    
+  jslogfile: true,        // 是否将 JS 运行日志保存到 logs 文件夹
+  eaxioslog: false,       // 打印/保存网络请求 url 到日志
+  proxy: true,            // 是否应用网络请求设置中的代理（如有）
+
+  white: {                // 白名单脚本。放行所有网络请求，不进行屏蔽检测
+    enable: false,
+    list: []
+  }
 }
 
 if (CONFIG.CONFIG_RUNJS) {
   Object.assign(CONFIG_RUNJS, CONFIG.CONFIG_RUNJS)
-} else {
-  CONFIG.CONFIG_RUNJS = CONFIG_RUNJS
 }
+// 同步 CONFIG 数据
+CONFIG.CONFIG_RUNJS = CONFIG_RUNJS
 
 // 初始化脚本运行
 if (CONFIG.init && CONFIG.init.runjs) {
@@ -48,7 +55,7 @@ const runstatus = {
  */
 async function taskCount(filename) {
   if (/test/.test(filename) || CONFIG_RUNJS.numtofeed === 0) {
-    clog.debug(filename, 'match key word: test, or by set, skip count run times')
+    clog.debug(filename, 'match key word: test, or skip count run times by set')
     return
   }
   if (runstatus.detail[filename]) {
@@ -100,27 +107,42 @@ function runJS(filename, jscode, addContext={}) {
     delete addContext.type
   }
 
-  let fconsole = null
-  if (/^\/\/ +@grant +(still|silent)$/m.test(jscode)) {
-    fconsole = { log(){},err(){},info(){},error(){},notify(){},debug(){} }
-  } else if (/^\/\/ +@grant +calm$/m.test(jscode)) {
-    fconsole = new logger({ head: filename, level: 'error', file: CONFIG_RUNJS.jslogfile ? filename : false })
-  } else {
+  let fconsole = null,
+      bGrant   = false
+  if (/^\/\/ +@grant/m.test(jscode)) {
+    bGrant = true
+  }
+  const compatible = {
+    surge: false,          // Surge 脚本调试模式
+    quanx: false,          // Quanx 脚本调试模式。都为 false 时，会进行自动判断
+    nodejs: false,         // nodejs 运行模式，不对脚本进行兼容判断
+    require: false         // 启用 nodeJS require 函数。不开启时会自动进行判断
+  }
+  if (bGrant) {
+    // compatiable 判断
+    if (/^\/\/ +@grant +nodejs$/m.test(jscode)) {
+      compatible.nodejs = true
+    } else if (/^\/\/ +@grant +surge$/m.test(jscode)) {
+      compatible.surge = true
+    } else if (/^\/\/ +@grant +quanx$/m.test(jscode)) {
+      compatible.quanx = true
+    }
+    // 日志显示类型判断
+    if (/^\/\/ +@grant +(still|silent)$/m.test(jscode)) {
+      fconsole = { log(){},err(){},info(){},error(){},notify(){},debug(){},clear(){} }
+    } else if (/^\/\/ +@grant +calm$/m.test(jscode)) {
+      fconsole = new logger({ head: filename, level: 'error', file: CONFIG_RUNJS.jslogfile ? filename : false })
+    }
+  }
+  if (!fconsole) {
     fconsole = new logger({ head: filename, level: 'debug', file: CONFIG_RUNJS.jslogfile ? filename : false, cb })
   }
   const CONTEXT = new context({ fconsole, name: filename })
 
-  const compatible = {
-    surge: false,          // Surge 脚本调试模式
-    quanx: false,          // Quanx 脚本调试模式。都为 false 时，会进行自动判断
-    require: false         // 启用 NodeJS require 函数。不开启时会自动进行判断
-  }
-  if (/^\/\/ +@grant +surge$/m.test(jscode)) {
-    compatible.surge = true
-  } else if (/^\/\/ +@grant +quanx$/m.test(jscode)) {
-    compatible.quanx = true
-  }
-  if (compatible.surge || (compatible.quanx === false && /\$httpClient|\$persistentStore|\$notification/.test(jscode))) {
+  if (compatible.nodejs) {
+    CONTEXT.final.module = module
+    CONTEXT.final.process = process
+  } else if (compatible.surge || (compatible.quanx === false && /\$httpClient|\$persistentStore|\$notification/.test(jscode))) {
     clog.debug(`${filename} compatible with Surge script`)
     CONTEXT.add({ surge: true })
   } else if (compatible.quanx || /\$task|\$prefs|\$notify/.test(jscode)) {
@@ -129,7 +151,7 @@ function runJS(filename, jscode, addContext={}) {
   } else if (/require\(/.test(jscode)) {
     compatible.require = true
   }
-  if (compatible.require || /^\/\/ +@grant +require/m.test(jscode)) {
+  if (compatible.nodejs || compatible.require || (bGrant && /^\/\/ +@grant +require/m.test(jscode))) {
     CONTEXT.final.require = (path)=>{
       const locfile = file.path(Jsfile.get(filename, 'dir'), /\.js$/i.test(path) ? path : path + '.js')
       if (file.isExist(locfile)) {
@@ -140,7 +162,7 @@ function runJS(filename, jscode, addContext={}) {
     CONTEXT.final.require.cache = require.cache
     CONTEXT.final.require.resolve = require.resolve
   }
-  if (/^\/\/ +@grant +(quiet|silent)$/m.test(jscode)) {
+  if (bGrant && /^\/\/ +@grant +(quiet|silent)$/m.test(jscode)) {
     CONTEXT.final.$feed = { push(){}, bark(){}, ifttt(){}, cust(){} }
     if (CONTEXT.final.$notify) {
       CONTEXT.final.$notify = ()=>{}
@@ -169,12 +191,14 @@ function runJS(filename, jscode, addContext={}) {
     try {
       if (bDone) {
         CONTEXT.final.ok = euid() + Date.now()
-        let vmtout = null
-        if (CONFIG_RUNJS.timeout > 0) {
+        let vmtout = null,
+            tout = addContext.timeout || CONFIG_RUNJS.timeout
+        if (tout > 0) {
           vmtout = setTimeout(()=>{
-            vmEvent.emit(CONTEXT.final.ok, 'run ' + filename + ' timeout of ' + CONFIG_RUNJS.timeout + ' ms')
-            clog.debug('run', filename, 'timeout of', CONFIG_RUNJS.timeout, 'ms')
-          }, CONFIG_RUNJS.timeout)
+            let message = addContext.timeout ? `${filename} still running...` : `run ${filename} timeout of ${tout} ms`
+            vmEvent.emit(CONTEXT.final.ok, message)
+            clog.debug(message)
+          }, tout)
         }
 
         vmEvent.once(CONTEXT.final.ok, (data)=>{
@@ -196,7 +220,12 @@ function runJS(filename, jscode, addContext={}) {
       }
     } catch(error) {
       fconsole.error(error.stack)
-      resolve({ rescode: -1, error: error.message, stack: error.stack })
+      let result = { error: error.message }
+      if (addContext.from === 'rule' || addContext.from === 'webhook') {
+        result.rescode = -1
+        result.stack = error.stack
+      }
+      resolve(result)
     }
   })
 }
@@ -279,10 +308,16 @@ async function runJSFile(filename, addContext={}) {
     return Promise.resolve(`${filename} not exist`)
   }
   if (addContext.rename) {
+    if (!/\.js$/i.test(addContext.rename)) {
+      addContext.rename += '.js'
+    }
     Jsfile.put(addContext.rename, rawjs)
     filename = addContext.rename
   } else if (addContext.type === 'rawcode') {
     filename = addContext.filename || addContext.from || 'rawcode.js'
+    if (!/\.js$/i.test(filename)) {
+      filename += '.js'
+    }
   }
 
   return new Promise((resolve, reject)=>{

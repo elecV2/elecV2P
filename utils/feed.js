@@ -49,9 +49,10 @@ const CONFIG_FEED = {
 if (CONFIG.CONFIG_FEED) {
   CONFIG_FEED.rss.homepage = CONFIG.homepage
   Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
-} else {
-  CONFIG.CONFIG_FEED = CONFIG_FEED
 }
+// 同步 CONFIG 数据
+CONFIG.CONFIG_FEED = CONFIG_FEED
+
 let feed = feedNew({})
 
 function feedNew({ title = 'elecV2P notification', description = 'elecV2P 运行记录通知', ttl = 10 }) {
@@ -84,12 +85,12 @@ function iftttPush(title, description, url) {
     if (bEmpty(title)) {
       title = 'elecV2P 通知'
     } else {
-      title = sString(title).trim().replace(/^\$enable\$/, '')
+      title = sString(title).replace(/^\$enable\$/, '')
     }
     if (bEmpty(description)) {
       description = 'a empty message\n没有任何通知内容'
     } else {
-      description = sString(description).trim()
+      description = sString(description)
     }
     const body = {
       value1: title
@@ -108,7 +109,8 @@ function iftttPush(title, description, url) {
       headers: {
         'Content-Type': 'application/json; charset=UTF-8'
       },
-      data: body
+      data: body,
+      token: CONFIG.wbrtoken
     }).then(res=>{
       clog.debug('iftttPush result:', res.data)
     }).catch(e=>{
@@ -128,12 +130,12 @@ function barkPush(title, description, url) {
     if (bEmpty(title)) {
       title = 'elecV2P 通知'
     } else {
-      title = sString(title).trim().replace(/^\$enable\$/, '')
+      title = sString(title).replace(/^\$enable\$/, '')
     }
     if (bEmpty(description)) {
       description = 'a empty message\n没有任何通知内容'
     } else {
-      description = sString(description).trim()
+      description = sString(description)
     }
     let pushurl = ''
     if (CONFIG_FEED.barkkey.key.startsWith('http')) {
@@ -155,7 +157,8 @@ function barkPush(title, description, url) {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
       },
-      data: `title=${encodeURI(title)}&body=${encodeURI(description)}`
+      data: `title=${encodeURI(title)}&body=${encodeURI(description)}`,
+      token: CONFIG.wbrtoken
     }).then(res=>{
       clog.debug('barkPush result:', res.data)
     }).catch(e=>{
@@ -175,7 +178,7 @@ function custPush(title, description, url) {
     if (bEmpty(title)) {
       title = 'elecV2P 通知'
     } else {
-      title = sString(title).trim().replace(/^\$enable\$/, '')
+      title = sString(title).replace(/^\$enable\$/, '')
     }
     if (bEmpty(description)) {
       description = 'a empty message\n没有任何通知内容'
@@ -186,7 +189,8 @@ function custPush(title, description, url) {
       url: CONFIG_FEED.custnotify.url,
       headers: {},
       method: CONFIG_FEED.custnotify.type,
-      data: sString(CONFIG_FEED.custnotify.data)
+      data: sString(CONFIG_FEED.custnotify.data),
+      token: CONFIG.wbrtoken
     }
     url = formUrl(url)
     req.url = req.url.replace(/\$title\$/g, title)
@@ -226,16 +230,16 @@ function feedPush(title, description, url) {
   if (bEmpty(title)) {
     title = 'elecV2P 通知'
   } else {
-    title = sString(title).trim()
+    title = sString(title)
   }
   if (bEmpty(description)) {
     description = 'a empty message\n没有任何通知内容'
   } else {
-    description = sString(description).trim()
+    description = sString(description)
   }
   url = formUrl(url)
   if (CONFIG_FEED.webmessage && CONFIG_FEED.webmessage.enable) {
-    message.success(`【elecV2P 网页通知】 ${title}\n${description}\n${url || ''}`, 10)
+    message.success(`【elecV2P 网页通知】 ${title}\n${description}\n${url || ''}`, { secd: 10, url })
   }
   if (CONFIG_FEED.rss.enable) {
     const date = new Date()

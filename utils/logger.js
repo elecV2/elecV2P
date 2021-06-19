@@ -6,6 +6,7 @@ const { sString, bEmpty } = require('./string')
 const { CONFIG } = require('../config')
 
 const CONFIG_LOG = {
+  logspath: path.join(__dirname, '../logs'),
   levels: {
     error: 0,
     notify: 1,
@@ -16,13 +17,9 @@ const CONFIG_LOG = {
   globalLevel: CONFIG.gloglevel || 'info'
 }
 
-CONFIG_LOG.logspath = function(){
-  const logFolder = path.join(__dirname, '../logs')
-  if(!fs.existsSync(logFolder)) {
-    fs.mkdirSync(logFolder)
-  }
-  return logFolder
-}();
+if(!fs.existsSync(CONFIG_LOG.logspath)) {
+  fs.mkdirSync(CONFIG_LOG.logspath)
+}
 
 class logger {
   _head = 'elecV2P'
@@ -115,20 +112,42 @@ class logger {
 const clog = new logger({ head: 'logger', level: 'debug' })
 
 const LOGFILE = {
+  streamList: {},
+  streamFile(name){
+    if (!this.streamList[name]) {
+      this.streamList[name] = fs.createWriteStream(name, { flags: 'a' })
+      setTimeout(()=>{
+        this.streamList[name].end()
+      }, 5000)
+      clog.debug('stream', name, 'created')
+      this.streamList[name].on('close', ()=>{
+        clog.debug(name + ' stream closed')
+        delete this.streamList[name]
+      })
+      this.streamList[name].on('error', ()=>{
+        clog.debug(name + ' stream error')
+        delete this.streamList[name]
+      })
+    }
+    return this.streamList[name]
+  },
   put(filename, data){
-    if (!filename || !data) return
+    if (!filename || !data) {
+      return
+    }
     filename = filename.trim()
-    fs.appendFile(path.join(CONFIG_LOG.logspath, filename.split(/\/|\\/).join('-')), sString(data) + '\n', (err) => {
-      if (err) clog.error(err)
-    })
+    let file = this.streamFile(path.join(CONFIG_LOG.logspath, filename.replace(/\/|\\/g, '-')))
+    file.write(sString(data) + '\n')
   },
   get(filename){
-    if (!filename) return
+    if (!filename) {
+      return
+    }
     filename = filename.trim()
     if (filename === 'all') {
       return fs.readdirSync(CONFIG_LOG.logspath)
     }
-    filename = filename.split(/\/|\\/).join('-')
+    filename = filename.replace(/\/|\\/g, '-')
     let fnmatch = filename.match(/^__(.+)__/)
     if (fnmatch && fnmatch[1]) {
       filename = filename.replace('__' + fnmatch[1] + '__', fnmatch[1] + '/')
@@ -138,7 +157,7 @@ const LOGFILE = {
       if (fs.statSync(logfpath).isDirectory()) {
         return fs.readdirSync(logfpath)
       }
-      return fs.readFileSync(logfpath, "utf8")
+      return fs.createReadStream(logfpath)
     }
     clog.info(filename, 'don\'t existed')
   },
@@ -218,7 +237,9 @@ function alignHead(head) {
   }
   if (head.length > CONFIG_LOG.alignHeadlen) {
     const sp = head.split(/\/|\\/)
-    if (sp.length > 1) head = sp[0].slice(0,1) + path.sep + sp.pop()
+    if (sp.length > 1) {
+      head = sp[0].slice(0,1) + '/' + sp.pop()
+    }
     const nstr = head.split(' ').pop()
     return head.slice(0, CONFIG_LOG.alignHeadlen-6-nstr.length) + '...' + head.slice(-nstr.length-3)
   }

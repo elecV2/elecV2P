@@ -221,4 +221,12 @@ function progressBar({step=0, total, name='file', initLength=50}) {
   return `${name} [${procbar}] ${endtip}`
 }
 
-module.exports = { euid, UUID, iRandom, sJson, sString, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, escapeHtml, surlName, progressBar }
+function btoa(str = 'Hello elecV2P!') {
+  return Buffer.from(str).toString('base64')
+}
+
+function atob(b64 = 'SGVsbG8gZWxlY1YyUCE=') {
+  return Buffer.from(b64, 'base64').toString()
+}
+
+module.exports = { euid, UUID, iRandom, sJson, sString, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, escapeHtml, surlName, progressBar, btoa, atob }

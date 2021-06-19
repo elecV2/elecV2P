@@ -1,4 +1,16 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.3.8)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.4.0)
+
+v3.4.0
+ • 增加显示脚本内网络请求 url 的选项
+ • eAxios 网络请求增加黑/白名单模式
+ • 脚本内网络请求可设置不使用代理
+ • @grant 增加 nodejs 兼容模式
+ • <a href='https://github.com/elecV2/elecV2P-dei/tree/master/docs/09-webhook.md' target='_blank'>webhook</a> download 支持设置目录及文件名
+ • EFSS 右键显示文件地址及目录支持 $temp
+ • 单个 cookie 导出/导入
+ • 取消 TASK 转圈动画及移动端显示优化
+
+v3.3.9  (无)
 
 v3.3.8  2021.05.23
  • REWRITE list JSON 化完成

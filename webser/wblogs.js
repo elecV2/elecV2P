@@ -7,10 +7,8 @@ module.exports = app => {
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get logs", filename)
     let logs = LOGFILE.get(filename)
     if (!logs) {
-      res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
-      logs === undefined 
-      ? res.end(`404: ${filename} don't exist`)
-      : res.end(`${filename} is empty`)
+      res.writeHead(404, { 'Content-Type': 'text/plain;charset=utf-8' })
+      res.end(`404: ${filename} don't exist`)
       return
     }
     res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })
@@ -25,7 +23,18 @@ module.exports = app => {
       res.end()
     } else {
       res.write(`<title>${filename} - elecV2P</title><style>.logs{background:#1890ff;border-radius:10px;color:#fff;font-family:consolas, monospace;font-size:18px;height:fit-content; overflow-wrap:break-word;padding:8px 12px;text-decoration:none; white-space:pre-wrap; word-break:break-word;}</style>`)
-      res.end(`<div class='logs'>${escapeHtml(logs)}</div>`)
+      logs.on('open', ()=>{
+        res.write(`<div class='logs'>`)
+      })
+      logs.on('data', (chunk)=>{
+        res.write(escapeHtml(chunk.toString()))
+      })
+      logs.on("close", ()=>{
+        res.end(`</div>`)
+      })
+      logs.on('error', (err)=>{
+        res.end(err)
+      })
     }
   })
 

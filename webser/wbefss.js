@@ -1,9 +1,10 @@
 const formidable = require('formidable')
 
-const { logger, file, errStack } = require('../utils')
-const clog = new logger({ head: 'wbefss' })
+const { logger, file, sType, sString, errStack } = require('../utils')
+const clog = new logger({ head: 'wbefss', level: 'debug' })
 
 const { CONFIG } = require('../config')
+const { runJSFile } = require('../script')
 
 const CONFIG_efss = {
   enable: true,            // 默认开启。关闭： false
@@ -16,7 +17,61 @@ const CONFIG_efss = {
 
 CONFIG.efss = Object.assign(CONFIG_efss, CONFIG.efss)
 
+function favend(req, res, next) {
+  // efss favorite and backend(待完成)
+  if (!req.params.favend) {
+    next()
+  }
+  clog.debug('efss favend', req.params.favend)
+  let fend = CONFIG.efss.favend && CONFIG.efss.favend[req.params.favend]
+  if (fend && fend.enable !== false) {
+    switch(fend.type) {
+    case 'runjs':
+      let $response = {
+        headers: {
+          'Content-Type': 'text/plain;charset=utf-8'
+        }
+      }
+      runJSFile(fend.target, {
+        $request: {
+          protocol: req.protocol,
+          headers: req.headers,
+          method: req.method,
+          hostname: req.hostname,
+          path: req.path,
+          url: `${req.protocol}://${req.get('host')}${req.originalUrl}`,
+          body: req.method === 'GET' ? req.query : req.body,
+          key: req.params.favend
+        },
+        from: `efss/${req.params.favend}`
+      }).then(jsres=>{
+        if (sType(jsres) === 'object') {
+          Object.assign($response, jsres.response || jsres)
+        } else {
+          $response.body = sString(jsres)
+        }
+      }).catch(e=>{
+        $response.body += '\nerror on run js' + fend.target + errStack(e)
+        clog.error('error on run js', fend.target, errStack(e))
+      }).finally(()=>{
+        res.writeHead(200, $response.headers || {'Content-Type': 'text/plain;charset=utf-8'})
+        res.end($response.body)
+      })
+      break
+    default:
+      res.end(`unknow favend type ${fend.type}`)
+    }
+    return
+  }
+  clog.debug('efss favend match none, skip')
+  next()
+}
+
 module.exports = app => {
+  app.get("/efss/:favend*", favend)
+  app.put("/efss/:favend*", favend)
+  app.post("/efss/:favend*", favend)
+
   app.get('/sefss', (req, res)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'get efss resource')
 

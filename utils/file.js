@@ -1,5 +1,6 @@
 const fs = require('fs')
 const path = require('path')
+const os = require('os')
 
 const { errStack, sJson, sString, sType, sBool, bEmpty, iRandom, euid } = require('./string')
 const { now } = require('./time')
@@ -12,7 +13,8 @@ const fpath = {
   list: path.join(__dirname, '../script', 'Lists'),
   js: path.join(__dirname, '../script', 'JSFile'),
   store: path.join(__dirname, '../script', 'Store'),
-  homedir: require('os').homedir()
+  homedir: os.homedir(),
+  tempdir: os.tmpdir()
 }
 
 if (!fs.existsSync(fpath.list)) {
@@ -168,14 +170,18 @@ const file = {
   get(pname, type){
     if (bEmpty(pname)) {
       clog.info('a first parameter is expect, file.get no result')
-      return ''
+      return
     }
     pname = pname.replace(/^(\$home|~)/i, fpath.homedir)
+    pname = pname.replace(/^\$(temp|tmp)/i, fpath.tempdir)
     let filepath = path.resolve(__dirname, '../', pname)
     if (type === 'path') {
       return filepath
     }
     if (fs.existsSync(filepath)) {
+      if (fs.statSync(filepath).isDirectory()) {
+        return filepath + ' is a directory'
+      }
       return fs.readFileSync(filepath, 'utf8')
     }
     clog.error(pname, 'not exist')
@@ -331,17 +337,23 @@ const Jsfile = {
     if (!/\.js$/i.test(name)) {
       name += '.js'
     }
+    let jspath = path.join(fpath.js, name)
     if (type === 'path') {
-      return path.join(fpath.js, name)
+      return jspath
     }
     if (type === 'dir') {
-      return path.dirname(path.join(fpath.js, name))
+      return path.dirname(jspath)
     }
-    if (fs.existsSync(path.join(fpath.js, name))) {
-      if (type === 'date') {
-        return fs.statSync(path.join(fpath.js, name)).mtimeMs
+    if (fs.existsSync(jspath)) {
+      let fstat = fs.statSync(jspath)
+      if (fstat.isDirectory()) {
+        clog.error(jspath, 'is a directory')
+        return false
       }
-      return fs.readFileSync(path.join(fpath.js, name), 'utf8')
+      if (type === 'date') {
+        return fstat.mtimeMs
+      }
+      return fs.readFileSync(jspath, 'utf8')
     }
     clog.error('no such js file', name)
     return false
@@ -361,6 +373,7 @@ const Jsfile = {
         fs.mkdirSync(jsfolder, { recursive: true })
       }
       fs.writeFileSync(fullpath, cont, 'utf8')
+      clog.info(`${name} success saved`)
       return true
     } catch(e) {
       clog.error('put js file error', name, e.stack)
@@ -378,6 +391,7 @@ const Jsfile = {
     let jspath = path.join(fpath.js, name)
     if (fs.existsSync(jspath)) {
       fs.unlinkSync(jspath)
+      clog.info('delete js file', name)
       return true
     } else {
       clog.error('no such js file:', name)
@@ -453,7 +467,7 @@ const store = {
     }
   },
   put(value, key, options = {}) {
-    if (bEmpty(key) || value === undefined) { 
+    if (bEmpty(key) || value === undefined) {
       clog.error('store put error: no key or value')
       return false
     }

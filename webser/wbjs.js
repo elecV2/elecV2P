@@ -7,18 +7,24 @@ const { runJSFile, JSLISTS } = require('../script')
 
 module.exports = app => {
   app.get("/jsfile", (req, res)=>{
-    const jsfn = req.query.jsfn
+    let jsfn = req.query.jsfn
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get js file", jsfn)
     if (!jsfn || /\.\./.test(jsfn)) {
-      res.end('illegal request to get js file' + jsfn)
+      res.end(JSON.stringify({
+        rescode: -1,
+        message: 'illegal request to get js file ' + jsfn
+      }))
       return
     }
-    const jscont = Jsfile.get(jsfn)
+    let jscont = Jsfile.get(jsfn)
     if (jscont) {
       res.end(jscont)
     } else {
       res.writeHead(404, { 'Content-Type': 'text/plain;charset=utf-8' })
-      res.end('404 ' + jsfn + ' don\'t exist')
+      res.end(JSON.stringify({
+        rescode: 404,
+        message: '404 ' + jsfn + ' don\'t exist'
+      }))
     }
   })
 
@@ -75,7 +81,8 @@ module.exports = app => {
         type: 'rawcode',
         filename: jsname.split('.js')[0] + '-test.js',
         from: 'test',
-        cb: wsSer.send.func('jsmanage')
+        cb: wsSer.send.func('jsmanage'),
+        timeout: 5000
       }).then(data=>{
         res.end(sString(data))
       }).catch(error=>{
@@ -84,7 +91,6 @@ module.exports = app => {
       })
     } else {
       if (Jsfile.put(jsname, req.body.jscontent)) {
-        clog.notify(`${jsname} success saved`)
         res.end(JSON.stringify({
           rescode: 0,
           message: `${jsname} success saved`
@@ -179,7 +185,7 @@ module.exports = app => {
           clog.notify('mock request response:', response.data)
           res.end('success!')
         }).catch(error=>{
-          clog.error('mock request error:', errStack(error))
+          clog.error('mock request', errStack(error))
           res.end('fail! ' + error.message)
         })
         break

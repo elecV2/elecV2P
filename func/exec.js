@@ -151,7 +151,7 @@ async function commandSetup(command, options={}, clog) {
 async function execFunc(command, options={}, cb) {
   let execlog = clog
   if (options.type === 'task') {
-    execlog = new logger({ head: 'taskExec', level: 'debug', file: options.name, cb: wsSer.send.func('tasklog') })
+    execlog = new logger({ head: 'taskExec', level: 'debug', file: options.name + '.task', cb: wsSer.send.func('tasklog') })
   }
 
   let fev = await commandSetup(command, options, execlog)

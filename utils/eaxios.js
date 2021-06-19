@@ -24,16 +24,33 @@ const uagent = sJson(list.get('useragent.list')) || {
 }
 
 const CONFIG_Axios = {
-  proxy:   false,           // axios 请求代理
+  proxy: {
+    enable: false,          // axios 请求代理
+  },
   timeout: 5000,            // axios 请求超时时间。单位：毫秒
-  uagent:  'iPhone'         // 通用 User-Agent，相关列表位于 script/Lists/useragent.list
+  uagent:  'iPhone',        // 通用 User-Agent，相关列表位于 script/Lists/useragent.list
+  block: {                  // 阻止发送的网络请求。匹配方式 new RegExp('regexp').test(url)
+    enable: false,
+    regexp: ''
+  },
+  only: {                   // 启用时，表示仅允许符合该规则的 url 通过
+    enable: false,
+    regexp: ''
+  }
 }
 
 if (CONFIG.CONFIG_Axios) {
+  if (CONFIG.CONFIG_Axios.proxy) {
+    if (CONFIG.CONFIG_Axios.proxy.enable === undefined) {
+      CONFIG.CONFIG_Axios.proxy.enable = true
+    }
+  } else {
+    CONFIG.CONFIG_Axios.proxy = CONFIG_Axios.proxy
+  }
   Object.assign(CONFIG_Axios, CONFIG.CONFIG_Axios)
-} else {
-  CONFIG.CONFIG_Axios = CONFIG_Axios
 }
+// 同步 CONFIG 数据
+CONFIG.CONFIG_Axios = CONFIG_Axios
 
 const axProxy = {
   new(proxy = null, type = 'https'){
@@ -52,10 +69,10 @@ const axProxy = {
     }
   },
   http(){
-    return CONFIG_Axios.proxy ? this.new(CONFIG_Axios.proxy, 'http') : null
+    return CONFIG_Axios.proxy.enable ? this.new(CONFIG_Axios.proxy, 'http') : null
   },
   https(){
-    return CONFIG_Axios.proxy ? this.new(CONFIG_Axios.proxy) : null
+    return CONFIG_Axios.proxy.enable ? this.new(CONFIG_Axios.proxy) : null
   },
   update(){
     eData.http = this.http()
@@ -75,6 +92,24 @@ function getUagent() {
   return uagent[CONFIG_Axios.uagent] ? uagent[CONFIG_Axios.uagent].header : null
 }
 
+function isBlock(request) {
+  if (request.token) {
+    if (request.token === CONFIG.wbrtoken) {
+      clog.debug('request.token is correct, skip block check')
+      delete request.token
+      return false
+    }
+    delete request.token
+  }
+  if (CONFIG_Axios.only.enable) {
+    return new RegExp(CONFIG_Axios.only.regexp).test(request.url) === false
+  }
+  if (CONFIG_Axios.block.enable) {
+    return new RegExp(CONFIG_Axios.block.regexp).test(request.url)
+  }
+  return false
+}
+
 /**
  * axios 简易封装
  * @param     {object/string}    request      axios 请求内容
@@ -87,23 +122,56 @@ function eAxios(request, proxy=null) {
       url: request
     }
   }
-  if (request.data === undefined) {
-    request.data = request.body
+  if (isBlock(request)) {
+    let res = {
+      rescode: -1,
+      message: 'error: ' + request.url + ' is blocked(You can reset on webUI->SETTING)'
+    }
+    if (request.headers && /json/i.test(request.headers.Accept)) {
+      return Promise.reject(res)
+    }
+    return Promise.reject(res.message)
+  }
+  if (!/%/.test(request.url)) {
+    // unescaped-characters 处理
+    request.url = encodeURI(request.url)
+  }
+  if (!request.method) {
+    request.method = 'get'
   }
   if (request.timeout === undefined) {
     request.timeout = CONFIG_Axios.timeout
   }
-  if (request.headers === undefined || typeof(request.headers) !== 'object') {
-    request.headers = {
-      "User-Agent": getUagent()
+  request.headers = sJson(request.headers, true)
+  // 移除 headers 中多余参数
+  Object.keys(request.headers).forEach(key => {
+    if (key === 'Content-Length' || key === 'content-length' || request.headers[key] === undefined) {
+      delete request.headers[key]
     }
-  } else if (request.headers['User-Agent'] === undefined && request.headers['user-agent'] === undefined) {
-    request.headers['User-Agent'] = getUagent()
-  }
-  // 移除空参数 undefined
-  Object.keys(request.headers).forEach(key => request.headers[key] === undefined && delete request.headers[key])
+  })
+  // 补充一些 headers 参数
+  request.headers['Accept'] = request.headers['Accept'] || request.headers['accept'] || '*/*'
+  request.headers['Accept-Encoding'] = request.headers['Accept-Encoding'] || request.headers['accept-encoding'] || '*'
+  request.headers['Accept-Language'] = request.headers['Accept-Language'] || request.headers['accept-language'] || 'zh,zh-CN;q=0.9,en;q=0.7,*;q=0.5'
+  request.headers['Connection'] = request.headers['Connection'] || request.headers['connection'] || 'keep-alive'
+  request.headers['Content-Type'] = request.headers['Content-Type'] || request.headers['content-type'] || 'application/x-www-form-urlencoded; charset=UTF-8'
+  request.headers['Date'] = request.headers['Date'] || request.headers['date'] || new Date().toUTCString()
+  request.headers['User-Agent'] = request.headers['User-Agent'] || request.headers['user-agent'] || getUagent()
 
-  if (proxy !== false && (proxy || CONFIG_Axios.proxy)) {
+  // request data/body 处理
+  if (request.data === undefined) {
+    request.data = request.body
+  }
+  // 非 GET 请求 url 参数移动到 body 内
+  if (request.method.toLowerCase() !== 'get' && !request.data && /\?/.test(request.url)) {
+    request.data = request.url.split('?').pop()
+  }
+  if (request.data === undefined || request.data === '') {
+    request.data = null
+  }
+
+  // 网络请求代理处理
+  if (proxy !== false && (proxy || CONFIG_Axios.proxy.enable)) {
     if (request.url.startsWith('https')) {
       request['httpsAgent'] = proxy ? axProxy.new(proxy) : eData.https
     } else {
@@ -112,9 +180,7 @@ function eAxios(request, proxy=null) {
     request.proxy = false
   }
 
-  return new Promise((resolve, reject)=>{
-    axios(request).then(res=>resolve(res)).catch(e=>reject(e))
-  })
+  return axios(request)
 }
 
 function stream(url) {
@@ -139,33 +205,38 @@ function stream(url) {
 function downloadfile(durl, dest, cb) {
   // 在 elecV2P 中占非常重要的部分，如无必要不要改动
   // very important, don't change if not necessary
-  if (!durl.startsWith('http')) {
+  if (!/^https?:\/\/\S{4,}/.test(durl)) {
     return Promise.reject(durl + ' is not a valid url')
   }
-  let folder = '', fname = '', isFolder = false
+  let folder = '', fname  = ''
   if (dest) {
     if (sType(dest) === 'object') {
-      folder = dest.folder || ''
-      fname  = dest.name || ''
-      dest   = path.join(folder, fname)
+      if (dest.folder) {
+        folder = dest.folder
+      }
+      if (dest.name) {
+        fname = dest.name
+      }
+    } else {
+      if (file.isExist(dest, true)) {
+        folder = dest
+      } else if (path.dirname(dest) !== '.') {
+        folder = path.dirname(dest)
+        fname = path.basename(dest)
+      } else {
+        fname = dest
+      }
     }
-    dest = path.normalize(dest)
-    isFolder = Boolean(folder) || file.isExist(dest, true)
-  } 
-  if ((!dest || isFolder) && fname === '') {
-    fname = surlName(durl)
   }
-  if (isFolder) {
-    folder = folder || dest
-  } else if (dest && dest.indexOf(path.sep) !== -1) {
-    folder = folder || dest.slice(0, dest.lastIndexOf(path.sep))
-    fname = fname || dest.slice(dest.lastIndexOf(path.sep) + 1)
-  } else {
+  if (!folder) {
     folder = file.get(CONFIG.efss.directory || 'web/dist', 'path')
   }
-  
-  dest = path.join(folder, fname || dest)
-  folder = path.dirname(dest)
+  if (!fname) {
+    fname  = surlName(durl)
+  }
+
+  dest = path.join(folder, fname)
+  folder = path.dirname(dest)   // fname 中包含目录的情况
   if (!fs.existsSync(folder)) {
     clog.info('mkdir', folder, 'for download', fname)
     fs.mkdirSync(folder, { recursive: true })
@@ -201,7 +272,7 @@ function downloadfile(durl, dest, cb) {
         }
       })
     }).catch(e=>{
-      reject('download fail! ' + e.message)
+      reject('download fail! ' + (e.message || e))
       clog.error(durl, 'download fail!', errStack(e))
     })
   })
@@ -229,7 +300,7 @@ async function checkupdate(force = false){
     } catch(e) {
       clog.error('check update from github is fail', errStack(e))
       body.update = false
-      body.message = 'unenable to check the new version of elecV2P'
+      body.message = 'unable to check the new version of elecV2P'
     }
   }
 

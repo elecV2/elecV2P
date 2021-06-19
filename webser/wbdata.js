@@ -32,13 +32,13 @@ module.exports = app => {
       case "rules":
         let rlist = list.get('default.list')
         res.end(JSON.stringify({
-          eplists: (rlist && rlist.rules) || {list: []},
+          eplists: (rlist && rlist.rules) || { list: [] },
           uagent: CONFIG_RULE.uagent,
           jslists: JSLISTS
         }))
         break
       case "rewritelists":
-        res.end(JSON.stringify(list.get('rewrite.list')))
+        res.end(JSON.stringify(list.get('rewrite.list') || { rewrite: { list: [] } }))
         break
       case "mitmhost":
         let mlist = list.get('mitmhost.list')

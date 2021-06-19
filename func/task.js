@@ -287,11 +287,15 @@ const taskMa = {
       TASKS_WORKER[tid].delete()
       delete TASKS_WORKER[tid]
     }
-    delete TASKS_INFO[tid]
-    return {
+    let resmsg = {
       rescode: 0,
-      message: 'task deleted'
+      message: `task ${tid} not exist`
     }
+    if (TASKS_INFO[tid]) {
+      resmsg.message = `task ${TASKS_INFO[tid].name} deleted`
+      delete TASKS_INFO[tid]
+    }
+    return resmsg
   },
   async test(taskinfo){
     if (!bIsValid(taskinfo)) {
