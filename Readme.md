@@ -34,16 +34,19 @@ yarn start
 
 # 如果要使用基础方式启动，执行命令
 node index.js
+# node.js 版本大于 14.0.0 (node -v)
 # 假如提示 80 端口不可用，尝试命令
 # PORT=8000 node index.js
 
-# 调试模式（webUI 端口为 12521，正常模式下端口为 80）
+# 调试模式(webUI 端口为 12521，正常模式下端口为 80)
 yarn dev
 
-# 升级 *【3.1.8 版本后，推荐使用自带的 [softupdate.js](https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js) 脚本进行软更新升级】*
+# 升级
 # - 先备份好个人数据，比如 根证书，以及 script/JSFile、Store、Lists、Shell 等文件夹，和 efss 文件夹等
 # - 然后再从 Github 拉取最新的代码进行覆盖升级 git pull
 # - 最后再把备份好的文件复制还原到之前的位置
+# 
+# *【3.1.8 版本后，推荐使用自带的 [softupdate.js](https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js) 脚本进行软更新升级】*
 ```
 
 其他 PM2 相关指令
@@ -101,14 +104,19 @@ docker pull elecv2/elecv2p     # 再下载新的镜像。镜像名注意要和�
 ``` sh
 mkdir /elecv2p && cd /elecv2p
 curl -sL https://git.io/JLw7s > docker-compose.yaml
+# arm32
+# curl -sL https://git.io/JOuQB > docker-compose.yaml
+# arm64
+# curl -sL https://git.io/JOuQo > docker-compose.yaml
 docker-compose up -d
 
-# 注意：默认的 docker-compose.yaml 文件使用的是基础镜像，如果是 ARM 平台请使用下面的文件手动进行修改。
+# 注意：默认的 docker-compose.yaml 文件使用的是基础镜像，如果是 ARM 平台请使用注释中的对应命令，或者使用下面的文件手动进行修改。
 # 另外，默认把 80/8001/8002 端口分别映射成了 8100/8101/8102，以防出现端口占用的情况，访问时注意。
 # 如果需要调整为其他端口，可以自行修改下面的内容然后手动保存。
 ```
 
 或者将以下内容手动保存为 docker-compose.yaml 文件。
+
 ``` yaml
 version: '3.7'
 services:
@@ -158,12 +166,12 @@ docker logs elecv2p -f
 - 8001：  ANYPROXY HTTP代理端口。（*代理端口不是网页，不能通过浏览器直接访问*）
 - 8002：  ANYPROXY 代理请求查看端口
 
-**v3.3.5 版本后 ANYPROXY 端口默认关闭。在 webUI 首页双击 ANYPROXY 可临时开启，在 webUI->SETTING->初始化相关设置 中可选择启动时自动开启。**
+**v3.3.5 版本后 ANYPROXY 相关端口默认关闭。可在 webUI 首页双击 ANYPROXY 临时开启。如需在启动时自动开启，请前往 webUI->SETTING->初始化相关设置 中进行设置。**
 
 *80 端口可使用环境变量 **PORT** 进行修改(比如: PORT=8000 node index.js)，也可以在 script/Lists/config.json 文件中更改其他所有端口。*
 *如果是使用 Docker 相关的安装方式，修改对应的映射端口即可。*
 
-*v3.3.0 版本后，可在 webUI->SETTING 界面修改（非必要情况不建议随意更改）*
+*v3.3.0 版本后，所有端口可在 webUI->SETTING 界面进行修改（非必要情况不建议随意更改）*
 
 ## 根证书相关 - HTTPS 解密
 
@@ -173,7 +181,7 @@ docker logs elecv2p -f
 
 ### 安装证书
 
-选择以下任一种方式下载证书，然后安装并信任
+选择以下任意一种方式下载证书，然后安装并信任
 
 - 直接打开 :80/crt
 - :80 -> MITM -> 安装证书
@@ -252,11 +260,11 @@ IFTTT/BARK/自定义通知等相关设置参考: [07-feed&notify](https://github
 
 ## DOCUMENTS&EXAMPLES
 
-说明文档及一些例程：[https://github.com/elecV2/elecV2P-dei](https://github.com/elecV2/elecV2P-dei)
+说明文档及一些例程: [https://github.com/elecV2/elecV2P-dei](https://github.com/elecV2/elecV2P-dei)
 
 TG 交流群: https://t.me/elecV2G (主要为方便用户使用交流，开发者24小时不在线，也不负责解答任何问题。)
 
-如果遇到问题或Bug 可以开一个 [issue](https://github.com/elecV2/elecV2P/issues)，说明使用平台，版本，以及附上相关的错误日志（提供的信息越详细，越有助于解决问题）。
+如果遇到问题或 Bug 可以开一个 [issue](https://github.com/elecV2/elecV2P/issues)。说明使用平台，版本，以及附上相关的错误日志（提供的信息越详细，越有助于解决问题）。
 
 ## 贡献参考
 

@@ -12,6 +12,7 @@
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- TASK 分组及批量管理
 - EFSS favorite/site/backend
 - EFSS zip 压缩打包/解压
 - Backup 备份导出/导入(lists/store)
@@ -25,6 +26,18 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [x] 增加显示脚本内网络请求 url 的选项
+- [x] eAxios 网络请求增加黑/白名单模式
+- [x] @grant 增加 nodejs 兼容模式
+- [x] $message 支持点击打开 url
+- [x] $evui 增加 从后台关闭
+- [x] efss 右键显示文件地址及目录支持 $temp
+- [x] webUI 移动端显示 及 log.vue 等优化
+- [x] webUI 取消 TASK 转圈动画
+- [x] 单个 cookie 导出/导入
+- [x] webhook 增加对后台限制 IP 的更改
+- [x] webhook download 支持设置目录及文件名
+- [x] webhook 增加 jsfile 获取及添加
 - [x] REWRITE 订阅同时添加 MITMHOST 及 TASK
 - [x] REWRITE 增加 reject 类规则 (网络请求前)
 - [X] 使用 JSON 重构 Lists 数据结构
