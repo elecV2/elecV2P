@@ -2,6 +2,7 @@
   "name": "elecV2P 重写订阅",
   "note": "该订阅目前仅适用于 elecV2P。更多说明请查看: https://github.com/elecV2/elecV2P-dei/tree/master/docs/05-rewrite.md",
   "author": "https://t.me/elecV2",
+  "resource": "https://raw.githubusercontent.com/elecV2/elecV2P/master/efss/rewritesub.json",
   "mitmhost": [
     "test.com", "httpbin.org"
   ],
