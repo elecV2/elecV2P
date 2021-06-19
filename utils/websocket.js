@@ -108,14 +108,14 @@ function websocketSer({ server, path }) {
 }
 
 const message = {
-  success(data, secd) {
-    wsSer.send({ type: 'evui', data: { type: 'message', data: { type: 'success', data, secd } }})
+  success() {
+    wsSer.send({ type: 'message', data: { type: 'success', data: [...arguments] } })
   },
-  error(data, secd) {
-    wsSer.send({ type: 'evui', data: { type: 'message', data: { type: 'error', data, secd } }})
+  error() {
+    wsSer.send({ type: 'message', data: { type: 'error', data: [...arguments] } })
   },
-  loading(data, secd) {
-    wsSer.send({ type: 'evui', data: { type: 'message', data: { type: 'loading', data, secd } }})
+  loading() {
+    wsSer.send({ type: 'message', data: { type: 'loading', data: [...arguments] } })
   }
 }
 
