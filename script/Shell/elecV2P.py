@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# 最近更新: 2021-04-02
 # 更新地址: https://github.com/elecV2/elecV2P/blob/master/script/Shell/elecV2P.py
+# 最近更新: 
+# 2021-05-24
+#   - store 返回结果优化
 
 '''
 elecV2P python module - elecV2P pyhton 库函数 v0.2
@@ -297,7 +299,15 @@ class estore:
   def get(self, key):
     try:
       with open(self.basepath + key, 'r', encoding='UTF-8') as f:
-        return f.read()
+        rawv = f.read()
+        try:
+          objv = json.loads(rawv)
+          if objv['value'] and objv['type']:
+            return objv['value']
+          else:
+            return rawv
+        except Exception as e:
+          return rawv
     except Exception as e:
       console.error(e)
       return False
