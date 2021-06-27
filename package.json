@@ -1,6 +1,6 @@
 {
   "name": "elecV2P",
-  "version": "3.4.0",
+  "version": "3.4.1",
   "description": "customize personal network",
   "main": "index.js",
   "author": "https://github.com/elecV2",
@@ -19,7 +19,7 @@
   "dependencies": {
     "anyproxy": "^4.1.3",
     "axios": "^0.21.1",
-    "cheerio": "^1.0.0-rc.5",
+    "cheerio": "^1.0.0-rc.10",
     "formidable": "^1.2.2",
     "node-cron": "^2.0.3",
     "rss": "^1.2.2",

@@ -19,8 +19,11 @@ const wsobs = {
   send() {
     if (this.intval) return
     this.intval = setInterval(()=>{
-      if (this.WSS) wsSend({ type: 'elecV2Pstatus', data: { clients: this.WSS.clients.size, memoryusage: nStatus() }})
-      else this.stop()
+      if (this.WSS) {
+        wsSend({ type: 'elecV2Pstatus', data: { clients: this.WSS.clients.size, memoryusage: nStatus() }})
+      } else {
+        this.stop()
+      }
     }, 3e3)
   },
   stop() {
@@ -39,7 +42,9 @@ wsSer.send.func = type => {
 
 wsSer.recv.ready = recver => {
   // 客户端 recver 准备接收数据
-  if (wsSer.recverlists.indexOf(recver) < 0) wsSer.recverlists.push(recver)
+  if (wsSer.recverlists.indexOf(recver) < 0) {
+    wsSer.recverlists.push(recver)
+  }
 }
 
 wsSer.recv.stopsendstatus = flag => flag ? wsobs.stop() : wsobs.send()
@@ -56,13 +61,15 @@ function wsSend(data, target){
     clog.debug('send client msg:', data)
     wsobs.WSS.clients.forEach(client=>{
       if (target) {
-        if (client.id === target) client.send(data)
+        if (client.id === target) {
+          client.send(data)
+        }
       } else if (client.readyState === ws.OPEN) {
         client.send(data)
       }
     })
   } else {
-    clog.debug('websocket 暂未连接，无法发送数据：', data)
+    clog.debug('no websocket clients yet, cant send data:', data)
   }
 }
 

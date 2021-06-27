@@ -139,8 +139,9 @@ function jobFunc(job, taskname) {
     }
   } else if (job.type === 'exec') {
     return ()=>new Promise((resolve)=>{
+      let cwd = /^node /.test(job.target) ? 'script/JSFile' : 'script/Shell'
       exec(job.target, {
-        cwd: file.get('script/Shell', 'path'), call: true,
+        cwd, call: true,
         cb(data, error, finish){
           if (finish) {
             resolve(data)
@@ -373,9 +374,10 @@ const taskMa = {
       }
     }
     if (list.put('task.list', TASKS_INFO)) {
+      let status = this.status()
       return {
         rescode: 0,
-        message: 'success save current task list ' + Object.keys(TASKS_INFO).length
+        message: `success save current task list ${status.running}/${status.total}/${status.sub}`
       }
     }
     return {

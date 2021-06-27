@@ -23,7 +23,6 @@ function sJson(str, force=false) {
     if (typeof(jobj) === 'object') {
       return jobj
     }
-    return force ? { 0: jobj } : false
   } catch(e) {
     try {
       let obj = (new Function("return " + str))()
@@ -31,11 +30,11 @@ function sJson(str, force=false) {
         return obj
       }
     } catch(e) {}
-    if (force) {
-      return { 0: str }
-    }
-    return false
   }
+  if (force) {
+    return { 0: str }
+  }
+  return false
 }
 
 function sString(obj) {
@@ -49,7 +48,7 @@ function sString(obj) {
   if (/object|array/.test(type)) {
     try {
       if (obj[Symbol.toPrimitive]) {
-        return obj[Symbol.toPrimitive]()
+        return String(obj[Symbol.toPrimitive]())
       }
       return JSON.stringify(obj)
     } catch(e) {

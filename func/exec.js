@@ -1,7 +1,8 @@
+
 const os = require('os')
 const { exec } = require('child_process')
 
-const { logger, file, downloadfile, wsSer, surlName, kSize } = require('../utils')
+const { logger, file, downloadfile, wsSer, surlName, kSize, errStack } = require('../utils')
 const clog = new logger({ head: 'funcExec', file: 'funcExec', level: 'debug' })
 
 const CONFIG_exec = {
@@ -78,34 +79,54 @@ function commandCross(command) {
  * @return    {string}               处理后命令
  */
 async function commandSetup(command, options={}, clog) {
-  let cwd = command.match(/ -cwd (\S+)/)
-  if (cwd && cwd[1]) {
-    options.cwd = file.path(process.cwd(), cwd[1])
+  // options.timeout 处理
+  let timeout = command.match(/ -timeout(=| )(\d+)/)
+  if (timeout && timeout[2]) {
+    options.timeout = Number(timeout[2])
+    command = command.replace(/ -timeout(=| )(\d+)/g, '')
+  } else if (options.timeout === undefined) {
+    options.timeout = CONFIG_exec.timeout
   }
 
+  // options.cwd 处理
+  let cwd = command.match(/ -cwd (\S+)/)
+  if (cwd && cwd[1]) {
+    options.cwd = cwd[1]
+    command = command.replace(/ -cwd (\S+)/g, '')
+  } else if (!options.cwd && /^node /.test(command)) {
+    // 当使用 node 命令而没有指定 cwd 时，默认 cwd 设置为 script/JSFile
+    options.cwd = 'script/JSFile'
+  }
+
+  // options.stdin 处理
   let stdin = command.match(/ -stdin (\S+)/)
   if (stdin && stdin[1]) {
     options.stdin = Object.assign(options.stdin || {}, { write: decodeURI(stdin[1]) })
+    command = command.replace(/ -stdin (\S+)/g, '')
   }
 
-  let envrough = command.replace(/ -cwd (\S+)/g, '').match(/ -env ([^-]+)/)
+  // options.env 处理
+  let envrough = command.match(/ -env ([^-]+)/)
+  let envtemp  = {}
   if (envrough && envrough[1]) {
-    let envlist = envrough[1].trim().split(' ')
-    options.env = { ...options.env, ...envlist }
-
-    envlist.forEach(ev=>{
-      let ei = ev.split('=')
-      if (ei.length === 2) {
-        options.env[ei[0].trim()] = ei[1].trim()
+    envrough[1].trim().split(' ').forEach(ev=>{
+      let ei = ev.indexOf('=')
+      if (ei !== -1) {
+        envtemp[ev.substring(0, ei)] = ev.substring(ei + 1).replace(/^('|"|`)|('|"|`)$/g, '')
       }
     })
+
+    command = command.replace(/ -env ([^-]+)/g, '')
   }
-  command = commandCross(command.split(/ -(cwd|env|stdin) /)[0])
+  options.env = Object.assign(options.env || {}, process.env, envtemp)
+
+  // 基础 command 跨平台转换
+  command = commandCross(command)
 
   if (!/^(curl|wget|git|start|you-get|youtube-dl) /.test(command)) {
     let remotesh = command.match(/ (https?:\/\/\S{4,})/)
     if (remotesh && remotesh[1]) {
-      let folder = file.path(process.cwd(), options.cwd || './script/Shell')
+      let folder = file.path(process.cwd(), options.cwd || 'script/Shell')
       let shname = surlName(remotesh[1])
       let shfile = file.path(folder, shname)
       try {
@@ -126,9 +147,6 @@ async function commandSetup(command, options={}, clog) {
 
   command = command.replace(' -http', ' http')
 
-  if (options.timeout === undefined) {
-    options.timeout = CONFIG_exec.timeout
-  }
   if (options.windowsHide === undefined) {
     options.windowsHide = true
   }
@@ -154,7 +172,7 @@ async function execFunc(command, options={}, cb) {
     execlog = new logger({ head: 'taskExec', level: 'debug', file: options.name + '.task', cb: wsSer.send.func('tasklog') })
   }
 
-  let fev = await commandSetup(command, options, execlog)
+  let fev = await commandSetup(command, options, execlog).catch(e=>execlog.error(errStack(e)))
   let childexec = exec(fev.command, fev.options)
 
   execlog.notify('start run command:', command)
@@ -185,8 +203,11 @@ async function execFunc(command, options={}, cb) {
     wsSer.send({ type: 'minishell', data: err })
   })
 
-  childexec.on('exit', ()=>{
+  childexec.on('exit', (code, signal) => {
     let fstr = command + ' finished'
+    if (options.timeout && signal === 'SIGTERM') {
+      fstr += `(may run timeout of ${options.timeout}ms)`
+    }
     execlog.info(fstr)
     if (cb) {
       cb(options.call ? fdata.join('\n') : fstr, null, true)

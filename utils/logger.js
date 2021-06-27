@@ -1,7 +1,8 @@
 const fs = require('fs')
 const path = require('path')
+const { format } = require('util')
 const { now } = require('./time')
-const { sString, bEmpty } = require('./string')
+const { sString } = require('./string')
 
 const { CONFIG } = require('../config')
 
@@ -31,7 +32,7 @@ class logger {
 
   constructor({ head, level, isalignHead, cb, file }) {
     if(head) this._head = head
-    if(CONFIG_LOG.levels.hasOwnProperty(level)) this._level = level
+    if(level && CONFIG_LOG.levels.hasOwnProperty(level)) this._level = level
     if(cb) this._cb = cb
     if(file) this._file = /\.log/.test(file) ? file : file + '.log'
 
@@ -53,7 +54,7 @@ class logger {
   }
 
   info(){
-    const args = formArgs(arguments)
+    const args = formArgs(...arguments)
     if (!args) return
     const cont = `[${ this.infohead }][${ now() }] ${ args }`
     if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['info'] && CONFIG_LOG.levels['info'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
@@ -64,7 +65,7 @@ class logger {
   }
 
   notify(){
-    const args = formArgs(arguments)
+    const args = formArgs(...arguments)
     if (!args) return
     const cont = `[${ this.notifyhead }][${ now() }] ${ args }`
     if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['notify'] && CONFIG_LOG.levels['notify'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
@@ -75,7 +76,7 @@ class logger {
   }
 
   error(){
-    const args = formArgs(arguments)
+    const args = formArgs(...arguments)
     if (!args) return
     const cont = `[${ this.errorhead }][${ now() }] ${ args }`
     if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['error'] && CONFIG_LOG.levels['error'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
@@ -88,7 +89,7 @@ class logger {
 
   debug(){
     if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['debug'] && CONFIG_LOG.levels['debug'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
-      const args = formArgs(arguments)
+      const args = formArgs(...arguments)
       if (!args) return
       const cont = `[${ this.debughead }][${ now() }] ${ args }`
       console.log(cont)
@@ -106,6 +107,32 @@ class logger {
     }
     console.log(cont)
     if(this._cb) this._cb(cont)
+  }
+
+  ctime = {}
+  time(label = 'default') {
+    if (this.ctime[label]) {
+      this.info('timer ' + label + ' already exists')
+      return
+    }
+    this.ctime[label] = process.hrtime()
+    this.info(`start a console timer: ${label}`)
+  }
+  timeLog(label = 'default', ...args) {
+    if (!this.ctime[label]) {
+      this.info('timer ' + label + ' does not exist')
+      return
+    }
+    let diff = process.hrtime(this.ctime[label])
+    this.info(`${label}: ${ (diff[0]*1e9 + diff[1]) / 1e6 }ms ${ formArgs.apply(this, args) }`)
+  }
+  timeEnd(label = 'default') {
+    if (!this.ctime[label]) {
+      this.info('timer ' + label + ' does not exist')
+      return
+    }
+    let diff = process.hrtime(this.ctime[label])
+    this.info(`timer ${label} end: ${ (diff[0]*1e9 + diff[1]) / 1e6 }ms`)
   }
 }
 
@@ -132,7 +159,7 @@ const LOGFILE = {
     return this.streamList[name]
   },
   put(filename, data){
-    if (!filename || !data) {
+    if (!filename || data === undefined || data === '') {
       return
     }
     filename = filename.trim()
@@ -180,53 +207,19 @@ const LOGFILE = {
   }
 }
 
-function formArgs(args) {
-  try {
-    args = [...args]
-    let res = '', skip = false
-    if (args.length) {
-      for (let ind in args) {
-        ind = Number(ind)
-        if (skip) {
-          skip = false
-          continue
-        }
-        if (args[ind] !== '\r' && bEmpty(args[ind])) continue
-        if (/%o|%O|%s/.test(args[ind])) {
-          res += (res.trim() ? ' ' : '') + args[ind].replace(/%o|%O|%s/, sString(args[ind+1]))
-          skip = true
-        } else if (/%[.0-9]*d|%[.0-9]*i/.test(args[ind])) {
-          let mtnum = args[ind].match(/%(\.([0-9])*)d|%(\.([0-9]))*i/)
-          let secarg = parseInt(args[ind+1])
-          if (mtnum) {
-            mtnum = mtnum[2] || mtnum[4]
-            secarg = sString(secarg).padStart(Number(mtnum), '0')
-          }
-          res += (res.trim() ? ' ' : '') + args[ind].replace(/%[.0-9]*d|%[.0-9]*i/, secarg)
-          skip = true
-        } else if (/%[.0-9]*f/.test(args[ind])) {
-          let mtnum = args[ind].match(/%(\.([0-9])*)f/)
-          let secarg = parseFloat(args[ind+1])
-          if (mtnum && mtnum[2]) secarg = secarg.toFixed(Number(mtnum[2]))
-          res += (res.trim() ? ' ' : '') + args[ind].replace(/%[.0-9]*f/, secarg)
-          skip = true
-        } else if (/^\r|\r$/.test(args[ind])) {
-          res += (res.trim() ? ' ' : '') + args[ind]
-        } else {
-          res += (res.trim() ? ' ' : '') + sString(args[ind])
-        }
-      }
-      return res
+function formArgs() {
+  for (let i=0; i<arguments.length; i++) {
+    if (typeof arguments[i] === 'string' && !/^\r|\r$/.test(arguments[i])) {
+      arguments[i] = arguments[i].trim()
     }
-    return ''
-  } catch(e) {
-    clog.error('wrong arguments', e.stack)
-    return 'there are some errors in logs arguments'
   }
+  return format(...arguments)
 }
 
 function alignHead(head) {
-  if (head.length === CONFIG_LOG.alignHeadlen) return head
+  if (head.length === CONFIG_LOG.alignHeadlen) {
+    return head
+  }
   if (head.length < CONFIG_LOG.alignHeadlen) {
     let nstr = head.split(' ')
     let space = CONFIG_LOG.alignHeadlen - head.length
@@ -246,7 +239,7 @@ function alignHead(head) {
 }
 
 function setGlog(level) {
-  if(CONFIG_LOG.levels.hasOwnProperty(level)) {
+  if (CONFIG_LOG.levels.hasOwnProperty(level)) {
     CONFIG_LOG.globalLevel = level
     clog.notify('global loglevel set to', level)
   } else {
