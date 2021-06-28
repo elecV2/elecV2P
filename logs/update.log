@@ -1,6 +1,6 @@
 <a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.4.1)
 
-v3.4.1
+v3.4.1  2021.06.28
  • node 指令默认 cwd 修改为 script/JSFile
  • 优化 shell 指令中 -env/-timeout 的处理
  • 添加默认 JS: process.env.js/moduleCheck.js

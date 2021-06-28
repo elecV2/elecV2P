@@ -19,13 +19,16 @@
 - minishell 上传/下载文件（编辑?）
 - 文件编辑器(component||libery) (备 CodeMirror?)
 - 多语言 [一个可能永远不填的坑..., start ready...]
-- elecV2Pflow: 不同语言的脚本执行流程可视化控制（大坑）
+- elecV2Pflow: 不同语言的脚本执行流程可视化控制（天坑）
 </pre>
 </div>
 </div>
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [x] exec -env/-timeout 参数处理优化
+- [x] node 指令默认 cwd 修改为 script/JSFile
+- [x] 增加 console.time/timeLog/timeEnd
 - [x] 增加显示脚本内网络请求 url 的选项
 - [x] eAxios 网络请求增加黑/白名单模式
 - [x] @grant 增加 nodejs 兼容模式

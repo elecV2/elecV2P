@@ -141,7 +141,7 @@ function jobFunc(job, taskname) {
     return ()=>new Promise((resolve)=>{
       let cwd = /^node /.test(job.target) ? 'script/JSFile' : 'script/Shell'
       exec(job.target, {
-        cwd, call: true,
+        cwd, type: 'task',
         cb(data, error, finish){
           if (finish) {
             resolve(data)
@@ -149,7 +149,6 @@ function jobFunc(job, taskname) {
             resolve(error)
           }
         },
-        type: 'task',
         name: taskname
       })
     })

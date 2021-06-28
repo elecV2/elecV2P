@@ -107,18 +107,22 @@ async function commandSetup(command, options={}, clog) {
 
   // options.env 处理
   let envrough = command.match(/ -env ([^-]+)/)
-  let envtemp  = {}
+  let tempenv  = {}
   if (envrough && envrough[1]) {
     envrough[1].trim().split(' ').forEach(ev=>{
       let ei = ev.indexOf('=')
       if (ei !== -1) {
-        envtemp[ev.substring(0, ei)] = ev.substring(ei + 1).replace(/^('|"|`)|('|"|`)$/g, '')
+        tempenv[ev.substring(0, ei)] = ev.substring(ei + 1).replace(/^('|"|`)|('|"|`)$/g, '')
       }
     })
 
     command = command.replace(/ -env ([^-]+)/g, '')
   }
-  options.env = Object.assign(options.env || {}, process.env, envtemp)
+  if (!options.env) {
+    options.env = {}
+  }
+  // 优先级 process.env < options.env < tempenv, 不影响原 process.env
+  options.env = { ...process.env, ...options.env, ...tempenv }
 
   // 基础 command 跨平台转换
   command = commandCross(command)
