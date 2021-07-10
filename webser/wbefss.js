@@ -28,7 +28,7 @@ const CONFIG_efss = {
     },
     shell: {
       key: "shell",
-      name: "日志查看",
+      name: "shell目录",
       type: "favorite",
       target: "script/Shell",
       enable: true
