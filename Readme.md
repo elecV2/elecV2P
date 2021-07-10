@@ -141,6 +141,7 @@ services:
 
 - *具体使用的镜像 image、端口映射和 volumes 目录，根据个人情况进行调整*
 - *部分用户反映，在某些设备上需要调整 version 的版本才能启动。如果启动出现问题，可以尝试把文件开头的 version: '3.7' 更改为 version: '3.3'*
+- *arm32 平台如果出错，参考 [issues #78](https://github.com/elecV2/elecV2P/issues/78)*
 
 然后在 docker-compose.yaml 同目录下执行以下任一命令
 ``` sh

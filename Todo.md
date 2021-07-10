@@ -12,11 +12,11 @@
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
-- TASK 分组及批量管理
-- EFSS favorite/site/backend
+- WEBHOOK 临时 token 及权限管理
+- TASK/RULES/REWRITE 排序
+- EFSS download wget/aria2c/git 等
 - EFSS zip 压缩打包/解压
 - Backup 备份导出/导入(lists/store)
-- minishell 上传/下载文件（编辑?）
 - 文件编辑器(component||libery) (备 CodeMirror?)
 - 多语言 [一个可能永远不填的坑..., start ready...]
 - elecV2Pflow: 不同语言的脚本执行流程可视化控制（天坑）
@@ -26,6 +26,12 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [X] EFSS favorite&backend
+- [x] TASK 批量删除/添加/暂停/开始
+- [x] logs 支持多级目录
+- [x] exec 远程指令优化及默认目录调整
+- [x] EFSS 支持删除文件夹
+- [x] JS 列表只返回 .js 结尾文件
 - [x] exec -env/-timeout 参数处理优化
 - [x] node 指令默认 cwd 修改为 script/JSFile
 - [x] 增加 console.time/timeLog/timeEnd
