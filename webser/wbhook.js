@@ -8,7 +8,7 @@ const clog = new logger({ head: 'webhook', level: 'debug' })
 const { CONFIG } = require('../config')
 
 function handler(req, res){
-  const rbody = req.method === 'GET' ? req.query : req.body
+  const rbody = Object.assign(req.body || {}, req.query || {})
   res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
   if (!CONFIG.wbrtoken) {
     res.end(JSON.stringify({
@@ -76,10 +76,14 @@ function handler(req, res){
       }).catch(error=>{
         res.write('error: ' + error)
       }).finally(()=>{
-        res.write(`\n\nconsole log file: ${req.protocol}://${req.get('host')}/logs/${showfn.replace(/\/|\\/g, '-')}.log\n\n`)
+        showfn = showfn.replace(/\/|\\/g, '-')
+        let homepage = CONFIG.homepage || `${req.headers['x-forwarded-proto'] || req.protocol}://${req.get('host')}`
+        res.write(`\n\nconsole log file: ${homepage}/logs/${showfn}.log\n\n`)
         let oldlog = LOGFILE.get(showfn+'.log')
         if (oldlog) {
           oldlog.pipe(res)
+        } else {
+          res.end()
         }
       })
     }
@@ -88,18 +92,48 @@ function handler(req, res){
   case 'jsdel':
   case 'deletejs':
   case 'jsdelete':
+    if (rbody.op === 'clear') {
+      return res.end(JSON.stringify({
+        rescode: 0,
+        message: 'all file without .js extname on JSFile folder is cleared',
+        delfile: Jsfile.clear()
+      }))
+    }
+    if (!rbody.fn) {
+      return res.end(JSON.stringify({
+        rescode: -1,
+        message: 'a parameter fn is expect'
+      }))
+    }
     let jsfn = rbody.fn
     clog.info(clientip, 'delete javascript file', jsfn)
-    if (Jsfile.delete(jsfn)) {
-      res.end(JSON.stringify({
-        rescode: 0,
-        message: jsfn + ' success deleted'
-      }))
-      JSLISTS.splice(JSLISTS.indexOf(jsfn), 1)
+    let bDelist = Jsfile.delete(jsfn)
+    if (bDelist) {
+      if (sType(bDelist) === 'array') {
+        res.end(JSON.stringify({
+          rescode: 0,
+          message: bDelist.join(', ') + ' success delete'
+        }))
+        bDelist.forEach(fn=>{
+          let fnidx = JSLISTS.indexOf(fn)
+          if (fnidx !== -1) {
+            JSLISTS.splice(fnidx, 1)
+          }
+        })
+      } else {
+        res.end(JSON.stringify({
+          rescode: 0,
+          message: jsfn + ' success delete'
+        }))
+        let fnidx = JSLISTS.indexOf(jsfn)
+        if (fnidx !== -1) {
+          JSLISTS.splice(fnidx, 1)
+        }
+      }
     } else {
       res.end(JSON.stringify({
         rescode: -1,
-        message: jsfn + ' javascript file don\'t exist'
+        message: jsfn + ' not exist'
       }))
     }
     break
@@ -152,12 +186,12 @@ function handler(req, res){
     if (LOGFILE.delete(name)) {
       res.end(JSON.stringify({
         rescode: 0,
-        message: name + ' success deleted'
+        message: name + ' success delete'
       }))
     } else {
       res.end(JSON.stringify({
         rescode: 404,
-        message: name + ' log file don\'t exist'
+        message: name + ' log file not exist'
       }))
     }
     break
@@ -181,7 +215,7 @@ function handler(req, res){
     } else {
       res.end(JSON.stringify({
         rescode: 404,
-        message: rbody.fn + ' log file don\'t exist'
+        message: rbody.fn + ' not exist'
       }))
     }
     break
@@ -199,16 +233,20 @@ function handler(req, res){
     break
   case 'taskinfo':
     clog.info(clientip, 'get taskinfo', rbody.tid)
-    if (rbody.tid === 'all') {
+    if (!rbody.tid || rbody.tid === 'all') {
       let status = taskMa.status()
       status.info = taskMa.info()
       res.end(JSON.stringify(status, null, 2))
     } else {
-      if (taskMa.info(rbody.tid)) {
-        res.end(JSON.stringify(taskMa.info(rbody.tid), null, 2))
+      let taskinfo = taskMa.info(rbody.tid)
+      if (taskinfo) {
+        res.end(JSON.stringify(taskinfo, null, 2))
         return
       }
-      res.end(JSON.stringify({ error: 'no such task with taskid: ' + rbody.tid }))
+      res.end(JSON.stringify({
+        rescode: -1,
+        message: 'no such task with taskid: ' + rbody.tid
+      }))
     }
     break
   case 'taskstart':
@@ -220,15 +258,17 @@ function handler(req, res){
     res.end(JSON.stringify(taskMa.stop(rbody.tid)))
     break
   case 'taskadd':
-    clog.notify(clientip, 'add a new task')
-    res.end(JSON.stringify(taskMa.add(rbody.task)))
+    clog.notify(clientip, 'add new task')
+    res.end(JSON.stringify(taskMa.add(rbody.task, rbody.options)))
     break
   case 'tasksave':
-    clog.notify(clientip, 'save current task list.')
+    clog.notify(clientip, 'save current task list')
     res.end(JSON.stringify(taskMa.save()))
     break
   case 'taskdel':
   case 'taskdelete':
+  case 'deltask':
+  case 'deletetask':
     clog.notify(clientip, 'delete task', rbody.tid)
     res.end(JSON.stringify(taskMa.delete(rbody.tid)))
     break
@@ -282,7 +322,7 @@ function handler(req, res){
     if (rbody.command) {
       let command = decodeURI(rbody.command)
       let option  = {
-        call: true, timeout: 5000,
+        timeout: 5000,
         cb(data, error, finish) {
           error ? clog.error(error) : clog.info(data)
           if (finish) {
@@ -302,7 +342,7 @@ function handler(req, res){
     } else {
       res.end(JSON.stringify({
         rescode: -1,
-        message: 'command parameter is expected'
+        message: 'command parameter is expect'
       }))
     }
     break
@@ -330,13 +370,11 @@ function handler(req, res){
         method: req.method,
         protocol: req.protocol,
         hostname: req.hostname,
-        query: req.query,
+        body: rbody,
         'user-agent': req.headers['user-agent'],
       }
     }
-    if (req.body !== undefined) {
-      elecV2PInfo.client.body = req.body
-    }
+
     if (req.headers['x-forwarded-for']) {
       elecV2PInfo.client['x-forwarded-for'] = req.headers['x-forwarded-for']
     }
@@ -395,10 +433,10 @@ function handler(req, res){
     case 'delete':
       clog.info('delete store key', rbody.key, 'from webhook')
       if (store.delete(rbody.key)) {
-        clog.notify(rbody.key, 'deleted')
+        clog.notify(rbody.key, 'delete')
         res.end(JSON.stringify({
           rescode: 0,
-          message: rbody.key + ' deleted'
+          message: rbody.key + ' delete'
         }))
       } else {
         clog.error('delete fail')
