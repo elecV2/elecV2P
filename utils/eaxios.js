@@ -235,7 +235,7 @@ function downloadfile(durl, dest, cb) {
     fname  = surlName(durl)
   }
 
-  dest = path.join(folder, fname)
+  dest = path.resolve(folder, fname)
   folder = path.dirname(dest)   // fname 中包含目录的情况
   if (!fs.existsSync(folder)) {
     clog.info('mkdir', folder, 'for download', fname)

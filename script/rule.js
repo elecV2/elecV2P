@@ -178,6 +178,7 @@ function formBody(body) {
 function formRequest($request) {
   return {
     ...$request.requestOptions,
+    protocol: $request.protocol,
     url: $request.url,
     body: formBody($request.requestData),
   }
@@ -185,7 +186,8 @@ function formRequest($request) {
 
 function formResponse($response) {
   return {
-    ...$response,
+    statusCode: $response.statusCode,
+    status: $response.statusCode,
     headers: $response.header,
     body: formBody($response.body)
   }

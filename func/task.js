@@ -68,17 +68,20 @@ const taskInit = function() {
     clog.info('retrieve task from Lists/task.list')
   }
   for(let tid in TASKS_INFO) {
-    if (TASKS_INFO[tid].type !== 'sub' && TASKS_INFO[tid].running) {
-      TASKS_WORKER[tid] = new Task(TASKS_INFO[tid])
-      TASKS_WORKER[tid].start()
+    if (TASKS_INFO[tid].type !== 'sub') {
+      if (TASKS_INFO[tid].running) {
+        TASKS_WORKER[tid] = new Task(TASKS_INFO[tid])
+        TASKS_WORKER[tid].start()
+      }
+      TASKS_INFO[tid].id = tid
     }
   }
 }();
 
 function bIsValid(info) {
   // 任务合法性检测
-  if (!info) {
-    clog.error('task information is expect')
+  if (sType(info) !== 'object') {
+    clog.error('a task object is expect')
     return false
   }
   if (info.name === undefined) {
@@ -141,7 +144,7 @@ function jobFunc(job, taskname) {
     return ()=>new Promise((resolve)=>{
       let cwd = /^node /.test(job.target) ? 'script/JSFile' : 'script/Shell'
       exec(job.target, {
-        cwd, type: 'task',
+        cwd, from: 'task',
         cb(data, error, finish){
           if (finish) {
             resolve(data)
@@ -149,7 +152,7 @@ function jobFunc(job, taskname) {
             resolve(error)
           }
         },
-        name: taskname
+        logname: taskname + '.task'
       })
     })
   } else {
@@ -160,60 +163,78 @@ function jobFunc(job, taskname) {
 
 const taskMa = {
   add(taskinfo, options={}){
-    if (!bIsValid(taskinfo)) {
-      return {
-        rescode: -1,
-        message: 'some task parameters may be invalid'
+    let tname = this.nameList()
+    let resmsg = {
+        rescode: 0,
+        message: ''
       }
-    }
+    let addtask = (taskinfo) => {
+      let message = ''
+      if (!bIsValid(taskinfo)) {
+        message = 'some task parameters may be invalid(please check docs: https://github.com/elecV2/elecV2P-dei/blob/master/docs/06-task.md)'
+        clog.info(taskinfo || '', message)
+        resmsg.message += '\n' + message
+        return
+      }
 
-    let tid = options.tid || taskinfo.id
-    if (options.type) {
-      let tname = this.nameList()
-      if (tname[taskinfo.name]) {
+      let tid = taskinfo.id
+      if (options.type && tname[taskinfo.name]) {
         clog.info(taskinfo.name, 'exist, new task add type', options.type)
         switch(options.type) {
         case 'skip':
-          return {
-            rescode: 0,
-            message: 'skip add task ' + taskinfo.name
-          }
+          message = 'skip add task ' + taskinfo.name
+          clog.info(message)
+          resmsg.message += '\n' + message
+          return
           break
         case 'addition':
           tid = euid()
+          message = 'add new task ' + taskinfo.name
           break
         case 'replace':
           tid = tname[taskinfo.name]
+          message = 'replace task ' + taskinfo.name
           break
         default:
-          clog.error('unknow type of task add options')
+          clog.error('unknow type of task add options', options.type)
         }
       }
-    }
 
-    if (!tid) {
-      tid = euid()
-    }
-    if (TASKS_WORKER[tid]) {
-      clog.info('delete old task data')
-      if (TASKS_WORKER[tid].stat()) {
-        TASKS_WORKER[tid].stop('restart')
+      if (!tid) {
+        tid = euid()
       }
-      TASKS_WORKER[tid].delete('restart')
-      TASKS_WORKER[tid] = null
-    }
+      if (TASKS_WORKER[tid]) {
+        clog.info('delete old task', TASKS_INFO[tid].name, 'data')
+        if (TASKS_WORKER[tid].stat()) {
+          TASKS_WORKER[tid].stop('restart')
+        }
+        TASKS_WORKER[tid].delete('restart')
+        TASKS_WORKER[tid] = null
+      }
 
-    TASKS_INFO[tid] = taskinfo
-    TASKS_INFO[tid].id = tid
-    TASKS_WORKER[tid] = new Task(TASKS_INFO[tid])
-    let message = 'add task: ' + taskinfo.name
-    if (taskinfo.running !== false) {
-      TASKS_WORKER[tid].start()
-      message = 'task: ' + taskinfo.name + ' started'
+      TASKS_INFO[tid] = taskinfo
+      TASKS_INFO[tid].id = tid
+      TASKS_WORKER[tid] = new Task(TASKS_INFO[tid])
+      if (taskinfo.running !== false) {
+        TASKS_WORKER[tid].start()
+        message += ' TASK: ' + taskinfo.name + ' started'
+      }
+      if (!message) {
+        message = 'add task: ' + taskinfo.name
+      }
+      clog.info(message)
+      resmsg.message += '\n' + message
     }
-    return {
-      rescode: 0, message, taskinfo
+    if (sType(taskinfo) === 'array') {
+      taskinfo.forEach(task=>{
+        addtask(task)
+      })
+    } else {
+      addtask(taskinfo)
+      resmsg.taskinfo = taskinfo
     }
+    resmsg.message = resmsg.message.trim()
+    return resmsg
   },
   start(tid){
     if (!tid) {
@@ -223,29 +244,38 @@ const taskMa = {
       }
     }
 
-    if (TASKS_INFO[tid]) {
-      if (!TASKS_WORKER[tid]) {
-        TASKS_WORKER[tid] = new Task(TASKS_INFO[tid])
+    let resmsg = {
+        rescode: 0,
+        message: ''
       }
-      if (TASKS_INFO[tid].running === false) {
-        TASKS_WORKER[tid].start()
-        return {
-          rescode: 0,
-          message: 'task started',
-          taskinfo: TASKS_INFO[tid]
+    let starttask = (tid) => {
+      let msg = ''
+      if (TASKS_INFO[tid]) {
+        if (!TASKS_WORKER[tid]) {
+          TASKS_WORKER[tid] = new Task(TASKS_INFO[tid])
+        }
+        if (TASKS_INFO[tid].running === false) {
+          TASKS_WORKER[tid].start()
+          message = TASKS_INFO[tid].name + ' started'
+        } else {
+          message = TASKS_INFO[tid].name + ' is running'
         }
       } else {
-        return {
-          rescode: 0,
-          message: 'task is running',
-          taskinfo: TASKS_INFO[tid]
-        }
+        message = 'task ' + tid + ' not exist'
       }
+      clog.info(message)
+      resmsg.message += '\n' + message
     }
-    return {
-      rescode: 404,
-      message: 'task ' + tid + ' not exist'
+    if (sType(tid) === 'array') {
+      tid.forEach(id=>{
+        starttask(id)
+      })
+    } else {
+      starttask(tid)
+      resmsg.taskinfo = TASKS_INFO[tid]
     }
+    resmsg.message = resmsg.message.trim()
+    return resmsg
   },
   stop(tid){
     if (!tid) {
@@ -254,27 +284,37 @@ const taskMa = {
         message: 'a task tid is expect'
       }
     }
-    if (TASKS_WORKER[tid]) {
-      TASKS_WORKER[tid].stop()
-      TASKS_WORKER[tid].delete('stop')
-      TASKS_WORKER[tid] = null
-      return {
+    let resmsg = {
         rescode: 0,
-        message: 'task stopped',
-        taskinfo: TASKS_INFO[tid]
+        message: ''
       }
-    }
-    if (TASKS_INFO[tid]) {
-      return {
-        rescode: 0,
-        message: 'task already stopped',
-        taskinfo: TASKS_INFO[tid]
+    let stoptask = (tid) => {
+      let msg = ''
+      if (TASKS_WORKER[tid]) {
+        TASKS_WORKER[tid].stop()
+        TASKS_WORKER[tid].delete('stop')
+        TASKS_WORKER[tid] = null
+        msg = TASKS_INFO[tid].name + ' stopped'
+      } else if (TASKS_INFO[tid]) {
+        // 没有运行任务但存在任务信息
+        msg = TASKS_INFO[tid].name + ' already stopped'
+        clog.info(msg)
+      } else {
+        msg = 'task ' + tid + ' no exist'
+        clog.info(msg)
       }
+      resmsg.message += '\n' + msg
     }
-    return {
-      rescode: 404,
-      message: 'task no exist'
+    if (sType(tid) === 'array') {
+      tid.forEach(id=>{
+        stoptask(id)
+      })
+    } else {
+      stoptask(tid)
+      resmsg.taskinfo = TASKS_INFO[tid]
     }
+    resmsg.message = resmsg.message.trim()
+    return resmsg
   },
   delete(tid){
     if (!tid) {
@@ -283,18 +323,33 @@ const taskMa = {
         message: 'a task tid is expect'
       }
     }
-    if (TASKS_WORKER[tid]) {
-      TASKS_WORKER[tid].delete()
-      delete TASKS_WORKER[tid]
-    }
     let resmsg = {
-      rescode: 0,
-      message: `task ${tid} not exist`
+        rescode: 0,
+        message: ''
+      }
+    let deltask = (tid) => {
+      if (TASKS_WORKER[tid]) {
+        TASKS_WORKER[tid].delete()
+        delete TASKS_WORKER[tid]
+      }
+      let msg = ''
+      if (TASKS_INFO[tid]) {
+        msg = `TASK ${TASKS_INFO[tid].name} deleted`
+        delete TASKS_INFO[tid]
+      } else {
+        msg = `TASK ${tid} not exist`
+      }
+      clog.info(msg)
+      resmsg.message += '\n' + msg
     }
-    if (TASKS_INFO[tid]) {
-      resmsg.message = `task ${TASKS_INFO[tid].name} deleted`
-      delete TASKS_INFO[tid]
+    if (sType(tid) === 'array') {
+      tid.forEach(id=>{
+        deltask(id)
+      })
+    } else {
+      deltask(tid)
     }
+    resmsg.message = resmsg.message.trim()
     return resmsg
   },
   async test(taskinfo){

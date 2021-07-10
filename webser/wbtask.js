@@ -17,7 +17,7 @@ module.exports = app => {
         res.end(JSON.stringify(taskMa.add(data.task, { type: data.type || 'replace' })))
         break
       case "start":
-        res.end(JSON.stringify(taskMa.add(data.task, { tid: data.tid })))
+        res.end(JSON.stringify(taskMa.add(data.task)))
         break
       case "stop":
         res.end(JSON.stringify(taskMa.stop(data.tid)))

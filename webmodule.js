@@ -59,8 +59,6 @@ module.exports = () => {
 
   app.use(express.static(path.resolve(__dirname, 'web/dist'), { maxAge: ONEMONTH }))
 
-  wbefss(app)
-
   wbconfig(app)
   wbfeed(app)
   wbcrt(app)
@@ -71,6 +69,7 @@ module.exports = () => {
   wbdata(app)
   wblist(app)
   wbhook(app)
+  wbefss(app)
 
   app.use((req, res, next) => {
     res.writeHead(404, { 'Content-Type': 'text/html;charset=utf-8' })

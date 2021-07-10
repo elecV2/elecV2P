@@ -70,9 +70,6 @@ module.exports = class {
       this.task.running = false
       clearInterval(this.temIntval)
       clog.log(this.task.name, flag)
-      if (data) {
-        clog.log(this.task.name, 'result:', sString(data))
-      }
       if (this.task.id && flag !== 'restart') {   // maybe 'stopped' or 'finished'
         wsSer.send({type: 'task', data: {tid: this.task.id, op: 'stop'}})
       }

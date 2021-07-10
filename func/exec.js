@@ -1,8 +1,7 @@
-
 const os = require('os')
 const { exec } = require('child_process')
 
-const { logger, file, downloadfile, wsSer, surlName, kSize, errStack } = require('../utils')
+const { logger, file, downloadfile, wsSer, surlName, kSize, errStack, sType } = require('../utils')
 const clog = new logger({ head: 'funcExec', file: 'funcExec', level: 'debug' })
 
 const CONFIG_exec = {
@@ -41,7 +40,7 @@ wsSer.recv.shell = command => {
         }
       })
     } else {
-      wsSer.send({ type: 'minishell', data: cdd + ' don\'t exist' })
+      wsSer.send({ type: 'minishell', data: cdd + ' not exist' })
     }
   } else {
     execFunc(command, {
@@ -76,7 +75,7 @@ function commandCross(command) {
  * command 参数处理 -cwd/-env/-stdin，可执行化命令
  * @param     {string}    command    exec 命令
  * @param     {object}    options    命令执行参数
- * @return    {string}               处理后命令
+ * @return    {object}               处理后命令及options
  */
 async function commandSetup(command, options={}, clog) {
   // options.timeout 处理
@@ -93,9 +92,16 @@ async function commandSetup(command, options={}, clog) {
   if (cwd && cwd[1]) {
     options.cwd = cwd[1]
     command = command.replace(/ -cwd (\S+)/g, '')
-  } else if (!options.cwd && /^node /.test(command)) {
-    // 当使用 node 命令而没有指定 cwd 时，默认 cwd 设置为 script/JSFile
-    options.cwd = 'script/JSFile'
+  }
+  if (!file.isExist(options.cwd, true)) {
+    // 当没有设置 cwd，或设置 cwd 目录不存在时，自动设置默认 cwd
+    if (/^node /.test(command)) {
+      // 当使用 node 命令开头时，默认 cwd 设置为 script/JSFile
+      options.cwd = 'script/JSFile'
+    } else {
+      // 其他情况，默认 cwd 为 script/Shell
+      options.cwd = 'script/Shell'
+    }
   }
 
   // options.stdin 处理
@@ -127,25 +133,29 @@ async function commandSetup(command, options={}, clog) {
   // 基础 command 跨平台转换
   command = commandCross(command)
 
-  if (!/^(curl|wget|git|start|you-get|youtube-dl) /.test(command)) {
+  // 远程指令 处理
+  if (!options.nohttp && !/^(curl|wget|git|start|you-get|youtube-dl|aria2c|http|npm|yarn|ping|openssl|telnet|nc|echo) /.test(command)) {
     let remotesh = command.match(/ (https?:\/\/\S{4,})/)
     if (remotesh && remotesh[1]) {
-      let folder = file.path(process.cwd(), options.cwd || 'script/Shell')
-      let shname = surlName(remotesh[1])
-      let shfile = file.path(folder, shname)
+      let shname = options.rename || surlName(remotesh[1])
+      let shfile = file.path(options.cwd, shname)
       try {
         if ((/ -local/.test(command) || options.local) && shfile) {
           command = command.replace(' -local', '')
           clog.info('run shell file from locally', shfile)
         } else {
-          shfile = await downloadfile(remotesh[1], { folder, fname: options.rename || shname })
+          clog.info('downloading remote shell file:', remotesh[1])
+          shfile = await downloadfile(remotesh[1], { folder: options.cwd, name: shname })
           clog.info(`success download ${remotesh[1]}, ready to run`)
         }
       } catch(e) {
         clog.error(`run remote shell error: ${remotesh[1]} ${e}`)
         clog.info(`try to run locally`)
       }
-      command = command.replace(remotesh[1], shfile)
+      if (shfile) {
+        command = command.replace(remotesh[1], shfile)
+      }
+      // else 本地文件不存在，且下载失败，则保留原远程链接，不作任何处理
     }
   }
 
@@ -172,24 +182,32 @@ async function commandSetup(command, options={}, clog) {
  */
 async function execFunc(command, options={}, cb) {
   let execlog = clog
-  if (options.type === 'task') {
-    execlog = new logger({ head: 'taskExec', level: 'debug', file: options.name + '.task', cb: wsSer.send.func('tasklog') })
+  if (options.from === 'task') {
+    execlog = new logger({ head: 'taskExec', level: 'debug', file: options.logname, cb: wsSer.send.func('tasklog') })
   }
 
-  let fev = await commandSetup(command, options, execlog).catch(e=>execlog.error(errStack(e)))
+  let callback = (data, error, finish)=>{
+    cb = cb || options.cb
+    if (cb && sType(cb) === 'function') {
+      cb(data, error, finish)
+    }
+  }
+  let fev = await commandSetup(command, options, execlog).catch(e=>{
+    let err = errStack(e)
+    execlog.error(err)
+    callback(null, err)
+  })
   let childexec = exec(fev.command, fev.options)
 
-  execlog.notify('start run command:', command)
+  execlog.notify('start run command:', fev.command, 'cwd:', options.cwd)
+  callback('start run command: ' + fev.command + ' cwd: ' + options.cwd)
   execlog.debug('start run command:', fev.command, 'with options:', fev.options)
 
-  cb = cb || options.cb
   let fdata = []
   childexec.stdout.on('data', data => {
     data = data.toString()
     execlog.info(data)
-    if (cb) {
-      cb(data)
-    }
+    callback(data)
     if (options.call) {
       if (fdata.length > CONFIG_exec.maxfdata) {
         fdata.splice(0, fdata.length/2)
@@ -201,9 +219,7 @@ async function execFunc(command, options={}, cb) {
   childexec.stderr.on('data', err => {
     err = err.toString()
     execlog.error(err)
-    if (cb) {
-      cb(null, err)
-    }
+    callback(null, err)
     wsSer.send({ type: 'minishell', data: err })
   })
 
@@ -213,9 +229,7 @@ async function execFunc(command, options={}, cb) {
       fstr += `(may run timeout of ${options.timeout}ms)`
     }
     execlog.info(fstr)
-    if (cb) {
-      cb(options.call ? fdata.join('\n') : fstr, null, true)
-    }
+    callback(options.call ? fdata.join('\n') : fstr, null, true)
   })
 
   if (options.stdin && options.stdin.write !== undefined) {
@@ -225,9 +239,7 @@ async function execFunc(command, options={}, cb) {
 
     let hint = 'input ' + options.stdin.write + ' after ' + options.stdin.delay + ' milliseconds'
     execlog.info(hint)
-    if (cb) {
-      cb(hint)
-    }
+    callback(hint)
     setTimeout(()=>{
       childexec.stdin.write(options.stdin.write)
       childexec.stdin.end()

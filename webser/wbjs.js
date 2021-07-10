@@ -111,12 +111,29 @@ module.exports = app => {
     const jsfn = req.body.jsfn
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "delete js file " + jsfn)
     if (jsfn) {
-      if (Jsfile.delete(jsfn)) {
-        JSLISTS.splice(JSLISTS.indexOf(jsfn), 1)
-        res.end(JSON.stringify({
-          rescode: 0,
-          message: jsfn + ' is deleted'
-        }))
+      let bDelist = Jsfile.delete(jsfn)
+      if (bDelist) {
+        if (sType(bDelist) === 'array') {
+          res.end(JSON.stringify({
+            rescode: 0,
+            message: bDelist.join(', ') + ' success deleted'
+          }))
+          bDelist.forEach(fn=>{
+            let fnidx = JSLISTS.indexOf(fn)
+            if (fnidx !== -1) {
+              JSLISTS.splice(fnidx, 1)
+            }
+          })
+        } else {
+          res.end(JSON.stringify({
+            rescode: 0,
+            message: jsfn + ' success deleted'
+          }))
+          let fnidx = JSLISTS.indexOf(jsfn)
+          if (fnidx !== -1) {
+            JSLISTS.splice(fnidx, 1)
+          }
+        }
       } else {
         res.end(JSON.stringify({
           rescode: 404,

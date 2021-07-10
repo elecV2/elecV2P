@@ -2,14 +2,20 @@ const { logger, LOGFILE, sType, escapeHtml } = require('../utils')
 const clog = new logger({ head: 'wblogs' })
 
 module.exports = app => {
-  app.get("/logs/:filename?", (req, res)=>{
-    let filename = req.params.filename || 'all'
+  app.get(["/logs", "/logs*"], (req, res)=>{
+    let filename = req.originalUrl.split('?')[0].replace(/\/$/, '').replace('/logs/', '')
+    if (!filename || filename === '/logs') {
+      filename = 'all'
+    }
+    filename = decodeURI(filename)
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get logs", filename)
     let logs = LOGFILE.get(filename)
     if (!logs) {
       res.writeHead(404, { 'Content-Type': 'text/plain;charset=utf-8' })
-      res.end(`404: ${filename} don't exist`)
-      return
+      return res.end(JSON.stringify({
+        rescode: 404,
+        message: `${filename} not exist`
+      }))
     }
     res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })
     res.write('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
@@ -18,7 +24,7 @@ module.exports = app => {
       if (logs.length === 0) {
         res.write('<div class="item">暂无 LOGS 日志</div>')
       } else {
-        logs.forEach(log=>res.write(`<a class='item' href="/logs/${filename !== 'all' ? ('__' + filename + '__') : ''}${log}">${log}</a>`))
+        logs.forEach(log=>res.write(`<a class='item' href="/logs/${filename !== 'all' ? (filename + '/') : ''}${log}" target="_blank">${log}</a>`))
       }
       res.end()
     } else {
@@ -42,9 +48,15 @@ module.exports = app => {
     const name = req.body.name
     clog.notify(req.headers['x-forwarded-for'] || req.connection.remoteAddress, "delete log file", name)
     if (LOGFILE.delete(name)) {
-      res.end(name + ' success deleted!')
+      res.end(JSON.stringify({
+        rescode: 0,
+        message: name + ' success deleted'
+      }))
     } else {
-      res.end(name + ' don\'t exist')
+      res.end(JSON.stringify({
+        rescode: 404,
+        message: name + ' not exist'
+      }))
     }
   })
 }

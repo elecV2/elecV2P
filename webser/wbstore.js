@@ -3,7 +3,7 @@ const clog = new logger({ head: 'wbstore', cb: wsSer.send.func('jsmanage'), leve
 
 module.exports = app => {
   app.get("/store", (req, res) => {
-    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " get store data", req.query.key)
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress) + " get store data", req.query.key || 'list')
     res.writeHead(200, { 'Content-Type' : 'text/plain;charset=utf-8' })
     if (req.query.key) {
       res.end(sString(store.get(req.query.key, 'raw')))

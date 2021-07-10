@@ -186,25 +186,10 @@ const file = {
     }
     clog.error(pname, 'not exist')
   },
-  delete(fname, basepath, option = { recursive: false }) {
+  delete(fname, basepath) {
     basepath && (fname = path.join(basepath, fname))
     if (fs.existsSync(fname)) {
-      if (fs.statSync(fname).isDirectory()) {
-        try {
-          if (option.recursive) {
-            fs.rmdirSync(fname, { recursive: true })
-            clog.info('delete directory', fname, 'recursively')
-          } else {
-            fs.rmdirSync(fname)
-            clog.info('delete a empty directory', fname)
-          }
-          return true
-        } catch(e) {
-          clog.info(fname, 'is a no empty directory, cant be delete.')
-          return false
-        }
-      }
-      fs.unlinkSync(fname)
+      fs.rmSync(fname, { recursive: true, force: true })
       clog.info('delete file', fname)
       return true
     } else {
@@ -244,7 +229,7 @@ const file = {
   },
   aList(folder, option = { max: -1, dot: true, skip: { folder: [], file: [] } }, progress = { num: 0 }){
     if (!fs.existsSync(folder)) {
-      clog.error('directory', folder, 'not existed.')
+      clog.error('directory', folder, 'not exist')
       return null
     }
     folder = path.resolve(folder)
@@ -288,7 +273,8 @@ const file = {
       }
     }
   },
-  list({ folder, max=1000 }) {
+  list({ folder, max=1000, dotfiles='deny', ext=[], noext=[] }) {
+    // ext: 只返回该 extension 的文件, noext: 不包括该后缀名的文件
     if (!(folder && fs.existsSync(folder))) {
       return []
     }
@@ -305,9 +291,18 @@ const file = {
       let newfolder = path.join(folder, subf)
       let list = fs.readdirSync(newfolder)
       for (let fd of list) {
+        if (dotfiles !== 'allow' && /^\./.test(fd)) {
+          continue
+        }
         if (fs.statSync(path.join(newfolder, fd)).isDirectory()) {
           subfolder.push((subf ? subf + '/' : '') + fd)
         } else {
+          if (ext.length && ext.indexOf(path.extname(fd)) === -1) {
+            continue
+          }
+          if (noext.length && noext.indexOf(path.extname(fd)) !== -1) {
+            continue
+          }
           fnlist.push((subf ? subf + '/' : '') + fd)
           curnum++
           if (curnum >= max) {
@@ -332,7 +327,7 @@ const Jsfile = {
     }
     name = name.trim()
     if (name === 'list') {
-      return file.list({ folder: fpath.js }).sort()
+      return file.list({ folder: fpath.js, ext: ['.js'] }).sort()
     }
     if (!/\.js$/i.test(name)) {
       name += '.js'
@@ -385,18 +380,43 @@ const Jsfile = {
       clog.info('first parameter is expect')
       return false
     }
-    if (!/\.js$/i.test(name)) {
-      name += '.js'
+    let delf = (name) => {
+      if (!/\.js$/i.test(name)) {
+        name += '.js'
+      }
+      let jspath = path.join(fpath.js, name)
+      if (fs.existsSync(jspath)) {
+        fs.unlinkSync(jspath)
+        clog.info(name, 'deleted')
+        return true
+      } else {
+        clog.error('no such js file:', name)
+        return false
+      }
     }
-    let jspath = path.join(fpath.js, name)
-    if (fs.existsSync(jspath)) {
-      fs.unlinkSync(jspath)
-      clog.info('delete js file', name)
-      return true
-    } else {
-      clog.error('no such js file:', name)
+
+    switch (sType(name)) {
+    case 'array':
+      let delist = []
+      name.forEach(n=>{
+        if (delf(n)) {
+          delist.push(n)
+        }
+      })
+      if (delist.length) {
+        return delist
+      }
       return false
+    case 'string':
+    default:
+      return delf(name)
     }
+  },
+  clear(){
+    // 清空目录下非 JS 文件
+    let nojslist = file.list({ folder: fpath.js, noext: ['.js'] })
+    nojslist.forEach(f=>file.delete(f, fpath.js))
+    return nojslist
   }
 }
 

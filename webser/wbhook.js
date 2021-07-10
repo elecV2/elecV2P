@@ -11,18 +11,16 @@ function handler(req, res){
   const rbody = Object.assign(req.body || {}, req.query || {})
   res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
   if (!CONFIG.wbrtoken) {
-    res.end(JSON.stringify({
+    return res.end(JSON.stringify({
       rescode: -1,
       message: 'webhook token not set yet'
     }))
-    return
   }
   if (rbody.token !== CONFIG.wbrtoken) {
-    res.end(JSON.stringify({
+    return res.end(JSON.stringify({
       rescode: -1,
       message: 'token is illegal'
     }))
-    return
   }
   const clientip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
   clog.notify(clientip, "run webhook type", rbody.type)

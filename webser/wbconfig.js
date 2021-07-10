@@ -1,5 +1,3 @@
-const express = require('express')
-
 const { logger, setGlog, CONFIG_FEED, CONFIG_Axios, axProxy, list, file, sString } = require('../utils')
 const clog = new logger({ head: 'wbconfig' })
 
@@ -7,49 +5,6 @@ const { CONFIG } = require('../config')
 const { CONFIG_RUNJS, CONFIG_RULE } = require('../script')
 
 module.exports = app => {
-  const dyn = dynStatic(file.get(CONFIG.efss.directory, 'path'))
-  app.use('/efss', dyn)
-
-  function dynStatic(path) {
-    let static = express.static(path, { dotfiles: (CONFIG.efss.dotshow && CONFIG.efss.dotshow.enable) ?  'allow' : 'deny' })
-    const dyn = (req, res, next) => static(req, res, next)
-
-    dyn.setPath = (newPath) => {
-      static = express.static(newPath, { dotfiles: (CONFIG.efss.dotshow && CONFIG.efss.dotshow.enable) ?  'allow' : 'deny' })
-    }
-    return dyn
-  }
-
-  function efssSet(cefss) {
-    if (cefss.enable === false) {
-      clog.notify('efss is closed')
-      return {
-        rescode: 0,
-        message: 'efss is closed'
-      }
-    }
-    if (cefss.directory) {
-      const efssF = file.get(cefss.directory, 'path')
-      if (file.isExist(efssF)) {
-        clog.notify('efss directory set to', cefss.directory)
-        dyn.setPath(efssF)
-        return {
-          rescode: 0,
-          message: 'reset efss directory success!'
-        }
-      }
-      clog.error(cefss.directory + ' dont exist')
-      return {
-        rescode: 404,
-        message: cefss.directory + ' dont exist'
-      }
-    }
-    return {
-      rescode: 0,
-      message: `efss set ${sString(cefss)}`
-    }
-  }
-
   app.get("/config", (req, res)=>{
     let type = req.query.type
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get config data", type)
@@ -132,7 +87,10 @@ module.exports = app => {
       case "wbrtoken":
         CONFIG.wbrtoken = req.body.data
         clog.notify('webhook token set to', CONFIG.wbrtoken)
-        res.end('webhook token set success!')
+        res.end(JSON.stringify({
+          rescode: 0,
+          message: 'success reset webhook token'
+        }))
         break
       case "eAxios":
         try {
@@ -178,9 +136,36 @@ module.exports = app => {
         }
         break
       case "efss":
-        let msg = efssSet(req.body.data)
+        let cefss = req.body.data, msg
+        if (cefss.enable === false) {
+          clog.notify('efss is closed')
+          msg = {
+            rescode: 0,
+            message: 'efss is closed'
+          }
+        } else if (cefss.directory) {
+          const efssF = file.get(cefss.directory, 'path')
+          if (file.isExist(efssF, true)) {
+            clog.notify('efss directory set to', cefss.directory)
+            msg = {
+              rescode: 0,
+              message: 'reset efss directory success!'
+            }
+          } else {
+            clog.error(cefss.directory + ' dont exist')
+            msg = {
+              rescode: 404,
+              message: cefss.directory + ' dont exist'
+            }
+          }
+        } else {
+          msg = {
+            rescode: 0,
+            message: `efss set ${sString(cefss)}`
+          }
+        }
         if (msg.rescode === 0) {
-          Object.assign(CONFIG.efss, req.body.data)
+          Object.assign(CONFIG.efss, cefss)
         }
         res.end(JSON.stringify(msg))
         break

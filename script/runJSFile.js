@@ -179,23 +179,23 @@ function runJS(filename, jscode, addContext={}) {
     CONTEXT.add({ addContext })
   }
 
-  // CONTEXT.final.__name = filename
-
-  let bDone = false     // 判断脚本中是否使用 $done 函数
-
-  if (/\$done/.test(jscode)) {
-    bDone = true
-  }
+  let bDone = /^(?!\/\/).*\$done/m.test(jscode)   // 判断脚本中是否使用 $done 函数。（待优化多选注释
 
   return new Promise((resolve, reject)=>{
     try {
+      let tout = addContext.timeout === undefined ? CONFIG_RUNJS.timeout : addContext.timeout
       if (bDone) {
         CONTEXT.final.ok = euid() + Date.now()
-        let vmtout = null,
-            tout = addContext.timeout || CONFIG_RUNJS.timeout
+        let vmtout = null
         if (tout > 0) {
           vmtout = setTimeout(()=>{
-            let message = addContext.timeout ? `${filename} still running...` : `run ${filename} timeout of ${tout} ms`
+            let message = `run ${filename} timeout of ${tout} ms`
+            if (addContext.timeout !== undefined) {
+              message = `${filename} still running...`
+            }
+            if (addContext.from === 'favend') {
+              message += `\ncheck the favend setting on webUI/efss`
+            }
             vmEvent.emit(CONTEXT.final.ok, message)
             clog.debug(message)
           }, tout)
@@ -208,10 +208,7 @@ function runJS(filename, jscode, addContext={}) {
         CONTEXT.final.$vmEvent = vmEvent
       }
       let option = {
-        filename
-      }
-      if (CONFIG_RUNJS.timeout && CONFIG_RUNJS.timeout > 0) {
-        option.timeout = CONFIG_RUNJS.timeout
+        filename, timeout: tout > 0 ? Number(tout) : undefined
       }
       let $result = vm.runInNewContext(jscode, CONTEXT.final, option)
 

@@ -112,10 +112,10 @@ function pemToP12(keyPath, crtPath, password='elecV2P') {
 
 function cacheClear() {
   try {
-    fs.rmdirSync(path.join(os.tmpdir(), 'anyproxy/cache'), { recursive: true })
+    fs.rmSync(path.join(os.tmpdir(), 'anyproxy/cache'), { recursive: true, force: true })
     return true
   } catch(e) {
-    clog.error('fail to clear anyproxy temp cache')
+    clog.error('fail to clear anyproxy temp cache', errStack(e))
     return false
   }
 }

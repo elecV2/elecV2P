@@ -1,5 +1,5 @@
 {
   "type": "string",
-  "value": "cookieValue\r\n这是一个示例，不需要可直接删除\r\n添加新的 cookie 时，直接修改 KEY 和它对应的 value 然后保存即可\r\n\r\n调用方法：\r\n在 JS 中使用 $store.get(KEY) 方法进行获取，比如直接测试运行下面的代码:\r\n\r\n``` JS\r\nlet anv = $store.get('cookieKEY')\r\nlet anov = $store.get('newone')\r\n\r\nconsole.log('cookieValue:', anv)\r\nconsole.log('newone 对应值:', anov)\r\n```\r\n\r\n更详细使用方法查看: https://github.com/elecV2/elecV2P-dei/tree/master/docs/04-JS.md 相关部分",
-  "update": "2021-05-23 19:44:10"
+  "value": "cookieKEY 是本 store/cookie 常量的名称，或者叫关键字，脚本通过该关键字来读取内容。大小写敏感，比如 cookieKEY 和 CookieKEY 是两个完全不同的常量。\n\n这是一个简单的 cookie 常量示例，不需要的话可直接删除\n在添加新的 cookie/store 常量时，直接修改 KEY: 对应关键字和这里面的内容，然后直接保存即可\n\n保存的常量可以在 JS 中通过 $store.get(KEY) 的方法进行获取，比如直接测试运行下面的代码:\n\n``` JS\nlet anv = $store.get('cookieKEY')\nlet anov = $store.get('newone')\n\nconsole.log('cookieKEY:', anv)\nconsole.log('newone 对应值:', anov)\n```\n\n更详细使用方法查看: https://github.com/elecV2/elecV2P-dei/tree/master/docs/04-JS.md 相关部分",
+  "update": "2021-07-07 19:13:04"
 }
