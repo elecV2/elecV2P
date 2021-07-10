@@ -1,11 +1,17 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.4.1)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.4.2)
+
+v3.4.2  2021.07.10
+ • EFSS 增加 favend <a href='https://github.com/elecV2/elecV2P-dei/blob/master/docs/08-logger&efss.md' target='_blank'>具体说明</a>
+ • TASK 批量删除/添加/暂停/开始
+ • logs 支持多级目录
+ • JS 列表只返回 .js 结尾文件
 
 v3.4.1  2021.06.28
  • node 指令默认 cwd 修改为 script/JSFile
  • 优化 shell 指令中 -env/-timeout 的处理
  • 添加默认 JS: process.env.js/moduleCheck.js
 
-v3.4.0
+v3.4.0  2021.06.19
  • 增加显示脚本内网络请求 url 的选项
  • eAxios 网络请求增加黑/白名单模式
  • 脚本内网络请求可设置不使用代理

@@ -140,31 +140,41 @@ const clog = new logger({ head: 'logger', level: 'debug' })
 
 const LOGFILE = {
   streamList: {},
+  statusList: {},
   streamFile(name){
     if (!this.streamList[name]) {
       this.streamList[name] = fs.createWriteStream(name, { flags: 'a' })
-      setTimeout(()=>{
-        this.streamList[name].end()
-      }, 5000)
+      this.statusList[name] = {
+        interval: setInterval(()=>{
+          if (this.statusList[name].toclose) {
+            clearInterval(this.statusList[name].interval)
+            this.streamList[name].end()
+          } else {
+            this.statusList[name].toclose = true
+          }
+        }, 5000),
+        toclose: true
+      }
       clog.debug('stream', name, 'created')
       this.streamList[name].on('close', ()=>{
         clog.debug(name + ' stream closed')
         delete this.streamList[name]
+        delete this.statusList[name]
       })
       this.streamList[name].on('error', ()=>{
         clog.debug(name + ' stream error')
         delete this.streamList[name]
+        delete this.statusList[name]
       })
     }
+    this.statusList[name].toclose = false
     return this.streamList[name]
   },
   put(filename, data){
     if (!filename || data === undefined || data === '') {
       return
     }
-    filename = filename.trim()
-    let file = this.streamFile(path.join(CONFIG_LOG.logspath, filename.replace(/\/|\\/g, '-')))
-    file.write(sString(data) + '\n')
+    this.streamFile(path.join(CONFIG_LOG.logspath, filename.trim().replace(/\/|\\/g, '-'))).write(sString(data) + '\n')
   },
   get(filename){
     if (!filename) {
@@ -172,34 +182,29 @@ const LOGFILE = {
     }
     filename = filename.trim()
     if (filename === 'all') {
-      return fs.readdirSync(CONFIG_LOG.logspath)
-    }
-    filename = filename.replace(/\/|\\/g, '-')
-    let fnmatch = filename.match(/^__(.+)__/)
-    if (fnmatch && fnmatch[1]) {
-      filename = filename.replace('__' + fnmatch[1] + '__', fnmatch[1] + '/')
+      return require('./file.js').file.list({ folder: CONFIG_LOG.logspath, ext: ['.log'] })
     }
     let logfpath = path.join(CONFIG_LOG.logspath, filename)
     if (fs.existsSync(logfpath)) {
       if (fs.statSync(logfpath).isDirectory()) {
-        return fs.readdirSync(logfpath)
+        return require('./file.js').file.list({ folder: logfpath, ext: ['.log'] })
       }
       return fs.createReadStream(logfpath)
     }
-    clog.info(filename, 'don\'t existed')
+    clog.info(filename, 'not exist')
   },
   delete(filename){
     if (!filename) return
     filename = filename.trim()
     if (filename == 'all') {
-      fs.readdirSync(CONFIG_LOG.logspath).forEach(file=>{
+      require('./file.js').file.list({ folder: CONFIG_LOG.logspath, ext: ['.log'] }).forEach(file=>{
         clog.notify('delete log file:', file)
         fs.unlinkSync(path.join(CONFIG_LOG.logspath, file))
       })
       return true
     }
     if (fs.existsSync(path.join(CONFIG_LOG.logspath, filename))){
-      clog.notify('delete log file', filename)
+      clog.notify('delete log file:', filename)
       fs.unlinkSync(path.join(CONFIG_LOG.logspath, filename))
       return true
     } 
