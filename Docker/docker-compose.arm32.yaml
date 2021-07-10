@@ -22,3 +22,5 @@ services:
       - "/elecv2p/Shell:/usr/local/app/script/Shell"
       - "/elecv2p/rootCA:/usr/local/app/rootCA"
       - "/elecv2p/efss:/usr/local/app/efss"
+    security_opt:
+      - seccomp=unconfined
