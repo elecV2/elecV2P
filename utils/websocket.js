@@ -4,6 +4,8 @@ const { nStatus, euid, sType, sString, sJson } = require('./string')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'webSocket', level: 'debug' })
 
+const { CONFIG } = require('../config')
+
 // 服务器 websocket 发送/接收 数据
 const wsSer = {
   recverlists: [],       // 客户端 recverlists
@@ -52,13 +54,17 @@ wsSer.recv.stopsendstatus = flag => flag ? wsobs.stop() : wsobs.send()
 function wsSend(data, target){
   if (sType(data) === "object") {
     if (wsSer.recverlists.indexOf('minishell') === -1 && wsSer.recverlists.indexOf(data.type) === -1) {
-      clog.debug('client recver', data.type, 'no ready yet')
+      if (CONFIG.debug && CONFIG.debug.websocket) {
+        clog.debug('client recver', data.type, 'no ready yet')
+      }
       return
     }
+    if (data.type !== 'elecV2Pstatus' && CONFIG.debug && CONFIG.debug.websocket) {
+      clog.debug('send client msg:', data)
+    }
   }
-  data = sString(data)
   if (wsobs.WSS) {
-    clog.debug('send client msg:', data)
+    data = sString(data)
     wsobs.WSS.clients.forEach(client=>{
       if (target) {
         if (client.id === target) {
@@ -68,7 +74,7 @@ function wsSend(data, target){
         client.send(data)
       }
     })
-  } else {
+  } else if (CONFIG.debug && CONFIG.debug.websocket) {
     clog.debug('no websocket clients yet, cant send data:', data)
   }
 }
@@ -123,6 +129,9 @@ const message = {
   },
   loading() {
     wsSer.send({ type: 'message', data: { type: 'loading', data: [...arguments] } })
+  },
+  close(mid) {
+    wsSer.send({ type: 'message', data: { type: 'close', data: mid } })
   }
 }
 
