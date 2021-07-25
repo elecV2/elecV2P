@@ -14,7 +14,7 @@ elecV2P - customize personal network.
 
 ## 安装/INSTALL
 
-**程序开放权限极大，建议局域网使用。网络部署，风险自负**
+***程序开放权限极大，建议局域网使用。网络部署，风险自负***
 
 ### 方法一：直接 NODEJS 运行
 
@@ -29,12 +29,12 @@ yarn
 # pm2 安装方式:
 # - 添加目录 elecV2P所在目录/node_modules/.bin 到系统环境变量 PATH 中
 # - 或者直接执行 yarn global add pm2
-# 安装完成后，就可以直接启动 elecV2P 了
+# 然后执行命令
 yarn start
 
 # 如果要使用基础方式启动，执行命令
 node index.js
-# node.js 版本大于 14.0.0 (node -v)
+# nodejs 版本需大于 14.0.0 (node -v)
 # 假如提示 80 端口不可用，尝试命令
 # PORT=8000 node index.js
 
@@ -95,8 +95,8 @@ docker run --restart=always \
 
 # 升级 Docker 镜像。（如果没有使用持久化存储，升级后所有个人数据会丢失，请提前备份）
 docker rm -f elecv2p           # 先删除旧的容器
-docker pull elecv2/elecv2p     # 再下载新的镜像。镜像名注意要和之前使用的相对应
-# 再使用之前的 docker run xxxx 命令重新启动一下
+docker pull elecv2/elecv2p     # 再下载新的镜像。注意镜像名要和之前使用的相对应
+# 再使用前面的 docker run xxxx 命令重新启动一下
 ```
 
 ### 方法三：DOCKER-COMPOSE （推荐）
@@ -143,7 +143,7 @@ services:
 - *部分用户反映，在某些设备上需要调整 version 的版本才能启动。如果启动出现问题，可以尝试把文件开头的 version: '3.7' 更改为 version: '3.3'*
 - *arm32 平台如果出错，参考 [issues #78](https://github.com/elecV2/elecV2P/issues/78)*
 
-然后在 docker-compose.yaml 同目录下执行以下任一命令
+文件保存后，在 docker-compose.yaml 同目录下执行以下任一命令
 ``` sh
 # 直接启动。（首次启动命令）
 docker-compose up -d
@@ -172,11 +172,11 @@ docker logs elecv2p -f
 *80 端口可使用环境变量 **PORT** 进行修改(比如: PORT=8000 node index.js)，也可以在 script/Lists/config.json 文件中更改其他所有端口。*
 *如果是使用 Docker 相关的安装方式，修改对应的映射端口即可。*
 
-*v3.3.0 版本后，所有端口可在 webUI->SETTING 界面进行修改（非必要情况不建议随意更改）*
+*v3.3.0 版本后，所有端口可在 webUI->SETTING->初始化相关设置 中进行修改（非必要情况不建议随意更改）*
 
 ## 根证书相关 - HTTPS 解密
 
-- *如果不使用 RULES/REWRITE 相关功能，此步骤可跳过。*
+- *如果不使用 RULES/REWRITE 等 MITM 相关功能，此步骤可跳过。*
 - *升级启动后，如果不是使用之前的证书，需要重新下载安装信任根证书。*
 - *根证书包含两个文件 rootCA.crt/rootCA.key，文件名不可修改。*
 
@@ -265,7 +265,7 @@ IFTTT/BARK/自定义通知等相关设置参考: [07-feed&notify](https://github
 
 TG 交流群: https://t.me/elecV2G (主要为方便用户使用交流，开发者24小时不在线，也不负责解答任何问题。)
 
-如果遇到问题或 Bug 可以开一个 [issue](https://github.com/elecV2/elecV2P/issues)。说明使用平台，版本，以及附上相关的错误日志（提供的信息越详细，越有助于解决问题）。
+如果遇到问题或 Bug 欢迎 [open a issue](https://github.com/elecV2/elecV2P/issues)。说明使用平台，版本，以及附上相关的错误日志（提供的信息越详细，越有助于解决问题）。
 
 ## 贡献参考
 

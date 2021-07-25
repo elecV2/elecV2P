@@ -418,7 +418,7 @@ const taskMa = {
         if (taskobj[tid].type === 'sub' || taskobj[tid].running === false) {
           if (TASKS_WORKER[tid]) {
             TASKS_WORKER[tid].delete('stop')
-            TASKS_WORKER[tid] = null
+            delete TASKS_WORKER[tid]
           }
           TASKS_INFO[tid] = taskobj[tid]
           if (taskobj[tid].type !== 'sub') {
@@ -433,10 +433,11 @@ const taskMa = {
         rescode: 0,
         message: `success save current task list ${status.running}/${status.total}/${status.sub}`
       }
-    }
-    return {
-      rescode: -1,
-      message: 'fail to save current task list'
+    } else {
+      return {
+        rescode: -1,
+        message: 'fail to save current task list'
+      }
     }
   }
 }

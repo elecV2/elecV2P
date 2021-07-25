@@ -1,4 +1,8 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.4.2)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.4.3)
+
+v3.4.3  2021.07.25
+ • EFSS 右键增加 pm2 运行选项（测试初版）
+ • JS 默认环境变量增加 $cache（详见: <a href='https://github.com/elecV2/elecV2P-dei/blob/master/docs/04-JS.md' target='_blank'>04-JS.md</a> 相关部分）
 
 v3.4.2  2021.07.10
  • EFSS 增加 favend <a href='https://github.com/elecV2/elecV2P-dei/blob/master/docs/08-logger&efss.md' target='_blank'>具体说明</a>

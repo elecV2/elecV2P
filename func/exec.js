@@ -200,7 +200,7 @@ async function execFunc(command, options={}, cb) {
   let childexec = exec(fev.command, fev.options)
 
   execlog.notify('start run command:', fev.command, 'cwd:', options.cwd)
-  callback('start run command: ' + fev.command + ' cwd: ' + options.cwd)
+  callback('start run command: ' + fev.command + ' cwd: ' + options.cwd + '\n')
   execlog.debug('start run command:', fev.command, 'with options:', fev.options)
 
   let fdata = []

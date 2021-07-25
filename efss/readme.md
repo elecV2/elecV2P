@@ -78,3 +78,19 @@ $done({
 ```
 
 当返回结果不是以上 $done 中的格式时，将会把最终结果作为 body 输出，其他项使用默认参数。
+
+## 使用 PM2 运行 (v3.4.3 beta 测试阶段...)
+
+使用方式：在需要运行的程序文件右键，然后选择 PM2 运行
+
+建议执行程序:
+- 简单的测试 js 文件
+- 普通可使用 pm2 start xxxx 运行的程序
+
+关于 PM2 的管理可参考: [官方文档 PM2.io 部分](https://pm2.keymetrics.io/docs/usage/monitoring/)
+
+*另外，可以也可在 elecV2P 的 $exec/Shell 指令/minishell 中，使用 pm2 命令对这些程序进行管理。（minishell 的开启，参考: [说明文档 Advanced.md](https://github.com/elecV2/elecV2P-dei/tree/master/docs/Advanced.md) ）*
+
+### 增加此选项的原因
+
+*可使用此方式运行一些提供 web ui 管理界面的程序，比如 aria2/clash 等。未来可能扩展到这些程序和 elecV2P 进行交互。*
