@@ -3,10 +3,14 @@
 
 const CONFIG = {
   clearanyproxycache: true,        // 是否清空由 ANYPROXY 代理产生的缓存文件
+  flushpm2logs: true,              // 是否清空由 pm2 运行产生的日志文件
 }
 
 if (CONFIG.clearanyproxycache) {
   cacheClear()
+}
+if (CONFIG.flushpm2logs) {
+  $exec('pm2 flush')
 }
 
 $exec('rm -f *.log', {
@@ -28,7 +32,7 @@ function cacheClear() {
   const path = require('path')
   try {
     console.log('准备清空 ANYPROXY temp cache 文件夹')
-    fs.rmSync(path.join(os.tmpdir(), 'anyproxy/cache'), { recursive: true })
+    fs.rmSync(path.join(os.tmpdir(), 'anyproxy/cache'), { recursive: true, force: true })
     console.log('ANYPROXY temp cache 清理完成')
     return true
   } catch(e) {

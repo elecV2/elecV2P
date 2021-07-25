@@ -4,12 +4,30 @@ const { CONFIG } = require('../config')
 const { errStack, euid, sType, sString, sJson, bEmpty, feedPush, iftttPush, barkPush, custPush, store, eAxios, jsfile, file, downloadfile, wsSer, message } = require('../utils')
 
 const { exec } = require('../func/exec')
-// const clog = new logger({ head: 'context', level: 'debug' })
+
+const $cache = {
+  get(key){
+    return this[key]
+  },
+  put(value, key) {
+    this[key] = value
+  },
+  delete(key){
+    delete this[key]
+  },
+  keys(){
+    return Object.keys(this).filter(key=>['get', 'put', 'keys', 'delete', 'clear'].indexOf(key) === -1)
+  },
+  clear(){
+    this.keys().forEach(key=>delete this[key])
+  }
+}
 
 class contextBase {
   constructor({ fconsole, name }){
     this.console = fconsole
     this.__name  = name
+    this.__filename = name
   }
 
   setTimeout = setTimeout
@@ -23,6 +41,7 @@ class contextBase {
   __efss = file.get(CONFIG.efss.directory, 'path')
   $ws = wsSer
   $exec = exec
+  $cache = $cache
   $store = {
     get(key, type){
       return store.get(key, type)
@@ -97,18 +116,10 @@ class contextBase {
     })
   }
   $feed = {
-    push(title, description, url) {
-      feedPush(title, description, url)
-    },
-    ifttt(title, description, url) {
-      iftttPush(title, description, url)
-    },
-    bark(title, description, url) {
-      barkPush(title, description, url)
-    },
-    cust(title, description, url) {
-      custPush(title, description, url)
-    }
+    push:  feedPush,
+    ifttt: iftttPush,
+    bark:  barkPush,
+    cust:  custPush
   }
   $done = (data) => {
     this.console.debug('$done:', data)

@@ -1,14 +1,4 @@
 {
-  "jxwQOSJZ": {
-    "name": "test",
-    "type": "schedule",
-    "job": {
-      "type": "runjs",
-      "target": "test.js"
-    },
-    "time": "3",
-    "running": false
-  },
   "m8LWPxDc": {
     "name": "执行 Shell 指令",
     "type": "cron",
@@ -28,6 +18,16 @@
       "type": "runjs",
       "target": "https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/python-install.js"
     }
+  },
+  "jxwQOSJZ": {
+    "name": "test",
+    "type": "schedule",
+    "job": {
+      "type": "runjs",
+      "target": "test.js"
+    },
+    "time": "3",
+    "running": false
   },
   "tJLRTl4t": {
     "name": "elecV2P 任务订阅",

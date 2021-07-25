@@ -142,6 +142,7 @@ function runJS(filename, jscode, addContext={}) {
   if (compatible.nodejs) {
     CONTEXT.final.module = module
     CONTEXT.final.process = process
+    CONTEXT.final.exports = exports
   } else if (compatible.surge || (compatible.quanx === false && /\$httpClient|\$persistentStore|\$notification/.test(jscode))) {
     clog.debug(`${filename} compatible with Surge script`)
     CONTEXT.add({ surge: true })
