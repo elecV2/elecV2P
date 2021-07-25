@@ -12,7 +12,7 @@ if (!CONFIG.wbrtoken) {
   CONFIG.wbrtoken = UUID()
 }
 
-const { wbefss, wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook } = require('./webser')
+const { wbefss, wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook, wbrpc } = require('./webser')
 
 module.exports = () => {
   const app = express()
@@ -51,7 +51,7 @@ module.exports = () => {
     } else {
       clog.error(ipAddress, 'trying to access elecV2P')
       res.writeHead(403, { 'Content-Type': 'text/html;charset=utf-8' })
-      res.end(`You don't have permission to access.<br>IP: ${ipAddress} is recorded.<br><br>Powered BY elecV2P: <a href='https://github.com/elecV2/elecV2P'>https://github.com/elecV2/elecV2P</a>`)
+      res.end(`<p>You don't have permission to access.</p><p>IP: ${ipAddress} is recorded.</p><br><p>Powered BY elecV2P: <a href='https://github.com/elecV2/elecV2P'>https://github.com/elecV2/elecV2P</a></p>`)
     }
   })
 
@@ -59,6 +59,7 @@ module.exports = () => {
 
   app.use(express.static(path.resolve(__dirname, 'web/dist'), { maxAge: ONEMONTH }))
 
+  wbrpc(app)
   wbconfig(app)
   wbfeed(app)
   wbcrt(app)

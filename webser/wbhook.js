@@ -316,17 +316,19 @@ function handler(req, res){
     break
   case 'exec':
   case 'shell':
-    clog.notify(clientip, 'exec shell command from webhook', rbody.command)
+    clog.notify(clientip, 'exec shell command', rbody.command, 'from webhook')
     if (rbody.command) {
       let command = decodeURI(rbody.command)
       let option  = {
-        timeout: 5000,
+        timeout: 5000, from: 'webhook',
         cb(data, error, finish) {
-          error ? clog.error(error) : clog.info(data)
           if (finish) {
             res.end('\ncommand: ' + command + ' finished')
+          } else if (error) {
+            clog.error(error)
+            res.write(error)
           } else {
-            res.write(error || data)
+            res.write(data)
           }
         }
       }
