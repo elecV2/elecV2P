@@ -20,12 +20,16 @@ module.exports = app => {
     res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })
     res.write('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
     if (sType(logs) === 'array') {
-      res.write(`<title>elecV2P LOGS - ${logs.length}</title><style>body{display: flex;flex-wrap: wrap;justify-content: space-between;}.item{height: fit-content;text-decoration: none;border-radius: 10px;padding: 8px 12px;margin: 4px 8px;background: #1890ff;color: white;font-size: 18px;font-family: 'Microsoft YaHei', -apple-system, Arial;}</style>`)
+      res.write(`<title>elecV2P LOGS - ${logs.length}</title><style>body{display: flex;flex-wrap: wrap;justify-content: space-between;}.item {height: 40px;border-radius: 10px;padding: 0 0 0 15px;margin: 4px 8px;background: #1890ff;color: white;font-size: 18px;font-family: 'Microsoft YaHei', -apple-system, Arial;}.item_a {padding: 8px 0;color: white;text-decoration: none;}.item_delete {display: inline-flex;justify-content: center;align-items: center;width: 15px;cursor: pointer;opacity: 0;padding: 8px 0;border-radius: 0 10px 10px 0;background-color: red;}.item_delete:hover{opacity: 1;}</style>`)
       if (logs.length === 0) {
         res.write('<div class="item">暂无 LOGS 日志</div>')
       } else {
-        logs.forEach(log=>res.write(`<a class='item' href="/logs/${filename !== 'all' ? (filename + '/') : ''}${log}" target="_blank">${log}</a>`))
+        logs.forEach(log=>{
+          let rflog = `${filename !== 'all' ? (filename + '/') : ''}${log}`
+          res.write(`<div class='item'><a class='item_a' href="/logs/${rflog}" target="_blank">${log}</a><span class='item_delete' onclick="logDel('${rflog}', this)">x</span></div>`)
+        })
       }
+      res.write(`<script type='text/javascript'>function logDel(n,o){confirm("确定删除日志 "+n+"？（不可恢复）")&&fetch("/logs",{method:"delete",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:n})}).then(e=>e.json()).then(e=>{0===e.rescode?o.parentElement.remove():alert(e.message||e)}).catch(e=>{alert(n+" 删除失败 "+e.message),console.log(e)})}</script>`)
       res.end()
     } else {
       res.write(`<title>${filename} - elecV2P</title><style>.logs{background:#1890ff;border-radius:10px;color:#fff;font-family:consolas, monospace;font-size:18px;height:fit-content; overflow-wrap:break-word;padding:8px 12px;text-decoration:none; white-space:pre-wrap; word-break:break-word;}</style>`)
