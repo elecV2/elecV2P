@@ -3,7 +3,7 @@ const formidable = require('formidable')
 const { logger, downloadfile, eAxios, errStack, sString, sType, Jsfile, file, wsSer } = require('../utils')
 const clog = new logger({ head: 'wbjsfile', cb: wsSer.send.func('jsmanage') })
 
-const { runJSFile, JSLISTS } = require('../script')
+const { runJSFile } = require('../script')
 
 module.exports = app => {
   app.get("/jsfile", (req, res)=>{
@@ -23,7 +23,7 @@ module.exports = app => {
       res.writeHead(404, { 'Content-Type': 'text/plain;charset=utf-8' })
       res.end(JSON.stringify({
         rescode: 404,
-        message: '404 ' + jsfn + ' don\'t exist'
+        message: jsfn + ' not exist'
       }))
     }
   })
@@ -32,7 +32,7 @@ module.exports = app => {
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get js manage data")
     res.end(JSON.stringify({
       storemanage: true,
-      jslists: Object.assign(JSLISTS, Jsfile.get('list'))
+      jslists: Jsfile.get('list')
     }))
   })
 
@@ -41,20 +41,20 @@ module.exports = app => {
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), op, req.body.url)
     switch(op){
       case 'jsdownload':
-        downloadfile(req.body.url, Jsfile.get(req.body.name, 'path') || file.get('script/JSFile', 'path'), d=>{
+        downloadfile(req.body.url, {
+          folder: file.get('script/JSFile', 'path'),
+          name: req.body.name
+        }, d=>{
           clog.info(d.finish || d.progress + '\r')
         }).then(jsl=>{
           res.end(JSON.stringify({
             rescode: 0,
             message: 'download js file to: ' + jsl
           }))
-          if (req.body.name && JSLISTS.indexOf(req.body.name) === -1) {
-            JSLISTS.push(req.body.name)
-          }
         }).catch(e=>{
           res.end(JSON.stringify({
             rescode: -1,
-            message: `${req.body.name ? req.body.name + ' ' : ''}${errStack(e)}`
+            message: `${req.body.name || ''} ${errStack(e)}`.trim()
           }))
         })
         break
@@ -95,9 +95,6 @@ module.exports = app => {
           rescode: 0,
           message: `${jsname} success saved`
         }))
-        if (JSLISTS.indexOf(jsname) === -1) {
-          JSLISTS.push(jsname)
-        }
       } else {
         res.end(JSON.stringify({
           rescode: -1,
@@ -118,21 +115,11 @@ module.exports = app => {
             rescode: 0,
             message: bDelist.join(', ') + ' success deleted'
           }))
-          bDelist.forEach(fn=>{
-            let fnidx = JSLISTS.indexOf(fn)
-            if (fnidx !== -1) {
-              JSLISTS.splice(fnidx, 1)
-            }
-          })
         } else {
           res.end(JSON.stringify({
             rescode: 0,
             message: jsfn + ' success deleted'
           }))
-          let fnidx = JSLISTS.indexOf(jsfn)
-          if (fnidx !== -1) {
-            JSLISTS.splice(fnidx, 1)
-          }
         }
       } else {
         res.end(JSON.stringify({
@@ -175,16 +162,10 @@ module.exports = app => {
         files.js.forEach(sgfile=>{
           clog.notify('upload js file:', sgfile.name)
           file.copy(sgfile.path, Jsfile.get(sgfile.name, 'path'))
-          if (JSLISTS.indexOf(sgfile.name) === -1) {
-            JSLISTS.push(sgfile.name)
-          }
         })
       } else {
         clog.notify('upload js file:', files.js.name)
         file.copy(files.js.path, Jsfile.get(files.js.name, 'path'))
-        if (JSLISTS.indexOf(files.js.name) === -1) {
-          JSLISTS.push(files.js.name)
-        }
       }
       return res.end(JSON.stringify({
         rescode: 0,
@@ -227,9 +208,6 @@ $axios(request).then(res=>{
         Jsfile.put(jsname, jscont)
         res.end(`success save ${jsname}!`)
         clog.notify(`success save ${jsname}!`)
-        if (JSLISTS.indexOf(jsname) === -1) {
-          JSLISTS.push(jsname)
-        }
         break
       default:{
         res.end("wrong mock type")

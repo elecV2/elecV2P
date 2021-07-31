@@ -1,6 +1,6 @@
 const os = require('os')
 const { taskMa, exec } = require('../func')
-const { CONFIG_RULE, runJSFile, JSLISTS } = require('../script')
+const { CONFIG_RULE, runJSFile } = require('../script')
 
 const { logger, LOGFILE, Jsfile, list, nStatus, sJson, sString, sType, surlName, sBool, stream, downloadfile, now, checkupdate, store, kSize, errStack } = require('../utils')
 const clog = new logger({ head: 'webhook', level: 'debug' })
@@ -26,7 +26,7 @@ function handler(req, res){
   clog.notify(clientip, "run webhook type", rbody.type)
   switch(rbody.type) {
   case 'jslist':
-    res.end(JSON.stringify(JSLISTS))
+    res.end(JSON.stringify(Jsfile.get('list')))
     break
   case 'jsrun':
   case 'runjs':
@@ -39,13 +39,15 @@ function handler(req, res){
       }))
     } else {
       const addContext = {
-        type: 'webhook'
+        from: 'webhook'
       }
-      let showfn = surlName(fn)
+      let showfn = ''
       if (rbody.rawcode) {
         addContext.type = 'rawcode'
         fn = rbody.rawcode
         showfn = 'rawcode.js'
+      } else {
+        showfn = surlName(fn)
       }
       if (rbody.rename) {
         if (!/\.js$/i.test(rbody.rename)) {
@@ -53,9 +55,6 @@ function handler(req, res){
         }
         addContext.rename = rbody.rename
         showfn = rbody.rename
-        if (JSLISTS.indexOf(rbody.rename) === -1) {
-          JSLISTS.push(rbody.rename)
-        }
       }
       if (rbody.env) {
         const senv = sJson(rbody.env, true)
@@ -63,7 +62,6 @@ function handler(req, res){
           addContext[env.startsWith('$') ? env : ('$' + env)] = senv[env]
         }
       }
-      addContext.from = 'webhook'
       addContext.timeout = 5000
       runJSFile(fn, addContext).then(data=>{
         if (data) {
@@ -77,7 +75,7 @@ function handler(req, res){
         showfn = showfn.replace(/\/|\\/g, '-')
         let homepage = CONFIG.homepage || `${req.headers['x-forwarded-proto'] || req.protocol}://${req.get('host')}`
         res.write(`\n\nconsole log file: ${homepage}/logs/${showfn}.log\n\n`)
-        let oldlog = LOGFILE.get(showfn+'.log')
+        let oldlog = LOGFILE.get(showfn + '.log')
         if (oldlog) {
           oldlog.pipe(res)
         } else {
@@ -112,21 +110,11 @@ function handler(req, res){
           rescode: 0,
           message: bDelist.join(', ') + ' success delete'
         }))
-        bDelist.forEach(fn=>{
-          let fnidx = JSLISTS.indexOf(fn)
-          if (fnidx !== -1) {
-            JSLISTS.splice(fnidx, 1)
-          }
-        })
       } else {
         res.end(JSON.stringify({
           rescode: 0,
           message: jsfn + ' success delete'
         }))
-        let fnidx = JSLISTS.indexOf(jsfn)
-        if (fnidx !== -1) {
-          JSLISTS.splice(fnidx, 1)
-        }
       }
     } else {
       res.end(JSON.stringify({
@@ -381,7 +369,6 @@ function handler(req, res){
 
     if (rbody.debug) {
       elecV2PInfo.elecV2P.webhooktoken = CONFIG.wbrtoken
-      elecV2PInfo.elecV2P.JSLISTSlen = JSLISTS.length
 
       elecV2PInfo.system.userInfo = os.userInfo()
       elecV2PInfo.system.uptime = (os.uptime()/60/60).toFixed(2) + ' hours'
@@ -509,13 +496,21 @@ function handler(req, res){
     }))
     break
   case 'devdebug':
-    // temp debug
+    // temp debug, 待完成 unfinished
     switch(rbody.get){
     case 'rule':
       res.end(JSON.stringify(CONFIG_RULE))
       break
     case 'config':
       res.end(JSON.stringify(CONFIG))
+      break
+    case 'minishell':
+      if (rbody.op === 'open') {
+        CONFIG.minishell = true
+      } else if (rbody.op === 'close') {
+        CONFIG.minishell = false
+      }
+      res.end(JSON.stringify({ minishell: CONFIG.minishell }))
       break
     default:
       res.end('dev debug')
@@ -569,7 +564,7 @@ function handler(req, res){
   default:
     res.end(JSON.stringify({
       rescode: -1,
-      message: 'wrong webhook type ' + rbody.type
+      message: 'webhook type ' + rbody.type + ' not support yet'
     }))
   }
 }

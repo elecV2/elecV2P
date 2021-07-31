@@ -1,9 +1,9 @@
 const { CONFIG, CONFIG_Port } = require('../config')
 
-const { logger, list, sType, stream, checkupdate } = require('../utils')
+const { logger, list, Jsfile, sType, stream, checkupdate } = require('../utils')
 const clog = new logger({ head: 'wbdata' })
 
-const { CONFIG_RULE, JSLISTS } = require('../script')
+const { CONFIG_RULE } = require('../script')
 const { crtInfo, taskMa, sysInfo } = require('../func')
 
 module.exports = app => {
@@ -19,7 +19,7 @@ module.exports = app => {
           webifPort: CONFIG_Port.webif,
           ruleslen: CONFIG_RULE.reqlists.length + CONFIG_RULE.reslists.length,
           rewriteslen: CONFIG_RULE.rewritelists.length,
-          jslistslen: JSLISTS.length,
+          jslistslen: Jsfile.get('list').length,
           taskstatus: taskMa.status(),
           mitmhostlen: CONFIG_RULE.mitmhost.length,
           version: CONFIG.version,
@@ -33,8 +33,7 @@ module.exports = app => {
         let rlist = list.get('default.list')
         res.end(JSON.stringify({
           eplists: (rlist && rlist.rules) || { list: [] },
-          uagent: CONFIG_RULE.uagent,
-          jslists: JSLISTS
+          uagent: CONFIG_RULE.uagent
         }))
         break
       case "rewritelists":
