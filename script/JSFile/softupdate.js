@@ -6,10 +6,10 @@
 // 3.1.8 版本后 elecV2P 默认启动方式更改为 PM2，建议在此版本后使用
 // 
 // 文件更新地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
-// 最近更新时间: 2021-07-10
+// 最近更新时间: 2021-07-27
 
 let CONFIG = {
-  store: 'softupdate_CONFIG',    // 将当前配置内容(CONFIG 值) 常量储存。留空: 表示使用下面的参数进行更新，否则将会读取 store 中的 softupdate_CONFIG 对应值进行更新。如果 softupdate_CONFIG 尚未设置(首次运行)，会先按下面参数执行，并储存当前 CONFIG 内容
+  store: 'softupdate_CONFIG',    // 将当前配置内容(CONFIG 值) 常量储存。留空: 表示使用下面的参数进行更新，否则将会读取 store/cookie 常量中的 softupdate_CONFIG 对应值进行更新。如果 softupdate_CONFIG 尚未设置(首次运行)，会先按下面参数执行，并储存当前 CONFIG 内容
   forceupdate: false,            // 强制更新。false: 检测到新版本时才更新。 true: 不检测版本直接更新
   notify: true,                  // 检测到新版本时是否进行通知。true: 通知, false: 不通知
   restart: 'elecV2P',            // false: 只更新文件，不重启不应用。 其他值表示 pm2 重启线程名，比如 all/elecV2P/index（暂时不清楚就保持不动）
@@ -66,7 +66,7 @@ async function checkUpdate(){
     if (__version !== newversion) {
       console.log('检测到有新的版本:', newversion)
       if (CONFIG.notify) {
-        $feed.push('elecV2P 检测到新版本 ' + newversion, '当前版本 ' + __version +  '\n即将进行软更新升级', /127|192|172|10|localhost/.test(__home) ? '' : __home)
+        $feed.push('elecV2P 检测到新版本 ' + newversion, '当前版本 ' + __version +  '\n即将进行软更新升级\n\n更新日志: https://github.com/elecV2/elecV2P/blob/master/logs/update.log', /127|192|172|10|localhost/.test(__home) ? '' : __home)
       }
       return true
     }
@@ -160,11 +160,11 @@ function autoFresh() {
     title: '软更新完成',
     width: 800,
     height: 200,
-    content: `<p>软更新已完成，elecV2P 将在 3 秒后尝试自动刷新前端页面</p><p>如长时间没有反应，请点击 <a href="/">手动刷新</a></p>`,
+    content: `<p>软更新已完成，elecV2P 将在 3 秒后尝试自动刷新前端页面</p><p>如长时间没有反应，请点击 <span style="color: var(--main-bk); cursor: pointer;" onclick="location.reload(true)">手动刷新</span></p>`,
     style: {
       content: "font-size: 26px; text-align: center",
     },
     resizable: false,
-    script: `console.log("将在 3 秒后自动刷新页面");setTimeout(()=>location.href = '/?refresh=' + Math.random(), 3000)`
+    script: `console.log("将在 3 秒后自动刷新页面");setTimeout(()=>{location.hash = '';location.reload(true)}, 3000)`
   }).then(data=>console.log(data)).catch(e=>console.log(e))
 }
