@@ -4,11 +4,11 @@ const homedir = require('os').homedir()
 const { logger, errStack, file } = require('../utils')
 const clog = new logger({ head: 'wbcrt' })
 
-const { rootCrtSync, clearCrt, newRootCrt, cacheClear } = require('../func')
+const { clearCrt, newRootCrt, cacheClear } = require('../func')
 
 module.exports = app => {
   app.get("/crt", (req, res)=>{
-    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "download rootCA.crt")
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'download rootCA.crt')
     res.download(homedir + '/.anyproxy/certificates/rootCA.crt')
   })
 
@@ -28,32 +28,19 @@ module.exports = app => {
           }))
         })
         break
-      case 'rootsync':
-        rootCrtSync().then(()=>{
-          res.end(JSON.stringify({
-            rescode: 0,
-            message: 'success move rootCA.crt/rootCA.key to anyproxy certificates directory'
-          }))
-        }).catch(e=>{
-          res.end(JSON.stringify({
-            rescode: 404,
-            message: 'rootCA not found\n' + errStack(e)
-          }))
-        })
-        break
       case 'clearcrt':
         clearCrt()
-        res.end('all certificates is cleared except rootCA')
+        res.end('all certificates cleared except rootCA')
         break
       default: {
-        res.end("unknow operation " + op)
+        res.end('unknow operation ' + op)
         break
       }
     }
   })
 
   app.post('/crt', (req, res) => {
-    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "uploading rootCA")
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'uploading rootCA')
     const uploadfile = new formidable.IncomingForm()
     uploadfile.maxFieldsSize = 2 * 1024 * 1024 //限制为最大2M
     uploadfile.keepExtensions = true
@@ -95,7 +82,7 @@ module.exports = app => {
     if (cacheClear()) {
       res.end(JSON.stringify({
         rescode: 0,
-        message: 'anyproxy cache is deleted'
+        message: 'anyproxy cache deleted'
       }))
     } else {
       res.end(JSON.stringify({
