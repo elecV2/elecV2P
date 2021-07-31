@@ -3,10 +3,11 @@
 const { exec } = require('../func')
 const { logger } = require('../utils')
 
-const clog = new logger({ head: 'webRPC', level: 'debug' })
+const clog = new logger({ head: 'webRPC', level: 'debug', file: 'webRPC.log' })
 
 function eRPC(req, res) {
   let { method, params, id } = req.body
+  clog.info(req.headers['x-forwarded-for'] || req.connection.remoteAddress, method, params)
   // method: string, params: array
   switch(method) {
   case 'pm2run':
