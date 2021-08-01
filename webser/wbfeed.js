@@ -13,7 +13,7 @@ module.exports = app => {
   app.put("/feed", (req, res)=>{
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "put feed")
     let data = req.body.data
-    let bSave = true
+    let bSave = true, message = ''
     switch(req.body.type){
       case "op":
         CONFIG_FEED.enable = data.enable
@@ -50,18 +50,39 @@ module.exports = app => {
       case "merge":
         CONFIG_FEED.merge = data.merge
         CONFIG_FEED.rss.enable = data.rssenable
-        let message = `FEED 输出已 ${ data.rssenable ? '开启' : '关闭' }` + `\n默认通知合并已 ${ data.merge.enable ? '开启' : '取消' }`
+        message = `FEED 输出已 ${ data.rssenable ? '开启' : '关闭' }` + `\n默认通知合并已 ${ data.merge.enable ? '开启' : '取消' }`
         clog.notify(message)
         res.end(message)
         break
       case "test":
+        if (CONFIG_FEED.iftttid.enable) {
+          message += '\nIFTTT 通知已发送，请打开相关 APP 查看接收是否正常'
+        } else {
+          message += '\nIFTTT 通知方式处于关闭状态'
+        }
+        if (CONFIG_FEED.barkkey.enable) {
+          message += '\nBARK 通知已发送，请打开相关 APP 查看接收是否正常'
+        } else {
+          message += '\nBARK 通知方式处于关闭状态'
+        }
+        if (CONFIG_FEED.custnotify.enable) {
+          message += '\n自定义 通知已发送，请打开相关 APP 查看接收是否正常'
+        } else {
+          message += '\n自定义 通知方式处于关闭状态'
+        }
         feedPush('elecV2P 测试通知', '恭喜您，该通知方式设置正常\nCongratulations! this notification is enabled', 'https://github.com/elecV2/elecV2P')
-        res.end('通知已发送，请查看是否接收')
+        res.end(JSON.stringify({
+          rescode: 0,
+          message: message.trim()
+        }))
         bSave = false
         break
       default:{
         clog.error('FEED PUT 未知操作', req.body.type)
-        res.end('FEED PUT 未知操作 ' + req.body.type)
+        res.end(JSON.stringify({
+          rescode: -1,
+          message: 'FEED PUT 未知操作 ' + req.body.type
+        }))
         bSave = false
       }
     }
