@@ -19,6 +19,7 @@ module.exports = class {
       
       this.job = cron.schedule(this.task.time, this.job)
       this.task.running = true
+      wsSer.send({ type: 'task', data: { tid: this.task.id, op: 'start' }})
     } else {
       clog.error('no taskinfo')
     }
@@ -31,8 +32,8 @@ module.exports = class {
     if (this.task) {
       clog.log(this.task.name, flag)
       this.task.running = false
-      if(this.task.id && flag !== 'restart') {
-        wsSer.send({type: 'task', data: {tid: this.task.id, op: 'stop'}})
+      if (this.task.id && flag !== 'restart') {
+        wsSer.send({ type: 'task', data: { tid: this.task.id, op: 'stop' }})
       }
     }
   }

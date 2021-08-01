@@ -1,6 +1,6 @@
 {
   "name": "elecV2P",
-  "version": "3.4.3",
+  "version": "3.4.4",
   "description": "customize personal network",
   "main": "index.js",
   "author": "https://github.com/elecV2",
@@ -16,6 +16,16 @@
     "dev": "set port=12521 && nodemon index.js"
   },
   "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/elecV2/elecV2P/issues"
+  },
+  "keywords": [
+    "MITM",
+    "V2P",
+    "anyproxy",
+    "task",
+    "shell"
+  ],
   "dependencies": {
     "anyproxy": "^4.1.3",
     "axios": "^0.21.1",

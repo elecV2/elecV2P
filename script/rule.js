@@ -1,9 +1,7 @@
-const { logger, sJson, sUrl, sType, sString, list, Jsfile, wsSer, errStack } = require('../utils')
+const { logger, sJson, sUrl, sType, sString, list, wsSer, errStack } = require('../utils')
 const clog = new logger({ head: 'elecV2P', level: 'debug' })
 
 const { runJSFile } = require('./runJSFile')
-
-const JSLISTS = Jsfile.get('list')
 
 const bCircle = {
   max: 50,      // 单位时间内对同一个 host 最大的请求数
@@ -196,7 +194,6 @@ function formResponse($response) {
 module.exports = {
   summary: 'elecV2P - customize personal network',
   CONFIG_RULE,
-  JSLISTS,
   *beforeSendRequest(requestDetail) {
     if (bCircle.check(requestDetail.requestOptions.hostname)) {
       let error = 'access ' + requestDetail.requestOptions.hostname + ' be blocked, because of visiting over ' + bCircle.max + ' times in ' + bCircle.gap + ' milliseconds'
@@ -314,7 +311,10 @@ module.exports = {
     // 通过 JS 文件修改请求体
     if ('js' === matchreq.ctype ) {
       return new Promise((resolve, reject)=>{
-        runJSFile(matchreq.target, { $request: formRequest(requestDetail) }).then(jsres=>{
+        runJSFile(matchreq.target, {
+          from: 'ruleReq',
+          $request: formRequest(requestDetail)
+        }).then(jsres=>{
           if (sType(jsres) !== 'object') {
             return resolve({
               response: { ...localResponse.reject, body: sString(jsres) }
@@ -361,7 +361,11 @@ module.exports = {
       if ((new RegExp(r.match)).test($request.url)) {
         clog.info('match rewrite rule:', r.match, r.target)
         return new Promise((resolve, reject)=>{
-          runJSFile(r.target, { $request: formRequest($request), $response: formResponse($response) }).then(jsres=>{
+          runJSFile(r.target, {
+            from: 'rewrite',
+            $request: formRequest($request),
+            $response: formResponse($response)
+          }).then(jsres=>{
             if (sType(jsres) === 'object') {
               Object.assign($response, jsres.response || jsres)
             } else {
@@ -438,8 +442,12 @@ module.exports = {
       }
     }
     if (matchres.ctype === "js") {
-      return new Promise(async (resolve, reject)=>{
-        runJSFile(matchres.target, { $request: formRequest($request), $response: formResponse($response) }).then(jsres=>{
+      return new Promise((resolve, reject)=>{
+        runJSFile(matchres.target, {
+          from: 'ruleRes',
+          $request: formRequest($request),
+          $response: formResponse($response)
+        }).then(jsres=>{
           if (sType(jsres) === 'object') {
             Object.assign($response, jsres.response || jsres)
           } else {

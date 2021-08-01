@@ -11,7 +11,7 @@ const clog = new logger({ head: 'funcTask', cb: wsSer.send.func('tasklog'), file
 class Task {
   constructor(info){
     this.info = info
-    this.job = jobFunc(info.job, info.name)
+    this.job = jobFunc(info.job, { taskname: info.name, taskid: info.id })
   }
 
   stat(){
@@ -50,6 +50,7 @@ class Task {
         feedAddItem(this.info.name + ' deleted', 'time: ' + this.info.time)
       }
       this.task.delete(flag)
+      delete this.task
     }
   }
 }
@@ -108,37 +109,43 @@ function bIsValid(info) {
   return true
 }
 
-function jobFunc(job, taskname) {
+function jobFunc(job, { taskname, taskid }) {
   // 任务信息转化为可执行函数
   if (!(job && job.target)) {
     clog.error('a job target is expect')
     return ()=>'a job target is expect'
   }
   if (job.type === 'runjs') {
-    return ()=>runJSFile(job.target, { type: 'task', cb: wsSer.send.func('tasklog') })
+    return ()=>runJSFile(job.target, {
+      from: 'task',
+      __taskid: taskid,
+      __taskname: taskname,
+      cb: wsSer.send.func('tasklog')
+    })
   } else if (job.type === 'taskstart') {
     return ()=>{
       if (!TASKS_INFO[job.target]) {
-        clog.error('task start another task error: job', job.target, 'not exist')
-        return
+        clog.error('start task error:', job.target, 'not exist')
+        return {
+          error: `${job.target || 'task'} not exist`
+        }
       }
       if (!TASKS_WORKER[job.target]) {
         TASKS_WORKER[job.target] = new Task(TASKS_INFO[job.target])
       }
       TASKS_WORKER[job.target].start()
-      wsSer.send({ type: 'task', data: {tid: job.target, op: 'start'} })
     }
   } else if (job.type === 'taskstop') {
     return ()=>{
       if (!TASKS_INFO[job.target] || !TASKS_WORKER[job.target]) {
-        clog.error('task stop another task error: job', job.target, 'not exist')
-        return
+        clog.error('stop task error:', job.target, 'not exist')
+        return {
+          error: `${job.target || 'task'} not exist`
+        }
       }
       TASKS_WORKER[job.target].stop()
       TASKS_WORKER[job.target].delete('stop')
       TASKS_WORKER[job.target] = null
-      TASKS_INFO[job.target].running = false
-      wsSer.send({type: 'task', data: {tid: job.target, op: 'stop'}})
     }
   } else if (job.type === 'exec') {
     return ()=>new Promise((resolve)=>{
@@ -161,7 +168,7 @@ function jobFunc(job, taskname) {
   }
 }
 
-const taskMa = {
+const taskMan = {
   add(taskinfo, options={}){
     let tname = this.nameList()
     let resmsg = {
@@ -240,7 +247,7 @@ const taskMa = {
     if (!tid) {
       return {
         rescode: -1,
-        message: 'a task tid is expect'
+        message: 'a task id is expect'
       }
     }
 
@@ -281,7 +288,7 @@ const taskMa = {
     if (!tid) {
       return {
         rescode: -1,
-        message: 'a task tid is expect'
+        message: 'a task id is expect'
       }
     }
     let resmsg = {
@@ -320,7 +327,7 @@ const taskMa = {
     if (!tid) {
       return {
         rescode: -1,
-        message: 'a task tid is expect'
+        message: 'a task id is expect'
       }
     }
     let resmsg = {
@@ -360,7 +367,7 @@ const taskMa = {
       }
     }
     try {
-      let job = jobFunc(taskinfo.job, taskinfo.name + '-test')
+      let job = jobFunc(taskinfo.job, { taskname: taskinfo.name + '-test', taskid: taskinfo.id })
       let jobres = await job()
       return {
         rescode: 0,
@@ -376,7 +383,9 @@ const taskMa = {
   nameList(){
     let tname = {}
     for (let tid in TASKS_INFO) {
-      tname[TASKS_INFO[tid].name] = tid
+      if (TASKS_INFO[tid].type !== 'sub') {
+        tname[TASKS_INFO[tid].name] = tid
+      }
     }
     return tname
   },
@@ -442,4 +451,11 @@ const taskMa = {
   }
 }
 
-module.exports = { taskMa }
+module.exports = {
+  taskMa: new Proxy(taskMan, {
+    set(target, prop){
+      clog.error('forbid redefine $task method', prop)
+      throw new Error('forbid redefine $task method ' + prop)
+    }
+  })
+}

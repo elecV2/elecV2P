@@ -1,4 +1,3 @@
-const qs = require('qs')
 const RSS = require('rss')
 
 const { message, wsSer } = require('./websocket')
@@ -279,8 +278,9 @@ function feedPush(title, description, url) {
 
 const mergefeed = {
   content: [],               // 合并通知的内容
-  push(){
+  notify(){
     if (CONFIG_FEED.enable === false) {
+      clog.debug('default notification is closed')
       return
     }
     feedPush('elecV2P 合并通知 ' + this.content.length, this.content.join('\n'))
@@ -296,6 +296,7 @@ const mergefeed = {
 function feedAddItem(title = 'elecV2P notification', description =  '通知内容', url) {
   // 默认通知
   if (CONFIG_FEED.enable === false) {
+    clog.debug('default notification is closed')
     return
   }
   if (/test/.test(title)) {
@@ -307,14 +308,14 @@ function feedAddItem(title = 'elecV2P notification', description =  '通知内�
     if (!(mergefeed.timefulled || mergefeed.setTime)) {
       mergefeed.setTime = setTimeout(()=>{
         if (!CONFIG_FEED.merge.andor || mergefeed.content.length >= Number(CONFIG_FEED.merge.number)) {
-          mergefeed.push()
+          mergefeed.notify()
         } else {
           mergefeed.timefulled = true
         }
       }, Number(CONFIG_FEED.merge.gaptime)*1000)
     }
     if ((!CONFIG_FEED.merge.andor || mergefeed.timefulled) && mergefeed.content.length >= Number(CONFIG_FEED.merge.number)) {
-      mergefeed.push()
+      mergefeed.notify()
     }
   } else {
     feedPush(title, description, url)

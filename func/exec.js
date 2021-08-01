@@ -229,7 +229,7 @@ async function execFunc(command, options={}, cb) {
       fstr += `(may run timeout of ${options.timeout}ms)`
     }
     execlog.info(fstr)
-    callback(options.call ? fdata.join('\n') : fstr, null, true)
+    callback(options.call ? fdata.join('') : fstr, null, true)
   })
 
   if (options.stdin && options.stdin.write !== undefined) {

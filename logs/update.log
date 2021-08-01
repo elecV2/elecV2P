@@ -1,4 +1,13 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.4.3)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.4.4)
+
+v3.4.4  2021.08.01
+ • JS 运行增加 sudo 模式及 $task（详见: <a href='https://github.com/elecV2/elecV2P-dei/blob/master/docs/04-JS.md' target='_blank'>04-JS.md</a> 相关部分）
+ • LOGS 界面增加删除按钮
+ • Fix:
+  - 任务获取显示 0/0/0 的问题
+  - EFSS 右键菜单边缘问题
+  - 部分 context 函数安全性增强
+  - __dirname/__filename 默认值修改
 
 v3.4.3  2021.07.25
  • EFSS 右键增加 pm2 运行选项（测试初版）

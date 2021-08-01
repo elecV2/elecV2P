@@ -24,6 +24,7 @@ module.exports = class {
   start(){
     clog.log("start schedule task:", this.task.name, `${this.repeat}/${this._Task.repeat}, time: ${this.task.time}`)
     this.task.running = true
+    wsSer.send({ type: 'task', data: { tid: this.task.id, op: 'start' }})
     if(this._Task.random) {
       let rand = iRandom(Number(this._Task.random))
       this.countdown = Number(this.countdown || this._Task.time) + rand
@@ -33,6 +34,7 @@ module.exports = class {
     clog.log(this.task.name, "total countdown second:", this.countdown)
     let step = this.countdown>100 ? parseInt(this.countdown/10) : parseInt(this.countdown/3)
     if (this.countdown <= 0) {
+      // 当初始倒计时小于等于 0 时，直接运行不进入 setInterval
       this.run()
     } else {
       this.temIntval = setInterval(()=>{
@@ -50,10 +52,12 @@ module.exports = class {
   }
 
   run(){
+    // 不管是否 repeat 都得先执行任务
     clog.log(this.task.name, 'job start')
     let jobres = this.job()
 
-    if (this.repeat < this._Task.repeat || this._Task.repeat >= 999) {
+    if (this.task && (this.repeat < this._Task.repeat || this._Task.repeat >= 999)) {
+      // 任务还存在且重复次数还不满足时，继续重复运行
       this.repeat++
       this.start()
     } else {
@@ -77,7 +81,7 @@ module.exports = class {
       clearInterval(this.temIntval)
       clog.log(this.task.name, flag)
       if (this.task.id && flag !== 'restart') {   // maybe 'stopped' or 'finished'
-        wsSer.send({type: 'task', data: {tid: this.task.id, op: 'stop'}})
+        wsSer.send({ type: 'task', data: { tid: this.task.id, op: 'stop' }})
       }
       if (flag === 'finished') {
         feedAddItem(`scheduletask ${this.task.name} finished`, 'time: ' + this.task.time)

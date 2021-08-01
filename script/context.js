@@ -23,11 +23,21 @@ const $cache = {
   }
 }
 
+const $cacheProxy = new Proxy($cache, {
+  set(target, prop, val){
+    if (['get', 'put', 'keys', 'delete', 'clear'].indexOf(prop) !== -1) {
+      throw new Error('forbid redefine $cache method ' + prop)
+    } else {
+      target[prop] = val
+      return true
+    }
+  }
+})
+
 class contextBase {
   constructor({ fconsole, name }){
     this.console = fconsole
     this.__name  = name
-    this.__filename = name
   }
 
   setTimeout = setTimeout
@@ -35,13 +45,14 @@ class contextBase {
   clearTimeout = clearTimeout
   clearInterval = clearInterval
 
-  __dirname = process.cwd()
   __version = CONFIG.version
   __home = CONFIG.homepage
   __efss = file.get(CONFIG.efss.directory, 'path')
-  $ws = wsSer
+  $ws = {
+    send: wsSer.send
+  }
   $exec = exec
-  $cache = $cache
+  $cache = $cacheProxy
   $store = {
     get(key, type){
       return store.get(key, type)

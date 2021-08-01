@@ -25,7 +25,7 @@ class eproxy {
   }
 
   new(eoption = this.eoption){
-    require('../func/crt.js').rootCrtSync().catch(e=>{
+    require('../func').rootCrtSync().catch(e=>{
       anyproxy.utils.certMgr.generateRootCA((error, keyPath, crtPath)=>{
         if(error){
           this.clog.error(error)
@@ -62,7 +62,7 @@ class eproxy {
       this.clog.notify(this.name, 'is closed')
       delete this.ProxyServer
       this.clog.info('trying to delete anyproxy temp cache...')
-      fs.rmdirSync(path.join(os.tmpdir(), 'anyproxy/cache'), { recursive: true })
+      fs.rmSync(path.join(os.tmpdir(), 'anyproxy/cache'), { recursive: true, force: true })
       this.clog.info('anyproxy temp cache directory deleted')
     } else {
       this.clog.error('anyproxy not ready yet')

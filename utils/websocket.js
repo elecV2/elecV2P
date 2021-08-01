@@ -120,7 +120,7 @@ function websocketSer({ server, path }) {
   })
 }
 
-const message = {
+const messageSend = {
   success() {
     wsSer.send({ type: 'message', data: { type: 'success', data: [...arguments] } })
   },
@@ -135,4 +135,12 @@ const message = {
   }
 }
 
-module.exports = { websocketSer, wsSer, message }
+module.exports = {
+  websocketSer, wsSer,
+  message: new Proxy(messageSend, {
+    set(target, prop){
+      clog.error('forbid redefine $message method', prop)
+      throw new Error('forbid redefine $message method ' + prop)
+    }
+  })
+}
