@@ -57,7 +57,7 @@ function execP(command) {
   console.log('start run command', command)
   return new Promise((resolve, reject)=>{
     $exec(command, {
-      timeout: 0,
+      timeout: 0, cwd: './',
       cb(data, error, finish){
         if (finish) {
           console.log(command, 'finished')

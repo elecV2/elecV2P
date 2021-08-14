@@ -4,30 +4,31 @@
 //   - 自定义个性化通知
 //   - 其他 JS 能做的事
 //
-// 默认带有三个变量 $title$, $body$, $url$
-// 通过通知触发的 JS 除 $feed.push 函数不可用之外（防止循环调用），其他默认参数/环境变量都可以直接使用（具体查看: https://github.com/elecV2/elecV2P-dei/tree/master/docs/04-JS.md）
+// 通过通知触发的 JS 默认带有三个变量 $title$, $body$, $url$（v3.4.5 之后可使用 $env.title/$env.body/$env.url 读取）
+// 通过通知触发的 JS 除 $feed.push 函数不可用之外（防止循环调用），其他默认参数/环境变量都可以直接使用
+// （具体查看: https://github.com/elecV2/elecV2P-dei/blob/master/docs/04-JS.md）
 
-if (typeof $title$ !== "undefined") {
-  console.log('脚本获取到的通知内容:', $title$, $body$, $url$)
+if ($env.title && $env.body) {
+  console.log('脚本获取到的通知内容:', $env.title, $env.body, $env.url)
 
   // 简单过滤
-  if (/重要/.test($title$)) {
+  if (/重要/.test($env.title)) {
     // 使用 $enable$ 强制发送通知 
-    $feed.bark('$enable$【重要通知】 ' + $title$, $body$, $url$)
-  } else if (/userid/.test($title$)) {
-    $feed.cust('$enable$特别的通知给特别的你', $title$ + $body$, $url$)
-  } else if (/测试/.test($title$)) {
-    $message.success(`一条网页消息 -来自通知触发的 JS\n【标题】 ${$title$} 【内容】 ${$body$}\n${$url$}`, 0)
+    $feed.bark('$enable$【重要通知】 ' + $env.title, $env.body, $env.url)
+  } else if (/userid/.test($env.title)) {
+    $feed.cust('$enable$特别通知 - ' + $env.title, $env.body, $env.url)
+  } else if (/测试/.test($env.title)) {
+    $message.success(`一条网页消息 -来自通知触发的 JS\n【标题】 ${$env.title} 【内容】 ${$env.body}\n${$env.url}`, 0)
   }
 
-  if (/elecV2P/.test($body$)) {
+  if (/elecV2P/.test($env.body)) {
     // 对通知内容进行修改
-    $body$ = $body$.replace('elecV2P', 'https://github.com/elecV2/elecV2P')
+    $env.body = $env.body.replace('elecV2P', 'https://github.com/elecV2/elecV2P')
     // 然后通过自定义通知发送
-    mynotify1($title$, $body$, $url$)
+    mynotify1($env.title, $env.body, $env.url)
   }
 } else {
-  console.log('没有 $title$', '该 JS 应该由通知自动触发执行')
+  console.log('没有 $env.title', '该 JS 应该由通知自动触发执行')
 }
 
 function mynotify1(title, body, url) {
