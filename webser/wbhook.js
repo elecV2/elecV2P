@@ -2,7 +2,7 @@ const os = require('os')
 const { taskMa, exec } = require('../func')
 const { CONFIG_RULE, runJSFile } = require('../script')
 
-const { logger, LOGFILE, Jsfile, list, nStatus, sJson, sString, sType, surlName, sBool, stream, downloadfile, now, checkupdate, store, kSize, errStack } = require('../utils')
+const { logger, LOGFILE, Jsfile, list, nStatus, sString, sType, surlName, sBool, stream, downloadfile, now, checkupdate, store, kSize, errStack } = require('../utils')
 const clog = new logger({ head: 'webhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -46,8 +46,10 @@ function handler(req, res){
         addContext.type = 'rawcode'
         fn = rbody.rawcode
         showfn = 'rawcode.js'
-      } else {
+      } else if (/^https?:\/\/\S{4,}/.test(fn)) {
         showfn = surlName(fn)
+      } else {
+        showfn = fn
       }
       if (rbody.rename) {
         if (!/\.js$/i.test(rbody.rename)) {
@@ -56,11 +58,11 @@ function handler(req, res){
         addContext.rename = rbody.rename
         showfn = rbody.rename
       }
-      if (rbody.env) {
-        const senv = sJson(rbody.env, true)
-        for (let env in senv) {
-          addContext[env.startsWith('$') ? env : ('$' + env)] = senv[env]
-        }
+      if (sType(rbody.env) === 'object') {
+        addContext.env = rbody.env
+      }
+      if (rbody.grant) {
+        addContext.grant = rbody.grant
       }
       addContext.timeout = 5000
       runJSFile(fn, addContext).then(data=>{
