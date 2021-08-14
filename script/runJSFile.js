@@ -1,7 +1,7 @@
 const vm = require('vm')
 const EventEmitter = require('events')
 
-const { logger, feedAddItem, now, sString, surlName, euid, errStack, downloadfile, Jsfile, file, wsSer } = require('../utils')
+const { logger, feedAddItem, now, sType, sString, surlName, euid, errStack, downloadfile, Jsfile, file, wsSer } = require('../utils')
 const clog = new logger({ head: 'runJSFile', level: 'debug' })
 
 const vmEvent = new EventEmitter()
@@ -33,7 +33,7 @@ CONFIG.CONFIG_RUNJS = CONFIG_RUNJS
 
 // 初始化脚本运行
 if (CONFIG.init && CONFIG.init.runjs) {
-  CONFIG.init.runjs.split(/ ?, ?|，| /).filter(s=>s).forEach(js=>{
+  CONFIG.init.runjs.split(/ ?, ?|，/).filter(s=>s).forEach(js=>{
     runJSFile(js, { from: 'initialization' })
   })
 }
@@ -107,10 +107,21 @@ function runJS(filename, jscode, addContext={}) {
         nodejs: false,         // nodejs 运行模式，不对脚本进行兼容判断
         require: false         // 启用 nodeJS require 函数。不开启时会自动进行判断
       }
-  if (/^\/\/ +@grant/m.test(jscode)) {
+  if (sType(addContext.grant) === 'string') {
+    let grantcode = ''
+    addContext.grant.split('|').forEach(val=>{
+      if (val) {
+        grantcode += '\n// @grant ' + val
+      }
+    })
+    jscode += grantcode
+    bGrant = true
+    delete addContext.grant
+  }
+  if (bGrant || /^\/\/ +@grant/m.test(jscode)) {
     bGrant = true
 
-    // compatiable 判断
+    // compatible 判断
     if (/^\/\/ +@grant +nodejs$/m.test(jscode)) {
       compatible.nodejs = true
     } else if (/^\/\/ +@grant +surge$/m.test(jscode)) {
@@ -129,7 +140,7 @@ function runJS(filename, jscode, addContext={}) {
       fconsole = new logger({ head: filename, level: 'error', file: CONFIG_RUNJS.jslogfile ? filename : false })
     }
   }
-  if (!fconsole) {
+  if (sType(fconsole) !== 'object') {
     fconsole = new logger({ head: filename, level: 'debug', file: CONFIG_RUNJS.jslogfile ? filename : false, cb: addContext.cb })
   }
   const CONTEXT = new context({ fconsole, name: filename })
@@ -139,14 +150,15 @@ function runJS(filename, jscode, addContext={}) {
   CONTEXT.final.__taskid   = addContext.__taskid
 
   if (compatible.nodejs) {
+    fconsole.debug(filename, 'run in nodejs mode')
     CONTEXT.final.module = module
     CONTEXT.final.process = process
     CONTEXT.final.exports = exports
   } else if (compatible.surge || (compatible.quanx === false && /\$httpClient|\$persistentStore|\$notification/.test(jscode))) {
-    clog.debug(`${filename} compatible with Surge script`)
+    fconsole.debug(`${filename} compatible with Surge script`)
     CONTEXT.add({ surge: true })
   } else if (compatible.quanx || /\$task|\$prefs|\$notify/.test(jscode)) {
-    clog.debug(`${filename} compatible with QuantumultX script`)
+    fconsole.debug(`${filename} compatible with QuantumultX script`)
     CONTEXT.add({ quanx: true })
   } else if (!compatible.require && /require/.test(jscode)) {
     compatible.require = true
@@ -178,9 +190,12 @@ function runJS(filename, jscode, addContext={}) {
   if (addContext.from === 'feedPush') {
     CONTEXT.final.$feed.push = ()=>fconsole.notify(filename, 'is triggered by notification, $feed.push is disabled to avoid circle callback')
   }
+  CONTEXT.final.$env = { ...process.env, ...addContext.env }
 
   delete addContext.cb
+  delete addContext.env
   delete addContext.type
+  delete addContext.rename
   delete addContext.__taskid
   delete addContext.__taskname
   CONTEXT.add({ addContext })
@@ -240,37 +255,45 @@ function runJS(filename, jscode, addContext={}) {
  * @return    {Promise}                 runJS() 的结果
  */
 async function runJSFile(filename, addContext={}) {
-  if (typeof filename !== 'string' || (filename = filename.trim()) === '') {
+  if (sType(filename) !== 'string' || (filename = filename.trim()) === '') {
     return Promise.resolve('a javascript filename or code is expect')
   }
-  if (typeof addContext !== 'object') {
+  if (sType(addContext) !== 'object') {
     return Promise.resolve('type of addContext must be object')
+  }
+  if (sType(addContext.env) !== 'object') {
+    addContext.env = {}
   }
 
   // filename 附带参数处理
-  if (addContext.type !== 'rawcode') {
+  if (addContext.type !== 'rawcode' && / -/.test(filename)) {
     if (/ -local/.test(filename)) {
       addContext.type = 'local'
       filename = filename.replace(' -local', '')
     }
 
     // -rename 参数处理
-    let ren = filename.match(/ -rename ([^\- ]+)/)
-    if (ren && ren[1]) {
-      if (!ren[1].endsWith('.js')) {
-        ren[1] = ren[1] + '.js'
-      }
-      addContext.rename = ren[1]
-      filename = filename.replace(/ -rename ([^\- ]+)/, '')
+    let ren = filename.match(/ -rename(=| )([^\- ]+)/)
+    if (ren && ren[2]) {
+      addContext.rename = ren[2]
+      filename = filename.replace(/ -rename(=| )([^\- ]+)/, '')
     }
 
+    // -grant 参数添加
+    let comp = filename.match(/ -grant(=| )([^\- ]+)/)
+    if (comp && comp[2]) {
+      addContext.grant = comp[2]
+      filename = filename.replace(/ -grant(=| )([^\- ]+)/, '')
+    }
+
+    // -env 参数处理
     let jobenvs = filename.split(' -env ')
     if (jobenvs[1] !== undefined) {
       let envlist = jobenvs[1].trim().split(' ')
       envlist.forEach(ev=>{
         let ei = ev.match(/(.*?)=(.*)/)
         if (ei.length === 3) {
-          addContext[ei[1].startsWith('$') ? ei[1] : ('$' + ei[1])] = decodeURI(ei[2])
+          addContext.env[ei[1]] = decodeURI(ei[2])
         }
       })
       filename = jobenvs[0]

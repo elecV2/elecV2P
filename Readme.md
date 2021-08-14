@@ -46,7 +46,7 @@ yarn dev
 # - 然后再从 Github 拉取最新的代码进行覆盖升级 git pull
 # - 最后再把备份好的文件复制还原到之前的位置
 # 
-# *【3.1.8 版本后，推荐使用自带的 [softupdate.js](https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js) 脚本进行软更新升级】*
+# *【3.1.8 版本后，推荐使用自带的 softupdate.js 进行软更新升级】*
 ```
 
 其他 PM2 相关指令
@@ -110,7 +110,8 @@ curl -sL https://git.io/JLw7s > docker-compose.yaml
 # curl -sL https://git.io/JOuQo > docker-compose.yaml
 docker-compose up -d
 
-# 注意：默认的 docker-compose.yaml 文件使用的是基础镜像，如果是 ARM 平台请使用注释中的对应命令，或者使用下面的文件手动进行修改。
+# 注意：默认的 docker-compose.yaml 文件使用的是基础镜像。
+# 如果是 ARM 平台请使用注释中的对应命令，或者使用下面的文件手动进行修改。
 # 另外，默认把 80/8001/8002 端口分别映射成了 8100/8101/8102，以防出现端口占用的情况，访问时注意。
 # 如果需要调整为其他端口，可以自行修改下面的内容然后手动保存。
 ```
@@ -266,6 +267,10 @@ IFTTT/BARK/自定义通知等相关设置参考: [07-feed&notify](https://github
 TG 交流群: https://t.me/elecV2G (主要为方便用户使用交流，开发者24小时不在线，也不负责解答任何问题。)
 
 如果遇到问题或 Bug 欢迎 [open a issue](https://github.com/elecV2/elecV2P/issues)。说明使用平台，版本，以及附上相关的错误日志（提供的信息越详细，越有助于解决问题）。
+
+## 更新日志
+
+查看: https://github.com/elecV2/elecV2P/blob/master/logs/update.log
 
 ## 贡献参考
 

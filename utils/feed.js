@@ -238,7 +238,7 @@ function feedPush(title, description, url) {
   }
   url = formUrl(url)
   if (CONFIG_FEED.webmessage && CONFIG_FEED.webmessage.enable) {
-    message.success(`【elecV2P 网页通知】 ${title}\n${description}\n${url || ''}`, { secd: 10, url })
+    message.success(`【elecV2P 网页通知】 ${title}\n${description}\n${url || ''}`, { url })
   }
   if (CONFIG_FEED.rss.enable) {
     const date = new Date()
@@ -252,12 +252,16 @@ function feedPush(title, description, url) {
     })
   }
   if (CONFIG_FEED.runjs && CONFIG_FEED.runjs.enable && CONFIG_FEED.runjs.list && wsSer.recv.runjs) {
-    CONFIG_FEED.runjs.list.split(/ ?, ?|，| /).filter(s=>s).forEach(fn=>{
+    CONFIG_FEED.runjs.list.split(/ ?, ?|，/).filter(s=>s).forEach(fn=>{
       wsSer.recv.runjs({ fn, addContext: {
         $title$: title,
         $body$: description,
         $url$: url,
-        from: 'feedPush'
+        from: 'feedPush',
+        grant: 'nodejs',
+        env: {
+          title, body: description, url
+        }
       }})
     })
   }

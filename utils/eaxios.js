@@ -304,7 +304,7 @@ async function checkupdate(force = false){
     }
   }
 
-  if (body.version && Number(body.version.replace(/\.|v/g, '')) > Number(CONFIG.version.replace(/\.|v/g, ''))) {
+  if (body.version && Number(body.version.replace(/\.|v/g, '')) > CONFIG.vernum) {
     body.update = true
     body.updateversion = body.version
     CONFIG.newversion = body.updateversion

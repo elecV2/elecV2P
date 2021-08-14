@@ -38,6 +38,7 @@ if (fs.existsSync(CONFIG.path)) {
 }
 
 CONFIG.version = require('./package.json').version
+CONFIG.vernum  = Number(CONFIG.version.replace(/\.|v/g, ''))
 CONFIG.start   = Date.now()
 
 module.exports = { CONFIG, CONFIG_Port }

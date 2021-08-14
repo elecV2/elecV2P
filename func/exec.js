@@ -56,17 +56,18 @@ wsSer.recv.shell = command => {
  * @return    {string}               转换后命令
  */
 function commandCross(command) {
-  const isWin = /^win/.test(process.platform)
-  if (isWin) {
+  if (/^win/.test(process.platform)) {
     if (/^ls|^find /.test(command)) command = command.replace('ls', 'dir')
     else if (/^cat /.test(command)) command = command.replace('cat', 'type')
     else if (command === 'reboot') command = 'powershell.exe restart-computer'
     else if (/^(rm|mv|cp|mkdir|rmdir)/.test(command)) command = 'powershell.exe ' + command
     else if (/^apk add/.test(command)) command = command.replace('apk add', 'scoop install')
+    else if (/^traceroute /.test(command)) command = command.replace('traceroute', 'tracert')
   } else {
     if (/^dir/.test(command)) command = command.replace('dir', 'ls')
     else if (/^type/.test(command)) command = command.replace('type', 'cat')
-    else if (/Restart-Computer/i.test(command)) command = 'reboot'
+    else if (/^Restart-Computer/i.test(command)) command = 'reboot'
+    else if (/^tracert /.test(command)) command = command.replace('tracert', 'traceroute')
   }
   return command
 }
@@ -88,10 +89,10 @@ async function commandSetup(command, options={}, clog) {
   }
 
   // options.cwd 处理
-  let cwd = command.match(/ -cwd (\S+)/)
-  if (cwd && cwd[1]) {
-    options.cwd = cwd[1]
-    command = command.replace(/ -cwd (\S+)/g, '')
+  let cwd = command.match(/ -cwd(=| )(\S+)/)
+  if (cwd && cwd[2]) {
+    options.cwd = cwd[2]
+    command = command.replace(/ -cwd(=| )(\S+)/g, '')
   }
   if (!file.isExist(options.cwd, true)) {
     // 当没有设置 cwd，或设置 cwd 目录不存在时，自动设置默认 cwd
@@ -105,26 +106,29 @@ async function commandSetup(command, options={}, clog) {
   }
 
   // options.stdin 处理
-  let stdin = command.match(/ -stdin (\S+)/)
-  if (stdin && stdin[1]) {
-    options.stdin = Object.assign(options.stdin || {}, { write: decodeURI(stdin[1]) })
-    command = command.replace(/ -stdin (\S+)/g, '')
+  if (sType(options.stdin) !== 'object') {
+    options.stdin = {}
+  }
+  let stdin = command.match(/ -stdin(=| )(\S+)/)
+  if (stdin && stdin[2]) {
+    options.stdin.write = decodeURI(stdin[2])
+    command = command.replace(/ -stdin(=| )(\S+)/g, '')
   }
 
   // options.env 处理
-  let envrough = command.match(/ -env ([^-]+)/)
+  let envrough = command.match(/ -env(=| )([^-]+)/)
   let tempenv  = {}
-  if (envrough && envrough[1]) {
-    envrough[1].trim().split(' ').forEach(ev=>{
+  if (envrough && envrough[2]) {
+    envrough[2].trim().split(' ').forEach(ev=>{
       let ei = ev.indexOf('=')
       if (ei !== -1) {
         tempenv[ev.substring(0, ei)] = ev.substring(ei + 1).replace(/^('|"|`)|('|"|`)$/g, '')
       }
     })
 
-    command = command.replace(/ -env ([^-]+)/g, '')
+    command = command.replace(/ -env(=| )([^-]+)/g, '')
   }
-  if (!options.env) {
+  if (sType(options.env) !== 'object') {
     options.env = {}
   }
   // 优先级 process.env < options.env < tempenv, 不影响原 process.env
@@ -182,8 +186,13 @@ async function commandSetup(command, options={}, clog) {
  */
 async function execFunc(command, options={}, cb) {
   let execlog = clog
-  if (options.from === 'task') {
-    execlog = new logger({ head: 'taskExec', level: 'debug', file: options.logname, cb: wsSer.send.func('tasklog') })
+  if (sType(options.logname) === 'string') {
+    execlog = new logger({
+      head: options.logname.replace(/\.task$/, ''),
+      level: 'debug',
+      file: options.logname,
+      cb: options.from === 'task' ? wsSer.send.func('tasklog') : null
+    })
   }
 
   let callback = (data, error, finish)=>{

@@ -26,10 +26,13 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [x] runJS 增加 -grant 参数处理
+- [x] 增加临时环境变量 $env
+- [x] 通知触发 JS 优化
 - [x] JS 增加 sudo 模式及 $task
 - [x] 增加默认变量__taskname/__taskid
 - [x] require 相关函数优化
-- [x] logs 删除按钮
+- [x] logs 界面删除按钮
 - [x] 部分对象 Proxy 化
 - [x] EFSS 右键增加 pm2 运行选项
 - [x] JS 默认环境变量增加 $cache

@@ -46,6 +46,7 @@ class contextBase {
   clearInterval = clearInterval
 
   __version = CONFIG.version
+  __vernum  = CONFIG.vernum
   __home = CONFIG.homepage
   __efss = file.get(CONFIG.efss.directory, 'path')
   $ws = {
