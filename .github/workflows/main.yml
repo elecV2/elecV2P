@@ -6,9 +6,8 @@ name: CI to Docker Hub
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+    tags:
+      - "*.*.*"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -48,4 +47,4 @@ jobs:
 
       # Runs a set of commands using the runners shell
       - name: Image digest
-        run: ${{ steps.docker_build.outputs.digest }}
+        run: echo ${{ steps.docker_build.outputs.digest }}
