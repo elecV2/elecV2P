@@ -12,10 +12,10 @@
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
-- WEBHOOK 临时 token 及权限管理
-- TASK/RULES/REWRITE 排序
+- 临时 token 及权限管理
 - EFSS download wget/aria2c/git 等
 - EFSS zip 压缩打包/解压
+- TASK/RULES/REWRITE 排序
 - Backup 备份导出/导入(lists/store)
 - 文件编辑器(component||libery) (备 CodeMirror?)
 - 多语言 [一个可能永远不填的坑..., start ready...]
@@ -26,6 +26,10 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [x] EFSS 右键新建文件夹
+- [x] EFSS 复制粘粘移动文件
+- [x] github action 自动构建多平台 docker 镜像
+- [x] table overflow 显示优化
 - [x] runJS 增加 -grant 参数处理
 - [x] 增加临时环境变量 $env
 - [x] 通知触发 JS 优化

@@ -1,9 +1,12 @@
 <a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.4.5)
 
-v3.4.5  2021.08.14
+v3.4.5  2021.08.21
+ • Docker 所有平台直接使用基础镜像
  • runJS 增加 -grant 参数处理 详见<a href='https://github.com/elecV2/elecV2P-dei/blob/master/docs/06-task.md' target='_blank'> 06-task.md </a>相关部分
  • 增加临时环境变量 $env
  • 通知触发 JS 默认以 nodejs 兼容模式运行
+ • EFSS 右键新建文件夹
+ • EFSS 复制粘粘移动文件
 
 v3.4.4  2021.08.01
  • JS 运行增加 sudo 模式及 $task（详见: <a href='https://github.com/elecV2/elecV2P-dei/blob/master/docs/04-JS.md' target='_blank'>04-JS.md</a> 相关部分）
