@@ -49,13 +49,17 @@ const runstatus = {
 }
 
 /**
- * JS 运行统计
+ * JS 运行次数统计
  * @param  {string} filename JS 文件名
- * @return {none}          
+ * @return {none}
  */
 async function taskCount(filename) {
-  if (/test/.test(filename) || CONFIG_RUNJS.numtofeed === 0) {
-    clog.debug(filename, 'match key word: test, or skip count run times by set')
+  if (CONFIG_RUNJS.numtofeed === 0) {
+    clog.debug(filename, 'skip count run times by set')
+    return
+  }
+  if (/test/.test(filename)) {
+    clog.debug(filename, 'match key word: test, skip count run times')
     return
   }
   if (runstatus.detail[filename]) {
@@ -154,6 +158,10 @@ function runJS(filename, jscode, addContext={}) {
     CONTEXT.final.module = module
     CONTEXT.final.process = process
     CONTEXT.final.exports = exports
+    CONTEXT.final.Buffer = Buffer
+
+    CONTEXT.final.URL = URL
+    CONTEXT.final.URLSearchParams = URLSearchParams
   } else if (compatible.surge || (compatible.quanx === false && /\$httpClient|\$persistentStore|\$notification/.test(jscode))) {
     fconsole.debug(`${filename} compatible with Surge script`)
     CONTEXT.add({ surge: true })
