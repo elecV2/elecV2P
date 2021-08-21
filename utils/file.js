@@ -197,8 +197,22 @@ const file = {
       return false
     }
   },
-  copy(source, target){
-    fs.copyFileSync(source, target)
+  copy(source, target, cb=()=>{}){
+    clog.info('copy', source, 'to', target)
+    fs.copyFile(source, target, cb)
+  },
+  move(source, target, cb=()=>{}){
+    try {
+      fs.copyFileSync(source, target)
+      fs.rmSync(source, { force: true })
+      clog.info('move', source, 'to', target)
+      cb(null, 'success move to ' + target)
+    } catch(err) {
+      cb(err)
+    }
+  },
+  mkdir(dir, cb=()=>{}){
+    fs.mkdir(dir, { recursive: true }, cb)
   },
   path(x1, x2){
     if (!(x1 && x2)) return

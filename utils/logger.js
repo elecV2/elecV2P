@@ -141,9 +141,17 @@ const clog = new logger({ head: 'logger', level: 'debug' })
 const LOGFILE = {
   streamList: {},
   statusList: {},
+  filethList: {},
+  filepath(name){
+    if (!this.filethList[name]) {
+      this.filethList[name] = path.join(CONFIG_LOG.logspath, name.trim().replace(/\/|\\/g, '-'))
+    }
+    return this.filethList[name]
+  },
   streamFile(name){
     if (!this.streamList[name]) {
-      this.streamList[name] = fs.createWriteStream(name, { flags: 'a' })
+      let filename = this.filepath(name)
+      this.streamList[name] = fs.createWriteStream(filename, { flags: 'a' })
       this.statusList[name] = {
         interval: setInterval(()=>{
           if (this.statusList[name].toclose) {
@@ -155,16 +163,18 @@ const LOGFILE = {
         }, 5000),
         toclose: true
       }
-      clog.debug('stream', name, 'created')
+      clog.debug('stream', filename, 'created')
       this.streamList[name].on('close', ()=>{
-        clog.debug(name + ' stream closed')
+        clog.debug(filename + ' stream closed')
         delete this.streamList[name]
         delete this.statusList[name]
+        delete this.filethList[name]
       })
       this.streamList[name].on('error', ()=>{
-        clog.debug(name + ' stream error')
+        clog.debug(filename + ' stream error')
         delete this.streamList[name]
         delete this.statusList[name]
+        delete this.filethList[name]
       })
     }
     this.statusList[name].toclose = false
@@ -174,7 +184,7 @@ const LOGFILE = {
     if (!filename || data === undefined || data === '') {
       return
     }
-    this.streamFile(path.join(CONFIG_LOG.logspath, filename.trim().replace(/\/|\\/g, '-'))).write(sString(data) + '\n')
+    this.streamFile(filename).write(sString(data) + '\n')
   },
   get(filename){
     if (!filename) {
