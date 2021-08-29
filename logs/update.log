@@ -7,6 +7,7 @@ v3.4.5  2021.08.21
  • 通知触发 JS 默认以 nodejs 兼容模式运行
  • EFSS 右键新建文件夹
  • EFSS 复制粘粘移动文件
+ • 增加 $store.set 方法
 
 v3.4.4  2021.08.01
  • JS 运行增加 sudo 模式及 $task（详见: <a href='https://github.com/elecV2/elecV2P-dei/blob/master/docs/04-JS.md' target='_blank'>04-JS.md</a> 相关部分）
