@@ -23,8 +23,10 @@ if (CONFIG.anyproxy && CONFIG.anyproxy.enable === false) {
   eProxy.start()
 }
 
+// anyproxy 临时设置
 CONFIG_Port.anyproxy = { ...CONFIG.anyproxy }
 
+// websocket 快速打开/关闭 anyproxy
 wsSer.recv.eproxy = (op)=>{
   switch(op) {
     case 'new':

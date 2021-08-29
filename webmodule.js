@@ -5,12 +5,8 @@ const compression = require('compression')
 
 const { CONFIG, CONFIG_Port } = require('./config')
 
-const { logger, websocketSer, UUID } = require('./utils')
+const { logger, websocketSer } = require('./utils')
 const clog = new logger({ head: 'webServer', level: 'debug' })
-
-if (!CONFIG.wbrtoken) {
-  CONFIG.wbrtoken = UUID()
-}
 
 const { wbefss, wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook, wbrpc } = require('./webser')
 
@@ -74,7 +70,7 @@ module.exports = () => {
 
   app.use((req, res, next) => {
     res.writeHead(404, { 'Content-Type': 'text/html;charset=utf-8' })
-    res.end(`404<br><br><a href="/">BACK TO HOME</a><br><br><br>Powered BY <a target="_blank" href="https://github.com/elecV2/elecV2P">elecV2P</a>`)
+    res.end(`<p>404</p><br><a href="/">BACK TO HOME</a><br><p><span>Powered BY</span><a target="_blank" href="https://github.com/elecV2/elecV2P">elecV2P</a></p>`)
   })
 
   const server = http.createServer(app)

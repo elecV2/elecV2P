@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const { sJson } = require('./utils/string')
+const { sJson, UUID } = require('./utils/string')
 
 const CONFIG_Port = {
   proxy: 8001,    // anyproxy 代理端口
@@ -17,26 +17,30 @@ if (fs.existsSync(CONFIG.path)) {
   if (CONFIG.webUI && CONFIG.webUI.port) {
     CONFIG_Port.webst = CONFIG.webUI.port
   }
-  if (CONFIG.anyproxy) {
-    if (CONFIG.anyproxy.port) {
-      CONFIG_Port.proxy = CONFIG.anyproxy.port
-    } else {
-      CONFIG.anyproxy.port = CONFIG_Port.proxy
-    }
-    if (CONFIG.anyproxy.webPort) {
-      CONFIG_Port.webif = CONFIG.anyproxy.webPort
-    } else {
-      CONFIG.anyproxy.webPort = CONFIG_Port.webif
-    }
+}
+
+if (CONFIG.anyproxy) {
+  if (CONFIG.anyproxy.port) {
+    CONFIG_Port.proxy = CONFIG.anyproxy.port
   } else {
-    CONFIG.anyproxy = {
-      enable: false,
-      port: CONFIG_Port.proxy,
-      webPort: CONFIG_Port.webif
-    }
+    CONFIG.anyproxy.port = CONFIG_Port.proxy
+  }
+  if (CONFIG.anyproxy.webPort) {
+    CONFIG_Port.webif = CONFIG.anyproxy.webPort
+  } else {
+    CONFIG.anyproxy.webPort = CONFIG_Port.webif
+  }
+} else {
+  CONFIG.anyproxy = {
+    enable: false,
+    port: CONFIG_Port.proxy,
+    webPort: CONFIG_Port.webif
   }
 }
 
+if (!CONFIG.wbrtoken) {
+  CONFIG.wbrtoken = UUID()
+}
 CONFIG.version = require('./package.json').version
 CONFIG.vernum  = Number(CONFIG.version.replace(/\.|v/g, ''))
 CONFIG.start   = Date.now()

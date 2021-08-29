@@ -307,7 +307,7 @@ function handler(req, res){
   case 'exec':
   case 'shell':
     clog.notify(clientip, 'exec shell command', rbody.command, 'from webhook')
-    if (rbody.command) {
+    if (rbody.command && sType(rbody.command) === 'string') {
       let command = decodeURI(rbody.command)
       let option  = {
         timeout: 5000, from: 'webhook',
@@ -322,11 +322,11 @@ function handler(req, res){
           }
         }
       }
-      if (rbody.timeout !== undefined) {
-        option.timeout = Number(rbody.timeout)
-      }
       if (rbody.cwd !== undefined) {
         option.cwd = rbody.cwd
+      }
+      if (rbody.timeout !== undefined) {
+        option.timeout = Number(rbody.timeout)
       }
       exec(command, option)
     } else {
