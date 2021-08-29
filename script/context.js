@@ -6,30 +6,56 @@ const { errStack, euid, sType, sString, sJson, bEmpty, feedPush, iftttPush, bark
 const { exec } = require('../func/exec')
 
 const $cache = {
+  vals: new Map(),
   get(key){
-    return this[key]
+    return this.vals.get(key)
+  },
+  set(key, value){
+    return this.vals.set(key, value)
   },
   put(value, key) {
-    this[key] = value
+    return this.vals.set(key, value)
   },
   delete(key){
-    delete this[key]
+    return this.vals.delete(key)
   },
   keys(){
-    return Object.keys(this).filter(key=>['get', 'put', 'keys', 'delete', 'clear'].indexOf(key) === -1)
+    return [...this.vals.keys()]
   },
   clear(){
-    this.keys().forEach(key=>delete this[key])
+    return this.vals.clear()
   }
 }
 
 const $cacheProxy = new Proxy($cache, {
   set(target, prop, val){
-    if (['get', 'put', 'keys', 'delete', 'clear'].indexOf(prop) !== -1) {
+    switch (prop) {
+    case 'size':
+      throw new Error('forbid redefine $cache prop ' + prop)
+    case 'get':
+    case 'set':
+    case 'put':
+    case 'keys':
+    case 'delete':
+    case 'clear':
       throw new Error('forbid redefine $cache method ' + prop)
-    } else {
-      target[prop] = val
-      return true
+    default:
+      return target.vals.set(prop, val)
+    }
+  },
+  get(target, prop){
+    switch (prop) {
+    case 'size':
+      return target.vals.size
+    case 'get':
+    case 'set':
+    case 'put':
+    case 'keys':
+    case 'delete':
+    case 'clear':
+      return target[prop].bind(target)
+    default:
+      return target.vals.get(prop)
     }
   }
 })
@@ -70,6 +96,9 @@ class contextBase {
         }
       }
       return store.put(value, key, options)
+    },
+    set(key, value, options){
+      return this.put(value, key, options)
     }
   }
   $axios = (request)=>{
