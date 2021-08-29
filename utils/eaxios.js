@@ -203,7 +203,7 @@ function stream(url) {
 }
 
 function downloadfile(durl, dest, cb) {
-  // 在 elecV2P 中占非常重要的部分，如无必要不要改动
+  // 在 elecV2P 中占非常重要的位置，如无必要不要改动
   // very important, don't change if not necessary
   if (!/^https?:\/\/\S{4,}/.test(durl)) {
     return Promise.reject(durl + ' is not a valid url')
@@ -247,28 +247,36 @@ function downloadfile(durl, dest, cb) {
       responseType: 'stream'
     }).then(response=>{
       if (response.status == 404) {
-        clog.error(durl + ' 404! file dont exist')
+        clog.error(durl, '404! file dont exist')
         reject('404! file dont exist')
         return
       }
-      let totalLength = response.headers['content-length']
-      let currentLength = 0
-      let file = fs.createWriteStream(dest)
-      response.data.on('data', (chunk) => {
-        currentLength += chunk.length
-        let progress = progressBar({ step: currentLength, total: totalLength, name: fname })
-        clog.debug(progress)
-        if (cb) {
-          cb({ progress })
+      if (sType(cb) === 'function') {
+        let chunkstatus = {
+          step: 0,       // 记录是第几个 chunk 块
+          total: response.headers['content-length'],
+          current: 0,
         }
-      })
+        response.data.on('data', (chunk) => {
+          chunkstatus.current += chunk.length
+          chunkstatus.step++
+          let progress = progressBar({ step: chunkstatus.current, total: chunkstatus.total, name: fname })
+          clog.debug(progress)
+          cb({ progress, chunk: chunkstatus.step, name: fname })
+        })
+      }
+      let file = fs.createWriteStream(dest)
       response.data.pipe(file)
       file.on('finish', ()=>{
         clog.notify(`success download ${durl} to ${dest}`)
         file.close()
         resolve(dest)
-        if (cb) {
-          cb({ finish: `success download ${durl} to ${dest}`})
+        if (sType(cb) === 'function') {
+          cb({
+            progress: progressBar({ step: 2, total: 1, name: fname }),
+            finish: `success download ${durl} to ${dest}`,
+            name: fname
+          })
         }
       })
     }).catch(e=>{

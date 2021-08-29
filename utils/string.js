@@ -1,3 +1,7 @@
+/* 一些关于字符操作的基础函数
+** Author: http://t.me/elecV2
+**/
+
 function sType(obj) {
   if (typeof obj !== 'object') {
     return typeof obj
@@ -15,8 +19,19 @@ function sJson(str, force=false) {
   if (!str) {
     return force ? {} : false
   }
-  if (/^(object|array)$/.test(sType(str))) {
+  let type = sType(str)
+  switch (type) {
+  case 'array':
+  case 'object':
     return str
+  case 'set':
+  case 'uint8array':
+    return Array.from(str)
+  case 'map':
+    return Array.from(str).reduce((obj, [key, value]) => {
+      obj[key] = value
+      return obj
+    }, {})
   }
   try {
     let jobj = JSON.parse(str)
@@ -25,7 +40,7 @@ function sJson(str, force=false) {
     }
   } catch(e) {
     try {
-      let obj = (new Function("return " + str))()
+      let obj = (new Function("return " + str))();
       if (/^(object|array)$/.test(sType(obj))) {
         return obj
       }
@@ -42,10 +57,18 @@ function sString(obj) {
     return ''
   }
   let type = sType(obj)
-  if (type === 'string') {
+  switch (type) {
+  case 'string':
     return obj.trim()
-  }
-  if (/object|array/.test(type)) {
+  case 'map':
+  case 'set':
+  case 'uint8array':
+    return JSON.stringify({
+      dataType: type,
+      value: Array.from(obj)
+    })
+  case 'array':
+  case 'object':
     try {
       if (obj[Symbol.toPrimitive]) {
         return String(obj[Symbol.toPrimitive]())
@@ -54,8 +77,9 @@ function sString(obj) {
     } catch(e) {
       return e.message
     }
+  default:
+    return String(obj).trim()
   }
-  return String(obj).trim()
 }
 
 function sBool(val) {
@@ -110,7 +134,7 @@ function euid(len = 8) {
 
 function UUID(){
   let dt = new Date().getTime()
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     let r = (dt + Math.random()*16)%16 | 0
     dt = Math.floor(dt/16)
     return (c=='x' ? r :(r&0x3|0x8)).toString(16)
@@ -198,7 +222,7 @@ function progressBar({step=0, total, name='file', initLength=50}) {
     }
     return `${name} [${procbar}] ${endtip}`
   }
-  if (total < step) {
+  if (total <= step) {
     while(initLength > 0) {
       procbar += '>'
       initLength--

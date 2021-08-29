@@ -18,17 +18,17 @@ const fpath = {
 }
 
 if (!fs.existsSync(fpath.list)) {
-  fs.mkdirSync(fpath.list)
+  fs.mkdirSync(fpath.list, { recursive: true })
   clog.notify('mkdir new Lists folder')
 }
 
 if (!fs.existsSync(fpath.js)) {
-  fs.mkdirSync(fpath.js)
+  fs.mkdirSync(fpath.js, { recursive: true })
   clog.notify('mkdir new JSFile folder')
 }
 
 if (!fs.existsSync(fpath.store)) {
-  fs.mkdirSync(fpath.store)
+  fs.mkdirSync(fpath.store, { recursive: true })
   clog.notify('mkdir new Store folder')
 }
 
@@ -156,7 +156,7 @@ const list = {
           cont = { mitmhost: orglist }
         }
       }
-      fs.writeFileSync(path.join(fpath.list, name), typeof(cont) === 'object' ? JSON.stringify(cont, null, 2) : sString(cont), 'utf8')
+      fs.writeFileSync(path.join(fpath.list, name), sType(cont) === 'object' ? JSON.stringify(cont, null, 2) : sString(cont), 'utf8')
       clog.info(name, 'updated')
       return true
     } catch(e) {
