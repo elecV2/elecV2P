@@ -62,6 +62,13 @@ function efsshandler(req, res, next) {
           'Content-Type': 'text/plain;charset=utf-8'
         }
       }
+      let env = {
+          key: req.params.favend,
+          name: fend.name
+        }
+      if (sType(rbody.env) === 'object') {
+        Object.assign(env, rbody.env)
+      }
       runJSFile(fend.target, {
         $request: {
           protocol: req.protocol,
@@ -69,12 +76,11 @@ function efsshandler(req, res, next) {
           method: req.method,
           hostname: req.hostname,
           host: req.get('host'),
-          path: req.path,
+          path: req.baseUrl + req.path,
           url: `${req.headers['x-forwarded-proto'] || req.protocol}://${req.get('host')}${req.originalUrl}`,
           body: rbody,
-          key: req.params.favend
         },
-        from: 'favend',
+        from: 'favend', env,
         timeout: rbody.timeout === undefined ? CONFIG.efss.favendtimeout : rbody.timeout
       }).then(jsres=>{
         if (sType(jsres) === 'object') {
@@ -87,54 +93,52 @@ function efsshandler(req, res, next) {
         $response.body = `favend error on run js ${fend.target} ${errStack(e)}`
         clog.error('error on run js', fend.target, errStack(e))
       }).finally(()=>{
-        res.writeHead($response.statusCode || $response.status || 200, $response.headers || {'Content-Type': 'text/html;charset=utf-8'})
-        res.end(sString($response.body))
+        res.set($response.headers || {'Content-Type': 'text/html;charset=utf-8'})
+        res.status($response.statusCode || $response.status || 200).send($response.body)
       })
       break
     case 'favorite':
       let favdir = file.get(fend.target, 'path')
       if (!file.isExist(favdir, true)) {
-        return res.end(JSON.stringify({
+        return res.status(404).json({
           rescode: 404,
           message: 'directory ' + fend.target + ' not exist'
-        }))
+        })
       }
       let reqfav = '/efss/' + req.params.favend
       if (requrl === reqfav) {
         let flist = file.list({ folder: favdir, max: rbody.max, dotfiles })
         res.writeHead(200, {'Content-Type': 'text/html;charset=utf-8'})
-        res.write('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
-        res.write(`<title>${flist.length} - EFSS favorite ${fend.name} 目录文件列表</title><style>body{border: 1px solid;
-  border-radius: 8px;}.item{display: block;color: #1890ff;margin: 6px 0;padding-bottom: 2px;padding-left: 6px;text-decoration: none;border-bottom: 1px solid;font-size: 18px;font-family: 'Microsoft YaHei', -apple-system, Arial;}.item:last-child {margin: 0;border-bottom: none;}</style>`)
+        res.write('<head><meta name="viewport" content="width=device-width, initial-scale=1.0">')
+        res.write(`<title>${fend.name} ${flist.length} - EFSS favorite 目录文件列表</title><style>.content{display: flex;flex-direction: column;border: 1px solid;border-radius: 8px;}.item{display: block;color: #1890ff;margin: 6px 0;padding-bottom: 2px;padding-left: 6px;text-decoration: none;border-bottom: 1px solid;font-size: 18px;font-family: 'Microsoft YaHei', -apple-system, Arial;}.item:last-child {margin: 0;border-bottom: none;}</style></head><body><div class='content'>`)
         flist.forEach(file=>{
           res.write(`<a class='item' href='${reqfav}/${file}${ dotfiles === 'allow' ? '?dotfiles=allow' : '' }' target='_blank'>${file}</a>`)
         })
-        return res.end()
+        return res.end('</div></body>')
       }
       req.url = requrl.replace(reqfav + '/', '')
       return express.static(favdir, { dotfiles })(req, res, next)
     default:
-      res.end(JSON.stringify({
+      res.json({
         rescode: -1,
         message: `unknow favend type ${fend.type}`
-      }))
+      })
     }
     return
   }
   clog.debug('efss favend match none, continue')
   let efssdir = file.get(CONFIG.efss.directory, 'path')
   if (!file.isExist(efssdir, true)) {
-    res.writeHead(404)
-    return res.end(JSON.stringify({
+    return res.status(404).json({
       rescode: 404,
       message: efssdir + ' not exist'
-    }))
+    })
   }
   if (!CONFIG.efss.enable) {
-    return res.end(JSON.stringify({
+    return res.json({
       rescode: -1,
       message: 'EFSS is disabled'
-    }))
+    })
   }
   req.url = requrl.replace('/efss/', '')
   return express.static(efssdir, { dotfiles })(req, res, next)
@@ -153,17 +157,17 @@ module.exports = app => {
       resdata.config = CONFIG.efss
     }
 
-    res.end(JSON.stringify(resdata))
+    res.json(resdata)
   })
 
   app.post('/sefss', (req, res)=>{
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "uploading efss file")
 
     if (!(CONFIG.efss && CONFIG.efss.enable)) {
-      return res.end(JSON.stringify({
+      return res.json({
         rescode: 403,
         message: 'efss is closed'
-      }))
+      })
     }
     const subpath = decodeURI(req.query.subpath || '')
     const uploadfile = new formidable.IncomingForm()
@@ -174,26 +178,26 @@ module.exports = app => {
     uploadfile.parse(req, (err, fields, files) => {
       if (err) {
         clog.error(errStack(err, true))
-        return res.end(JSON.stringify({
+        return res.json({
           rescode: -1,
           message: 'efss upload fail: ' + err.message
-        }))
+        })
       }
 
       if (!files.efss) {
         clog.info('no efss file to upload')
-        return res.end(JSON.stringify({
+        return res.json({
           rescode: -1,
           message: 'a file is expect'
-        }))
+        })
       }
       const efssF = file.get(CONFIG.efss.directory + subpath, 'path')
       if (!file.isExist(efssF)) {
         clog.error('efss folder:', efssF, 'not exist')
-        return res.end(JSON.stringify({
+        return res.json({
           rescode: -1,
           message: efssF + ' not exist'
-        }))
+        })
       }
       if (files.efss.length) {
         files.efss.forEach(sgfile=>{
@@ -204,19 +208,19 @@ module.exports = app => {
         clog.notify('upload a file:', files.efss.name, 'to', efssF)
         file.copy(files.efss.path, efssF + '/' + files.efss.name)
       }
-      res.end(JSON.stringify({
+      res.json({
         rescode: 0,
         message: 'upload success'
-      }))
+      })
     })
   })
 
   app.delete('/sefss', (req, res)=>{
     if (!(CONFIG.efss && CONFIG.efss.enable)) {
-      return res.end(JSON.stringify({
+      return res.json({
         rescode: 403,
         message: 'efss is closed'
-      }))
+      })
     }
 
     let fn = req.body.fn
@@ -225,21 +229,21 @@ module.exports = app => {
     if (fn) {
       let fpath = file.get(CONFIG.efss.directory + '/' + fn, 'path')
       if (file.delete(fpath)) {
-        res.end(JSON.stringify({
+        res.json({
           rescode: 0,
           message: fpath + ' is deleted'
-        }))
+        })
       } else {
-        res.end(JSON.stringify({
+        res.json({
           rescode: -1,
           message: fpath + ' fail to delete'
-        }))
+        })
       }
     } else {
-      res.end(JSON.stringify({
-        rescode: 100,
+      res.json({
+        rescode: -1,
         message: 'a parameter fn is expect'
-      }))
+      })
       clog.error('a parameter fn is expect')
     }
   })

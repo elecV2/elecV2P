@@ -17,24 +17,29 @@ module.exports = app => {
     switch(op){
       case 'new':
         newRootCrt(req.body.data).then(({ crtPath })=>{
-          res.end(JSON.stringify({
+          res.json({
             rescode: 0,
             message: 'new rootCA generated at: ' + crtPath
-          }))
+          })
         }).catch(error=>{
-          res.end(JSON.stringify({
+          res.json({
             rescode: -1,
             message: 'fail to generate new rootCA: ' + errStack(error)
-          }))
+          })
         })
         break
       case 'clearcrt':
         clearCrt()
-        res.end('all certificates cleared except rootCA')
+        res.json({
+          rescode: 0,
+          message: 'all certificates cleared except rootCA'
+        })
         break
       default: {
-        res.end('unknow operation ' + op)
-        break
+        res.status(405).json({
+          rescode: 405,
+          message: 'unknow operation ' + op
+        })
       }
     }
   })
@@ -48,18 +53,18 @@ module.exports = app => {
     uploadfile.parse(req, (err, fields, files) => {
       if (err) {
         clog.error('rootCA upload Error', errStack(err))
-        return res.end(JSON.stringify({
+        return res.json({
           rescode: -1,
           message: 'rootCA upload fail ' + err.message
-        }))
+        })
       }
 
       if (!files.crt) {
         clog.info('no crt file to upload')
-        return res.end(JSON.stringify({
-          rescode: 404,
-          message: 'no crt file to upload'
-        }))
+        return res.json({
+          rescode: -1,
+          message: 'root crt files are expect'
+        })
       }
       if (files.crt.length) {
         files.crt.forEach(sgfile=>{
@@ -70,25 +75,25 @@ module.exports = app => {
         clog.notify('upload rootCA file:', files.crt.name)
         file.copy(files.crt.path, file.get('rootCA/' + files.crt.name, 'path'))
       }
-      return res.end(JSON.stringify({
+      return res.json({
         rescode: 0,
         message: 'upload success'
-      }))
+      })
     })
   })
 
   app.delete("/tempcaches", (req, res)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "delete anyproxy temp cache")
     if (cacheClear()) {
-      res.end(JSON.stringify({
+      res.json({
         rescode: 0,
         message: 'anyproxy cache deleted'
-      }))
+      })
     } else {
-      res.end(JSON.stringify({
+      res.json({
         rescode: -1,
         message: 'fail to delete anyproxy cache'
-      }))
+      })
     }
   })
 }

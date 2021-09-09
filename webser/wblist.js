@@ -8,12 +8,11 @@ module.exports = app => {
   const LISTPATH = path.join(__dirname, '../script', 'Lists')
 
   app.get("/filter", (req, res)=>{
-    res.end(list.get('filter.list'))
+    res.send(list.get('filter.list'))
   })
 
   app.post("/filterlist", (req, res)=>{
-    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress) 
-      + " 保存最新 filter.list")
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'update filter.list')
     if (req.body.filterlist) {
       let file = fs.createWriteStream(path.join(LISTPATH, 'filter.list'))
       file.on('error', (err)=>clog.error(err))
@@ -24,9 +23,15 @@ module.exports = app => {
         }
       })
       file.end()
-      res.end(`filter.list 更新成功`)
+      res.json({
+        rescode: 0,
+        message: 'filter.list update success'
+      })
     } else {
-      res.end("非法请求")
+      res.json({
+        rescode: -1,
+        message: 'a parameter filterlist is expect'
+      })
     }
   })
 }

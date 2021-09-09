@@ -11,11 +11,10 @@ module.exports = app => {
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get logs", filename)
     let logs = LOGFILE.get(filename)
     if (!logs) {
-      res.writeHead(404, { 'Content-Type': 'text/plain;charset=utf-8' })
-      return res.end(JSON.stringify({
+      return res.status(404).json({
         rescode: 404,
         message: `${filename} not exist`
-      }))
+      })
     }
     res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })
     res.write('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
@@ -53,15 +52,15 @@ module.exports = app => {
     const name = req.body.name
     clog.notify(req.headers['x-forwarded-for'] || req.connection.remoteAddress, "delete log file", name)
     if (LOGFILE.delete(name)) {
-      res.end(JSON.stringify({
+      res.json({
         rescode: 0,
         message: name + ' success deleted'
-      }))
+      })
     } else {
-      res.end(JSON.stringify({
+      res.json({
         rescode: 404,
         message: name + ' not exist'
-      }))
+      })
     }
   })
 }

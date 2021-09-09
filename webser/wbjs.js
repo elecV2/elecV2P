@@ -10,30 +10,28 @@ module.exports = app => {
     let jsfn = req.query.jsfn
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get js file", jsfn)
     if (!jsfn || /\.\./.test(jsfn)) {
-      res.end(JSON.stringify({
+      return res.json({
         rescode: -1,
         message: 'illegal request to get js file ' + jsfn
-      }))
-      return
+      })
     }
     let jscont = Jsfile.get(jsfn)
     if (jscont) {
-      res.end(jscont)
+      res.send(jscont)
     } else {
-      res.writeHead(404, { 'Content-Type': 'text/plain;charset=utf-8' })
-      res.end(JSON.stringify({
+      res.status(404).json({
         rescode: 404,
         message: jsfn + ' not exist'
-      }))
+      })
     }
   })
 
   app.get("/jsmanage", (req, res)=>{
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get js manage data")
-    res.end(JSON.stringify({
+    res.json({
       storemanage: true,
       jslists: Jsfile.get('list')
-    }))
+    })
   })
 
   app.put("/jsfile", (req, res)=>{
@@ -47,22 +45,22 @@ module.exports = app => {
         }, d=>{
           clog.info(d.finish || d.progress + '\r')
         }).then(jsl=>{
-          res.end(JSON.stringify({
+          res.json({
             rescode: 0,
             message: 'download js file to: ' + jsl
-          }))
+          })
         }).catch(e=>{
-          res.end(JSON.stringify({
+          res.json({
             rescode: -1,
             message: `${req.body.name || ''} ${errStack(e)}`.trim()
-          }))
+          })
         })
         break
       default: {
-        res.end(JSON.stringify({
+        res.json({
           rescode: -1,
           message: op + " - wrong operation on js file"
-        }))
+        })
         break
       }
     }
@@ -73,33 +71,32 @@ module.exports = app => {
     let jscontent = req.body.jscontent
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "post", jsname, req.body.type || 'to save')
     if (!(jsname && jscontent)) {
-      res.end("a name of js and content is expect")
-      return
+      return res.send("a name of js and content is expect")
     }
     if (req.body.type === 'totest') {
       runJSFile(req.body.jscontent, {
         type: 'rawcode',
-        filename: jsname.split('.js')[0] + '-test.js',
+        filename: jsname.replace(/\.js$/, '-test.js'),
         from: 'test',
         cb: wsSer.send.func('jsmanage'),
         timeout: 5000
       }).then(data=>{
-        res.end(sString(data))
+        res.send(sString(data))
       }).catch(error=>{
-        res.end('error: ' + error)
+        res.send('error: ' + error)
         clog.error(errStack(error))
       })
     } else {
       if (Jsfile.put(jsname, req.body.jscontent)) {
-        res.end(JSON.stringify({
+        res.json({
           rescode: 0,
           message: `${jsname} success saved`
-        }))
+        })
       } else {
-        res.end(JSON.stringify({
+        res.json({
           rescode: -1,
           message: `${jsname} fail to save`
-        }))
+        })
       }
     }
   })
@@ -111,28 +108,28 @@ module.exports = app => {
       let bDelist = Jsfile.delete(jsfn)
       if (bDelist) {
         if (sType(bDelist) === 'array') {
-          res.end(JSON.stringify({
+          res.json({
             rescode: 0,
             message: bDelist.join(', ') + ' success deleted'
-          }))
+          })
         } else {
-          res.end(JSON.stringify({
+          res.json({
             rescode: 0,
             message: jsfn + ' success deleted'
-          }))
+          })
         }
       } else {
-        res.end(JSON.stringify({
+        res.json({
           rescode: 404,
           message: jsfn + ' not existed'
-        }))
+        })
       }
     } else {
       clog.error('a js file name is expect')
-      res.end(JSON.stringify({
+      res.json({
         rescode: -1,
         message: 'a parameter jsfn is expect'
-      }))
+      })
     }
   })
 
@@ -145,18 +142,18 @@ module.exports = app => {
     uploadfile.parse(req, (err, fields, files) => {
       if (err) {
         clog.error('upload js Error', errStack(err))
-        return res.end(JSON.stringify({
+        return res.json({
           rescode: -1,
           message: 'js upload fail ' + err.message
-        }))
+        })
       }
 
       if (!files.js) {
         clog.info('no js file to upload')
-        return res.end(JSON.stringify({
+        return res.json({
           rescode: 404,
           message: 'no js file upload'
-        }))
+        })
       }
       if (files.js.length) {
         files.js.forEach(sgfile=>{
@@ -167,10 +164,10 @@ module.exports = app => {
         clog.notify('upload js file:', files.js.name)
         file.copy(files.js.path, Jsfile.get(files.js.name, 'path'))
       }
-      return res.end(JSON.stringify({
+      return res.json({
         rescode: 0,
         message: 'upload success'
-      }))
+      })
     })
   })
 
@@ -181,10 +178,16 @@ module.exports = app => {
       case "req":
         eAxios(request).then(response=>{
           clog.notify('mock request response:', response.data)
-          res.end('success!')
+          res.json({
+            rescode: 0,
+            message: 'axios request success'
+          })
         }).catch(error=>{
           clog.error('mock request', errStack(error))
-          res.end('fail! ' + error.message)
+          res.json({
+            rescode: -1,
+            message: 'axios request fail, ' + error.message
+          })
         })
         break
       case "js":
@@ -206,11 +209,17 @@ $axios(request).then(res=>{
   console.error(e)
 })`
         Jsfile.put(jsname, jscont)
-        res.end(`success save ${jsname}!`)
-        clog.notify(`success save ${jsname}!`)
+        res.json({
+          rescode: 0,
+          message: `success save ${jsname}`
+        })
+        clog.notify(`success save ${jsname}`)
         break
       default:{
-        res.end("wrong mock type")
+        res.json({
+          rescode: -1,
+          message: "wrong mock type"
+        })
       }
     }
   })

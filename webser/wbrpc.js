@@ -5,7 +5,7 @@ const clog = new logger({ head: 'webRPC', level: 'debug', file: 'webRPC.log' })
 
 function eRPC(req, res) {
   let { method, params } = req.body
-  clog.info(req.headers['x-forwarded-for'] || req.connection.remoteAddress, method, params)
+  clog.info(req.headers['x-forwarded-for'] || req.connection.remoteAddress, 'run method', method, 'with', params && params[0])
   // method: string, params: array
   switch(method) {
   case 'pm2run':
@@ -14,16 +14,16 @@ function eRPC(req, res) {
       ...params[1],
       cb(data, error, finish){
         if (finish) {
-          res.end(JSON.stringify({
+          res.json({
             rescode: 0,
             message: data
-          }))
+          })
         } else if (error) {
           clog.error(error)
-          res.end(JSON.stringify({
+          res.json({
             rescode: -1,
             message: error
-          }))
+          })
         } else {
           clog.debug(data)
         }
@@ -32,18 +32,19 @@ function eRPC(req, res) {
     break
   case 'copy':
   case 'move':
+  case 'save':
     file[method](params[0], params[1], (err)=>{
       if (err) {
         clog.error(err)
-        res.end(JSON.stringify({
+        res.json({
           rescode: -1,
           message: err.message
-        }))
+        })
       } else {
-        res.end(JSON.stringify({
+        res.json({
           rescode: 0,
-          message: 'success ' + method + ' file to ' + params[1]
-        }))
+          message: 'success ' + method + ' file to ' + (method !== 'save' ? params[1] : params[0])
+        })
       }
     })
     break
@@ -51,24 +52,24 @@ function eRPC(req, res) {
     file.mkdir(params[0], (err)=>{
       if (err) {
         clog.error(err)
-        res.end(JSON.stringify({
+        res.json({
           rescode: -1,
           message: err.message
-        }))
+        })
       } else {
-        res.end(JSON.stringify({
+        res.json({
           rescode: 0,
           message: 'success make dir ' + params[0]
-        }))
+        })
       }
     })
     break
   default:
     clog.info('RPC method not found', method)
-    res.end(JSON.stringify({
-      rescode: -2,
+    res.status(405).json({
+      rescode: 405,
       message: `method ${method || ''} not found`
-    }))
+    })
   }
 }
 

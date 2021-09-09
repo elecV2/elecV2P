@@ -9,12 +9,10 @@ const { crtInfo, taskMa, sysInfo } = require('../func')
 module.exports = app => {
   app.get("/data", (req, res)=>{
     let type = req.query.type
-    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress) 
-  + ` get data ${type}`)
-    res.writeHead(200, { 'Content-Type' : 'text/plain;charset=utf-8' })
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), `get data ${type}`)
     switch (type) {
       case "overview":
-        res.end(JSON.stringify({
+        res.json({
           proxyPort: CONFIG_Port.proxy,
           webifPort: CONFIG_Port.webif,
           ruleslen: CONFIG_RULE.reqlists.length + CONFIG_RULE.reslists.length,
@@ -27,57 +25,60 @@ module.exports = app => {
           anyproxy: CONFIG_Port.anyproxy,
           newversion: CONFIG.newversion,
           sysinfo: sysInfo(),
-        }))
+        })
         break
       case "rules":
         let rlist = list.get('default.list')
-        res.end(JSON.stringify({
+        res.json({
           eplists: (rlist && rlist.rules) || { list: [] },
           uagent: CONFIG_RULE.uagent
-        }))
+        })
         break
       case "rewritelists":
-        res.end(JSON.stringify(list.get('rewrite.list') || { rewrite: { list: [] } }))
+        res.json(list.get('rewrite.list') || { rewrite: { list: [] } })
         break
       case "mitmhost":
         let mlist = list.get('mitmhost.list')
-        res.end(JSON.stringify({
+        res.json({
           host: (mlist && mlist.list) || [],
           type: CONFIG_RULE.mitmtype,
           crtinfo: crtInfo()
-        }))
+        })
         break
       case "filter":
-        res.end(list.get('filter.list'))
+        res.send(list.get('filter.list'))
         break
       case "update":
       case "newversion":
       case 'checkupdate':
         checkupdate(Boolean(req.query.force)).then(body=>{
-          res.end(JSON.stringify(body))
+          res.json(body)
         })
         break
       case 'stream':
-        if (req.query.url && req.query.url.startsWith('http')) {
+        if (req.query.url && /^https?:\/\/\S{4}/.test(req.query.url)) {
           stream(req.query.url).then(response=>{
             response.pipe(res)
           }).catch(e=>{
-            res.end(JSON.stringify({
+            res.json({
               rescode: -1,
               message: e
-            }))
+            })
           })
         } else {
           clog.error('wrong stream url', req.query.url)
-          res.end(JSON.stringify({
+          res.json({
             rescode: -1,
             message: 'wrong stream url ' + req.query.url
-          }))
+          })
         }
         break
       default: {
         clog.error('unknow data get type', type)
-        res.end("404")
+        res.status(405).json({
+          rescode: 405,
+          message: 'unknow data get type ' + type
+        })
       }
     }
   })
@@ -97,10 +98,10 @@ module.exports = app => {
               list: fdata
             }
           })){
-            res.end(JSON.stringify({
+            res.json({
               rescode: 0,
               message: "success! rules list saved: " + fdata.length
-            }))
+            })
             CONFIG_RULE.reqlists = []
             CONFIG_RULE.reslists = []
             renlist.forEach(r=>{
@@ -111,16 +112,16 @@ module.exports = app => {
               }
             })
           } else {
-            res.end(JSON.stringify({
+            res.json({
               rescode: -1,
               message: "fail to save rules list"
-            }))
+            })
           }
         } else {
-          res.end(JSON.stringify({
+          res.json({
             rescode: -1,
             message: "some data is expect"
-          }))
+          })
         }
         break
       case "rewrite":
@@ -135,10 +136,10 @@ module.exports = app => {
               list: req.body.rewritelists
             }
           })){
-            res.end(JSON.stringify({
+            res.json({
               rescode: 0,
               message: "success! rewrite list saved: " + req.body.rewritelists.length
-            }))
+            })
             CONFIG_RULE.rewritelists = []
             CONFIG_RULE.rewritereject = []
             enlist.forEach(r=>{
@@ -149,16 +150,16 @@ module.exports = app => {
               }
             })
           } else {
-            res.end(JSON.stringify({
+            res.json({
               rescode: -1,
               message: "fail to save rewrite list"
-            }))
+            })
           }
         } else {
-          res.end(JSON.stringify({
+          res.json({
             rescode: -1,
             message: "some data is expect"
-          }))
+          })
         }
         break
       case "mitmhost":
@@ -172,55 +173,61 @@ module.exports = app => {
             list: mhost
           }
         })){
-          res.end(JSON.stringify({
+          res.json({
             rescode: 0,
             message: "success! mitmhost list saved: " + mhost.length
-          }))
+          })
           CONFIG_RULE.mitmhost = enhost
         } else {
-          res.end(JSON.stringify({
+          res.json({
             rescode: -1,
             message: "fail to save mitmhost list"
-          }))
+          })
         }
         break
       case "mitmhostadd":
         if (req.body.data && sType(req.body.data) === 'array' && req.body.data.length) {
           let faddhost = req.body.data.filter(host=>host.length>2 && CONFIG_RULE.mitmhost.indexOf(host) === -1)
           if (list.put('mitmhost.list', faddhost, { type: 'add' })) {
-            res.end(JSON.stringify({
+            res.json({
               rescode: 0,
               message: "success! mitmhost list update " + faddhost.length
-            }))
+            })
             CONFIG_RULE.mitmhost.push(...faddhost)
           } else {
-            res.end(JSON.stringify({
+            res.json({
               rescode: -1,
               message: "fail to update mitmhost list"
-            }))
+            })
           }
         } else {
-          res.end(JSON.stringify({
+          res.json({
             rescode: -1,
             message: "body data is expect"
-          }))
+          })
         }
         break
       case "mitmtype":
         let mtype = req.body.data
         CONFIG_RULE.mitmtype = mtype
         if (mtype === 'all') {
-          clog.notify('MITM 设置为全局模式')
+          clog.notify('MITM set to global mode')
         } else if (mtype === 'none') {
-          clog.notify('MITM 已关闭')
+          clog.notify('MITM is closed')
         } else {
-          clog.notify('MITM 设置为按列表域名解析模式')
+          clog.notify('MITM set to list mode')
         }
-        res.end('设置成功')
+        res.json({
+          rescode: 0,
+          message: 'success'
+        })
         break
       default:{
         clog.error('unknow data put type', req.body.type)
-        res.end("data put error")
+        res.status(405).json({
+          rescode: 405,
+          message: 'unknow data put type'
+        })
       }
     }
   })
