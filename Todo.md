@@ -12,20 +12,23 @@
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
-- 临时 token 及权限管理
+- 授权 token 及权限管理
 - EFSS download wget/aria2c/git 等
-- EFSS zip 压缩打包/解压
-- TASK/RULES/REWRITE 排序
-- Backup 备份导出/导入(lists/store)
-- 文件编辑器(component||libery) (备 CodeMirror?)
+- EFSS 文件多选 及压缩/解压
+- 文本编辑器增加左侧目录列表
+- TASK/RULES/REWRITE 分组/排序
 - 多语言 [一个可能永远不填的坑..., start ready...]
-- elecV2Pflow: 不同语言的脚本执行流程可视化控制（天坑）
+- elecV2P 启动器/快捷方式（$run JSON 格式文件
+- eFlow: 不同语言的脚本执行流程可视化控制（天坑）
 </pre>
 </div>
 </div>
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [X] EFSS 新增文本文件编辑器
+- [x] 添加 access.log 访问日志
+- [x] weboskcet token 验证
 - [x] 增加 $store.set 方法
 - [x] EFSS 右键新建文件夹
 - [x] EFSS 复制粘粘移动文件
