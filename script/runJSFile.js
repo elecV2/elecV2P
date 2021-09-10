@@ -275,9 +275,17 @@ async function runJSFile(filename, addContext={}) {
 
   // filename 附带参数处理
   if (addContext.type !== 'rawcode' && / -/.test(filename)) {
+    // -local 参数处理
     if (/ -local/.test(filename)) {
       addContext.type = 'local'
       filename = filename.replace(' -local', '')
+    }
+
+    // -timeout 参数处理
+    let timeout = filename.match(/ -timeout(=| )(\d+)/)
+    if (timeout && timeout[2]) {
+      addContext.timeout = Number(timeout[2])
+      filename = filename.replace(/ -timeout(=| )(\d+)/g, '')
     }
 
     // -rename 参数处理
