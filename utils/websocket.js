@@ -1,7 +1,8 @@
 const ws = require('ws')
 
+const { isAuthReq } = require('./validate')
 const { nStatus, euid, sType, sString, sJson } = require('./string')
-const { logger } = require('./logger')
+const { logger, LOGFILE } = require('./logger')
 const clog = new logger({ head: 'webSocket', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -85,6 +86,14 @@ function websocketSer({ server, path }) {
   
   wsobs.WSS.on('connection', (ws, req)=>{
     ws.ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
+    if (isAuthReq(req)) {
+      LOGFILE.put('access.log', `${ws.ip} is connected`, 'access notify')
+    } else {
+      clog.notify(ws.ip, 'try to access elecV2P websocket server')
+      LOGFILE.put('access.log', `${ws.ip} trying to connect elecV2P`, 'access notify')
+      ws.close(4003, `have no permission. IP: ${ws.ip} is recorded`)
+      return
+    }
     clog.notify(ws.ip, 'new connection')
 
     // 初始化 ID
@@ -105,7 +114,8 @@ function websocketSer({ server, path }) {
     })
 
     ws.on("close", ev=>{
-      clog.info(ws.ip, 'disconnected', 'reason: ' + ev)
+      clog.notify(ws.ip, 'disconnected', 'reason:', ev)
+      LOGFILE.put('access.log', `${ws.ip} is disconnected`, 'access notify')
       if(!wsobs.WSS.clients || wsobs.WSS.clients.size <= 0) {
         clog.notify('all clients disconnected now')
         wsobs.stop()
