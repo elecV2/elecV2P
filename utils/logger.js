@@ -180,11 +180,11 @@ const LOGFILE = {
     this.statusList[name].toclose = false
     return this.streamList[name]
   },
-  put(filename, data){
+  put(filename, data, head = ''){
     if (!filename || data === undefined || data === '') {
       return
     }
-    this.streamFile(filename).write(sString(data) + '\n')
+    this.streamFile(filename).write((head ? `[${ alignHead(head) }][${ now() }] ` : '') + sString(data) + '\n')
   },
   get(filename){
     if (!filename) {
@@ -236,12 +236,13 @@ function alignHead(head) {
     return head
   }
   if (head.length < CONFIG_LOG.alignHeadlen) {
-    let nstr = head.split(' ')
+    let nstr = head.split(' '), lastr = nstr.pop()
     let space = CONFIG_LOG.alignHeadlen - head.length
-    while(space--){
-      nstr[0] += ' '
+    while(space > 0){
+      lastr = ' ' + lastr
+      space--
     }
-    return nstr.join(' ')
+    return nstr.join(' ') + ' ' + lastr
   }
   if (head.length > CONFIG_LOG.alignHeadlen) {
     const sp = head.split(/\/|\\/)

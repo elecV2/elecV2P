@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const os = require('os')
 
-const { errStack, sJson, sString, sType, sBool, bEmpty, iRandom, euid } = require('./string')
+const { errStack, sJson, sString, sType, sBool, bEmpty, iRandom, euid, kSize } = require('./string')
 const { now } = require('./time')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFile', level: 'debug' })
@@ -197,6 +197,15 @@ const file = {
       return false
     }
   },
+  save(fpath, fcont, cb=()=>{}){
+    clog.info(`save file to ${fpath}`)
+    let folder = path.dirname(fpath)
+    if (!fs.existsSync(folder)) {
+      clog.info('mkdir', folder, 'for', fpath)
+      fs.mkdirSync(folder, { recursive: true })
+    }
+    fs.writeFile(fpath, sType(fcont) === 'object' ? JSON.stringify(fcont, null, 2) : sString(fcont), 'utf8', cb)
+  },
   copy(source, target, cb=()=>{}){
     clog.info('copy', source, 'to', target)
     fs.copyFile(source, target, cb)
@@ -282,12 +291,12 @@ const file = {
       return {
         type: 'file',
         name: basename,
-        size: this.size(folder),
+        size: kSize(fstat.size),
         mtime: fstat.mtimeMs
       }
     }
   },
-  list({ folder, max=1000, dotfiles='deny', ext=[], noext=[] }) {
+  list({ folder, max=1000, dotfiles='deny', ext=[], noext=[], detail=false }) {
     // ext: 只返回该 extension 的文件, noext: 不包括该后缀名的文件
     if (!(folder && fs.existsSync(folder))) {
       return []
@@ -308,7 +317,8 @@ const file = {
         if (dotfiles !== 'allow' && /^\./.test(fd)) {
           continue
         }
-        if (fs.statSync(path.join(newfolder, fd)).isDirectory()) {
+        let fstat = fs.statSync(path.join(newfolder, fd))
+        if (fstat.isDirectory()) {
           subfolder.push((subf ? subf + '/' : '') + fd)
         } else {
           if (ext.length && ext.indexOf(path.extname(fd)) === -1) {
@@ -317,7 +327,15 @@ const file = {
           if (noext.length && noext.indexOf(path.extname(fd)) !== -1) {
             continue
           }
-          fnlist.push((subf ? subf + '/' : '') + fd)
+          if (detail) {
+            fnlist.push({
+              name: (subf ? subf + '/' : '') + fd,
+              size: kSize(fstat.size),
+              mtime: fstat.mtimeMs
+            })
+          } else {
+            fnlist.push((subf ? subf + '/' : '') + fd)
+          }
           curnum++
           if (curnum >= max) {
             return fnlist
@@ -372,16 +390,13 @@ const Jsfile = {
       name += '.js'
     }
     try {
-      if (typeof(cont) === 'object') {
-        cont = JSON.stringify(cont)
-      }
       let fullpath = path.join(fpath.js, name)
       let jsfolder = path.dirname(fullpath)
       if (!fs.existsSync(jsfolder)) {
         clog.info('mkdir', jsfolder, 'for', name)
         fs.mkdirSync(jsfolder, { recursive: true })
       }
-      fs.writeFileSync(fullpath, cont, 'utf8')
+      fs.writeFileSync(fullpath, sType(cont) === 'object' ? JSON.stringify(cont, null, 2) : sString(cont), 'utf8')
       clog.info(`${name} success saved`)
       return true
     } catch(e) {

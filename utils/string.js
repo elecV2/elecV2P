@@ -6,6 +6,9 @@ function sType(obj) {
   if (typeof obj !== 'object') {
     return typeof obj
   }
+  if (Buffer.isBuffer(obj)) {
+    return 'buffer'
+  }
   return Object.prototype.toString.call(obj).slice(8, -1).toLocaleLowerCase()
 }
 
@@ -24,8 +27,9 @@ function sJson(str, force=false) {
   case 'array':
   case 'object':
     return str
+  case 'buffer':
+    return str.toJSON()
   case 'set':
-  case 'uint8array':
     return Array.from(str)
   case 'map':
     return Array.from(str).reduce((obj, [key, value]) => {
@@ -62,10 +66,9 @@ function sString(obj) {
     return obj.trim()
   case 'map':
   case 'set':
-  case 'uint8array':
+  case 'buffer':
     return JSON.stringify({
-      dataType: type,
-      value: Array.from(obj)
+      type, data: Array.from(obj)
     })
   case 'array':
   case 'object':
@@ -80,6 +83,10 @@ function sString(obj) {
   default:
     return String(obj).trim()
   }
+}
+
+function strJoin() {
+  return [...arguments].map(s=>sString(s)).join(' ')
 }
 
 function sBool(val) {
@@ -252,4 +259,4 @@ function atob(b64 = 'SGVsbG8gZWxlY1YyUCE=') {
   return Buffer.from(b64, 'base64').toString()
 }
 
-module.exports = { euid, UUID, iRandom, sJson, sString, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, escapeHtml, surlName, progressBar, btoa, atob }
+module.exports = { euid, UUID, iRandom, sJson, sString, strJoin, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, escapeHtml, surlName, progressBar, btoa, atob }

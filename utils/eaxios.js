@@ -262,7 +262,11 @@ function downloadfile(durl, dest, cb) {
           chunkstatus.step++
           let progress = progressBar({ step: chunkstatus.current, total: chunkstatus.total, name: fname })
           clog.debug(progress)
-          cb({ progress, chunk: chunkstatus.step, name: fname })
+          try {
+            cb({ progress, chunk: chunkstatus.step, name: fname })
+          } catch(e) {
+            clog.error(fname, 'download callback error', errStack(e))
+          }
         })
       }
       let file = fs.createWriteStream(dest)
@@ -272,11 +276,15 @@ function downloadfile(durl, dest, cb) {
         file.close()
         resolve(dest)
         if (sType(cb) === 'function') {
-          cb({
-            progress: progressBar({ step: 2, total: 1, name: fname }),
-            finish: `success download ${durl} to ${dest}`,
-            name: fname
-          })
+          try {
+            cb({
+              progress: progressBar({ step: 2, total: 1, name: fname }),
+              finish: `success download ${durl} to ${dest}`,
+              name: fname
+            })
+          } catch(e) {
+            clog.error(fname, 'download callback error', errStack(e))
+          }
         }
       })
     }).catch(e=>{
