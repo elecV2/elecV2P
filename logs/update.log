@@ -1,4 +1,13 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.4.5)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.4.6)
+
+v3.4.6  2021.09.11
+ • EFSS 界面增加文本文件编辑器
+ • 增加 access.log 访问日志
+ • favend 收藏目录显示大小和日期
+ • Fix:
+   - EFSS 换目录后的路径问题
+   - favend $request.path
+   - websocket token 验证
 
 v3.4.5  2021.08.21
  • Docker 所有平台直接使用基础镜像

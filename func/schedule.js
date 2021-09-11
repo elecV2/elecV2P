@@ -66,9 +66,8 @@ module.exports = class {
           jobres,
           new Promise(resolve=>setTimeout(resolve, 5000, `${this.task.name} still running...`))
         ])
-        .then(res=>jobres=res)
-        .catch(error=>jobres=error.message || error)
-        .finally(res=>this.stop('finished', jobres))
+        .catch(error=>error.message || error)
+        .then(res=>this.stop('finished', res))
       } else {
         this.stop('finished', jobres)
       }

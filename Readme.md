@@ -48,6 +48,8 @@ yarn dev
 # - 最后再把备份好的文件复制还原到之前的位置
 ```
 
+**【推荐使用的软更新升级文件 [softupdate.js](https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js) 】**
+
 其他 PM2 相关指令
 ``` sh
 pm2 stop elecV2P  # 停止 elecV2P
@@ -60,8 +62,6 @@ pm2 logs    # 查看运行日志
 
 pm2 -h      # 查看 PM2 帮助列表
 ```
-
-**【3.1.8 版本后，推荐使用自带的 [softupdate.js](https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js) 脚本进行软更新升级】**
 
 ### 方法二：DOCKER
 
@@ -161,9 +161,9 @@ docker logs elecv2p -f
 
 **ANYPROXY 相关端口默认关闭。可在 webUI 首页双击 ANYPROXY 临时开启。如需在启动时自动开启，请前往 webUI->SETTING->初始化相关设置 中进行设置。**
 
-*80 端口可使用环境变量 **PORT** 进行修改(比如: PORT=8000 node index.js)，也可以在 script/Lists/config.json 文件中更改其他所有端口。*
-
-*v3.3.0 版本后，所有端口也可以在 webUI->SETTING->初始化相关设置 中进行修改（非必要情况不建议随意更改）*
+- *80 端口可使用环境变量 **PORT** 进行修改(比如: PORT=8000 node index.js)*
+- *在 elecV2P 已经启动的情况下，可在 webUI->SETTING->初始化相关设置 中修改其他端口*
+- *在 elecV2P 尚未启动时，可在 script/Lists/config.json 文件中修改对应端口*
 
 ## 根证书相关 - HTTPS 解密
 

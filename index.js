@@ -9,14 +9,15 @@ const aProxyOptions = {
   webInterface: {
     enable: true,          // 是否打开代理请求查看端口
     webPort: CONFIG_Port.webif
-  }
+  },
+  wsIntercept: Boolean(CONFIG.anyproxy.wsIntercept)
 }
 
 const { eproxy, wsSer, logger, message, checkupdate } = require('./utils')
 const clog = new logger({ head: 'elecV2P', level: 'debug' })
 
 let eProxy = null
-if (CONFIG.anyproxy && CONFIG.anyproxy.enable === false) {
+if (CONFIG.anyproxy.enable === false) {
   clog.info('anyproxy not enabled yet')
 } else {
   eProxy = new eproxy(aProxyOptions)

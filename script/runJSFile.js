@@ -214,7 +214,7 @@ function runJS(filename, jscode, addContext={}) {
     try {
       let tout = addContext.timeout === undefined ? CONFIG_RUNJS.timeout : addContext.timeout
       if (bDone) {
-        CONTEXT.final.ok = euid() + Date.now()
+        CONTEXT.final.ok = filename + '-' + euid() + '-' + Date.now()
         let vmtout = null
         if (tout > 0) {
           vmtout = setTimeout(()=>{
@@ -237,7 +237,8 @@ function runJS(filename, jscode, addContext={}) {
         CONTEXT.final.$vmEvent = vmEvent
       }
       let option = {
-        filename, timeout: tout > 0 ? Number(tout) : undefined
+        filename, timeout: tout > 0 ? Number(tout) : undefined,
+        breakOnSigint: true
       }
       let result = vm.runInNewContext(jscode, CONTEXT.final, option)
 
