@@ -1,7 +1,7 @@
 const formidable = require('formidable')
 const express = require('express')
 
-const { logger, file, sType, sString, errStack } = require('../utils')
+const { logger, file, sType, sString, errStack, now } = require('../utils')
 const clog = new logger({ head: 'wbefss', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -26,9 +26,16 @@ const CONFIG_efss = {
       target: "https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/0body.js",
       enable: true
     },
+    logs: {
+      key: "logs",
+      name: "logs 查看",
+      type: "favorite",
+      target: "logs",
+      enable: true
+    },
     shell: {
       key: "shell",
-      name: "shell目录",
+      name: "shell 目录",
       type: "favorite",
       target: "script/Shell",
       enable: true
@@ -107,12 +114,12 @@ function efsshandler(req, res, next) {
       }
       let reqfav = '/efss/' + req.params.favend
       if (requrl === reqfav) {
-        let flist = file.list({ folder: favdir, max: rbody.max, dotfiles })
+        let flist = file.list({ folder: favdir, max: rbody.max, dotfiles, detail: true })
         res.writeHead(200, {'Content-Type': 'text/html;charset=utf-8'})
         res.write('<head><meta name="viewport" content="width=device-width, initial-scale=1.0">')
-        res.write(`<title>${fend.name} ${flist.length} - EFSS favorite 目录文件列表</title><style>.content{display: flex;flex-direction: column;border: 1px solid;border-radius: 8px;}.item{display: block;color: #1890ff;margin: 6px 0;padding-bottom: 2px;padding-left: 6px;text-decoration: none;border-bottom: 1px solid;font-size: 18px;font-family: 'Microsoft YaHei', -apple-system, Arial;}.item:last-child {margin: 0;border-bottom: none;}</style></head><body><div class='content'>`)
+        res.write(`<title>${fend.name} ${flist.length} - EFSS favorite 目录文件列表</title><style>.content{display: flex;flex-direction: column;border: 1px solid;border-radius: 8px;}.file {display: inline-flex;flex-wrap: wrap;width: 100%;padding: 6px 8px;color: #1890ff;border-bottom: 1px solid;justify-content: space-between;align-items: center;box-sizing: border-box;}.file:last-child {margin: 0;border-bottom: none;}.file_link {width: 50%;color: #1890ff;text-decoration: none;font-size: 18px;font-family: 'Microsoft YaHei', -apple-system, Arial;}.file_mtime {color: #003153;font-size: 16px;}.file_size {width: 72px;text-align: right;font-size: 15px;color: #003153;}a {text-decoration: none;}@media screen and (max-width: 600px) {.file_mtime {display: none;}}</style></head><body><div class='content'>`)
         flist.forEach(file=>{
-          res.write(`<a class='item' href='${reqfav}/${file}${ dotfiles === 'allow' ? '?dotfiles=allow' : '' }' target='_blank'>${file}</a>`)
+          res.write(`<div class='file'><a class='file_link' href='${reqfav}/${file.name}${ dotfiles === 'allow' ? '?dotfiles=allow' : '' }' target='_blank'>${file.name}</a><span class='file_mtime'>${ now(file.mtime, false) }</span><span class='file_size'>${ file.size }</span></div>`)
         })
         return res.end('</div></body>')
       }
