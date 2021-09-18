@@ -1,12 +1,11 @@
-// （先看完说明，再决定是否执行！操作不可恢复，谨慎使用。执行前，先根据自身需求修改下面 CONFIG 变量里的内容）
-// 该脚本用于获取 https://github.com/elecV2/elecV2P 库的最新文件，并进行本地替换。（软更新升级）
+// elecV2P 软更新脚本。执行前，请先根据自身需求修改下面 CONFIG 变量中的内容。（操作不可恢复，谨慎使用）
+// 该脚本会自动获取 https://github.com/elecV2/elecV2P 库中的最新文件，并进行本地替换。（软更新升级）
 // 使用前请确保当前 elecV2P 服务器可正常连接 raw.githubusercontent.com/或自定义 cdngit 站点
-// 更新后会自动重启，以应用新的版本（请确定已保存任务列表及做好了储存映射数据备份等工作）
+// 更新后会自动重启，以应用新的版本（请确定已保存好任务列表及其他个人数据）
 // 脚本会先尝试以 PM2 的方式重启，如果失败，将直接重启容器(Docker 模式下)或服务器(pm2 指令不可用的情况下)
-// 3.1.8 版本后 elecV2P 默认启动方式更改为 PM2，建议在此版本后使用
 // 
-// 文件更新地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
-// 最近更新时间: 2021-07-27
+// 文件地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
+// 最近更新: 2021-09-18
 
 let CONFIG = {
   store: 'softupdate_CONFIG',    // 将当前配置内容(CONFIG 值) 常量储存。留空: 表示使用下面的参数进行更新，否则将会读取 store/cookie 常量中的 softupdate_CONFIG 对应值进行更新。如果 softupdate_CONFIG 尚未设置(首次运行)，会先按下面参数执行，并储存当前 CONFIG 内容
@@ -23,7 +22,7 @@ let CONFIG = {
     'Todo',                // 排除单个文件，使用文件名包含的关键字即可
     '^\\.',                // 也可以使用正则表示式。匹配方式为 new RegExp(str).test(fileurl)
   ],
-  wbtoken: 'a8c259b2-67fe-4c64-8700-7bfdf1f55cb3',    // webhook token（在 SETTING 界面查看）用于发送保存当前任务列表的网络请求，可省略。
+  wbtoken: 'a8c259b2-67fe-4c64-8700-7bfdf1f55cb3',    // WEBHOOK TOKEN（在 SETTING 界面查看）用于发送保存当前任务列表的网络请求，可省略。
   cdngit: 'https://raw.githubusercontent.com',        // 可自定义 raw.githubusercontent.com 加速站点
   about: 'elecV2P 软更新配置文件，详情: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js'
 }
@@ -66,7 +65,7 @@ async function checkUpdate(){
     if (__version !== newversion) {
       console.log('检测到有新的版本:', newversion)
       if (CONFIG.notify) {
-        $feed.push('elecV2P 检测到新版本 ' + newversion, '当前版本 ' + __version +  '\n即将进行软更新升级\n\n更新日志: https://github.com/elecV2/elecV2P/blob/master/logs/update.log', /127|192|172|10|localhost/.test(__home) ? '' : __home)
+        $feed.push('elecV2P 检测到新版本 ' + newversion, '当前版本 ' + __version + '\n即将进行软更新升级\n\n更新日志: https://github.com/elecV2/elecV2P/blob/master/logs/update.log', /127|192|172|10|localhost/.test(__home) ? '' : __home)
       }
       return true
     }
@@ -97,48 +96,42 @@ function taskSave() {
   }
 }
 
-function update() {
+async function update() {
   taskSave()
   console.log('开始获取更新文件列表')
-  $axios('https://api.github.com/repos/elecv2/elecv2p/git/trees/master?recursive=1').then(async res=>{
-    let data = res.data
-    let tree = data.tree
+  let res = {}
+  try {
+    res = await $axios('https://api.github.com/repos/elecv2/elecv2p/git/trees/master?recursive=1')
+  } catch(e) {
+    console.error('获取 elecV2P 软更新文件列表失败', e.message || e)
+    $message.error('获取 elecV2P 软更新文件列表失败', e.message || e)
+    return
+  }
 
-    for (let file of tree) {
-      if (file.type === 'blob') {
-        let btoUP = true
-        for (let item of CONFIG.noupdate) {
-          if (new RegExp(item).test(file.path)) {
-            btoUP = false
-            console.debug('根据 CONFIG.noupdate', item, '设置，跳过', file.path, '更新')
-            break
-          }
+  try {
+    // 异步并行下载
+    await promisePool(downloadFile, res.data.tree, {
+      cb({ finish, fail }){
+        if (!finish && fail) {
+          return 'done'
         }
-        if (btoUP) {
-          let durl = CONFIG.cdngit + '/elecV2/elecV2P/master/' + file.path
-          console.log('获取更新:', durl)
-          try {
-            await $download(durl, { folder: './', name: file.path }, d=>{
-                    if (d && d.progress) console.log(d.progress + '\r')
-                  }).then(d=>console.log('同步文件:', d))
-          } catch(e) {
-            console.error(e.message || e)
-            console.error('更新出错，请检查网络后重试。')
-            return
-          }
-        }
-      }
-    }
+      }, limit: 5
+    })
+  } catch(e) {
+    console.error('更新部分文件时出错，请检查网络后重试')
+    console.error(e.message || e)
+    $message.error('更新部分文件时出错，请检查网络后重试')
+    return
+  }
 
-    console.log('文件更新完成')
-    if (CONFIG.restart) {
-      console.log('开始重启以应用更新。稍等一下刷新前端网页，查看是否生效')
-      autoFresh()
-      restart()
-    } else {
-      console.log('此次软更新设置为不重启，所以该更新并没有应用。如需应用，请手动重启一下 elecV2P')
-    }
-  }).catch(e=>console.error('elecV2P 软更新失败', e.message || e))
+  console.log('文件更新完成')
+  if (CONFIG.restart) {
+    console.log('开始重启以应用更新。稍等一下刷新前端网页，查看是否生效')
+    autoFresh()
+    restart()
+  } else {
+    console.log('此次软更新设置为不重启，所以该更新并没有应用。如需应用，请手动重启 elecV2P')
+  }
 }
 
 function restart() {
@@ -167,4 +160,100 @@ function autoFresh() {
     resizable: false,
     script: `console.log("将在 3 秒后自动刷新页面");setTimeout(()=>{location.hash = '';location.reload(true)}, 3000)`
   }).then(data=>console.log(data)).catch(e=>console.log(e))
+}
+
+async function downloadFile(file){
+  if (file.type === 'blob') {
+    let btoUP = true
+    for (let item of CONFIG.noupdate) {
+      if (new RegExp(item).test(file.path)) {
+        btoUP = false
+        console.log('根据 CONFIG.noupdate 设置:', item, '跳过', file.path, '更新')
+        return
+      }
+    }
+    if (btoUP) {
+      let durl = CONFIG.cdngit + '/elecV2/elecV2P/master/' + file.path
+      console.log('获取更新:', durl)
+      await $download(durl, { folder: './', name: file.path },
+            d=>{
+              if (d && d.progress) console.log(d.progress + '\r')
+            }).then(d=>console.log('同步文件:', d))
+    }
+  }
+}
+
+/**
+ * 异步并行执行函数及限制（待优化）
+ * author     https://t.me/elecV2
+ * update     https://github.com/elecV2/elecV2P-dei/blob/master/examples/JSTEST/asyncPool.js
+ * @param     {Function}    fn       待执行的异步函数
+ * @param     {Array}       params   函数传入参数
+ * @param     {Function}    cb       回调函数
+ * @param     {Number}      limit    同时并发执行数
+ * @return    {Promise}
+ */
+function promisePool(fn, params, { cb, limit = 6, log = false }) {
+  if (typeof(fn) !== 'function') {
+    return Promise.reject('a function is expect')
+  }
+  if (!Array.isArray(params)) {
+    return Promise.reject('a array of params is expect')
+  }
+  let cnlog = (...args)=>{
+    if (log) {
+      console.log.apply(null, args)
+    }
+  }
+  let cback = async (options = {}) => {
+    // callback 可能会加入新的 params
+    if (typeof(cb) === 'function') {
+      return await cb(options)
+    } else {
+      cnlog(options)
+    }
+  }
+  let last  = 0, fail = [], cbdone = false
+  let orbit = new Map()
+  let isCbDone = (flag = false)=>{
+    // call force done 只生效一次
+    if (flag === 'done') {
+      cbdone = true
+    }
+    return cbdone
+  }
+  let nTask = async (idx) => {
+      let curt = last++, orbitdone = orbit.get(idx) || []
+      await cback({ message: `orbit ${idx} start`, orbit: idx, running: curt, done: orbitdone })
+      cnlog('orbit', idx, 'start task', curt)
+      let res = null, tempdone = false
+      try {
+        res = await fn(params[curt])
+        orbitdone.push(curt)
+        orbit.set(idx, orbitdone)
+        tempdone = await cback({ message: `task ${curt} finish`, orbit: idx, done: orbitdone, res })
+      } catch(err) {
+        console.error('task', curt, 'fail, data', params[curt])
+        fail.push(curt)
+        tempdone = await cback({ message: `task ${curt} fail with data ${params[curt]}`, orbit: idx, fail: err.message || err })
+      }
+      if (last >= params.length) {
+        orbit.delete(idx)
+        if (orbit.size === 0) {
+          cnlog('all task done')
+          await cback({ message: `total tasks ${last}, all finished`, finish: true, done: last, fail })
+        }
+      } else {
+        if (isCbDone(tempdone)) {
+          if (tempdone) {
+            cnlog('force done by callback, fail', fail, 'current task', curt, 'with param', params[curt])
+          }
+          throw Error('force done by callback')
+        } else {
+          await nTask(idx)
+        }
+      }
+    }
+
+  return Promise.all(new Array(Math.min(limit, params.length)).fill(1).map((s, idx)=>nTask(idx)))
 }
