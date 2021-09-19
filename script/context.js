@@ -215,15 +215,12 @@ class surgeContext {
       } else {
         sbody = error
       }
-    }).finally(()=>{
+    }).finally(async ()=>{
       if(cb && sType(cb) === 'function') {
         try {
-          let cbres = cb(error, resps, sbody)
-          if (sType(cbres) === 'promise') {
-            cbres.catch(err=>this.fconsole.error('$httpClient', req.method, req.url, 'async cb error:', errStack(err, true)))
-          }
+          await cb(error, resps, sbody)
         } catch(err) {
-          this.fconsole.error('$httpClient', req.method, req.url, 'cb error:', errStack(err, true))
+          this.fconsole.error('$httpClient', req.method, req.url, 'callback', errStack(err, true))
         }
       }
     })
@@ -305,15 +302,12 @@ class quanxContext {
           resp = errStack(error)
           this.fconsole.error('$task.fetch', req.url, resp)
           reject({ error: resp })
-        }).finally(()=>{
+        }).finally(async ()=>{
           if(cb && sType(cb) === 'function') {
             try {
-              let cbres = cb(resp)
-              if (sType(cbres) === 'promise') {
-                cbres.catch(err=>this.fconsole.error('$task.fetch async cb error:', errStack(err, true)))
-              }
+              await cb(resp)
             } catch(err) {
-              this.fconsole.error('$task.fetch cb error:', errStack(err, true))
+              this.fconsole.error('$task.fetch callback', errStack(err, true))
             }
           }
         })

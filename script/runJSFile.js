@@ -159,6 +159,8 @@ function runJS(filename, jscode, addContext={}) {
     CONTEXT.final.process = process
     CONTEXT.final.exports = exports
     CONTEXT.final.Buffer = Buffer
+    CONTEXT.final.TextEncoder = TextEncoder
+    CONTEXT.final.TextDecoder = TextDecoder
 
     CONTEXT.final.URL = URL
     CONTEXT.final.URLSearchParams = URLSearchParams
@@ -214,7 +216,7 @@ function runJS(filename, jscode, addContext={}) {
     try {
       let tout = addContext.timeout === undefined ? CONFIG_RUNJS.timeout : addContext.timeout
       if (bDone) {
-        CONTEXT.final.ok = filename + '-' + euid() + '-' + Date.now()
+        CONTEXT.final.ok = filename + '-' + euid(2) + '-' + Date.now()
         let vmtout = null
         if (tout > 0) {
           vmtout = setTimeout(()=>{
