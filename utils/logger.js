@@ -231,27 +231,74 @@ function formArgs() {
   return format(...arguments)
 }
 
-function alignHead(head) {
-  if (head.length === CONFIG_LOG.alignHeadlen) {
-    return head
+function alignHead(str, alignlen = CONFIG_LOG.alignHeadlen) {
+  let buf = Buffer.from(str), tlen = (buf.length + str.length) / 2
+  if (tlen === alignlen) {
+    return str
   }
-  if (head.length < CONFIG_LOG.alignHeadlen) {
-    let nstr = head.split(' '), lastr = nstr.pop()
-    let space = CONFIG_LOG.alignHeadlen - head.length
-    while(space > 0){
+  if (tlen < alignlen) {
+    let nstr = str.split(' '), lastr = nstr.pop()
+    let space = alignlen - tlen
+    while (space-- > 0) {
       lastr = ' ' + lastr
-      space--
     }
     return nstr.join(' ') + ' ' + lastr
   }
-  if (head.length > CONFIG_LOG.alignHeadlen) {
-    const sp = head.split(/\/|\\/)
-    if (sp.length > 1) {
-      head = sp[0].slice(0,1) + '/' + sp.pop()
+  const sp = str.split(/\/|\\/)
+  if (sp.length > 1) {
+    str = sp[0].slice(0,1) + '/' + sp.pop()
+    buf = Buffer.from(str)
+    tlen = (buf.length + str.length) / 2
+    if (tlen === alignlen) {
+      return str
     }
-    const nstr = head.split(' ').pop()
-    return head.slice(0, CONFIG_LOG.alignHeadlen-6-nstr.length) + '...' + head.slice(-nstr.length-3)
+    if (tlen < alignlen) {
+      let nstr = str.split(' '), lastr = nstr.pop()
+      let space = alignlen - tlen
+      while (space-- > 0) {
+        lastr = ' ' + lastr
+      }
+      return nstr.join(' ') + ' ' + lastr
+    }
   }
+  let lsidx = buf.lastIndexOf(' '), lres
+  let isZh  = (buf, idx)=>(buf[idx] >= 228 && (buf[idx+1] >= 128 && buf[idx+1] <=191) && (buf[idx+2] >= 128 && buf[idx+2] <=191))
+  if (isZh(buf, lsidx - 4)) {
+    lres = buf.slice(lsidx - 1)
+  } else if (isZh(buf, lsidx - 3)) {
+    lres = buf.slice(lsidx - 3)
+    alignlen++
+  } else {
+    lres = buf.slice(lsidx - 2)
+  }
+  alignlen = alignlen - lres.length - 3
+  tlen = 0
+  let end = 0
+  while (end <= buf.length) {
+    if (isZh(buf, end)) {
+      if (alignlen - tlen >= 2) {
+        end += 3
+        tlen += 2
+      } else {
+        break
+      }
+    } else {
+      end++
+      tlen++
+    }
+    if (tlen >= alignlen) {
+      break
+    }
+  }
+
+  let res = buf.slice(0, end).toString()
+  if (tlen < alignlen) {
+    let space = alignlen - tlen
+    while (space-- > 0) {
+      res += ' '
+    }
+  }
+  return res + '...' + lres.toString()
 }
 
 function setGlog(level) {
