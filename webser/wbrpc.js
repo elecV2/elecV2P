@@ -1,9 +1,19 @@
 const { exec } = require('../func')
-const { logger, file } = require('../utils')
+const { logger, file, sType } = require('../utils')
 
 const clog = new logger({ head: 'webRPC', level: 'debug', file: 'webRPC.log' })
 
+const CONFIG_RPC = {
+  v: 101,
+}
+
 function eRPC(req, res) {
+  if (!req.body.v || req.body.v < CONFIG_RPC.v) {
+    return res.json({
+      rescode: 2,   // 前端需要更新
+      message: 'webUI need update(try refresh page)'
+    })
+  }
   let { method, params } = req.body
   clog.info(req.headers['x-forwarded-for'] || req.connection.remoteAddress, 'run method', method, 'with', params && params[0])
   // method: string, params: array
@@ -32,8 +42,29 @@ function eRPC(req, res) {
     break
   case 'copy':
   case 'move':
+    if (sType(params[0]) === 'array') {
+      params[0].forEach(fn=>{
+        file[method](params[1] + '/' + fn, params[2] + '/' + fn, (err)=>{
+          if (err) {
+            clog.error(method, fn, 'fail.', err)
+          }
+        })
+      })
+
+      res.json({
+        rescode: 0,
+        message: 'success ' + method + ' file to ' + params[2]
+      })
+    } else {
+      res.json({
+        rescode: -1,
+        message: 'a array parameter[0] is expect'
+      })
+      clog.error(method, 'file error: a array parameter[0] is expect')
+    }
+    break
   case 'save':
-    file[method](params[0], params[1], (err)=>{
+    file.save(params[0], params[1], (err)=>{
       if (err) {
         clog.error(err)
         res.json({
@@ -43,7 +74,7 @@ function eRPC(req, res) {
       } else {
         res.json({
           rescode: 0,
-          message: 'success ' + method + ' file to ' + (method !== 'save' ? params[1] : params[0])
+          message: 'success save file to ' + params[0]
         })
       }
     })

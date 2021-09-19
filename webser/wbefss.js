@@ -23,7 +23,7 @@ const CONFIG_efss = {
       key: "test",
       name: "测试",
       type: "runjs",
-      target: "https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/0body.js",
+      target: "https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/favend.js",
       enable: true
     },
     logs: {
@@ -230,28 +230,28 @@ module.exports = app => {
       })
     }
 
-    let fn = req.body.fn
-    fn = fn.replace(/^\//, '')
-    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'delete efss file', fn)
-    if (fn) {
-      let fpath = file.get(CONFIG.efss.directory + '/' + fn, 'path')
-      if (file.delete(fpath)) {
-        res.json({
-          rescode: 0,
-          message: fpath + ' is deleted'
-        })
-      } else {
-        res.json({
-          rescode: -1,
-          message: fpath + ' fail to delete'
-        })
-      }
+    let files = req.body.files
+    let folder = CONFIG.efss.directory + req.body.path
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'delete efss files', files, 'on folder', folder)
+    if (sType(files) === 'array') {
+      let sucdel = [], faildel = []
+      files.forEach(fn=>{
+        if (file.delete(fn, folder)) {
+          sucdel.push(fn)
+        } else {
+          faildel.push(fn)
+        }
+      })
+      res.json({
+        rescode: 0,
+        message: (sucdel.length ? `success delete: ${ sucdel.join(', ') }\n` : '') + (faildel.length ? `fail to delete: ${ faildel.join(', ') }` : '')
+      })
     } else {
       res.json({
         rescode: -1,
-        message: 'a parameter fn is expect'
+        message: 'a array parameter files is expect'
       })
-      clog.error('a parameter fn is expect')
+      clog.error('delete efss files error: a array parameter files is expect')
     }
   })
 

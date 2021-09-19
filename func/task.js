@@ -184,8 +184,8 @@ const taskMan = {
         return
       }
 
-      let tid = taskinfo.id
-      if (options.type && tname[taskinfo.name]) {
+      let tid = taskinfo.id;         // 带 id 添加的任务将无视同名任务更新规则
+      if (!tid && options.type && tname[taskinfo.name]) {
         clog.info(taskinfo.name, 'exist, new task add type', options.type)
         switch(options.type) {
         case 'skip':
@@ -221,8 +221,8 @@ const taskMan = {
 
       TASKS_INFO[tid] = taskinfo
       TASKS_INFO[tid].id = tid
-      TASKS_WORKER[tid] = new Task(TASKS_INFO[tid])
       if (taskinfo.running !== false) {
+        TASKS_WORKER[tid] = new Task(TASKS_INFO[tid])
         TASKS_WORKER[tid].start()
         message += ' TASK: ' + taskinfo.name + ' started'
       }

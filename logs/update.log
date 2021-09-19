@@ -1,5 +1,11 @@
 <a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.4.6)
 
+v3.4.7
+ • EFSS 多文件操作及移动端优化
+ • TASK 订阅可指定默认 id
+ • TASK 订阅支持开始/暂定其他任务
+ • 默认脚本 deletelog/softeupdate 优化
+
 v3.4.6  2021.09.11
  • EFSS 界面增加文本文件编辑器
  • 增加 access.log 访问日志
