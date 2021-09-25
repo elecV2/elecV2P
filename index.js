@@ -32,9 +32,14 @@ wsSer.recv.eproxy = (op)=>{
   switch(op) {
     case 'new':
     case 'start':
-      eProxy = new eproxy(aProxyOptions)
-      eProxy.start()
-      message.success('anyproxy started')
+      if (eProxy === null) {
+        eProxy = new eproxy(aProxyOptions)
+        eProxy.start()
+        message.success('anyproxy started')
+      } else {
+        clog.info('anyproxy already started')
+        message.error('anyproxy already started')
+      }
       CONFIG_Port.anyproxy.enable = true
       break
     case 'delete':
