@@ -233,7 +233,7 @@ async function execFunc(command, options={}, cb) {
   })
 
   childexec.on('exit', (code, signal) => {
-    let fstr = command + ' finished'
+    let fstr = 'command: ' + command + ' finished'
     if (options.timeout && signal === 'SIGTERM') {
       fstr += `(may run timeout of ${options.timeout}ms)`
     }
