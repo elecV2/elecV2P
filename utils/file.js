@@ -204,7 +204,16 @@ const file = {
       clog.info('mkdir', folder, 'for', fpath)
       fs.mkdirSync(folder, { recursive: true })
     }
-    fs.writeFile(fpath, sType(fcont) === 'object' ? JSON.stringify(fcont, null, 2) : sString(fcont), 'utf8', cb)
+    switch (sType(fcont)) {
+    case 'buffer':
+      break
+    case 'object':
+      fcont = JSON.stringify(fcont, null, 2)
+      break
+    default:
+      fcont = sString(fcont)
+    }
+    fs.writeFile(fpath, fcont, 'utf8', cb)
   },
   copy(source, target, cb=()=>{}){
     clog.info('copy', source, 'to', target)

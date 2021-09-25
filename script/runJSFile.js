@@ -249,7 +249,7 @@ function runJS(filename, jscode, addContext={}) {
       }
     } catch(error) {
       let result = { error: error.message }
-      if (addContext.from === 'rule' || addContext.from === 'webhook') {
+      if (/^(ruleReq|ruleRes|rewrite|webhook)/.test(addContext.from)) {
         result.rescode = -1
         result.stack = error.stack
       }

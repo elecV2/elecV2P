@@ -5,7 +5,7 @@ const { logger, file, sType, sString, errStack, now } = require('../utils')
 const clog = new logger({ head: 'wbefss', level: 'debug' })
 
 const { CONFIG } = require('../config')
-const { runJSFile } = require('../script')
+const { runJSFile, getJsResponse } = require('../script')
 
 const CONFIG_efss = {
   enable: true,            // 默认开启。关闭： false
@@ -51,9 +51,12 @@ function efsshandler(req, res, next) {
   if (!req.params.favend) {
     return next()
   }
-  clog.debug('efss favend', req.params.favend, req.originalUrl)
+  clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), req.method, 'efss favend', req.params.favend)
   let fend = CONFIG.efss.favend && CONFIG.efss.favend[req.params.favend]
-  let rbody = Object.assign(req.body || {}, req.query || {})
+  let rbody = req.body
+  if (sType(rbody) === 'object') {
+    Object.assign(rbody, req.query)
+  }
   let requrl = decodeURI(req.originalUrl.split('?')[0].replace(/\/$/, ''))
   let dotfiles = 'deny'
   if (rbody.dotfiles) {
@@ -65,8 +68,10 @@ function efsshandler(req, res, next) {
     switch(fend.type) {
     case 'runjs':
       let $response = {
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8'
+        statusCode: 200,
+        header: {
+          'Content-Type': 'text/plain;charset=utf-8',
+          'X-Powered-By': 'elecV2P'
         }
       }
       let env = {
@@ -90,17 +95,12 @@ function efsshandler(req, res, next) {
         from: 'favend', env,
         timeout: rbody.timeout === undefined ? CONFIG.efss.favendtimeout : rbody.timeout
       }).then(jsres=>{
-        if (sType(jsres) === 'object') {
-          Object.assign($response, jsres.response || jsres)
-        }
-        if ($response.body === undefined) {
-          $response.body = jsres
-        }
+        $response = getJsResponse(jsres, $response)
       }).catch(e=>{
         $response.body = `favend error on run js ${fend.target} ${errStack(e)}`
         clog.error('error on run js', fend.target, errStack(e))
       }).finally(()=>{
-        res.set($response.headers || {'Content-Type': 'text/html;charset=utf-8'})
+        res.set($response.header || $response.headers || {'Content-Type': 'text/html;charset=utf-8'})
         res.status($response.statusCode || $response.status || 200).send($response.body)
       })
       break

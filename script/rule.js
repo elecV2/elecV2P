@@ -1,4 +1,4 @@
-const { logger, sJson, sUrl, sType, sString, list, wsSer, errStack } = require('../utils')
+const { logger, sJson, sUrl, sType, sString, list, wsSer, errStack, sbufBody } = require('../utils')
 const clog = new logger({ head: 'elecV2P', level: 'debug' })
 
 const { runJSFile } = require('./runJSFile')
@@ -89,6 +89,7 @@ const CONFIG_RULE = (()=>{
   }
 
   const config = {
+      maxResBytes: 5*1024*1024,      // 当 response.body.byteLength 大于此值时，不进行处理。默认 5M
       mitmtype: 'list',
       ...getRulesList(),
       ...getRewriteList(),
@@ -147,16 +148,16 @@ const localResponse = {
   }
 }
 
-function getrules($request, $response, lists) {
+function getMatchRule($request, $response, lists) {
   let matchobj = {
     url: $request.url,
     host: $request.requestOptions.hostname,
     reqmethod: $request.requestOptions.method,
-    reqbody: $request.requestData,
+    reqbody: $request.requestData.toString(),
     useragent: $request.requestOptions.headers["User-Agent"],
     resstatus: $response ? $response.statusCode : "",
     restype: $response ? $response.header["Content-Type"] : "",
-    resbody: $response ? $response.body : ""
+    resbody: $response ? $response.body.toString() : ""
   }
   for (let mr of lists) {
     // 逐行正则匹配，待优化
@@ -168,17 +169,13 @@ function getrules($request, $response, lists) {
   return false
 }
 
-function formBody(body) {
-  // 因为 null/undefined，不要用 sString 替换
-  return sType(body) === 'object' ? JSON.stringify(body) : String(body)
-}
-
 function formRequest($request) {
   return {
     ...$request.requestOptions,
     protocol: $request.protocol,
     url: $request.url,
-    body: formBody($request.requestData),
+    body: $request.requestData.toString(),
+    bodyBytes: $request.requestData
   }
 }
 
@@ -187,20 +184,49 @@ function formResponse($response) {
     statusCode: $response.statusCode,
     status: $response.statusCode,
     headers: $response.header,
-    body: formBody($response.body)
+    body: $response.body.toString(),
+    bodyBytes: $response.body
+  }
+}
+
+function getJsResponse(jsres, orires = { ...localResponse.reject }) {
+  if (sType(jsres) === 'object') {
+    if (jsres.response) {
+      return {
+        statusCode: jsres.response.statusCode || jsres.response.status || orires.statusCode,
+        header: sJson(jsres.response.header || jsres.response.headers) || orires.header,
+        body: sbufBody(jsres.response.bodyBytes || jsres.response.body) || orires.body
+      }
+    }
+    if (jsres.rescode === -1 && jsres.error) {
+      return {
+        statusCode: orires.statusCode,
+        header: orires.header,
+        body: 'error on run js to make response:\n' + (jsres.stack || jsres.error)
+      }
+    }
+    // 返回结果修改
+    return {
+      statusCode: jsres.statusCode || jsres.status || orires.statusCode,
+      header: sJson(jsres.header || jsres.headers) || orires.header,
+      body: sbufBody(jsres.bodyBytes || jsres.body) || orires.body
+    }
+  } else {
+    orires.body = sbufBody(jsres)
+    return orires
   }
 }
 
 module.exports = {
   summary: 'elecV2P - customize personal network',
-  CONFIG_RULE,
+  CONFIG_RULE, getJsResponse,
   *beforeSendRequest(requestDetail) {
     if (bCircle.check(requestDetail.requestOptions.hostname)) {
       let error = 'access ' + requestDetail.requestOptions.hostname + ' be blocked, because of visiting over ' + bCircle.max + ' times in ' + bCircle.gap + ' milliseconds'
       clog.error(error)
       return { response: localResponse.get(requestDetail.requestOptions.headers, error) }
     }
-    clog.debug(bCircle.max, bCircle.count, bCircle.host)
+    clog.debug('bCircle status:', bCircle.max, bCircle.count, bCircle.host)
 
     for (let r of CONFIG_RULE.rewritereject) {
       if ((new RegExp(r.match)).test(requestDetail.url)) {
@@ -223,23 +249,26 @@ module.exports = {
       }
     }
 
-    let matchreq = getrules(requestDetail, null, CONFIG_RULE.reqlists)
+    let matchreq = getMatchRule(requestDetail, null, CONFIG_RULE.reqlists)
     if (!matchreq) {
-      return requestDetail
+      // 不做任何处理
+      return null
     }
-    if ("block" === matchreq.ctype) {
-      clog.info("block - " + matchreq.target)
+    if ('block' === matchreq.ctype) {
+      clog.notify(requestDetail.url, 'block, type:', matchreq.target)
       return { response: localResponse[matchreq.target] }
     }
-    if ("ua" === matchreq.ctype) {
-      requestDetail.requestOptions.headers['User-Agent'] = CONFIG_RULE.uagent[matchreq.target].header
-      clog.notify(requestDetail.url, "User-Agent set to", CONFIG_RULE.uagent[matchreq.target].name)
-      return requestDetail
+    if ('ua' === matchreq.ctype) {
+      requestDetail.requestOptions.headers['User-Agent'] = CONFIG_RULE.uagent[matchreq.target]?.header
+      clog.notify(requestDetail.url, 'User-Agent set to', CONFIG_RULE.uagent[matchreq.target]?.name)
+      return {
+        requestOptions: requestDetail.requestOptions
+      }
     }
-    if (matchreq.ctype === 'hold') {
+    if ('hold' === matchreq.ctype) {
       if (wsSer.recverlists.length === 0) {
         clog.notify('no websocket connected, skip $HOLD rule')
-        return requestDetail
+        return null
       }
       wsSer.send({
         type: 'hold',
@@ -270,20 +299,22 @@ module.exports = {
             })
           }
           requestDetail.requestOptions.headers = res.header
-          requestDetail.requestData = res.body
           if (res.request) {
             Object.assign(requestDetail.requestOptions, res.request)
           }
           clog.notify(requestDetail.url, 'request $HOLD done')
-          resolve(requestDetail)
+          resolve({
+            requestData: res.body,
+            requestOptions: requestDetail.requestOptions
+          })
         }
 
         if (Number(matchreq.target) > 0) {
           setTimeout(()=>{
+            resolve(null)
             wsSer.recv.hold = null
             wsSer.send({ type: 'hold', data: 'over' })
-            clog.notify(requestDetail.url, '$HOLD timeout, continue with orignal data')
-            resolve(requestDetail)
+            clog.notify(requestDetail.url, '$HOLD timeout of', matchreq.target, 'seconds, continue with orignal data')
           }, Number(matchreq.target) * 1000)
         }
       })
@@ -317,78 +348,112 @@ module.exports = {
         }).then(jsres=>{
           if (sType(jsres) !== 'object') {
             return resolve({
-              response: { ...localResponse.reject, body: sString(jsres) }
+              response: {
+                statusCode: 200,
+                header: { "Content-Type": "text/plain;charset=utf-8" },
+                body: sbufBody(jsres)
+              }
             })
+          }
+          if (Object.keys(jsres).length === 0) {
+            return resolve(null)
           }
           if (jsres.response) {
             // 直接返回结果，不访问目标网址
             clog.notify(requestDetail.url, 'request force to local response')
             clog.debug(requestDetail.url, 'response:', jsres.response)
-            jsres.response.body = formBody(jsres.response.body)
             return resolve({
-              response: { ...localResponse.imghtml, ...jsres.response }
+              response: {
+                statusCode: jsres.response.statusCode || jsres.response.status || 200,
+                header: sJson(jsres.response.header || jsres.response.headers) || { "Content-Type": "text/html;charset=utf-8" },
+                body: sbufBody(jsres.response.bodyBytes || jsres.response.body)
+              }
             })
           }
           if (jsres.rescode === -1 && jsres.error) {
             return resolve({
-              response: { ...localResponse.reject, body: 'error on elecV2P modify rule: ' + matchreq.target + '\n' + (jsres.stack || jsres.error) }
+              response: {
+                statusCode: 200,
+                header: { "Content-Type": "text/plain;charset=utf-8" },
+                body: 'error on elecV2P modify rule: ' + matchreq.target + '\n' + (jsres.stack || jsres.error)
+              }
             })
           }
-          // 请求信息修改
-          if (jsres["User-Agent"] || jsres["user-agent"]) {
-            clog.notify(requestDetail.url, "User-Agent set to:", jsres["User-Agent"] || jsres["user-agent"])
-            requestDetail.requestOptions.headers["User-Agent"] = jsres["User-Agent"] || jsres["user-agent"]
-          } else if (jsres.body) {
-            clog.notify(requestDetail.url, "request body changed")
-            clog.debug(requestDetail.url, 'request body change to', jsres.body)
-            requestDetail.requestData = formBody(jsres.body)
-          } else {
-            Object.assign(requestDetail.requestOptions, jsres)
+          if (jsres.protocol) {
+            if (jsres.protocol === requestDetail.protocol) {
+              clog.info('current protocol', requestDetail.protocol, 'no need to change')
+            } else {
+              return resolve({
+                protocol: jsres.protocol
+              })
+            }
           }
+          // 请求信息修改
+          if (jsres.bodyBytes || jsres.body) {
+            clog.notify(requestDetail.url, 'request body changed')
+            clog.debug(requestDetail.url, 'request body change to', jsres.bodyBytes || jsres.body)
+            requestDetail.requestData = sbufBody(jsres.bodyBytes || jsres.body)
+          }
+          if (jsres.path) {
+            clog.debug(requestDetail.url, 'request path change to', jsres.path)
+            requestDetail.requestOptions.path = jsres.path
+          }
+          if (jsres.method) {
+            clog.debug(requestDetail.url, 'request method change to', jsres.method)
+            requestDetail.requestOptions.method = jsres.method
+          }
+          if (sType(jsres.headers) === 'object') {
+            clog.debug(requestDetail.url, 'request headers change to', jsres.headers)
+            requestDetail.requestOptions.headers = jsres.headers
+          }
+          resolve({ requestData, requestOptions } = requestDetail)
         }).catch(e=>{
+          resolve(null)
           clog.error('error on run js', matchreq.target, errStack(e))
-        }).finally(()=>{
-          resolve(requestDetail)
         })
       })
     }
   },
   *beforeSendResponse(requestDetail, responseDetail) {
-    const $request = requestDetail
     const $response = responseDetail.response
 
+    if (/^(audio|video)|(ogg|stream)$/.test($response.header['Content-Type'])) {
+      // 跳过音/视频类数据处理
+      clog.info('skip modify audio or video response content')
+      return null
+    }
+
+    if ($response.body.byteLength > CONFIG_RULE.maxResBytes) {
+      clog.info('response body is bigger than', CONFIG_RULE.maxResBytes, 'skip modify')
+      return null
+    }
+
     for (let r of CONFIG_RULE.rewritelists) {
-      if ((new RegExp(r.match)).test($request.url)) {
+      if ((new RegExp(r.match)).test(requestDetail.url)) {
         clog.info('match rewrite rule:', r.match, r.target)
         return new Promise((resolve, reject)=>{
           runJSFile(r.target, {
             from: 'rewrite',
-            $request: formRequest($request),
+            $request: formRequest(requestDetail),
             $response: formResponse($response)
           }).then(jsres=>{
-            if (sType(jsres) === 'object') {
-              Object.assign($response, jsres.response || jsres)
-            } else {
-              $response.body = sString(jsres)
-            }
+            resolve({ response: getJsResponse(jsres, $response) })
           }).catch(e=>{
-            $response.body += '\nerror on run js' + r.target + errStack(e)
+            resolve(null)
             clog.error('error on run js', r.target, errStack(e))
-          }).finally(()=>{
-            resolve({ response: $response })
           })
         })
       }
     }
 
-    let matchres = getrules($request, $response, CONFIG_RULE.reslists)
+    let matchres = getMatchRule(requestDetail, $response, CONFIG_RULE.reslists)
     if (!matchres) {
-      return { response: $response }
+      return null
     }
     if (matchres.ctype === 'hold') {
       if (wsSer.recverlists.length === 0) {
         clog.notify('no websocket connected, skip $HOLD rule')
-        return { response: $response }
+        return null
       }
       wsSer.send({
         type: 'hold',
@@ -409,16 +474,16 @@ module.exports = {
 
         if (Number(matchres.target) > 0) {
           setTimeout(()=>{
+            resolve(null)
             wsSer.recv.hold = null
             wsSer.send({ type: 'hold', data: 'over' })
             clog.notify('$HOLD timeout, continue with orignal data')
-            resolve({ response: $response })
           }, Number(matchres.target) * 1000)
         }
       })
     }
-    if ("block" === matchres.ctype) {
-      clog.info("block - " + matchres.target)
+    if ('block' === matchres.ctype) {
+      clog.info(requestDetail.url, 'block, type', matchres.target)
       return { response: localResponse[matchres.target] }
     }
     if (/^(30.)$/.test(matchres.ctype)) {
@@ -433,7 +498,7 @@ module.exports = {
       if (newurl.pathname === '/') {
         newurl.pathname = orgurl.pathname
       }
-      clog.info(requestDetail.url, matchres.ctype, "redirect to", newurl.href)
+      clog.info(requestDetail.url, matchres.ctype, 'redirect to', newurl.href)
       return {
         response: {
           statusCode: matchres.ctype,
@@ -441,27 +506,22 @@ module.exports = {
         }
       }
     }
-    if (matchres.ctype === "js") {
+    if (matchres.ctype === 'js') {
       return new Promise((resolve, reject)=>{
         runJSFile(matchres.target, {
           from: 'ruleRes',
-          $request: formRequest($request),
+          $request: formRequest(requestDetail),
           $response: formResponse($response)
         }).then(jsres=>{
-          if (sType(jsres) === 'object') {
-            Object.assign($response, jsres.response || jsres)
-          } else {
-            $response.body = sString(jsres)
-          }
+          resolve({ response: getJsResponse(jsres, $response) })
         }).catch(e=>{
+          resolve(null)
           clog.error('error on run js', matchres.target, errStack(e))
-        }).finally(()=>{
-          resolve({ response: $response })
         })
       })
     }
     clog.info('unknown match rule type, return the orignal response')
-    return { response: $response }
+    return null
   },
   *beforeDealHttpsRequest(requestDetail) {
     if (CONFIG_RULE.mitmtype === 'all') {
@@ -474,7 +534,7 @@ module.exports = {
       return false
     }
     
-    let host = requestDetail.host.split(":")[0]
+    let host = requestDetail.host.split(':')[0]
     if (CONFIG_RULE.mitmhost.indexOf(host) !== -1) {
       return true
     }

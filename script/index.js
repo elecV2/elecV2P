@@ -1,4 +1,4 @@
-const { CONFIG_RULE } = require('./rule')
-const { CONFIG_RUNJS, runJSFile} = require('./runJSFile')
+const { CONFIG_RULE, getJsResponse } = require('./rule')
+const { CONFIG_RUNJS, runJSFile } = require('./runJSFile')
 
-module.exports = { CONFIG_RULE, CONFIG_RUNJS, runJSFile }
+module.exports = { CONFIG_RULE, getJsResponse, CONFIG_RUNJS, runJSFile }

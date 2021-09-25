@@ -4,7 +4,7 @@ const { logger, file, sType } = require('../utils')
 const clog = new logger({ head: 'webRPC', level: 'debug', file: 'webRPC.log' })
 
 const CONFIG_RPC = {
-  v: 101,
+  v: 102,
 }
 
 function eRPC(req, res) {
@@ -64,7 +64,12 @@ function eRPC(req, res) {
     }
     break
   case 'save':
-    file.save(params[0], params[1], (err)=>{
+    let fcont = params[1]
+    if (params[2] === 'hex' && sType(params[1]) === 'array') {
+      clog.info('save mode is', params[2], 'Buffer.from content')
+      fcont = Buffer.from(params[1])
+    }
+    file.save(params[0], fcont, (err)=>{
       if (err) {
         clog.error(err)
         res.json({

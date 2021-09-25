@@ -259,4 +259,23 @@ function atob(b64 = 'SGVsbG8gZWxlY1YyUCE=') {
   return Buffer.from(b64, 'base64').toString()
 }
 
-module.exports = { euid, UUID, iRandom, sJson, sString, strJoin, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, escapeHtml, surlName, progressBar, btoa, atob }
+function sbufBody(body = '') {
+  switch (sType(body)) {
+  case 'string':
+  case 'buffer':
+    return body
+  case 'arraybuffer':
+    return Buffer.from(body)
+  case 'null':
+  case 'undefined':
+  case 'boolean':
+  case 'number':
+    return String(body)
+  case 'object':
+    return JSON.stringify(body, null, 2)
+  default:
+    return sString(body)
+  }
+}
+
+module.exports = { euid, UUID, iRandom, sJson, sString, strJoin, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, escapeHtml, surlName, progressBar, btoa, atob, sbufBody }

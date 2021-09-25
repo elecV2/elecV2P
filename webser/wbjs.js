@@ -1,6 +1,6 @@
 const formidable = require('formidable')
 
-const { logger, downloadfile, eAxios, errStack, sString, sType, Jsfile, file, wsSer } = require('../utils')
+const { logger, downloadfile, eAxios, errStack, sType, Jsfile, file, wsSer, sbufBody } = require('../utils')
 const clog = new logger({ head: 'wbjsfile', cb: wsSer.send.func('jsmanage') })
 
 const { runJSFile } = require('../script')
@@ -81,7 +81,7 @@ module.exports = app => {
         cb: wsSer.send.func('jsmanage'),
         timeout: 5000
       }).then(data=>{
-        res.send(sString(data))
+        res.send(sbufBody(data))
       }).catch(error=>{
         res.send('error: ' + error)
         clog.error(errStack(error))
