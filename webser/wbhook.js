@@ -2,19 +2,20 @@ const os = require('os')
 const { taskMa, exec } = require('../func')
 const { CONFIG_RULE, runJSFile } = require('../script')
 
-const { logger, LOGFILE, Jsfile, list, nStatus, sString, sType, surlName, sBool, stream, downloadfile, now, checkupdate, store, kSize, errStack } = require('../utils')
+const { logger, LOGFILE, Jsfile, list, nStatus, sString, sType, surlName, sBool, stream, downloadfile, now, checkupdate, store, kSize, errStack, sbufBody, wsSer } = require('../utils')
 const clog = new logger({ head: 'webhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
 
 function handler(req, res){
-  const rbody = Object.assign(req.body || {}, req.query || {})
+  res.set({ 'Access-Control-Allow-Origin': '*' })
   if (!CONFIG.wbrtoken) {
     return res.status(500).json({
       rescode: -1,
       message: 'webhook token not set yet'
     })
   }
+  const rbody = Object.assign(req.body || {}, req.query || {})
   if (rbody.token !== CONFIG.wbrtoken) {
     return res.status(403).json({
       rescode: 403,
@@ -22,7 +23,7 @@ function handler(req, res){
     })
   }
   const clientip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
-  clog.notify(clientip, "run webhook type", rbody.type)
+  clog.notify(clientip, 'run webhook type', rbody.type)
   switch(rbody.type) {
   case 'jslist':
     res.json(Jsfile.get('list'))
@@ -67,7 +68,7 @@ function handler(req, res){
       res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
       runJSFile(fn, addContext).then(data=>{
         if (data) {
-          res.write(sString(data))
+          res.write(sbufBody(data))
         } else {
           res.write(showfn + ' don\'t return any value')
         }
@@ -488,6 +489,13 @@ function handler(req, res){
       rescode: 0,
       message: secMsg.trim() || 'SECURITY config not changed',
       SECURITY: CONFIG.SECURITY
+    })
+    break
+  case 'proxyport':
+    wsSer.recv.eproxy(rbody.op === 'open' ? 'start' : 'close')
+    res.json({
+      rescode: 0,
+      message: `proxy port ${CONFIG.anyproxy.port} is ${rbody.op === 'open' ? 'open' : 'close'}`
     })
     break
   case 'devdebug':
