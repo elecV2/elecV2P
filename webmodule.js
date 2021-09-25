@@ -13,8 +13,10 @@ const { wbefss, wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, 
 module.exports = () => {
   const app = express()
   app.use(compression())
+  app.use(express.json({ limit: '10mb' }))
+  app.use(express.text({ type: 'text/*' }))
+  app.use(express.raw())
   app.set('json spaces', 2)
-  app.use(express.json({ limit: '20mb' }))
 
   app.use((req, res, next)=>{
     if (isAuthReq(req)) {
