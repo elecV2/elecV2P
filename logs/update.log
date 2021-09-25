@@ -1,6 +1,11 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.4.6)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.4.8)
 
-v3.4.7
+v3.4.8  2021.09.25
+ • 增强对 Buffer 类数据的处理
+ • webhook 打开/关闭代理端口
+ • webUI 及其他细节优化
+
+v3.4.7  2021.09.18
  • EFSS 多文件操作及移动端优化
  • TASK 订阅可指定默认 id
  • TASK 订阅支持开始/暂定其他任务

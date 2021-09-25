@@ -77,8 +77,6 @@ $done({
 // === $done({ response: { statusCode, headers, body } })
 ```
 
-当返回结果不是以上 $done 中的格式时，将会把最终结果作为 body 输出，其他项使用默认参数。
-
 ## 使用 PM2 运行 (v3.4.3 beta 测试阶段...)
 
 使用方式：在需要运行的程序文件右键，然后选择 PM2 运行
