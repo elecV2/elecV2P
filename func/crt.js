@@ -5,7 +5,7 @@ const forge = require('node-forge')
 const EasyCert = require('node-easy-cert')
 
 const anycrtpath = path.join(os.homedir(), '.anyproxy/certificates')
-const rootCApath = path.join(__dirname, "../rootCA")
+const rootCApath = path.join(__dirname, '../rootCA')
 
 if(!fs.existsSync(anycrtpath)) {
   fs.mkdirSync(anycrtpath, { recursive: true })
@@ -25,6 +25,8 @@ const clog = new logger({ head: 'funcCrt' })
 function newRootCrt(evoptions={}) {
   if (!evoptions.commonName) {
     evoptions.commonName = 'elecV2P'
+  } else {
+    evoptions.commonName = encodeURI(evoptions.commonName)
   }
   const options = {
     rootDirPath: rootCApath,
@@ -51,7 +53,7 @@ function newRootCrt(evoptions={}) {
         const p12b64 = pemToP12(keyPath, crtPath, password)
         fs.writeFile(path.join(rootCApath, 'p12b64.txt'), `password = ${password}\np12base64 = ${p12b64}`, 'utf8', err=>{
           if (err) {
-            clog.error('fail to generate p12 crt', errStack(error))
+            clog.error('fail to generate p12 crt', errStack(err))
           }
         })
       }
@@ -73,7 +75,7 @@ function clearCrt() {
         if (err) {
           clog.error(errStack(err))
         } else {
-          clog.notify("delete certificates", file)
+          clog.notify('delete certificates', file)
         }
       })
     }
@@ -82,8 +84,8 @@ function clearCrt() {
 
 async function rootCrtSync() {
   // 同步用户根证书和系统根证书
-  let rcrt = path.join(rootCApath, "rootCA.crt"),
-      rkey = path.join(rootCApath, "rootCA.key")
+  let rcrt = path.join(rootCApath, 'rootCA.crt'),
+      rkey = path.join(rootCApath, 'rootCA.key')
   if (!(fs.existsSync(rcrt) && fs.existsSync(rkey))) {
     try {
       await newRootCrt()
@@ -92,8 +94,8 @@ async function rootCrtSync() {
     }
   }
   clog.info('move rootCA.crt/rootCA.key to', anycrtpath)
-  fs.copyFileSync(rcrt, anycrtpath + "/rootCA.crt")
-  fs.copyFileSync(rkey, anycrtpath + "/rootCA.key")
+  fs.copyFileSync(rcrt, anycrtpath + '/rootCA.crt')
+  fs.copyFileSync(rkey, anycrtpath + '/rootCA.key')
   return true
 }
 
@@ -121,7 +123,7 @@ function cacheClear() {
 }
 
 function crtInfo(){
-  let crtPath = path.join(anycrtpath, "rootCA.crt")
+  let crtPath = path.join(anycrtpath, 'rootCA.crt')
   if (!fs.existsSync(crtPath)) {
     return {
       rescode: -1,
