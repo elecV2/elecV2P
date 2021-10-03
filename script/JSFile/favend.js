@@ -1,10 +1,10 @@
 // EFSS favend 之 backend runjs 示例脚本
 // 该脚本用于 elecV2P EFSS 界面 favend 相关部分
-// 更新时间: 2021-09-24
+// 更新时间: 2021-09-30
 // 文件地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/favend.js
 
 // favend 中可获取的网络请求参数:
-// $request.url, $request.headers, $request.body<object|string> (favend 暂不支持 $request.bodyBytes<buffer>)
+// $request.url, $request.headers, $request.body<string> (favend 暂不支持 $request.bodyBytes<buffer>)
 // $request.method, $request.protocol, $request.hostname, $request.port, $request.path
 
 // favend 中的 response 待生成，故无 $response 相关参数

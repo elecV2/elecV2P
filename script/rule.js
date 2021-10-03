@@ -32,7 +32,7 @@ const bCircle = {
 const CONFIG_RULE = (()=>{
   function getUserAgent() {
     let ustr = list.get('useragent.list')
-    return { 
+    return {
       uagent: sJson(ustr) || {
         "iPhone": {
           "name": "iPhone 6s",
