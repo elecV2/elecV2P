@@ -90,7 +90,7 @@ function efsshandler(req, res, next) {
           host: req.get('host'),
           path: req.baseUrl + req.path,
           url: `${req.headers['x-forwarded-proto'] || req.protocol}://${req.get('host')}${req.originalUrl}`,
-          body: rbody,
+          body: sString(rbody),
         },
         from: 'favend', env,
         timeout: rbody.timeout === undefined ? CONFIG.efss.favendtimeout : rbody.timeout
@@ -133,7 +133,7 @@ function efsshandler(req, res, next) {
     }
     return
   }
-  clog.debug('efss favend match none, continue')
+  clog.debug('favend no match, continue with efss static file')
   let efssdir = file.get(CONFIG.efss.directory, 'path')
   if (!file.isExist(efssdir, true)) {
     return res.status(404).json({
