@@ -40,8 +40,7 @@ module.exports = app => {
     switch(op){
       case 'jsdownload':
         downloadfile(req.body.url, {
-          folder: file.get('script/JSFile', 'path'),
-          name: req.body.name
+          name: Jsfile.get(req.body.name, 'path')
         }, d=>{
           clog.info(d.finish || d.progress + '\r')
         }).then(jsl=>{
