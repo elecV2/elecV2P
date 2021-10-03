@@ -236,6 +236,10 @@ function downloadfile(durl, options, cb) {
   }
 
   let dest = path.resolve(folder, fname)
+  if (options.existskip && fs.existsSync(dest)) {
+    clog.info(dest, 'exist, skip download')
+    return Promise.resolve(`${dest} exist, skip download`)
+  }
   folder = path.dirname(dest)   // fname 中包含目录的情况
   if (!fs.existsSync(folder)) {
     clog.info('mkdir', folder, 'for download', fname)
