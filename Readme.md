@@ -274,4 +274,5 @@ TG 交流群: https://t.me/elecV2G (主要为方便用户使用交流，开发�
 - [vue](https://vuejs.org)
 - [vue-draggable-resizable](https://github.com/mauricius/vue-draggable-resizable)
 - [ace](https://github.com/ajaxorg/ace)
+- [adm-zip](https://github.com/cthackers/adm-zip)
 - [Ant Design Vue](https://www.antdv.com)

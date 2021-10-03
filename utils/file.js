@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const os = require('os')
+const Zip = require('adm-zip')
 
 const { errStack, sJson, sString, sType, sBool, bEmpty, iRandom, euid, kSize } = require('./string')
 const { now } = require('./time')
@@ -220,14 +221,13 @@ const file = {
     fs.copyFile(source, target, cb)
   },
   move(source, target, cb=()=>{}){
-    try {
-      fs.copyFileSync(source, target)
-      fs.rmSync(source, { force: true })
-      clog.info('move', source, 'to', target)
-      cb(null, 'success move to ' + target)
-    } catch(err) {
-      cb(err)
-    }
+    clog.info('move', source, 'to', target)
+    fs.rename(source, target, cb)
+  },
+  rename(oldPath, newPath, cb=()=>{}){
+    // AKA - move
+    clog.info('rename', oldPath, 'to', newPath)
+    fs.rename(oldPath, newPath, cb)
   },
   mkdir(dir, cb=()=>{}){
     fs.mkdir(dir, { recursive: true }, cb)
@@ -258,6 +258,55 @@ const file = {
       }
     }
     return 0
+  },
+  zip(filelist, targetfile){
+    if (sType(filelist) !== 'array') {
+      clog.error('a array parameter is expect when compress zip files')
+      return false
+    }
+    if (filelist.length === 0) {
+      clog.error('no files to compress')
+      return false
+    }
+    let zip = new Zip()
+    filelist.forEach(file=>{
+      if (fs.existsSync(file)) {
+        if (fs.statSync(file).isDirectory()) {
+          clog.debug('add directory', file, 'to', targetfile)
+          zip.addLocalFolder(file)
+        } else {
+          clog.debug('add file', file, 'to', targetfile)
+          zip.addLocalFile(file)
+        }
+      } else {
+        clog.error(file, 'not exist, skip compress')
+      }
+    })
+    if (!targetfile) {
+      targetfile = filelist[0] + '.etc.zip'
+    } else if (!/\.zip$/.test(targetfile)) {
+      targetfile = targetfile + '.zip'
+    }
+    zip.writeZip(targetfile)
+    clog.info('success compress all files to', targetfile)
+    return true
+  },
+  unzip(zipfile, targetpath, options = {}){
+    if (fs.existsSync(zipfile)) {
+      let zip = new Zip(zipfile)
+      if (!targetpath) {
+        targetpath = path.dirname(zipfile)
+      }
+      zip.extractAllTo(targetpath, options.overwrite)
+      clog.info('success uncompress', zipfile, 'to', targetpath)
+      if (options.filelist) {
+        return this.aList(targetpath)
+      }
+      return true
+    } else {
+      clog.error(zipfile, 'not exist, cant unzip')
+      return false
+    }
   },
   aList(folder, option = { max: -1, dot: true, skip: { folder: [], file: [] } }, progress = { num: 0 }){
     if (!fs.existsSync(folder)) {
@@ -498,6 +547,8 @@ const store = {
         return Number(value)
       case 'array':
       case 'object':
+      case 'json':
+      case 'dict':
         return sJson(value, true)
       case 'string':
         return sString(value)

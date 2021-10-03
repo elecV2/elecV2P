@@ -1,4 +1,8 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.4.8)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.4.9)
+
+v3.4.9  2021.10.03
+ • EFSS 文件打包/解压/重命名
+ • 远程 JS 推送时可重命名
 
 v3.4.8  2021.09.25
  • 增强对 Buffer 类数据的处理

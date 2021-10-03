@@ -4,7 +4,7 @@ const { logger, file, sType } = require('../utils')
 const clog = new logger({ head: 'webRPC', level: 'debug', file: 'webRPC.log' })
 
 const CONFIG_RPC = {
-  v: 102,
+  v: 103,
 }
 
 function eRPC(req, res) {
@@ -19,11 +19,12 @@ function eRPC(req, res) {
   // method: string, params: array
   switch(method) {
   case 'pm2run':
+    let undone = true
     exec('pm2 start ' + params[0] + ' --attach --no-autorestart', {
       timeout: 5000, call: true, from: 'rpc',
       ...params[1],
       cb(data, error, finish){
-        if (finish) {
+        if (undone && finish) {
           res.json({
             rescode: 0,
             message: data
@@ -34,6 +35,7 @@ function eRPC(req, res) {
             rescode: -1,
             message: error
           })
+          undone = false
         } else {
           clog.debug(data)
         }
@@ -43,25 +45,43 @@ function eRPC(req, res) {
   case 'copy':
   case 'move':
     if (sType(params[0]) === 'array') {
+      let message = `${method} operation completed`
       params[0].forEach(fn=>{
         file[method](params[1] + '/' + fn, params[2] + '/' + fn, (err)=>{
           if (err) {
-            clog.error(method, fn, 'fail.', err)
+            clog.error(method, fn, 'fail', err)
+            message += `\nfail to ${method} ${fn}`
           }
         })
       })
 
       res.json({
         rescode: 0,
-        message: 'success ' + method + ' file to ' + params[2]
+        message
       })
     } else {
       res.json({
         rescode: -1,
-        message: 'a array parameter[0] is expect'
+        message: 'a array parameter is expect'
       })
-      clog.error(method, 'file error: a array parameter[0] is expect')
+      clog.error(method, 'file error: a array parameter is expect')
     }
+    break
+  case 'rename':
+    file.rename(params[0], params[1], (err)=>{
+      if (err) {
+        res.json({
+          rescode: -1,
+          message: err.message
+        })
+        clog.error(err)
+      } else {
+        res.json({
+          rescode: 0,
+          message: 'success rename file'
+        })
+      }
+    })
     break
   case 'save':
     let fcont = params[1]
@@ -100,8 +120,36 @@ function eRPC(req, res) {
       }
     })
     break
+  case 'zip':
+    if (file.zip(params[0], params[1])) {
+      res.json({
+        rescode: 0,
+        message: 'success make zip file ' + params[1]
+      })
+    } else {
+      res.json({
+        rescode: -1,
+        message: 'fail to make zip file ' + params[1]
+      })
+    }
+    break
+  case 'unzip':
+    let unzipres = file.unzip(params[0], params[1], { filelist: true })
+    if (unzipres) {
+      res.json({
+        rescode: 0,
+        message: 'success unzip ' + params[0],
+        reslist: unzipres
+      })
+    } else {
+      res.json({
+        rescode: -1,
+        message: 'fail to unzip ' + params[0]
+      })
+    }
+    break
   default:
-    clog.info('RPC method not found', method)
+    clog.info('RPC method', method, 'not found')
     res.status(405).json({
       rescode: 405,
       message: `method ${method || ''} not found`
