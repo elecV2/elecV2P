@@ -5,8 +5,8 @@ const compression = require('compression')
 
 const { CONFIG, CONFIG_Port } = require('./config')
 
-const { isAuthReq, logger, LOGFILE, websocketSer } = require('./utils')
-const clog = new logger({ head: 'webServer', level: 'debug' })
+const { isAuthReq, logger, websocketSer } = require('./utils')
+const clog = new logger({ head: 'webServer' })
 
 const { wbefss, wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook, wbrpc } = require('./webser')
 
@@ -22,10 +22,7 @@ module.exports = () => {
     if (isAuthReq(req)) {
       next()
     } else {
-      let ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress
-      res.status(403).send(`<p>You have no permission to access.</p><p>IP: ${ipAddress} is recorded.</p><br><p>Powered BY elecV2P: <a href='https://github.com/elecV2/elecV2P'>https://github.com/elecV2/elecV2P</a></p>`)
-      clog.notify(ipAddress, 'trying to access elecV2P')
-      LOGFILE.put('access.log', `${ipAddress} trying to access elecV2P`, 'access notify')
+      res.status(403).send(`<p>You have no permission to access.</p><p>IP: ${req.headers['x-forwarded-for'] || req.connection.remoteAddress} is recorded.</p><br><p>Powered BY elecV2P: <a href='https://github.com/elecV2/elecV2P'>https://github.com/elecV2/elecV2P</a></p>`)
     }
   })
 

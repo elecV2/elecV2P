@@ -148,14 +148,19 @@ const LOGFILE = {
     }
     return this.filethList[name]
   },
-  streamFile(name){
+  streamFile(name, opclose = false){
+    if (opclose) {
+      if (this.streamList[name]) {
+        this.streamList[name].end()
+      }
+      return
+    }
     if (!this.streamList[name]) {
       let filename = this.filepath(name)
       this.streamList[name] = fs.createWriteStream(filename, { flags: 'a' })
       this.statusList[name] = {
         interval: setInterval(()=>{
           if (this.statusList[name].toclose) {
-            clearInterval(this.statusList[name].interval)
             this.streamList[name].end()
           } else {
             this.statusList[name].toclose = true
@@ -165,12 +170,14 @@ const LOGFILE = {
       }
       clog.debug('stream', filename, 'created')
       this.streamList[name].on('close', ()=>{
+        clearInterval(this.statusList[name].interval)
         clog.debug(filename + ' stream closed')
         delete this.streamList[name]
         delete this.statusList[name]
         delete this.filethList[name]
       })
       this.streamList[name].on('error', ()=>{
+        clearInterval(this.statusList[name].interval)
         clog.debug(filename + ' stream error')
         delete this.streamList[name]
         delete this.statusList[name]
@@ -210,12 +217,14 @@ const LOGFILE = {
       require('./file.js').file.list({ folder: CONFIG_LOG.logspath, ext: ['.log'] }).forEach(file=>{
         clog.notify('delete log file:', file)
         fs.unlinkSync(path.join(CONFIG_LOG.logspath, file))
+        this.streamFile(filename, true)
       })
       return true
     }
     if (fs.existsSync(path.join(CONFIG_LOG.logspath, filename))){
       clog.notify('delete log file:', filename)
       fs.unlinkSync(path.join(CONFIG_LOG.logspath, filename))
+      this.streamFile(filename, true)
       return true
     } 
     return false
