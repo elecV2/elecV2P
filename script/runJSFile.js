@@ -341,7 +341,7 @@ async function runJSFile(filename, addContext={}) {
     } else if (!jsIsExist || addContext.from === 'webhook' || (CONFIG_RUNJS.intervals > 0 && new Date().getTime() - Jsfile.get(filename, 'date') > CONFIG_RUNJS.intervals*1000)) {
       runclog.info('downloading', filename, 'from', url)
       try {
-        await downloadfile(url, jsfulpath)
+        await downloadfile(url, { name: jsfulpath })
         runclog.info(`success download ${filename}, ready to run`)
       } catch(error) {
         runclog.error(`run ${url}, error: ${error}`)

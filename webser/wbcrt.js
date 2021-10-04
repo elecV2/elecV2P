@@ -7,12 +7,12 @@ const clog = new logger({ head: 'wbcrt' })
 const { clearCrt, newRootCrt, cacheClear } = require('../func')
 
 module.exports = app => {
-  app.get("/crt", (req, res)=>{
+  app.get('/crt', (req, res)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'download rootCA.crt')
     res.download(homedir + '/.anyproxy/certificates/rootCA.crt')
   })
 
-  app.put("/crt", (req, res)=>{
+  app.put('/crt', (req, res)=>{
     let op = req.body.op
     switch(op){
       case 'new':
@@ -82,8 +82,8 @@ module.exports = app => {
     })
   })
 
-  app.delete("/tempcaches", (req, res)=>{
-    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "delete anyproxy temp cache")
+  app.delete('/tempcaches', (req, res)=>{
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'delete anyproxy temp cache')
     if (cacheClear()) {
       res.json({
         rescode: 0,

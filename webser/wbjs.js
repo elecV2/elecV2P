@@ -1,14 +1,14 @@
 const formidable = require('formidable')
 
-const { logger, downloadfile, eAxios, errStack, sType, Jsfile, file, wsSer, sbufBody } = require('../utils')
+const { logger, downloadfile, eAxios, errStack, sType, Jsfile, file, wsSer, sbufBody, surlName } = require('../utils')
 const clog = new logger({ head: 'wbjsfile', cb: wsSer.send.func('jsmanage') })
 
 const { runJSFile } = require('../script')
 
 module.exports = app => {
-  app.get("/jsfile", (req, res)=>{
+  app.get('/jsfile', (req, res)=>{
     let jsfn = req.query.jsfn
-    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get js file", jsfn)
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'get js file', jsfn)
     if (!jsfn || /\.\./.test(jsfn)) {
       return res.json({
         rescode: -1,
@@ -26,21 +26,21 @@ module.exports = app => {
     }
   })
 
-  app.get("/jsmanage", (req, res)=>{
-    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get js manage data")
+  app.get('/jsmanage', (req, res)=>{
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'get js manage data')
     res.json({
       storemanage: true,
       jslists: Jsfile.get('list')
     })
   })
 
-  app.put("/jsfile", (req, res)=>{
+  app.put('/jsfile', (req, res)=>{
     const op = req.body.op
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), op, req.body.url)
     switch(op){
       case 'jsdownload':
         downloadfile(req.body.url, {
-          name: Jsfile.get(req.body.name, 'path')
+          name: Jsfile.get(req.body.name || surlName(req.body.url), 'path')
         }, d=>{
           clog.info(d.finish || d.progress + '\r')
         }).then(jsl=>{
@@ -58,19 +58,19 @@ module.exports = app => {
       default: {
         res.json({
           rescode: -1,
-          message: op + " - wrong operation on js file"
+          message: op + ' - wrong operation on js file'
         })
         break
       }
     }
   })
 
-  app.post("/jsfile", (req, res)=>{
+  app.post('/jsfile', (req, res)=>{
     let jsname = req.body.jsname
     let jscontent = req.body.jscontent
-    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "post", jsname, req.body.type || 'to save')
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'post', jsname, req.body.type || 'to save')
     if (!(jsname && jscontent)) {
-      return res.send("a name of js and content is expect")
+      return res.send('a name of js and content is expect')
     }
     if (req.body.type === 'totest') {
       runJSFile(req.body.jscontent, {
@@ -100,9 +100,9 @@ module.exports = app => {
     }
   })
 
-  app.delete("/jsfile", (req, res)=>{
+  app.delete('/jsfile', (req, res)=>{
     const jsfn = req.body.jsfn
-    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "delete js file " + jsfn)
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'delete js file ' + jsfn)
     if (jsfn) {
       let bDelist = Jsfile.delete(jsfn)
       if (bDelist) {
@@ -133,7 +133,7 @@ module.exports = app => {
   })
 
   app.post('/uploadjs', (req, res) => {
-    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "uploading JS file")
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'uploading JS file')
     const uploadfile = new formidable.IncomingForm()
     uploadfile.maxFieldsSize = 20 * 1024 * 1024 //限制为最大20M
     uploadfile.keepExtensions = true
@@ -174,7 +174,7 @@ module.exports = app => {
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'make mock', req.body.type)
     const request = req.body.request
     switch(req.body.type){
-      case "req":
+      case 'req':
         eAxios(request).then(response=>{
           clog.notify('mock request response:', response.data)
           res.json({
@@ -189,7 +189,7 @@ module.exports = app => {
           })
         })
         break
-      case "js":
+      case 'js':
         let jsname = req.body.jsname
         if (jsname) {
           if (!/\.js$/.test(jsname)) jsname = jsname + '.js'
@@ -217,7 +217,7 @@ $axios(request).then(res=>{
       default:{
         res.json({
           rescode: -1,
-          message: "wrong mock type"
+          message: 'wrong mock type'
         })
       }
     }

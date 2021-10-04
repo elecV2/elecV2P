@@ -35,7 +35,7 @@ function checkCmd(cmd) {
           reject(error.message || error)
         } else {
           console.log(data)
-          resolve()
+          resolve('OK')
         }
       }
     })
