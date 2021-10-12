@@ -248,7 +248,7 @@ function downloadfile(durl, options, cb) {
   }
   return new Promise((resolve, reject)=>{
     eAxios({
-      url: durl,
+      url: durl, timeout: options.timeout,
       responseType: 'stream'
     }).then(response=>{
       if (response.status == 404) {
