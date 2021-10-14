@@ -44,7 +44,7 @@ const list = {
       let listobj = sJson(liststr)
       switch(name) {
       case 'mitmhost.list':
-        if (listobj && listobj.mitmhost && listobj.mitmhost.list) {
+        if (listobj?.mitmhost?.list) {
           return listobj.mitmhost
         }
         return {
@@ -52,68 +52,26 @@ const list = {
         }
         break
       case 'rewrite.list':
-        if (listobj && listobj.rewrite && listobj.rewrite.list) {
+        if (listobj?.rewrite?.list) {
           return listobj
         }
-        listobj = {
+        return {
           rewrite: {
             note: 'elecV2P rewrite list',
             list: []
           }
         }
-        liststr.split(/\r|\n/).forEach(l=>{
-          if (/^(#|\[|\/\/)/.test(l) || l.length<2) {
-            return
-          }
-          let item = l.split(" ")
-          if (item.length === 2) {
-            if (/^sub/.test(item[0])) {
-              if (!listobj.rewritesub) {
-                listobj.rewritesub = {}
-              }
-              listobj.rewritesub[euid()] = {
-                name: 'elecV2P 重写订阅',
-                resource: item[1],
-                enable: true
-              }
-            } else if (/^http|^reject|\.js$/.test(item[1])) {
-              listobj.rewrite.list.push({
-                match: item[0],
-                target: item[1],
-                enable: true
-              })
-            }
-          }
-        })
-        return listobj
         break
       case 'default.list':
-        if (listobj && listobj.rules && listobj.rules.list) {
+        if (listobj?.rules?.list) {
           return listobj
         }
-        listobj = {
+        return {
           rules: {
             note: 'elecV2P rules list',
             list: []
           }
         }
-        liststr.split(/\n|\r/).forEach(l=>{
-          if (l.length<=8 || /^(#|\[|\/\/)/.test(l)) {
-            return
-          }
-          let item = l.split(/ *, */)
-          if (item.length >= 4) {
-            listobj.rules.list.push({
-              mtype: item[0],
-              match: item[1],
-              ctype: item[2],
-              target: item[3],
-              stage: item[4] || 'res',
-              enable: true
-            })
-          }
-        })
-        return listobj
         break
       default:
         return liststr
@@ -127,27 +85,30 @@ const list = {
       if (option.type === 'add') {
         if (name === 'mitmhost.list') {
           let orglist = this.get('mitmhost.list')
-          let listadd = (host, enable = true)=>{
+          let listadd = (host, note = '', enable = true)=>{
             let fhost = orglist.list.find(x=>x.host === host)
             if (fhost) {
               fhost.enable = sBool(enable)
+              if (note && fhost.note !== note) {
+                fhost.note += (fhost.note ? '|' : '') + note
+              }
             } else {
               orglist.list.push({
-                host, enable: sBool(enable)
+                host, note, enable: sBool(enable)
               })
             }
           }
           let contype = sType(cont)
           if (contype === 'string') {
             if (cont.length > 2) {
-              listadd(cont)
+              listadd(cont, option.note)
             }
           } else if (contype === 'array') {
             cont.forEach(host=>{
               if (typeof(host) === 'string' && host.length>2) {
-                listadd(host)
+                listadd(host, option.note)
               } else if (typeof(host) === 'object' && host.host) {
-                listadd(host.host, host.enable)
+                listadd(host.host, option.note, host.enable)
               }
             })
           } else {
