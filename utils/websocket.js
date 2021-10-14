@@ -53,7 +53,7 @@ wsSer.recv.ready = recver => {
 wsSer.recv.stopsendstatus = flag => flag ? wsobs.stop() : wsobs.send()
 
 function wsSend(data, target){
-  if (sType(data) === "object") {
+  if (sType(data) === 'object') {
     if (wsSer.recverlists.indexOf('minishell') === -1 && wsSer.recverlists.indexOf(data.type) === -1) {
       if (CONFIG.debug && CONFIG.debug.websocket) {
         clog.debug('client recver', data.type, 'no ready yet')
@@ -96,9 +96,19 @@ function websocketSer({ server, path }) {
     }
     clog.notify(ws.ip, 'new connection')
 
-    // 初始化 ID
+    // 初始化 ID 及前端版本检测等
     ws.id = euid()
-    // ws.send(JSON.stringify({ type: 'euid', data: ws.id }))
+    ws.send(JSON.stringify({ type: 'init', data: { id: ws.id, vernum: CONFIG.vernum } }))
+    let initver = setTimeout(()=>{
+      messageSend.error(`当前 webUI 与后台 v${CONFIG.version} 版本不一致, 可能正在使用缓存页面\n请点击该通知或使用 ctrl+F5 刷新当前页面\n(如果此提醒一直存在可能需要手动进行升级)`, { url: 'reload' })
+    }, 5000)
+    wsSer.recv.init = data=>{
+      if (data === 'OK') {
+        clog.debug(ws.ip, 'webUI is newest version', CONFIG.version)
+        clearTimeout(initver)
+        wsSer.recv.init = null
+      }
+    }
 
     // 发送当前服务器内存使用状态
     wsobs.send()
@@ -113,7 +123,7 @@ function websocketSer({ server, path }) {
       }
     })
 
-    ws.on("close", ev=>{
+    ws.on('close', ev=>{
       clog.notify(ws.ip, 'disconnected', 'reason:', ev)
       LOGFILE.put('access.log', `${ws.ip} is disconnected`, 'access notify')
       if(!wsobs.WSS.clients || wsobs.WSS.clients.size <= 0) {

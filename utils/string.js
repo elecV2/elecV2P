@@ -20,7 +20,7 @@ function sType(obj) {
  */
 function sJson(str, force=false) {
   if (!str) {
-    return force ? {} : false
+    return force ? Object.create(null) : false
   }
   let type = sType(str)
   switch (type) {
