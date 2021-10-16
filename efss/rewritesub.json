@@ -1,5 +1,6 @@
 {
   "name": "elecV2P 重写订阅",
+  "type": "rewrite",
   "note": "该订阅目前仅适用于 elecV2P。更多说明请查看: https://github.com/elecV2/elecV2P-dei/tree/master/docs/05-rewrite.md",
   "author": "https://t.me/elecV2",
   "resource": "https://raw.githubusercontent.com/elecV2/elecV2P/master/efss/rewritesub.json",
@@ -9,11 +10,13 @@
   "rewrite": [
     {
       "match": "^https?:\\/\\/test\\.com\\/block",
+      "stage": "req",
       "target": "reject-json",
       "enable": true
     },
     {
       "match": "https:\\/\\/httpbin\\.org",
+      "stage": "res",
       "target": "https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/exam-cheerio.js"
     }
   ],

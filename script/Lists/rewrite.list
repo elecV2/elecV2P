@@ -10,6 +10,7 @@
     "list": [
       {
         "match": "^https?://httpbin\\.org/get\\?rewrite=elecV2P",
+        "stage": "res",
         "target": "https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/0body.js",
         "enable": true
       }

@@ -2,6 +2,7 @@
   "name": "elecV2P 定时任务订阅",
   "desc": "elecV2P 定时任务测试订阅。相关说明参考: https://github.com/elecV2/elecV2P-dei/tree/master/docs/06-task.md",
   "date": "2021-06-19 20:32:08",
+  "type": "task",
   "author": "https://t.me/elecV2",
   "resource": "https://raw.githubusercontent.com/elecV2/elecV2P/master/efss/tasksub.json",
   "list": [
