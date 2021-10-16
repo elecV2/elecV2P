@@ -195,11 +195,11 @@ async function execFunc(command, options={}, cb) {
     })
   }
 
-  let callback = (data, error, finish)=>{
-    cb = cb || options.cb
-    if (cb && sType(cb) === 'function') {
-      cb(data, error, finish)
-    }
+  cb = cb || options.cb
+  delete options.cb
+  let callback = ()=>{}
+  if (cb && sType(cb) === 'function') {
+    callback = cb
   }
   let fev = await commandSetup(command, options, execlog).catch(e=>{
     let err = errStack(e)
@@ -210,7 +210,7 @@ async function execFunc(command, options={}, cb) {
 
   execlog.notify('start run command:', fev.command, 'cwd:', options.cwd)
   callback('start run command: ' + fev.command + ' cwd: ' + options.cwd + '\n')
-  execlog.debug('start run command:', fev.command, 'with options:', fev.options)
+  execlog.debug('start run command:', fev.command, 'with options:', { ...fev.options, env: 'process.env' })
 
   let fdata = []
   childexec.stdout.on('data', data => {

@@ -1,4 +1,13 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.4.9)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.5.0)
+
+v3.5.0  2021.10.16
+ • REWRITE 备份及订阅分组
+ • REWRITE 增加对 request 的修改
+ • REWRITE/RULES 规则总开关
+ • REWRITE/MITM 规则匹配缓存
+ • webUI 与后台版本一致性检测
+ • TASK 选择部分远程 JS 更新
+ • 移除对旧(v3.3.8 之前) list 格式的支持
 
 v3.4.9  2021.10.03
  • EFSS 文件打包/解压/重命名

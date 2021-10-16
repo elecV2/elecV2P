@@ -150,8 +150,8 @@ function eRPC(req, res) {
     break
   default:
     clog.info('RPC method', method, 'not found')
-    res.status(405).json({
-      rescode: 405,
+    res.status(501).json({
+      rescode: 501,
       message: `method ${method || ''} not found`
     })
   }

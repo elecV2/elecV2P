@@ -12,10 +12,8 @@
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
-- 授权 token 及权限管理
-- EFSS download wget/aria2c/git 等
-- 文本编辑器增加左侧目录列表
-- TASK/RULES/REWRITE 分组/排序
+- 多 token 授权及对应权限管理
+- TASK 定时任务分组/排序
 - favend JS 重构（可直接运行的类 vue 模型（ES6?
 - 多语言 [一个可能永远不填的坑..., start ready...]
 - elecV2P 启动器/快捷方式（$run JSON 格式文件
@@ -26,6 +24,12 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [x] REWRITE 备份及订阅分组
+- [x] RULES/REWRITE 规则总开关
+- [x] REWRITE/MITM 规则匹配缓存
+- [x] webUI 与后台版本一致性检测
+- [x] TASK 部分远程 JS 更新
+- [x] 当前连接客户端信息简易记录
 - [X] EFSS 文件压缩/解压/重命名
 - [x] $download options existskip
 - [x] 远程推送 JS 时可重命名文件

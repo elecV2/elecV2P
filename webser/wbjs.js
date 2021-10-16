@@ -77,7 +77,7 @@ module.exports = app => {
         type: 'rawcode',
         filename: jsname.replace(/\.js$/, '-test.js'),
         from: 'test',
-        cb: wsSer.send.func('jsmanage'),
+        cb: wsSer.send.func('jsmanage', req.body.id),
         timeout: 5000
       }).then(data=>{
         res.send(sbufBody(data))
