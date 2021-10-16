@@ -90,7 +90,11 @@ const list = {
             if (fhost) {
               fhost.enable = sBool(enable)
               if (note && fhost.note !== note) {
-                fhost.note += (fhost.note ? '|' : '') + note
+                if (fhost.note) {
+                  fhost.note += '|' + note
+                } else {
+                  fhost.note = note
+                }
               }
             } else {
               orglist.list.push({

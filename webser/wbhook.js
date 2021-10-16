@@ -502,7 +502,13 @@ function handler(req, res){
     // temp debug, 待完成 unfinished
     switch(rbody.get){
     case 'rule':
-      res.json(CONFIG_RULE)
+      res.send(rbody.key ? CONFIG_RULE[rbody.key] : CONFIG_RULE)
+      break
+    case 'rulecache':
+      res.send(sString(rbody.key ? CONFIG_RULE.cache[rbody.key] : CONFIG_RULE.cache.host))
+      break
+    case 'wsclient':
+      res.send(sString(wsSer.recver))
       break
     case 'config':
       res.json(CONFIG)
