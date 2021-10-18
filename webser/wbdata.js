@@ -191,7 +191,7 @@ module.exports = app => {
         })){
           res.json({
             rescode: 0,
-            message: 'success saved mitmhost list' + enhost.length + '/' + mhost.length
+            message: 'success saved mitmhost list ' + enhost.length + '/' + mhost.length
           })
           if (enhost.indexOf('*') !== -1) {
             CONFIG_RULE.mitmtype = 'all'

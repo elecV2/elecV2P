@@ -63,11 +63,13 @@ function commandCross(command) {
     else if (/^(rm|mv|cp|mkdir|rmdir)/.test(command)) command = 'powershell.exe ' + command
     else if (/^apk add/.test(command)) command = command.replace('apk add', 'scoop install')
     else if (/^traceroute /.test(command)) command = command.replace('traceroute', 'tracert')
+    else if (/^nc /.test(command)) command = command.replace('nc', 'telnet')
   } else {
     if (/^dir/.test(command)) command = command.replace('dir', 'ls')
     else if (/^type/.test(command)) command = command.replace('type', 'cat')
     else if (/^Restart-Computer/i.test(command)) command = 'reboot'
     else if (/^tracert /.test(command)) command = command.replace('tracert', 'traceroute')
+    else if (/^telnet /.test(command)) command = command.replace('telnet', 'nc')
   }
   return command
 }
@@ -210,7 +212,7 @@ async function execFunc(command, options={}, cb) {
 
   execlog.notify('start run command:', fev.command, 'cwd:', options.cwd)
   callback('start run command: ' + fev.command + ' cwd: ' + options.cwd + '\n')
-  execlog.debug('start run command:', fev.command, 'with options:', { ...fev.options, env: 'process.env' })
+  execlog.debug('start run command:', fev.command, 'with options:', { ...fev.options, env: '...process.env' })
 
   let fdata = []
   childexec.stdout.on('data', data => {
