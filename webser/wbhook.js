@@ -157,7 +157,7 @@ function handler(req, res){
     default:
       let jsfilecont = Jsfile.get(rbody.fn)
       if (jsfilecont) {
-        res.end(jsfilecont)
+        res.send(jsfilecont)
       } else {
         res.status(404).json({
           rescode: 404,
@@ -436,7 +436,7 @@ function handler(req, res){
       clog.info('get store key', rbody.key, 'from webhook')
       let storeres = store.get(rbody.key)
       if (storeres !== false) {
-        res.end(sString(storeres))
+        res.send(sString(storeres))
       } else {
         res.json({
           rescode: -1,
@@ -522,7 +522,7 @@ function handler(req, res){
       res.json({ minishell: CONFIG.minishell })
       break
     default:
-      res.end('dev debug')
+      res.send('dev debug')
     }
     break
   case 'help':

@@ -1,4 +1,11 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.5.0)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.5.1)
+
+v3.5.1  2021.10.23
+ • 首次 token 访问时生成 cookie
+ • Fix:
+   - webhook 中文乱码问题
+   - filter.list 解析问题
+   - MIMT enable 显示问题
 
 v3.5.0  2021.10.16
  • REWRITE 备份及订阅分组

@@ -122,9 +122,9 @@ const CONFIG_RULE = (()=>{
       ...getUserAgent()
     }
 
-  clog.notify(`default rules: ${ config.reqlists.length + config.reslists.length }`)
-  clog.notify(`rewrite rules: ${ config.rewritereq.length + config.rewriteres.length }`)
-  clog.notify(`MITM hosts: ${ config.mitmhost.length }`)
+  clog.notify(`default rules: ${ config.ruleenable ? (config.reqlists.length + config.reslists.length) : 'disabled' }`)
+  clog.notify(`rewrite rules: ${ config.rewriteenable ? (config.rewritereq.length + config.rewriteres.length) : 'disabled' }`)
+  clog.notify(`MITM hosts: ${ config.mitmhostenable ? config.mitmhost.length : 'disabled' }`)
 
   return config
 })();

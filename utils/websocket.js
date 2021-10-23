@@ -86,7 +86,7 @@ function wsSend(data, target){
 function websocketSer({ server, path }) {
   wsobs.WSS = new ws.Server({ server, path })
   clog.notify('websocket on path:', path)
-  
+
   wsobs.WSS.on('connection', (ws, req)=>{
     ws.ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
     if (isAuthReq(req)) {

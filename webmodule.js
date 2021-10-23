@@ -19,7 +19,7 @@ module.exports = () => {
   app.set('json spaces', 2)
 
   app.use((req, res, next)=>{
-    if (isAuthReq(req)) {
+    if (isAuthReq(req, res)) {
       next()
     } else {
       res.status(403).send(`<p>You have no permission to access.</p><p>IP: ${req.headers['x-forwarded-for'] || req.connection.remoteAddress} is recorded.</p><br><p>Powered BY elecV2P: <a href='https://github.com/elecV2/elecV2P'>https://github.com/elecV2/elecV2P</a></p>`)

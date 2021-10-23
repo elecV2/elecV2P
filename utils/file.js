@@ -78,7 +78,7 @@ const list = {
       }
     }
     clog.error('no list', name)
-    return false
+    return ''
   },
   put(name, cont, option = {}){
     try {

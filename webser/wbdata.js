@@ -33,7 +33,7 @@ module.exports = app => {
       case 'rules':
         let rlist = list.get('default.list')
         res.json({
-          eplists: (rlist && rlist.rules) || { list: [] },
+          eplists: rlist?.rules || { list: [] },
           uagent: CONFIG_RULE.uagent
         })
         break
@@ -43,7 +43,8 @@ module.exports = app => {
       case 'mitmhost':
         let mlist = list.get('mitmhost.list')
         res.json({
-          host: (mlist && mlist.list) || [],
+          host: mlist?.list || [],
+          enable: mlist?.enable !== false,
           crtinfo: CONFIG_Port.anyproxy.enable ? crtInfo() : { rescode: -1, message: 'ANYPROXY not enabled yet' }
         })
         break
@@ -193,10 +194,11 @@ module.exports = app => {
             rescode: 0,
             message: 'success saved mitmhost list ' + enhost.length + '/' + mhost.length
           })
-          if (enhost.indexOf('*') !== -1) {
+          CONFIG_RULE.mitmhostenable = req.body.mitmhostenable !== false
+          if (CONFIG_RULE.mitmhostenable && enhost.indexOf('*') !== -1) {
+            clog.info('MITM enable for all host')
             CONFIG_RULE.mitmtype = 'all'
           }
-          CONFIG_RULE.mitmhostenable = req.body.mitmhostenable !== false
           CONFIG_RULE.mitmhost = enhost
           clog.info('clear mitmhost match results cache')
           CONFIG_RULE.cache.host.clear()
