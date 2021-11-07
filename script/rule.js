@@ -199,7 +199,7 @@ function getMatchRule($request, $response, lists) {
   return false
 }
 
-function getRewriteRes(rtarget, { rmatch = '', type = '', request = {}, response = localResponse, from = '' }) {
+function getRewriteRes(rtarget, { rmatch = '', type = 'response', request = {}, response = localResponse, from = '' }) {
   clog.info(request.url, type, 'match rule:', rmatch, rtarget, 'from rewrite', from)
   if (type === 'request') {
     switch(rtarget) {
@@ -499,9 +499,9 @@ module.exports = {
   *beforeSendResponse(requestDetail, responseDetail) {
     const $response = responseDetail.response
 
-    if (/^(audio|video)|(ogg|stream)$/.test($response.header['Content-Type'])) {
-      // 跳过音/视频类数据处理
-      clog.info('skip modify audio or video response content')
+    if (/^(audio|video|image)|(ogg|stream)$/.test($response.header['Content-Type'])) {
+      // 跳过图片/音频/视频类数据处理
+      clog.info('skip modify', requestDetail.url, 'type:', $response.header['Content-Type'])
       return null
     }
 
