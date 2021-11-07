@@ -260,4 +260,19 @@ module.exports = app => {
       list.put('config.json', JSON.stringify(CONFIG, null, 2))
     }
   })
+
+  app.post('/config', (req, res)=>{
+    if (req.body.file) {
+      if (list.put('config.json', req.body.file.content)) {
+        return res.json({
+          rescode: 0,
+          message: 'success import config.json'
+        })
+      }
+    }
+    res.json({
+      rescode: -1,
+      message: 'fail to save config.json'
+    })
+  })
 }

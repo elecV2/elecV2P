@@ -29,7 +29,6 @@ module.exports = app => {
   app.get('/jsmanage', (req, res)=>{
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'get js manage data')
     res.json({
-      storemanage: true,
       jslists: Jsfile.get('list')
     })
   })
