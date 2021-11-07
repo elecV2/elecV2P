@@ -14,7 +14,7 @@ elecV2P - customize personal network.
 
 ## 安装/INSTALL
 
-***程序开放权限极大，建议局域网使用。网络部署，风险自负***
+***程序开放权限极大，建议局域网使用。公网部署，风险自负***
 
 ### 方法一：直接 NODEJS 运行
 
@@ -155,14 +155,16 @@ docker logs elecv2p -f
 
 ## 默认端口
 
-- 80：    webUI 后台管理界面。添加规则/JS 文件管理/定时任务管理/MITM 证书 等
+- 80：    webUI 后台管理界面。用于添加规则/管理 JS 文件/定时任务/MITM 证书 等
 - 8001：  ANYPROXY HTTP代理端口。（*代理端口不是网页，不能通过浏览器直接访问*）
 - 8002：  ANYPROXY 代理请求查看端口
 
-**ANYPROXY 相关端口默认关闭。可在 webUI 首页双击 ANYPROXY 临时开启。如需在启动时自动开启，请前往 webUI->SETTING->初始化相关设置 中进行设置。**
+**ANYPROXY 相关端口默认关闭。可在 webUI 首页双击 ANYPROXY 临时开启。**
+**如需在启动时自动开启，请前往 webUI->SETTING->初始化相关设置 中进行设置。**
+**80/8002 对应端口需要用到 websocket，在使用 nginx 等反代工具时注意设置。参考 [ev2p-nginx.conf](https://github.com/elecV2/elecV2P-dei/blob/master/examples/ev2p-nginx.conf)**
 
 - *80 端口可使用环境变量 **PORT** 进行修改(比如: PORT=8000 node index.js)*
-- *在 elecV2P 已经启动的情况下，可在 webUI->SETTING->初始化相关设置 中修改其他端口*
+- *在 elecV2P 已经启动时，可在 webUI->SETTING->初始化相关设置 中修改其他端口*
 - *在 elecV2P 尚未启动时，可在 script/Lists/config.json 文件中修改对应端口*
 
 ## 根证书相关 - HTTPS 解密
@@ -200,7 +202,8 @@ docker logs elecv2p -f
 
 ![task](https://raw.githubusercontent.com/elecV2/elecV2P-dei/master/docs/res/taskall.png)
 
-目前支持两种定时方式：
+支持两种定时方式：
+
 - 倒计时
 - cron 定时
 

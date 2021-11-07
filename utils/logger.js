@@ -247,10 +247,7 @@ function alignHead(str, alignlen = CONFIG_LOG.alignHeadlen) {
   }
   if (tlen < alignlen) {
     let nstr = str.split(' '), lastr = nstr.pop()
-    let space = alignlen - tlen
-    while (space-- > 0) {
-      lastr = ' ' + lastr
-    }
+    lastr = ' '.repeat(alignlen - tlen) + lastr
     return nstr.join(' ') + ' ' + lastr
   }
   const sp = str.split(/\/|\\/)
@@ -263,10 +260,7 @@ function alignHead(str, alignlen = CONFIG_LOG.alignHeadlen) {
     }
     if (tlen < alignlen) {
       let nstr = str.split(' '), lastr = nstr.pop()
-      let space = alignlen - tlen
-      while (space-- > 0) {
-        lastr = ' ' + lastr
-      }
+      lastr = ' '.repeat(alignlen - tlen) + lastr
       return nstr.join(' ') + ' ' + lastr
     }
   }
@@ -302,10 +296,7 @@ function alignHead(str, alignlen = CONFIG_LOG.alignHeadlen) {
 
   let res = buf.slice(0, end).toString()
   if (tlen < alignlen) {
-    let space = alignlen - tlen
-    while (space-- > 0) {
-      res += ' '
-    }
+    res += ' '.repeat(alignlen - tlen)
   }
   return res + '...' + lres.toString()
 }
