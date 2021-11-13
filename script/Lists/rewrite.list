@@ -1,10 +1,4 @@
 {
-  "rewritesub": {
-    "eSubUuid": {
-      "name": "elecV2P 重写订阅",
-      "resource": "https://raw.githubusercontent.com/elecV2/elecV2P/master/efss/rewritesub.json"
-    }
-  },
   "rewrite": {
     "note": "elecV2P 重写规则",
     "list": [
@@ -15,5 +9,13 @@
         "enable": true
       }
     ]
+  },
+  "rewritesub": {
+    "eSubUuid": {
+      "name": "elecV2P 重写订阅",
+      "enable": true,
+      "bkcolor": "#2FA885",
+      "resource": "https://raw.githubusercontent.com/elecV2/elecV2P/master/efss/rewritesub.json"
+    }
   }
 }
