@@ -1,4 +1,8 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.5.2)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.5.3)
+
+v3.5.3  2021.11.21
+ • TASK 定时任务分组设置
+ • fix 远程 JS 更新 bug
 
 v3.5.2  2021.11.07
  • websocket 断连提醒

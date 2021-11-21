@@ -17,7 +17,30 @@
     "job": {
       "type": "runjs",
       "target": "https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/python-install.js"
-    }
+    },
+    "group": "XjTmn1un"
+  },
+  "HLoAl0lq": {
+    "name": "软更新升级",
+    "type": "cron",
+    "time": "30 58 21 * * *",
+    "running": false,
+    "job": {
+      "type": "runjs",
+      "target": "https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js"
+    },
+    "group": "XjTmn1un"
+  },
+  "SUrQF0C5": {
+    "name": "清空日志",
+    "type": "cron",
+    "time": "30 58 23 * * *",
+    "job": {
+      "type": "runjs",
+      "target": "https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/deletelog.js"
+    },
+    "running": false,
+    "group": "XjTmn1un"
   },
   "jxwQOSJZ": {
     "name": "test",
@@ -36,5 +59,11 @@
       "type": "skip",
       "target": "https://raw.githubusercontent.com/elecV2/elecV2P/master/efss/tasksub.json"
     }
+  },
+  "XjTmn1un": {
+    "name": "elecV2P 任务分组",
+    "type": "group",
+    "note": "定时任务默认分组",
+    "collapse": false
   }
 }

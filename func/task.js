@@ -69,7 +69,7 @@ const taskInit = function() {
     clog.info('retrieve task from Lists/task.list')
   }
   for(let tid in TASKS_INFO) {
-    if (TASKS_INFO[tid].type !== 'sub') {
+    if (TASKS_INFO[tid].type === 'cron' || TASKS_INFO[tid].type === 'schedule') {
       if (TASKS_INFO[tid].running) {
         TASKS_WORKER[tid] = new Task(TASKS_INFO[tid])
         TASKS_WORKER[tid].start()
@@ -341,10 +341,10 @@ const taskMan = {
       }
       let msg = ''
       if (TASKS_INFO[tid]) {
-        msg = `TASK ${TASKS_INFO[tid].name} deleted`
+        msg = `TASK ${TASKS_INFO[tid].type} ${TASKS_INFO[tid].name} deleted`
         delete TASKS_INFO[tid]
       } else {
-        msg = `TASK ${tid} not exist`
+        msg = `TASK ${tid} not exist yet`
       }
       clog.info(msg)
       resmsg.message += '\n' + msg
@@ -383,7 +383,7 @@ const taskMan = {
   nameList(){
     let tname = {}
     for (let tid in TASKS_INFO) {
-      if (TASKS_INFO[tid].type !== 'sub') {
+      if (TASKS_INFO[tid].type === 'cron' || TASKS_INFO[tid].type === 'schedule') {
         tname[TASKS_INFO[tid].name] = tid
       }
     }
@@ -397,18 +397,22 @@ const taskMan = {
   },
   status(){
     let status = {
-      total: 0,
       running: 0,
+      total: 0,
       sub: 0
     }
     for (let tid in TASKS_INFO) {
-      if (TASKS_INFO[tid].type === 'sub') {
+      switch(TASKS_INFO[tid].type) {
+      case 'sub':
         status.sub++
-      } else {
+        break
+      case 'cron':
+      case 'schedule':
         status.total++
         if (TASKS_INFO[tid].running) {
           status.running++
         }
+        break
       }
     }
     return status
@@ -424,14 +428,50 @@ const taskMan = {
         }
       }
       for (let tid in taskobj) {
-        if (taskobj[tid].type === 'sub' || taskobj[tid].running === false) {
-          if (TASKS_WORKER[tid]) {
-            TASKS_WORKER[tid].delete('stop')
-            delete TASKS_WORKER[tid]
-          }
-          TASKS_INFO[tid] = taskobj[tid]
-          if (taskobj[tid].type !== 'sub') {
-            TASKS_INFO[tid].id = tid
+        // 逐项检测定时任务信息量是否有修改
+        if (JSON.stringify(taskobj[tid]) !== JSON.stringify(TASKS_INFO[tid])) {
+          switch (taskobj[tid].type) {
+          case 'sub':
+          case 'group':
+            TASKS_INFO[tid] = taskobj[tid]
+            break
+          case 'cron':
+          case 'schedule':
+            if (taskobj[tid].running) {
+              // 运行中的任务修改判断
+              // 需要重启的参数: 时间 任务
+              // 不需重启的参数: 名称 belong group
+              if (!TASKS_INFO[tid] || TASKS_INFO[tid].type !== taskobj[tid].type || TASKS_INFO[tid].time !== taskobj[tid].time || JSON.stringify(TASKS_INFO[tid].job) !== JSON.stringify(taskobj[tid].job)) {
+                if (TASKS_WORKER[tid]) {
+                  clog.info('delete old task data of', TASKS_INFO[tid].name)
+                  if (TASKS_WORKER[tid].stat()) {
+                    TASKS_WORKER[tid].stop('restart')
+                  }
+                  TASKS_WORKER[tid].delete('restart')
+                  TASKS_WORKER[tid] = null
+                }
+                TASKS_INFO[tid] = taskobj[tid]
+                TASKS_WORKER[tid] = new Task(TASKS_INFO[tid])
+                TASKS_WORKER[tid].start()
+              } else {
+                Object.assign(TASKS_INFO[tid], taskobj[tid])
+                if (!taskobj[tid].belong && TASKS_INFO[tid].belong) {
+                  delete TASKS_INFO[tid].belong
+                }
+                if (!taskobj[tid].group && TASKS_INFO[tid].group) {
+                  delete TASKS_INFO[tid].group
+                }
+              }
+            } else {
+              // 非运行中任务信息更新
+              if (TASKS_WORKER[tid]) {
+                TASKS_WORKER[tid].delete('stop')
+                delete TASKS_WORKER[tid]
+              }
+              TASKS_INFO[tid] = taskobj[tid]
+            }
+            TASKS_INFO[tid].id = tid      // id 修正及兼容旧版
+            break
           }
         }
       }
