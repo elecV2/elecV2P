@@ -2,7 +2,7 @@ const os = require('os')
 const { taskMa, exec } = require('../func')
 const { CONFIG_RULE, runJSFile } = require('../script')
 
-const { logger, LOGFILE, Jsfile, list, nStatus, sString, sType, surlName, sBool, stream, downloadfile, now, checkupdate, store, kSize, errStack, sbufBody, wsSer } = require('../utils')
+const { logger, LOGFILE, Jsfile, list, nStatus, sString, sType, surlName, sBool, stream, downloadfile, now, checkupdate, store, kSize, errStack, sbufBody, wsSer, validate_status } = require('../utils')
 const clog = new logger({ head: 'webhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -23,7 +23,7 @@ function handler(req, res){
     })
   }
   const clientip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
-  clog.notify(clientip, 'run webhook type', rbody.type)
+  clog.notify(clientip, req.method, 'webhook type', rbody.type)
   switch(rbody.type) {
   case 'jslist':
     res.json(Jsfile.get('list'))
@@ -211,6 +211,7 @@ function handler(req, res){
     status.start = now(CONFIG.start, false)
     status.uptime = ((Date.now() - Date.parse(status.start))/1000/60/60).toFixed(2) + ' hours'
     status.version = CONFIG.version
+    status.clients = wsSer.recver.size
     status.task = taskMa.status()
     res.json(status)
     break
@@ -341,6 +342,7 @@ function handler(req, res){
         version: CONFIG.version,
         start: now(CONFIG.start, false),
         uptime: ((Date.now() - CONFIG.start)/1000/60/60).toFixed(2) + ' hours',
+        clients: wsSer.recver.size,
         taskStatus: taskMa.status(),
         memoryUsage: nStatus(),
       },
@@ -369,6 +371,7 @@ function handler(req, res){
     }
 
     if (rbody.debug) {
+      elecV2PInfo.elecV2P.validateStatus = { ...validate_status, black: sString(validate_status.black) }
       elecV2PInfo.elecV2P.webhooktoken = CONFIG.wbrtoken
 
       elecV2PInfo.system.userInfo = os.userInfo()
@@ -498,6 +501,31 @@ function handler(req, res){
       message: `proxy port ${CONFIG.anyproxy.port} is ${rbody.op === 'open' ? 'open' : 'close'}`
     })
     break
+  case 'cors':
+    if (!CONFIG.cors) {
+      CONFIG.cors = {
+        enable: false,
+        origin: ''
+      }
+    }
+    let corsmsg = ''
+    if (rbody.enable !== undefined) {
+      CONFIG.cors.enable = sBool(rbody.enable)
+      corsmsg += 'CORS ' + (CONFIG.cors.enable ? 'enabled' : 'disabled')
+    }
+    if (rbody.origin !== undefined) {
+      CONFIG.cors.origin = rbody.origin
+      corsmsg += '\nCORS allow origin set to ' + CONFIG.cors.origin
+    }
+    if (corsmsg) {
+      list.put('config.json', CONFIG)
+    }
+    res.json({
+      rescode: 0,
+      message: corsmsg.trim() || 'get cors config',
+      cors: CONFIG.cors
+    })
+    break
   case 'devdebug':
     // temp debug, 待完成 unfinished
     switch(rbody.get){
@@ -522,7 +550,10 @@ function handler(req, res){
       res.json({ minishell: CONFIG.minishell })
       break
     default:
-      res.send('dev debug')
+      res.json({
+        rescode: 0,
+        message: 'dev debug'
+      })
     }
     break
   case 'help':
