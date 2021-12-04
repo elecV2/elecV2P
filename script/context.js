@@ -163,7 +163,7 @@ class contextBase {
     cust:  custPush
   }
   $done = (data) => {
-    this.console.debug('$done:', data)
+    this.console.debug('$done:', sString(data).slice(0, 1200))
     if (this.$vmEvent) {
       this.$vmEvent.emit(this.ok, data)
     }

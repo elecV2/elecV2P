@@ -39,8 +39,8 @@ module.exports = app => {
       logs.on('data', (chunk)=>{
         res.write(escapeHtml(chunk.toString()))
       })
-      logs.on("close", ()=>{
-        res.end(`</div>`)
+      logs.on('close', ()=>{
+        res.end('</div>')
       })
       logs.on('error', (err)=>{
         res.end(err)
@@ -49,8 +49,9 @@ module.exports = app => {
   })
 
   app.delete("/logs", (req, res)=>{
+    // 二级/多级目录问题 暂不可用 req.params
     const name = req.body.name
-    clog.notify(req.headers['x-forwarded-for'] || req.connection.remoteAddress, "delete log file", name)
+    clog.notify(req.headers['x-forwarded-for'] || req.connection.remoteAddress, 'delete log file', name)
     if (LOGFILE.delete(name)) {
       res.json({
         rescode: 0,

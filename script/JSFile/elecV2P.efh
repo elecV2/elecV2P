@@ -1,0 +1,36 @@
+<h3>efh - elecV2P favend html, 一个同时包含前后端运行代码的 html 扩展格式。</h3>
+<p>目前仅可运行于 elecV2P favend, 相关说明参考：<a href="https://github.com/elecV2/elecV2P-dei/blob/master/docs/08-logger&efss.md" target="_blank">elecV2P-dei/efss.md</a> 相关部分</p>
+<div>
+  <label>请求后台数据测试</label>
+  <button onclick="dataFetch()">获取</button>
+</div>
+<p>
+  <label>该 efh 文件地址: </label>
+  <a href='https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/elecV2P.efh' target='_blank'>https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/elecV2P.efh</a>
+</p>
+
+<script type="text/javascript">
+  console.log('前端 JS')
+  // 前端部分可使用多个 script 标签引入远程 axios/vue/react 等文件
+  // 总之这部分完全和之前的 html 一样
+  async function dataFetch() {
+    let data = await fetch('?data=json').then(res=>res.text()).catch(e=>console.error(e))
+    console.log(data)
+    alert(data)
+  }
+</script>
+
+<script type="text/javascript" runon="elecV2P" src="favend.js">
+  // 使用 runon="elecV2P" 属性来表示此部分是运行在后台的代码
+  // 使用 src 属性表示使用服务器上的 JS 作为后台代码
+  // 当有 src 属性时下面的代码无效（建议测试时去掉
+  console.log('后台 JS')
+
+  $done({
+    body: {
+      hello: 'elecV2P favend',
+      data: $store.get('cookieKEY'),
+      reqbody: $request.body
+    }
+  })
+</script>

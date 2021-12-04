@@ -361,7 +361,7 @@ async function runJSFile(filename, addContext={}) {
   } else if (addContext.type === 'rawcode') {
     filename = addContext.filename || addContext.from || 'rawcode.js'
   }
-  if (!/\.js$/i.test(filename)) {
+  if (!/\.(js|efh)$/i.test(filename)) {
     filename += '.js'
   }
 
@@ -371,7 +371,7 @@ async function runJSFile(filename, addContext={}) {
       if (res !== undefined) {
         res = sString(res)
         if (res.length > 480) {
-          runclog.debug(`run ${filename} result: ${res}`)
+          runclog.debug(`run ${filename} result: ${res.slice(0, 1200)}`)
           res = res.slice(0, 480) + '...'
         }
         runclog.info(`run ${filename} result: ${res}`)

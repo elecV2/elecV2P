@@ -12,18 +12,21 @@
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
-- 规则及定时任务排序
+- 规则及定时任务的移动和排序
 - 多 token 授权及对应权限管理
-- favend JS 重构（可直接运行的类 vue 模型（ES6?
-- 多语言 [一个可能永远不填的坑..., start ready...]
+- 使用脚本管理规则（RULE/REWRITE
 - elecV2P 启动器/快捷方式（$run JSON 格式文件
 - eFlow: 不同语言的脚本执行流程可视化控制（天坑）
+- 多语言 [一个可能永远不填的坑..., start ready...]
 </pre>
 </div>
 </div>
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [X] favend JS 重构(.efh 初版)
+- [x] 全局 CORS 设置
+- [x] 非授权访问通知提醒
 - [X] TASK 定时任务分组
 - [x] MITM 跳过对图片类数据的处理
 - [x] websocket 断连提醒

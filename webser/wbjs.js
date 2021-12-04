@@ -6,10 +6,14 @@ const clog = new logger({ head: 'wbjsfile', cb: wsSer.send.func('jsmanage') })
 const { runJSFile } = require('../script')
 
 module.exports = app => {
+  // req.params 方式在多目录下不实用，暂不考虑引入
   app.get('/jsfile', (req, res)=>{
     let jsfn = req.query.jsfn
-    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'get js file', jsfn)
-    if (!jsfn || /\.\./.test(jsfn)) {
+    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'get js file', jsfn || 'list')
+    if (!jsfn) {
+      return res.json(Jsfile.get('list'))
+    }
+    if (/\.\./.test(jsfn)) {
       return res.json({
         rescode: -1,
         message: 'illegal request to get js file ' + jsfn
@@ -27,6 +31,7 @@ module.exports = app => {
   })
 
   app.get('/jsmanage', (req, res)=>{
+    // v3.5.4 版本前获取 JS 列表的方式，暂时保留
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'get js manage data')
     res.json({
       jslists: Jsfile.get('list')
@@ -69,9 +74,16 @@ module.exports = app => {
     let jscontent = req.body.jscontent
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'post', jsname, req.body.type || 'to save')
     if (!(jsname && jscontent)) {
-      return res.send('a name of js and content is expect')
+      return res.json({
+        rescode: -1,
+        message: 'a name of js and content is expect'
+      })
     }
     if (req.body.type === 'totest') {
+      if (/\.efh$/.test(jsname)) {
+        clog.error('fail to test run', jsname)
+        return res.send('efh file only work on favend currently')
+      }
       runJSFile(req.body.jscontent, {
         type: 'rawcode',
         filename: jsname.replace(/\.js$/, '-test.js'),
@@ -101,7 +113,7 @@ module.exports = app => {
 
   app.delete('/jsfile', (req, res)=>{
     const jsfn = req.body.jsfn
-    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'delete js file ' + jsfn)
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'delete js file ' + jsfn)  // 自动转化 array
     if (jsfn) {
       let bDelist = Jsfile.delete(jsfn)
       if (bDelist) {
@@ -119,7 +131,7 @@ module.exports = app => {
       } else {
         res.json({
           rescode: 404,
-          message: jsfn + ' not existed'
+          message: jsfn + ' not exist'
         })
       }
     } else {
