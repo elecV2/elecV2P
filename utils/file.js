@@ -382,9 +382,9 @@ const Jsfile = {
     }
     name = name.trim()
     if (name === 'list') {
-      return file.list({ folder: fpath.js, ext: ['.js'] }).sort()
+      return file.list({ folder: fpath.js, ext: ['.js', '.efh'] }).sort()
     }
-    if (!/\.js$/i.test(name)) {
+    if (!/\.(js|efh)$/i.test(name)) {
       name += '.js'
     }
     let jspath = path.join(fpath.js, name)
@@ -409,7 +409,7 @@ const Jsfile = {
     return false
   },
   put(name, cont){
-    if (!/\.js$/i.test(name)) {
+    if (!/\.(js|efh)$/i.test(name)) {
       name += '.js'
     }
     try {
@@ -433,7 +433,7 @@ const Jsfile = {
       return false
     }
     let delf = (name) => {
-      if (!/\.js$/i.test(name)) {
+      if (!/\.(js|efh)$/i.test(name)) {
         name += '.js'
       }
       let jspath = path.join(fpath.js, name)

@@ -120,7 +120,7 @@ function iftttPush(title, description, url) {
       }
     })
   } else {
-    clog.debug('IFTTT not available yet, skip IFTTT push')
+    clog.debug('IFTTT not available yet, skip push IFTTT notification')
   }
 }
 
@@ -168,7 +168,7 @@ function barkPush(title, description, url) {
       }
     })
   } else {
-    clog.debug('bark not available yet, skip push bark notifications.')
+    clog.debug('bark not available yet, skip push BARK notification')
   }
 }
 
@@ -221,7 +221,7 @@ function custPush(title, description, url) {
       }
     })
   } else {
-    clog.debug('custnotify push not available yet, skip custnotify push.')
+    clog.debug('custom notify not available yet, skip push custom notification')
   }
 }
 

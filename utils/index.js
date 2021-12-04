@@ -1,5 +1,5 @@
 const { eproxy } = require('./eproxy')
-const { isAuthReq } = require('./validate')
+const { isAuthReq, validate_status } = require('./validate')
 const { now, wait, waituntil } = require('./time')
 const { logger, setGlog, LOGFILE } = require('./logger')
 const { list, Jsfile, store, file } = require('./file')
@@ -30,7 +30,7 @@ process
 })
 
 module.exports = {
-  eproxy, isAuthReq,
+  eproxy, isAuthReq, validate_status,
   now, wait, waituntil,
   logger, setGlog, LOGFILE,
   list, Jsfile, store, file,
