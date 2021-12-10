@@ -501,6 +501,14 @@ function handler(req, res){
       message: `proxy port ${CONFIG.anyproxy.port} is ${rbody.op === 'open' ? 'open' : 'close'}`
     })
     break
+  case 'blackreset':
+    validate_status.black.clear();
+    validate_status.blacknum = 0;
+    res.json({
+      rescode: 0,
+      message: 'validate black status is reset'
+    });
+    break
   case 'cors':
     if (!CONFIG.cors) {
       CONFIG.cors = {
