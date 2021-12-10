@@ -34,7 +34,10 @@ class logger {
     if(head) this._head = head
     if(level && CONFIG_LOG.levels.hasOwnProperty(level)) this._level = level
     if(cb) this._cb = cb
-    if(file) this._file = /\.log/.test(file) ? file : file + '.log'
+    if (file) {
+      file = file.trim().replace(/\/|\\/g, '-');
+      this._file = /\.log$/.test(file) ? file : file + '.log';
+    }
 
     if (isalignHead !== false) {
       this.infohead = alignHead(this._head + ' info')
@@ -101,9 +104,9 @@ class logger {
   clear(){
     let cont = null
     if(this._file && LOGFILE.delete(this._file)) {
-      cont = `[${ this.infohead }][${ now() }] ${ this._file } was cleared`
+      cont = `[${ this.infohead }][${ now() }] ${ this._file } cleared`;
     } else {
-      cont = `[${ this.infohead }][${ now() }] no log file to clear`
+      cont = `[${ this.infohead }][${ now() }] ${ this._file || '' } no exist yet, no need to clear`;
     }
     console.log(cont)
     if(this._cb) this._cb(cont)
@@ -170,14 +173,14 @@ const LOGFILE = {
       }
       clog.debug('stream', filename, 'created')
       this.streamList[name].on('close', ()=>{
-        clearInterval(this.statusList[name].interval)
+        clearInterval(this.statusList[name]?.interval);
         clog.debug(filename + ' stream closed')
         delete this.streamList[name]
         delete this.statusList[name]
         delete this.filethList[name]
       })
       this.streamList[name].on('error', ()=>{
-        clearInterval(this.statusList[name].interval)
+        clearInterval(this.statusList[name]?.interval);
         clog.debug(filename + ' stream error')
         delete this.streamList[name]
         delete this.statusList[name]
@@ -221,10 +224,12 @@ const LOGFILE = {
       })
       return true
     }
-    if (fs.existsSync(path.join(CONFIG_LOG.logspath, filename))){
-      clog.notify('delete log file:', filename)
-      fs.unlinkSync(path.join(CONFIG_LOG.logspath, filename))
-      this.streamFile(filename, true)
+    let logfpath = path.join(CONFIG_LOG.logspath, filename);
+    if (fs.existsSync(logfpath)){
+      clog.notify('clear log file:', filename);
+      // fs.unlinkSync(logfpath);
+      this.streamFile(filename, true);
+      fs.writeFileSync(logfpath, '', 'utf8');
       return true
     } 
     return false
