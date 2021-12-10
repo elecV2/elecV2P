@@ -474,6 +474,7 @@ const Jsfile = {
 
 const store = {
   maxByte: 1024*1024*2,
+  path: fpath.store,
   get(key, type) {
     // empty key return undefined, don't change
     if (bEmpty(key)) {
@@ -614,7 +615,32 @@ const store = {
   },
   all() {
     return fs.readdirSync(fpath.store)
-  }
+  },
+  backup(targetfile = ''){
+    const zip = new Zip();
+    zip.addLocalFolder(fpath.store);
+    if (targetfile && typeof targetfile === 'string') {
+      zip.writeZip(targetfile);
+      clog.info('backup store', fpath.store, 'to', targetfile);
+      return true;
+    } else {
+      clog.info('export stroe', fpath.store, 'as buffer');
+      return zip.toBuffer();
+    }
+  },
 }
+
+let estartinfo = store.get('elecV2PStartInfo');
+if (estartinfo && sType(estartinfo) === 'array') {
+  if (estartinfo.length >= 99) {
+    clog.info('elecV2P start for', estartinfo.length, 'times, reset to 1');
+    estartinfo = [];
+  }
+  estartinfo.push(now());
+} else {
+  estartinfo = [now()];
+}
+store.put(estartinfo, 'elecV2PStartInfo', { note: 'The every time of elecV2P start' });
+clog.info('elecV2P start', estartinfo.length, 'times');
 
 module.exports = { list, Jsfile, store, file }
