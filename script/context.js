@@ -163,7 +163,13 @@ class contextBase {
     cust:  custPush
   }
   $done = (data) => {
-    this.console.debug('$done:', sString(data).slice(0, 1200))
+    let dstr = sString(data);
+    if (dstr.length > 1200) {
+      dstr = dstr.slice(0, 1200) + '...';
+    } else if (!dstr) {
+      dstr = 'no result';
+    }
+    this.console.debug('$done:', dstr);
     if (this.$vmEvent) {
       this.$vmEvent.emit(this.ok, data)
     }

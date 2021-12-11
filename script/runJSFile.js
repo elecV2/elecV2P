@@ -1,7 +1,9 @@
 const vm = require('vm')
+const path = require('path')
+const cheerio = require('cheerio')
 const EventEmitter = require('events')
 
-const { logger, feedAddItem, now, sType, sString, surlName, euid, errStack, downloadfile, Jsfile, file, wsSer } = require('../utils')
+const { logger, feedAddItem, now, sType, sString, surlName, euid, errStack, downloadfile, Jsfile, file, wsSer, sParam } = require('../utils')
 const clog = new logger({ head: 'runJSFile', level: 'debug' })
 
 const vmEvent = new EventEmitter()
@@ -25,14 +27,11 @@ const CONFIG_RUNJS = {
   }
 }
 
-if (CONFIG.CONFIG_RUNJS) {
-  Object.assign(CONFIG_RUNJS, CONFIG.CONFIG_RUNJS)
-}
 // 同步 CONFIG 数据
-CONFIG.CONFIG_RUNJS = CONFIG_RUNJS
+CONFIG.CONFIG_RUNJS = Object.assign(CONFIG_RUNJS, CONFIG.CONFIG_RUNJS)
 
 // 初始化脚本运行
-if (CONFIG.init && CONFIG.init.runjs) {
+if (CONFIG.init?.runjs) {
   CONFIG.init.runjs.split(/ ?, ?|，/).filter(s=>s).forEach(js=>{
     runJSFile(js, { from: 'initialization' })
   })
@@ -86,6 +85,104 @@ async function taskCount(filename) {
     runstatus.times = CONFIG_RUNJS.numtofeed
     runstatus.start = now(null, false)
   }
+}
+
+/**
+ * 远程文件 filename 是否需要更新
+ * @param     {string}    filename    文件名称
+ * @return    {boolean}               true or false
+ */
+function bOutDate(filename) {
+  return CONFIG_RUNJS.intervals > 0 && new Date().getTime() - Jsfile.get(filename, 'date') > CONFIG_RUNJS.intervals*1000;
+}
+
+const efhcache = new Map();
+
+/**
+ * efh 文件处理
+ * @param     {string}    filename    efh 文件
+ * @param     {string}    options     title: efh html 缺省 title
+ * @return    {object}                efh 文件处理结果 { html, code }
+ */
+async function efhParse(filename, { title='' } = {}) {
+  let efhc = { name: '', date: 0, html: '', script: '', type: '' };
+  let { local, timeout, rename, fstr } = sParam(filename);
+  if (/^https?:\/\/\S{4}/.test(filename)) {
+    // 远程 efh 文件
+    let furl = fstr.split(' ')[0];
+    filename = rename || surlName(furl);
+    let efhfulpath = Jsfile.get(filename, 'path');
+    let efhIsExist = file.isExist(efhfulpath);
+    if (efhIsExist && local) {
+      clog.info('run', filename, 'locally');
+    } else if (!efhIsExist || bOutDate(filename)) {
+      clog.info('downloading', filename, 'from', furl);
+      try {
+        await downloadfile(furl, { name: efhfulpath });
+        clog.info(`success download ${filename}, ready to run`);
+      } catch(error) {
+        clog.error(`run ${furl}, error: ${error}`);
+        clog.info(`try to run ${filename} locally`);
+      }
+    }
+  } else {
+    filename = rename || fstr;
+  }
+  // 本地 efh 文件，先判断 cache 是否存在，再处理内容
+  let tdate = Jsfile.get(filename, 'date');
+  if (efhcache.has(filename)) {
+    efhc = efhcache.get(filename);
+    if (efhc.date === tdate) {
+      clog.info('run', filename, 'with cache');
+    } else {
+      // 非最新文件缓存，清空内容
+      efhc.date = tdate;
+      efhc.html = '';
+      efhc.script = '';
+    }
+  } else {
+    efhc.date = tdate;
+    efhcache.set(filename, efhc);
+  }
+  efhc.name = filename;
+  efhc.timeout = timeout;
+  if (!efhc.html) {
+    let efhcont = Jsfile.get(filename);
+    if (!efhcont) {
+      efhc.html = filename + ' not exist';
+      clog.info(efhc.html);
+    } else {
+      clog.info('deal', filename, 'content');
+      let $ = cheerio.load(efhcont);
+      if (title && $('title').length === 0) {
+        $('head').append('<title>' + title + '</title>');
+      }
+      $('head').append(`<script>function $fend(key, data){if(!key) {let msg='a key for $fend is expect';alert(msg);return Promise.reject(msg)};return fetch('', {method: 'post',body: JSON.stringify({key, data})})}</script>`);
+      let bcode = $("script[runon='elecV2P']");
+      if (bcode.attr('src')) {
+        // src 开头 /|./|空，即绝对/相对目录处理
+        efhc.script = bcode.attr('src');
+        if (efhc.script.startsWith('/')) {
+          efhc.script = efhc.script.replace('/', '');  // 仅替换开头/
+        } else if (!/^https?:\/\/\S{4}/.test(efhc.script)) {
+          // 非远程 src，则相对当前 efh 文件
+          let lastslash = filename.lastIndexOf('/');
+          if (lastslash === -1) {
+            efhc.script = path.join(efhc.script);
+          } else {
+            efhc.script = path.join(path.dirname(filename), efhc.script);
+          }
+        }
+        efhc.type = 'file';
+      } else {
+        efhc.script = bcode.html();
+        efhc.type = 'rawcode';
+      }
+      bcode.remove();
+      efhc.html = $.html();
+    }
+  }
+  return efhc;
 }
 
 /**
@@ -179,52 +276,97 @@ function runJS(filename, jscode, addContext={}) {
     CONTEXT.final.require.clear = (request)=>delete require.cache[require.resolve(request, { paths: [CONTEXT.final.__dirname] })]
     CONTEXT.final.require.cache = require.cache
   }
+
+  switch (addContext.from) {
+  case 'feedPush':
+    CONTEXT.final.$feed.push = ()=>fconsole.notify(filename, 'is triggered by notification, $feed.push is disabled to avoid circle callback');
+    break;
+  case 'favend':
+    CONTEXT.final.$fend = async function (key, fn) {
+      // 有 bind this, 勿改写为 arrow function
+      // 待优化：
+      // - 多 $fend 匹配优化
+      // - 无 $fend 匹配问题
+      if (typeof this.$request === 'undefined') {
+        return this.$done('$fend', key, 'error: $request is expect');
+      }
+
+      let body = this.$request.body;
+      if (!key || !body) {
+        return this.$done('$fend error: key and body are expect');
+      }
+      try {
+        body = JSON.parse(body);
+      } catch(e) {
+        return this.$done('$fend', key, 'error: $request.body can\'t be JSON.parse');
+      }
+      if (body.key === key) {
+        if (typeof fn === 'function') {
+          try {
+            fn = await fn(body.data);
+          } catch(e) {
+            fn = '$fend ' + key + ' error: ' + e.message;
+            fconsole.error('$fend', key, e);
+          }
+        }
+        return this.$done(fn);
+      }
+    }.bind(CONTEXT.final);
+    break;
+  default:
+    CONTEXT.final.$fend = ()=>fconsole.info('$fend only work on elecV2P favend currently');
+  }
+  CONTEXT.final.$env = { ...process.env, ...addContext.env }
+
   if (bGrant) {
     if (/^\/\/ +@grant +(quiet|silent)$/m.test(jscode)) {
-      CONTEXT.final.$feed = { push(){}, bark(){}, ifttt(){}, cust(){} }
+      CONTEXT.final.$feed = { push(){}, bark(){}, ifttt(){}, cust(){} };
       if (CONTEXT.final.$notify) {
-        CONTEXT.final.$notify = ()=>{}
+        CONTEXT.final.$notify = ()=>{};
       }
       if (CONTEXT.final.$notification) {
-        CONTEXT.final.$notification.post = ()=>{}
+        CONTEXT.final.$notification.post = ()=>{};
       }
     }
 
     // sudo 模式
     if (/^\/\/ +@grant +sudo$/m.test(jscode)) {
-      fconsole.notify(filename, 'run in sudo mode')
-      CONTEXT.final.$task = require('../func').taskMa
+      fconsole.notify(filename, 'run in sudo mode');
+      CONTEXT.final.$task = require('../func').taskMa;
+
+      CONTEXT.final.$fend.clear = ()=>{
+        fconsole.info('clear efh cache');
+        efhcache.clear();
+      }
     }
   }
 
-  if (addContext.from === 'feedPush') {
-    CONTEXT.final.$feed.push = ()=>fconsole.notify(filename, 'is triggered by notification, $feed.push is disabled to avoid circle callback')
-  }
-  CONTEXT.final.$env = { ...process.env, ...addContext.env }
-
+  let addtimeout = addContext.timeout, addfrom = addContext.from;
   delete addContext.cb
   delete addContext.env
   delete addContext.type
+  delete addContext.from
   delete addContext.rename
+  delete addContext.timeout
   delete addContext.__taskid
   delete addContext.__taskname
   CONTEXT.add({ addContext })
 
-  let bDone = /^(?!\/\/).*\$done/m.test(jscode)   // 判断脚本中是否使用 $done 函数。（待优化多选注释
-
   return new Promise((resolve, reject)=>{
     try {
-      let tout = addContext.timeout === undefined ? CONFIG_RUNJS.timeout : addContext.timeout
+      // 判断脚本中是否使用 $done 函数（待优化多选注释
+      let bDone = addfrom === 'favend' || /^(?!\/\/).*\$done/m.test(jscode);
+      let tout = addtimeout ?? CONFIG_RUNJS.timeout;
       if (bDone) {
         CONTEXT.final.ok = filename + '-' + euid(2) + '-' + Date.now()
         let vmtout = null
         if (tout > 0) {
           vmtout = setTimeout(()=>{
             let message = `run ${filename} timeout of ${tout} ms`
-            if (addContext.timeout !== undefined) {
+            if (addtimeout !== undefined) {
               message = `${filename} still running...`
             }
-            if (addContext.from === 'favend') {
+            if (addfrom === 'favend') {
               message += `\ncheck the favend setting on webUI/efss`
             }
             vmEvent.emit(CONTEXT.final.ok, message)
@@ -249,7 +391,7 @@ function runJS(filename, jscode, addContext={}) {
       }
     } catch(error) {
       let result = { error: error.message }
-      if (/^(ruleReq|ruleRes|rewrite|webhook)/.test(addContext.from)) {
+      if (/^(ruleReq|ruleRes|rewrite|webhook|favend)/.test(addfrom)) {
         result.rescode = -1
         result.stack = error.stack
       }
@@ -260,7 +402,7 @@ function runJS(filename, jscode, addContext={}) {
 }
 
 /**
- * runJSFile 函数 获取初始的 filename rawjs addContext
+ * runJSFile 函数 获取初始的 filename rawcode addContext
  * @param     {string}    filename      文件名。当 addContext.type = rawcode 时表示此项为纯 JS 代码
  * @param     {object}    addContext    附加环境变量 context
  * @return    {Promise}                 runJS() 的结果
@@ -278,33 +420,23 @@ async function runJSFile(filename, addContext={}) {
 
   // filename 附带参数处理
   if (addContext.type !== 'rawcode' && / -/.test(filename)) {
-    // -local 参数处理
-    if (/ -local/.test(filename)) {
-      addContext.type = 'local'
-      filename = filename.replace(' -local', '')
+    let { local, timeout, rename, fstr } = sParam(filename);
+    if (local) {
+      addContext.type = 'local';
     }
-
-    // -timeout 参数处理
-    let timeout = filename.match(/ -timeout(=| )(\d+)/)
-    if (timeout && timeout[2]) {
-      addContext.timeout = Number(timeout[2])
-      filename = filename.replace(/ -timeout(=| )(\d+)/g, '')
+    if (timeout !== undefined) {
+      addContext.timeout = timeout;
     }
-
-    // -rename 参数处理
-    let ren = filename.match(/ -rename(=| )([^\- ]+)/)
-    if (ren && ren[2]) {
-      addContext.rename = ren[2]
-      filename = filename.replace(/ -rename(=| )([^\- ]+)/, '')
+    if (rename) {
+      addContext.rename = rename;
     }
-
+    filename = fstr;
     // -grant 参数添加
     let comp = filename.match(/ -grant(=| )([^\- ]+)/)
     if (comp && comp[2]) {
       addContext.grant = comp[2]
       filename = filename.replace(/ -grant(=| )([^\- ]+)/, '')
     }
-
     // -env 参数处理
     let jobenvs = filename.split(' -env ')
     if (jobenvs[1] !== undefined) {
@@ -320,17 +452,12 @@ async function runJSFile(filename, addContext={}) {
   }
   // end filename 附带参数处理
 
-  let runclog = clog
-  if (addContext.cb) {
-    runclog = new logger({ head: addContext.from + 'RunJS', level: 'debug', file: CONFIG_RUNJS.jslogfile ? (addContext.rename || addContext.filename || (/^https?:/.test(filename) && surlName(filename)) || ((addContext.type === 'rawcode') && (addContext.from || 'rawcode.js')) || filename) : false, cb: addContext.cb })
-  }
+  let runclog = addContext.cb
+      ? new logger({ head: addContext.from + 'RunJS', level: 'debug', file: CONFIG_RUNJS.jslogfile ? (addContext.rename || addContext.filename || (/^https?:/.test(filename) && surlName(filename)) || ((addContext.type === 'rawcode') && (addContext.from || 'rawcode.js')) || filename) : false, cb: addContext.cb })
+      : clog;
   if (/^https?:\/\/\S{4}/.test(filename)) {
-    let url = filename
-    if (addContext.rename) {
-      filename = addContext.rename
-    } else {
-      filename = surlName(url)
-    }
+    let furl = filename;
+    filename = addContext.rename || surlName(furl);
     if (!/\.js$/i.test(filename)) {
       filename += '.js'
     }
@@ -338,25 +465,25 @@ async function runJSFile(filename, addContext={}) {
     let jsIsExist = file.isExist(jsfulpath)
     if (jsIsExist && addContext.type === 'local') {
       runclog.info('run', filename, 'locally')
-    } else if (!jsIsExist || addContext.from === 'webhook' || (CONFIG_RUNJS.intervals > 0 && new Date().getTime() - Jsfile.get(filename, 'date') > CONFIG_RUNJS.intervals*1000)) {
-      runclog.info('downloading', filename, 'from', url)
+    } else if (!jsIsExist || addContext.from === 'webhook' || bOutDate(filename)) {
+      runclog.info('downloading', filename, 'from', furl)
       try {
-        await downloadfile(url, { name: jsfulpath })
+        await downloadfile(furl, { name: jsfulpath });
         runclog.info(`success download ${filename}, ready to run`)
       } catch(error) {
-        runclog.error(`run ${url}, error: ${error}`)
+        runclog.error(`run ${furl}, error: ${error}`);
         runclog.info(`try to run ${filename} locally`)
       }
     }
   }
 
-  let rawjs = (addContext.type === 'rawcode') ? filename : Jsfile.get(filename)
-  if (rawjs === false) {
+  let rawcode = (addContext.type === 'rawcode') ? filename : Jsfile.get(filename);
+  if (rawcode === false) {
     runclog.error(`${filename} not exist`)
     return Promise.resolve(`${filename} not exist`)
   }
   if (addContext.rename) {
-    Jsfile.put(addContext.rename, rawjs)
+    Jsfile.put(addContext.rename, rawcode);
     filename = addContext.rename
   } else if (addContext.type === 'rawcode') {
     filename = addContext.filename || addContext.from || 'rawcode.js'
@@ -366,7 +493,7 @@ async function runJSFile(filename, addContext={}) {
   }
 
   return new Promise((resolve, reject)=>{
-    runJS(filename, rawjs, addContext).then(res=>{
+    runJS(filename, rawcode, addContext).then(res=>{
       resolve(res)
       if (res !== undefined) {
         res = sString(res)
@@ -383,4 +510,4 @@ async function runJSFile(filename, addContext={}) {
   })
 }
 
-module.exports = { runJSFile, CONFIG_RUNJS }
+module.exports = { runJSFile, CONFIG_RUNJS, efhParse }

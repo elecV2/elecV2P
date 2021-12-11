@@ -1,13 +1,11 @@
-const formidable = require('formidable')
 const express = require('express')
-const cheerio = require('cheerio')
-const path = require('path')
+const formidable = require('formidable')
 
-const { logger, file, sType, sString, errStack, now, Jsfile } = require('../utils')
+const { logger, file, sType, sString, errStack, now } = require('../utils')
 const clog = new logger({ head: 'wbefss', level: 'debug' })
 
 const { CONFIG } = require('../config')
-const { runJSFile, getJsResponse } = require('../script')
+const { runJSFile, getJsResponse, efhParse } = require('../script')
 
 const CONFIG_efss = {
   enable: true,            // 默认开启。关闭： false
@@ -55,9 +53,7 @@ const CONFIG_efss = {
 
 CONFIG.efss = Object.assign(CONFIG_efss, CONFIG.efss)
 
-const efhcache = new Map();
-
-function efsshandler(req, res, next) {
+async function efsshandler(req, res, next) {
   if (!req.params.favend) {
     return next()
   }
@@ -79,68 +75,19 @@ function efsshandler(req, res, next) {
   if (fend && fend.enable !== false) {
     switch(fend.type) {
     case 'runjs':
-      // .efh 文件测试 初版
+      // .efh 文件处理
       let efhc = { date: 0, html: '', script: '', type: '' };
-      if (/\.efh$/.test(fend.target)) {
-        if (/^https?:\/\/\S{4}/.test(fend.target)) {
-          // 远程 efh 文件，待完成
-          efhc.html = 'remote efh file not support yet';
-          clog.debug(efhc.html);
-        }
-        // 本地 efh 文件，先判断 cache 是否存在，再获取内容
-        let tdate = Jsfile.get(fend.target, 'date');
-        if (efhcache.has(fend.target)) {
-          // 有缓存
-          efhc = efhcache.get(fend.target);
-          if (efhc.date === tdate) {
-            clog.debug('run', fend.target, 'with cache');
-          } else {
-            efhc.html = '';
-            efhc.script = '';
-          }
-        } else {
-          efhc.date = tdate;
-          efhcache.set(fend.target, efhc)
-        }
-        if (!efhc.html) {
-          let efhcont = Jsfile.get(fend.target);
-          if (!efhcont) {
-            efhc.html = fend.target + ' not exist';
-            clog.debug(efhc.html);
-          } else {
-            clog.debug('deal', fend.target, 'content');
-            let $ = cheerio.load(efhcont);
-            let bcode = $("script[runon='elecV2P']");
-            if (bcode.attr('src')) {
-              // src 开头 /|./|空，即绝对/相对目录处理
-              efhc.script = bcode.attr('src');
-              if (efhc.script.startsWith('/')) {
-                efhc.script = efhc.script.replace('/', '');  // 仅替换开头/
-              } else if (!/^https?:\/\/\S{4}/.test(efhc.script)) {
-                // 非远程 src，则相对当前 efh 文件
-                let lastslash = fend.target.lastIndexOf('/');
-                if (lastslash === -1) {
-                  efhc.script = path.join(efhc.script);
-                } else {
-                  efhc.script = path.join(path.dirname(fend.target), efhc.script);
-                }
-              }
-              efhc.type = 'file';
-            } else {
-              efhc.script = bcode.html();
-              efhc.type = 'rawcode';
-            }
-            bcode.remove();
-            efhc.html = $.html();
-          }
-        }
+      if (/\.efh$/.test(fend.target?.split(' ')[0])) {
+        efhc = await efhParse(fend.target, { title: fend.name });
 
-        if (req.originalUrl.replace(/\/$/, '') === '/efss/' + req.params.favend) {
-          // 返回 html
+        if (!efhc.script || (req.method === 'GET' && req.originalUrl.replace(/\/$/, '') === '/efss/' + req.params.favend)) {
+          // 请求主页或者没有后台脚本时直接返回前端 html
+          clog.debug('send', efhc.name, 'html directly');
           return res.send(efhc.html);
         } else {
           // 返回 run code 结果（即运行 efh 后台部分代码
           // 进入原来的 JS 处理环节
+          clog.debug('run', efhc.name, 'backend code');
         }
       }
       let $response = {
@@ -168,13 +115,13 @@ function efsshandler(req, res, next) {
           url: `${req.headers['x-forwarded-proto'] || req.protocol}://${req.get('host')}${req.originalUrl}`,
           body: sString(rbody),
         },
-        from: 'favend', env, type: efhc.type, filename: efhc.type === 'rawcode' ? fend.target : undefined,
-        timeout: rbody.timeout === undefined ? CONFIG.efss.favendtimeout : rbody.timeout
+        from: 'favend', env, type: efhc.type, filename: efhc.type === 'rawcode' ? efhc.name : undefined,
+        timeout: rbody.timeout ?? efhc.timeout ?? CONFIG.efss.favendtimeout
       }).then(jsres=>{
         $response = getJsResponse(jsres, $response)
       }).catch(e=>{
         $response.body = `favend error on run js ${fend.target} ${errStack(e)}`
-        clog.error('error on run js', fend.target, errStack(e))
+        clog.error($response.body);
       }).finally(()=>{
         res.set($response.header || $response.headers || {'Content-Type': 'text/html;charset=utf-8'})
         res.status($response.statusCode || $response.status || 200).send($response.body)

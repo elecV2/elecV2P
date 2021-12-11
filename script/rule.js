@@ -279,6 +279,13 @@ function getJsResponse(jsres, orires = { ...localResponse.reject }) {
       }
     }
     // 返回结果修改
+    if (jsres.body === undefined && !jsres.statusCode && !jsres.status && !jsres.header && !jsres.headers) {
+      return {
+        statusCode: 200,
+        header: { "Content-Type": "application/json;charset=utf-8" },
+        body: jsres
+      }
+    }
     return {
       statusCode: jsres.statusCode || jsres.status || orires.statusCode,
       header: sJson(jsres.header || jsres.headers) || orires.header,
