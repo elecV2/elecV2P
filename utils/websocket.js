@@ -101,7 +101,7 @@ function websocketSer({ server, path }) {
 
     // 初始化 ID 及前端版本检测等
     ws.id = euid()
-    ws.send(JSON.stringify({ type: 'init', data: { id: ws.id, vernum: CONFIG.vernum } }))
+    ws.send(JSON.stringify({ type: 'init', data: { id: ws.id, vernum: CONFIG.vernum, version: CONFIG.version } }));
     wsSer.recver.set(ws.id, {
       IP: ws.ip,
       UA: req.headers['user-agent'],
@@ -112,7 +112,7 @@ function websocketSer({ server, path }) {
         type: 'message',
         data: {
           type: 'error',
-          data: [`当前 webUI 与后台 v${CONFIG.version} 版本不一致, 可能正在使用缓存页面\n请点击该通知或使用 ctrl+F5 刷新当前页面\n(如果此提醒一直存在可能需要手动进行升级)`, { url: '?reload' }]
+          data: [`当前 webUI 版本低于后台 v${CONFIG.version}，可能正在使用缓存页面\n请点击该通知或使用 ctrl+F5 刷新当前页面\n(如果此提醒一直存在可能需要手动进行升级)`, { url: '?reload' }]
         }
       }))
     }, 5000)

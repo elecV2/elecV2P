@@ -278,4 +278,31 @@ function sbufBody(body = '') {
   }
 }
 
-module.exports = { euid, UUID, iRandom, sJson, sString, strJoin, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, escapeHtml, surlName, progressBar, btoa, atob, sbufBody }
+function sParam(str) {
+  // 取出字符串中 -local/-timeout/-rename 参数
+  if (!/ -/.test(str)) {
+    return { fstr: str };
+  }
+  // -local 参数处理
+  let final = {};
+  if (/ -local/.test(str)) {
+    final.local = true;
+    str = str.replace(' -local', '');
+  }
+  // -timeout 参数处理
+  let timeout = str.match(/ -timeout(=| )(\d+)/);
+  if (timeout && timeout[2]) {
+    final.timeout = Number(timeout[2]);
+    str = str.replace(/ -timeout(=| )(\d+)/g, '');
+  }
+  // -rename 参数处理
+  let ren = str.match(/ -rename(=| )([^\- ]+)/);
+  if (ren && ren[2]) {
+    final.rename = ren[2];
+    str = str.replace(/ -rename(=| )([^\- ]+)/, '');
+  }
+  final.fstr = str;
+  return final;
+}
+
+module.exports = { euid, UUID, iRandom, sJson, sString, strJoin, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, escapeHtml, surlName, progressBar, btoa, atob, sbufBody, sParam }
