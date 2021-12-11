@@ -1,4 +1,10 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.5.4)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.5.5)
+
+v3.5.5  2021.12.11
+ • favend 支持 efh 远程文件
+ • 备份所有 store/cookie 常量
+ • REWRITE 单条规则备注信息
+ • 新增 $fend 用于前后台数据交互
 
 v3.5.4  2021.12.04
  • 非授权访问可设置通知提醒

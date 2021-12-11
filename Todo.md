@@ -24,6 +24,12 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [x] 所有 store/cookie 常量备份/导入
+- [x] REWRITE 单条规则备注信息
+- [x] efh $fend 前后台数据交互
+- [x] webUI 页面缓存提醒优化
+- [x] elecV2P 启动次数统计
+- [x] favend 支持 efh 远程文件
 - [X] favend JS 重构(.efh 初版)
 - [x] 全局 CORS 设置
 - [x] 非授权访问通知提醒
