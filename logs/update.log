@@ -1,4 +1,10 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.5.5)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.5.6)
+
+v3.5.6  2021.12.19
+ • EFSS 远程文件下载
+ • webUI 导航栏及其他优化
+ • $axios 错误信息显示优化
+ • Fix favend 关键字重复问题
 
 v3.5.5  2021.12.11
  • favend 支持 efh 远程文件

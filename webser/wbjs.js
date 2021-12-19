@@ -21,6 +21,9 @@ module.exports = app => {
     }
     let jscont = Jsfile.get(jsfn)
     if (jscont) {
+      res.set('Cache-Control', 'private, no-cache');
+      res.set('Content-Type', 'text/plain; charset=utf-8');
+      res.set('Last-Modified', new Date(Jsfile.get(jsfn, 'date')).toGMTString());
       res.send(jscont)
     } else {
       res.status(404).json({

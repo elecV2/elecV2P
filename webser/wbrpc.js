@@ -1,19 +1,9 @@
 const { exec } = require('../func')
-const { logger, file, sType } = require('../utils')
+const { logger, file, sType, downloadfile, errStack } = require('../utils')
 
 const clog = new logger({ head: 'webRPC', level: 'debug', file: 'webRPC.log' })
 
-const CONFIG_RPC = {
-  v: 103,
-}
-
 function eRPC(req, res) {
-  if (!req.body.v || req.body.v < CONFIG_RPC.v) {
-    return res.json({
-      rescode: 2,   // 前端需要更新
-      message: 'webUI need update(try refresh page)'
-    })
-  }
   let { method, params } = req.body
   clog.info(req.headers['x-forwarded-for'] || req.connection.remoteAddress, 'run method', method, 'with', params && params[0])
   // method: string, params: array
@@ -147,6 +137,22 @@ function eRPC(req, res) {
         message: 'fail to unzip ' + params[0]
       })
     }
+    break
+  case 'download':
+    downloadfile(params[0], {
+      folder: params[1],
+      name: params[2] || surlName(params[0])
+    }).then(dest=>{
+      res.json({
+        rescode: 0,
+        message: 'file download to: ' + dest
+      })
+    }).catch(e=>{
+      res.json({
+        rescode: -1,
+        message: `${params[1] || ''} ${errStack(e)}`
+      })
+    })
     break
   default:
     clog.info('RPC method', method, 'not found')
