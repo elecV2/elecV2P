@@ -78,6 +78,19 @@ const list = {
       }
     }
     clog.error('no list', name)
+    switch (name) {
+    case 'default.list':
+    case 'mitmhost.list':
+    case 'rewrite.list':
+    case 'task.list':
+    case 'useragent.list':
+      clog.info('make new file', name);
+      fs.writeFile(listpath, '{}', 'utf8', (err)=>{
+        if (err) {
+          clog.error(err);
+        }
+      });
+    }
     return ''
   },
   put(name, cont, option = {}){
