@@ -107,14 +107,34 @@ class contextBase {
         url: request
       }
     }
-    if (CONFIG.CONFIG_RUNJS.white && CONFIG.CONFIG_RUNJS.white.enable && CONFIG.CONFIG_RUNJS.white.list && CONFIG.CONFIG_RUNJS.white.list.length && CONFIG.CONFIG_RUNJS.white.list.indexOf(this.__name) !== -1) {
+    if (CONFIG.CONFIG_RUNJS.white?.enable && CONFIG.CONFIG_RUNJS.white.list?.length && CONFIG.CONFIG_RUNJS.white.list.indexOf(this.__name) !== -1) {
       // 白名单检测
       request.token = CONFIG.wbrtoken
     } else if (CONFIG.CONFIG_RUNJS.eaxioslog) {
       // 白名单之外才显示 url
       this.console.log(request.method || 'GET', request.url)
     }
-    return eAxios(request, (CONFIG.CONFIG_RUNJS.proxy === false) ? false : null)
+    return eAxios(request, (CONFIG.CONFIG_RUNJS.proxy === false) ? false : null).catch(error=>{
+      let err = new Error(`$axios ${request.method || 'GET'} ${request.url} Error: ${error.message}`);
+      if (error.response) {
+        err.response = error.response;
+      }
+      if (error.stack) {
+        err.stack = error.stack;
+      }
+      if (CONFIG.gloglevel === 'debug') {
+        err.config = {
+          url: error.config.url,
+          method: error.config.method,
+          data: error.config.data,
+          headers: error.config.headers,
+          timeout: error.config.timeout,
+          responseType: error.config.responseType
+        };
+      }
+      this.console.debug(err);
+      throw err;
+    });
   }
   $cheerio = cheerio
   $message = message
@@ -189,7 +209,7 @@ class surgeContext {
         url: req
       }
     }
-    if (CONFIG.CONFIG_RUNJS.white && CONFIG.CONFIG_RUNJS.white.enable && CONFIG.CONFIG_RUNJS.white.list && CONFIG.CONFIG_RUNJS.white.list.length && CONFIG.CONFIG_RUNJS.white.list.indexOf(this.__name) !== -1) {
+    if (CONFIG.CONFIG_RUNJS.white?.enable && CONFIG.CONFIG_RUNJS.white.list?.length && CONFIG.CONFIG_RUNJS.white.list.indexOf(this.__name) !== -1) {
       req.token = CONFIG.wbrtoken
     } else if (CONFIG.CONFIG_RUNJS.eaxioslog) {
       this.fconsole.log(req.method || 'GET', req.url)
@@ -287,7 +307,7 @@ class quanxContext {
           url: req
         }
       }
-      if (CONFIG.CONFIG_RUNJS.white && CONFIG.CONFIG_RUNJS.white.enable && CONFIG.CONFIG_RUNJS.white.list && CONFIG.CONFIG_RUNJS.white.list.length && CONFIG.CONFIG_RUNJS.white.list.indexOf(this.__name) !== -1) {
+      if (CONFIG.CONFIG_RUNJS.white?.enable && CONFIG.CONFIG_RUNJS.white.list?.length && CONFIG.CONFIG_RUNJS.white.list.indexOf(this.__name) !== -1) {
         req.token = CONFIG.wbrtoken
       } else if (CONFIG.CONFIG_RUNJS.eaxioslog) {
         this.fconsole.log(req.method || 'GET', req.url)
