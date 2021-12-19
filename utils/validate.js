@@ -18,16 +18,21 @@ const validate_status = {
 
 // 检测某个网络请求是否合法
 function isAuthReq(req, res) {
-  if (!CONFIG.SECURITY || CONFIG.SECURITY.enable === false) {
-    clog.debug('config security is not enable')
-    return true
-  }
   let ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress
   if (ipAddress.startsWith('::ffff:')) {
     ipAddress = ipAddress.substr(7)
   }
   validate_status.total++;
   let headstr = `${ipAddress} ${req.method} ${req.originalUrl || '/'},`
+  switch (req.path) {
+  case '/favicon.ico':
+    clog.debug(headstr, 'no need to validate check');
+    return true;
+  }
+  if (!CONFIG.SECURITY || CONFIG.SECURITY.enable === false) {
+    clog.debug(headstr, 'config security is not enable');
+    return true;
+  }
   let cookies = cookie.parse(req.headers.cookie || '')
   if (cookies?.token?.length > 10 && (CONFIG.wbrtoken + CONFIG.wbrtoken).indexOf(atob(cookies.token)) !== -1) {
     clog.debug(headstr, 'authorized by cookie')
@@ -39,7 +44,7 @@ function isAuthReq(req, res) {
     }
     let token = req.query?.token || req.body?.token
     if (token) {
-      clog.debug(headstr, 'get token from request query or body')
+      clog.debug(headstr, 'get token from request query/body');
     } else {
       if (req.headers['authorization']) {
         token = req.headers['authorization'].split(' ')[1]
@@ -53,11 +58,11 @@ function isAuthReq(req, res) {
     }
     if (token === CONFIG.wbrtoken) {
       clog.debug(headstr, 'authorized by token')
-      if (res) {
+      if (res && req.path !=='/webhook') {
         let days = req.query?.cookie === 'long' ? 365 : 7
         clog.notify('set cookie for', ipAddress, 'Max-Age:', days, 'days')
         res.setHeader('Set-Cookie', cookie.serialize('token', btoa((CONFIG.wbrtoken + CONFIG.wbrtoken ).substr(iRandom(CONFIG.wbrtoken.length), 10)), {
-          // httpOnly: true,
+          httpOnly: true,
           maxAge: 60 * 60 * 24 * days // cookie 有效期
         }))
       }
