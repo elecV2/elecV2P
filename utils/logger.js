@@ -218,18 +218,18 @@ const LOGFILE = {
     filename = filename.trim()
     if (filename == 'all') {
       require('./file.js').file.list({ folder: CONFIG_LOG.logspath, ext: ['.log'] }).forEach(file=>{
-        clog.notify('delete log file:', file)
-        fs.unlinkSync(path.join(CONFIG_LOG.logspath, file))
-        this.streamFile(filename, true)
+        clog.notify('delete log file:', file);
+        this.streamFile(filename, true);
+        fs.unlinkSync(path.join(CONFIG_LOG.logspath, file));
       })
       return true
     }
     let logfpath = path.join(CONFIG_LOG.logspath, filename);
     if (fs.existsSync(logfpath)){
-      clog.notify('clear log file:', filename);
-      // fs.unlinkSync(logfpath);
       this.streamFile(filename, true);
-      fs.writeFileSync(logfpath, '', 'utf8');
+      clog.notify('delete log file:', filename);
+      fs.unlinkSync(logfpath);
+      // fs.writeFileSync(logfpath, '', 'utf8');
       return true
     } 
     return false
