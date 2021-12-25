@@ -211,7 +211,7 @@ function surlName(url) {
     return ''
   }
   let name = ''
-  let sdurl = url.split(/\/|\?|#/)
+  let sdurl = url.split(/\/|\\|\?|#/)
   while (name === '' && sdurl.length) {
     name = sdurl.pop()
   }
@@ -305,4 +305,24 @@ function sParam(str) {
   return final;
 }
 
-module.exports = { euid, UUID, iRandom, sJson, sString, strJoin, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, escapeHtml, surlName, progressBar, btoa, atob, sbufBody, sParam }
+function sTypetoExt(ctype) {
+  // content-type to ext
+  if (/javascript/.test(ctype)) {
+    return '.js';
+  }
+  if (/plain/.test(ctype)) {
+    return '.txt';
+  }
+  if (/markdown/.test(ctype)) {
+    return '.md';
+  }
+  if (/x-icon/.test(ctype)) {
+    return '.ico';
+  }
+  if (!/stream/.test(ctype)) {
+    return '.' + ctype.split(/;|\//)[1];
+  }
+  return '';
+}
+
+module.exports = { euid, UUID, iRandom, sJson, sString, strJoin, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, escapeHtml, surlName, progressBar, btoa, atob, sbufBody, sParam, sTypetoExt }

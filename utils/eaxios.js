@@ -7,7 +7,7 @@ const HttpsProxyAgent = require('https-proxy-agent')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'eAxios', level: 'debug' })
 
-const { sJson, sType, errStack, surlName, progressBar } = require('./string')
+const { sJson, sType, errStack, surlName, progressBar, sTypetoExt } = require('./string')
 
 const { CONFIG, CONFIG_Port } = require('../config')
 
@@ -277,6 +277,10 @@ function downloadfile(durl, options, cb) {
             clog.error(fname, 'download callback error', errStack(e))
           }
         })
+      }
+      if (!path.extname(fname) && !/stream/.test(response.headers['content-type'])) {
+        fname += sTypetoExt(response.headers['content-type']);
+        dest = path.resolve(folder, fname);
       }
       let file = fs.createWriteStream(dest)
       response.data.pipe(file)
