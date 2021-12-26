@@ -201,6 +201,10 @@ function getMatchRule($request, $response, lists) {
 
 function getRewriteRes(rtarget, { rmatch = '', type = 'response', request = {}, response = localResponse, from = '' }) {
   clog.info(request.url, type, 'match rule:', rmatch, rtarget, 'from rewrite', from)
+  if (response === localResponse && /\.efh$/.test(rtarget.split(' ')[0])) {
+    type = 'response';
+    response = localResponse.imghtml;
+  }
   if (type === 'request') {
     switch(rtarget) {
     case 'reject':
@@ -283,7 +287,7 @@ function getJsResponse(jsres, orires = { ...localResponse.reject }) {
       return {
         statusCode: 200,
         header: { "Content-Type": "application/json;charset=utf-8" },
-        body: jsres
+        body: sbufBody(jsres)
       }
     }
     return {
@@ -495,7 +499,11 @@ module.exports = {
           from: 'ruleReq',
           $request: formRequest(requestDetail)
         }).then(jsres=>{
-          resolve(getJsRequest(jsres, requestDetail))
+          if (/\.efh$/.test(matchreq.target.split(' ')[0])) {
+            resolve({ response: getJsResponse(jsres, { ...localResponse.imghtml }) });
+          } else {
+            resolve(getJsRequest(jsres, requestDetail));
+          }
         }).catch(e=>{
           resolve(null)
           clog.error('modify', requestDetail.url, 'request error on run js', matchreq.target, errStack(e))
