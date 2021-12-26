@@ -83,13 +83,9 @@ module.exports = app => {
       })
     }
     if (req.body.type === 'totest') {
-      if (/\.efh$/.test(jsname)) {
-        clog.error('fail to test run', jsname)
-        return res.send('efh file only work on favend currently')
-      }
       runJSFile(req.body.jscontent, {
         type: 'rawcode',
-        filename: jsname.replace(/\.js$/, '-test.js'),
+        filename: jsname.replace(/\.(js|efh)$/, '-test.$1'),
         from: 'test',
         cb: wsSer.send.func('jsmanage', req.body.id),
         timeout: 5000

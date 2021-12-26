@@ -182,6 +182,35 @@ class contextBase {
     bark:  barkPush,
     cust:  custPush
   }
+  $fend = async (key, fn) => {
+    // 待优化：
+    // - 多 $fend 匹配优化
+    // - 无 $fend 匹配问题
+    if (typeof this.$request === 'undefined') {
+      return this.$done('$fend', key, 'error: $request is expect');
+    }
+
+    let body = this.$request.body;
+    if (!key || !body) {
+      return this.$done('$fend error: key and body are expect');
+    }
+    try {
+      body = JSON.parse(body);
+    } catch(e) {
+      return this.$done('$fend', key, 'error: $request.body can\'t be JSON.parse');
+    }
+    if (body.key === key) {
+      if (typeof fn === 'function') {
+        try {
+          fn = await fn(body.data);
+        } catch(e) {
+          fn = '$fend ' + key + ' error: ' + e.message;
+          this.console.error('$fend', key, e);
+        }
+      }
+      return this.$done(fn);
+    }
+  };
   $done = (data) => {
     let dstr = sString(data);
     if (dstr.length > 1200) {

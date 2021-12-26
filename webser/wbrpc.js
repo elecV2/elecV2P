@@ -145,7 +145,8 @@ function eRPC(req, res) {
     }).then(dest=>{
       res.json({
         rescode: 0,
-        message: 'file download to: ' + dest
+        message: 'file download to: ' + dest,
+        resdata: dest
       })
     }).catch(e=>{
       res.json({

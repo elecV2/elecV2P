@@ -5,7 +5,7 @@ const { logger, file, sType, sString, errStack, now } = require('../utils')
 const clog = new logger({ head: 'wbefss', level: 'debug' })
 
 const { CONFIG } = require('../config')
-const { runJSFile, getJsResponse, efhParse } = require('../script')
+const { runJSFile, getJsResponse } = require('../script')
 
 const CONFIG_efss = {
   enable: true,            // 默认开启。关闭： false
@@ -75,21 +75,6 @@ async function efsshandler(req, res, next) {
   if (fend && fend.enable !== false) {
     switch(fend.type) {
     case 'runjs':
-      // .efh 文件处理
-      let efhc = { date: 0, html: '', script: '', type: '' };
-      if (/\.efh$/.test(fend.target?.split(' ')[0])) {
-        efhc = await efhParse(fend.target, { title: fend.name });
-
-        if (!efhc.script || (req.method === 'GET' && req.originalUrl.replace(/\/$/, '') === '/efss/' + req.params.favend)) {
-          // 请求主页或者没有后台脚本时直接返回前端 html
-          clog.debug('send', efhc.name, 'html directly');
-          return res.send(efhc.html);
-        } else {
-          // 返回 run code 结果（即运行 efh 后台部分代码
-          // 进入原来的 JS 处理环节
-          clog.debug('run', efhc.name, 'backend code');
-        }
-      }
       let $response = {
         statusCode: 200,
         header: {
@@ -104,7 +89,7 @@ async function efsshandler(req, res, next) {
       if (sType(rbody.env) === 'object') {
         Object.assign(env, rbody.env)
       }
-      runJSFile(efhc.script || fend.target, {
+      runJSFile(fend.target, {
         $request: {
           protocol: req.protocol,
           headers: req.headers,
@@ -115,8 +100,8 @@ async function efsshandler(req, res, next) {
           url: `${req.headers['x-forwarded-proto'] || req.protocol}://${req.get('host')}${req.originalUrl}`,
           body: sString(rbody),
         },
-        from: 'favend', env, type: efhc.type, filename: efhc.type === 'rawcode' ? efhc.name : undefined,
-        timeout: rbody.timeout ?? efhc.timeout ?? CONFIG.efss.favendtimeout
+        from: 'favend', env,
+        timeout: rbody.timeout ?? CONFIG.efss.favendtimeout
       }).then(jsres=>{
         $response = getJsResponse(jsres, $response)
       }).catch(e=>{

@@ -104,16 +104,15 @@ const efhcache = new Map();
  * @param     {string}    options     title: efh html 缺省 title
  * @return    {object}                efh 文件处理结果 { html, code }
  */
-async function efhParse(filename, { title='' } = {}) {
+async function efhParse(filename, { title='', type='', name } = {}) {
   let efhc = { name: '', date: 0, html: '', script: '', type: '' };
-  let { local, timeout, rename, fstr } = sParam(filename);
   if (/^https?:\/\/\S{4}/.test(filename)) {
     // 远程 efh 文件
-    let furl = fstr.split(' ')[0];
-    filename = rename || surlName(furl);
+    let furl = filename.split(' ')[0];
+    filename = name || surlName(furl);
     let efhfulpath = Jsfile.get(filename, 'path');
     let efhIsExist = file.isExist(efhfulpath);
-    if (efhIsExist && local) {
+    if (efhIsExist && type === 'local') {
       clog.info('run', filename, 'locally');
     } else if (!efhIsExist || bOutDate(filename)) {
       clog.info('downloading', filename, 'from', furl);
@@ -126,11 +125,15 @@ async function efhParse(filename, { title='' } = {}) {
       }
     }
   } else {
-    filename = rename || fstr;
+    if (name) {
+      filename = name;
+    } else if (type === 'rawcode') {
+      filename = 'rawcode.efh';
+    }
   }
   // 本地 efh 文件，先判断 cache 是否存在，再处理内容
-  let tdate = Jsfile.get(filename, 'date');
-  if (efhcache.has(filename)) {
+  let tdate = type === 'rawcode' ? 0 : Jsfile.get(filename, 'date');
+  if (tdate && efhcache.has(filename)) {
     efhc = efhcache.get(filename);
     if (efhc.date === tdate) {
       clog.info('run', filename, 'with cache');
@@ -145,9 +148,8 @@ async function efhParse(filename, { title='' } = {}) {
     efhcache.set(filename, efhc);
   }
   efhc.name = filename;
-  efhc.timeout = timeout;
   if (!efhc.html) {
-    let efhcont = Jsfile.get(filename);
+    let efhcont = type === 'rawcode' ? filename : Jsfile.get(filename);
     if (!efhcont) {
       efhc.html = filename + ' not exist';
       clog.info(efhc.html);
@@ -159,6 +161,9 @@ async function efhParse(filename, { title='' } = {}) {
       }
       $('head').append(`<script>function $fend(key, data){if(!key) {let msg='a key for $fend is expect';alert(msg);return Promise.reject(msg)};return fetch('', {method: 'post',body: JSON.stringify({key, data})})}</script>`);
       let bcode = $("script[runon='elecV2P']");
+      if (bcode.length === 0) {
+        bcode = $("script[runon='backend']");
+      }
       if (bcode.attr('src')) {
         // src 开头 /|./|空，即绝对/相对目录处理
         efhc.script = bcode.attr('src');
@@ -281,42 +286,12 @@ function runJS(filename, jscode, addContext={}) {
   case 'feedPush':
     CONTEXT.final.$feed.push = ()=>fconsole.notify(filename, 'is triggered by notification, $feed.push is disabled to avoid circle callback');
     break;
-  case 'favend':
-    CONTEXT.final.$fend = async function (key, fn) {
-      // 有 bind this, 勿改写为 arrow function
-      // 待优化：
-      // - 多 $fend 匹配优化
-      // - 无 $fend 匹配问题
-      if (typeof this.$request === 'undefined') {
-        return this.$done('$fend', key, 'error: $request is expect');
-      }
-
-      let body = this.$request.body;
-      if (!key || !body) {
-        return this.$done('$fend error: key and body are expect');
-      }
-      try {
-        body = JSON.parse(body);
-      } catch(e) {
-        return this.$done('$fend', key, 'error: $request.body can\'t be JSON.parse');
-      }
-      if (body.key === key) {
-        if (typeof fn === 'function') {
-          try {
-            fn = await fn(body.data);
-          } catch(e) {
-            fn = '$fend ' + key + ' error: ' + e.message;
-            fconsole.error('$fend', key, e);
-          }
-        }
-        return this.$done(fn);
-      }
-    }.bind(CONTEXT.final);
-    break;
   default:
-    CONTEXT.final.$fend = ()=>fconsole.info('$fend only work on elecV2P favend currently');
+    break;
   }
-  CONTEXT.final.$env = { ...process.env, ...addContext.env }
+  if (!addContext.$env) {
+    CONTEXT.final.$env = { ...process.env, ...addContext.env }
+  }
 
   if (bGrant) {
     if (/^\/\/ +@grant +(quiet|silent)$/m.test(jscode)) {
@@ -355,7 +330,7 @@ function runJS(filename, jscode, addContext={}) {
   return new Promise((resolve, reject)=>{
     try {
       // 判断脚本中是否使用 $done 函数（待优化多选注释
-      let bDone = addfrom === 'favend' || /^(?!\/\/).*\$done/m.test(jscode);
+      let bDone = /^(?!\/\/).*\$(done|fend)/m.test(jscode);
       let tout = addtimeout ?? CONFIG_RUNJS.timeout;
       if (bDone) {
         CONTEXT.final.ok = filename + '-' + euid(2) + '-' + Date.now()
@@ -455,6 +430,36 @@ async function runJSFile(filename, addContext={}) {
   let runclog = addContext.cb
       ? new logger({ head: addContext.from + 'RunJS', level: 'debug', file: CONFIG_RUNJS.jslogfile ? (addContext.rename || addContext.filename || (/^https?:/.test(filename) && surlName(filename)) || ((addContext.type === 'rawcode') && (addContext.from || 'rawcode.js')) || filename) : false, cb: addContext.cb })
       : clog;
+  if (/\.efh$/.test(addContext.rename || addContext.filename || filename)) {
+    // 直接运行 efh 文件初版。本地/远程/rawcode 命名
+    let efhname = addContext.rename || addContext.filename || filename;
+    let efhc = await efhParse(filename, { type: addContext.type, name: addContext.rename || addContext.filename });
+    if (efhc.script && addContext.$request?.method === 'POST') {
+      runclog.debug('run', efhname, 'backend code from', addContext.from);
+      filename = efhc.script;
+      addContext.type = efhc.type;
+      addContext.filename = efhname;
+    } else {
+      runclog.debug('send', efhname, 'html directly');
+      return new Promise(resolve=>{
+        if (/^(rule|rewrite|favend)/.test(addContext.from)) {
+          resolve({response: {
+            statusCode: 200,
+            header: { ...addContext.$response?.headers, "Content-Type": "text/html;charset=utf-8" },
+            body: efhc.html
+          }})
+        } else {
+          resolve(efhc.html);
+        }
+        let res = efhc.html;
+        if (res.length > 480) {
+          runclog.debug(`run ${efhname} result: ${res.slice(0, 1200)}`);
+          res = res.slice(0, 480) + '...';
+        }
+        runclog.info(`run ${efhname} result: ${res}`);
+      })
+    }
+  }
   if (/^https?:\/\/\S{4}/.test(filename)) {
     let furl = filename;
     filename = addContext.rename || surlName(furl);
@@ -510,4 +515,4 @@ async function runJSFile(filename, addContext={}) {
   })
 }
 
-module.exports = { runJSFile, CONFIG_RUNJS, efhParse }
+module.exports = { runJSFile, CONFIG_RUNJS }
