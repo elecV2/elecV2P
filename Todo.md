@@ -15,7 +15,6 @@
 - 规则及定时任务的移动和排序
 - 多 token 授权及对应权限管理
 - 使用脚本管理规则($rewrite/$rule
-- efh 文件直接运行及生成相应路由
 - elecV2P 启动器/快捷方式（$run JSON 格式文件
 - eFlow: 不同语言的脚本执行流程可视化控制（天坑）
 - 多语言 [一个可能永远不填的坑..., start ready...]
@@ -25,6 +24,9 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [x] RULE/REWRITE 执行 efh 文件
+- [x] download 自动添加后缀
+- [x] SECURITY 未设置提醒
 - [x] efss 远程文件下载
 - [x] $axios 错误显示优化
 - [x] 显示脚本最近修改日期

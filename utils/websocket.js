@@ -101,7 +101,15 @@ function websocketSer({ server, path }) {
 
     // 初始化 ID 及前端版本检测等
     ws.id = euid()
-    ws.send(JSON.stringify({ type: 'init', data: { id: ws.id, vernum: CONFIG.vernum, version: CONFIG.version } }));
+    ws.send(JSON.stringify({
+      type: 'init',
+      data: {
+        id: ws.id,
+        vernum: CONFIG.vernum,
+        version: CONFIG.version,
+        secunset: !CONFIG.SECURITY
+      }
+    }));
     wsSer.recver.set(ws.id, {
       IP: ws.ip,
       UA: req.headers['user-agent'],

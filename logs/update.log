@@ -1,4 +1,9 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.5.6)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.5.7)
+
+v3.5.7  2021.12.26
+ • SECURITY 未设置提醒
+ • download 自动添加后缀
+ • RULE/REWRITE 可执行 efh
 
 v3.5.6  2021.12.19
  • EFSS 远程文件下载

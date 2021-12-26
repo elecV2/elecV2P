@@ -418,7 +418,7 @@ const Jsfile = {
       }
       return fs.readFileSync(jspath, 'utf8')
     }
-    clog.error('no such js file', name)
+    clog.error('no such script:', name);
     return false
   },
   put(name, cont){
@@ -455,7 +455,7 @@ const Jsfile = {
         clog.info(name, 'deleted')
         return true
       } else {
-        clog.error('no such js file:', name)
+        clog.error('no such script:', name);
         return false
       }
     }
