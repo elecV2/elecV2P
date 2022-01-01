@@ -17,6 +17,17 @@ if(!fs.existsSync(rootCApath)) {
 const { logger, errStack, now } = require('../utils')
 const clog = new logger({ head: 'funcCrt' })
 
+const easyCert = new EasyCert({
+  rootDirPath: rootCApath,
+  inMemory: false,
+  defaultCertAttrs: [
+    { name: 'countryName', value: 'CN' },
+    { name: 'organizationName', value: 'elecV2P' },
+    { shortName: 'ST', value: 'SH' },
+    { shortName: 'OU', value: 'elecV2P Network Tools' }
+  ]
+})
+
 /**
  * 自签根证书生成
  * @param     {object}      evoptions    {commonName, overwrite}
@@ -28,18 +39,6 @@ function newRootCrt(evoptions={}) {
   } else {
     evoptions.commonName = encodeURI(evoptions.commonName)
   }
-  const options = {
-    rootDirPath: rootCApath,
-    inMemory: false,
-    defaultCertAttrs: [
-      { name: 'countryName', value: 'CN' },
-      { name: 'organizationName', value: 'elecV2P' },
-      { shortName: 'ST', value: 'SH' },
-      { shortName: 'OU', value: 'elecV2P Network Tools' }
-    ]
-  }
-
-  const easyCert = new EasyCert(options)
 
   return new Promise((resolve, reject)=>{
     easyCert.generateRootCA(evoptions, (error, keyPath, crtPath) => {
@@ -141,4 +140,17 @@ function crtInfo(){
   }
 }
 
-module.exports = { clearCrt, rootCrtSync, newRootCrt, cacheClear, crtInfo }
+function crtHost(hostname) {
+  return new Promise((resolve, reject)=>{
+    easyCert.getCertificate(hostname, (error, keyContent, crtContent) => {
+      if (error === 'ROOT_CA_NOT_EXISTS') {
+        reject(error);
+        clog.error('fail to get certificate for', hostname, ' reason:', error);
+      }
+      resolve(easyCert.getRootDirPath());
+      clog.info('get certificate for', hostname);
+    });
+  })
+}
+
+module.exports = { clearCrt, rootCrtSync, newRootCrt, cacheClear, crtInfo, crtHost }
