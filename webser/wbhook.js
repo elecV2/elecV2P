@@ -1,5 +1,5 @@
 const os = require('os')
-const { taskMa, exec } = require('../func')
+const { taskMa, exec, crtHost } = require('../func')
 const { CONFIG_RULE, runJSFile } = require('../script')
 
 const { logger, LOGFILE, Jsfile, list, nStatus, sString, sType, surlName, sBool, stream, downloadfile, now, checkupdate, store, kSize, errStack, sbufBody, wsSer, validate_status } = require('../utils')
@@ -30,6 +30,7 @@ function handler(req, res){
     break
   case 'jsrun':
   case 'runjs':
+  case 'runscript':
     let fn = rbody.fn || ''
     if (!rbody.rawcode && !fn) {
       clog.info('can\'t find any javascript code to run')
@@ -65,26 +66,19 @@ function handler(req, res){
         addContext.grant = rbody.grant
       }
       addContext.timeout = 5000
-      res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' })
       runJSFile(fn, addContext).then(data=>{
-        if (data) {
-          res.write(sbufBody(data))
-        } else {
-          res.write(showfn + ' don\'t return any value')
-        }
+        res.json({
+          rescode: 0,
+          message: 'success run script ' + showfn,
+          resdata: data
+        })
       }).catch(error=>{
-        res.write('error: ' + error)
-      }).finally(()=>{
-        showfn = showfn.replace(/\/|\\/g, '-')
-        let homepage = CONFIG.homepage || `${req.headers['x-forwarded-proto'] || req.protocol}://${req.get('host')}`
-        res.write(`\n\nconsole log file: ${homepage}/logs/${showfn}.log\n\n`)
-        let oldlog = LOGFILE.get(showfn + '.log')
-        if (oldlog) {
-          oldlog.pipe(res)
-        } else {
-          res.end()
-        }
-      })
+        res.json({
+          rescode: -1,
+          message: 'fail to run script ' + showfn,
+          resdata: error
+        })
+      });
     }
     break
   case 'deljs':
@@ -95,7 +89,7 @@ function handler(req, res){
       return res.json({
         rescode: 0,
         message: 'all file without .js extname on JSFile folder is cleared',
-        delfile: Jsfile.clear()
+        resdata: Jsfile.clear()
       })
     }
     if (!rbody.fn) {
@@ -190,12 +184,17 @@ function handler(req, res){
         message: 'parameter fn is expect'
       })
     }
-    clog.info(clientip, 'get log', rbody.fn)
+    clog.info(clientip, 'Get log', rbody.fn);
     let logcont = LOGFILE.get(rbody.fn)
     if (logcont) {
       if (sType(logcont) === 'array') {
-        res.json(logcont)
+        res.json({
+          rescode: 0,
+          message: 'Get log file list',
+          resdata: logcont
+        });
       } else {
+        res.writeHead(200, { 'Content-Type': 'text/plain;charset=utf-8' });
         logcont.pipe(res)
       }
     } else {
@@ -206,7 +205,7 @@ function handler(req, res){
     }
     break
   case 'status':
-    clog.info(clientip, 'get server status')
+    clog.info(clientip, 'Get server status');
     let status = nStatus()
     status.start = now(CONFIG.start, false)
     status.uptime = ((Date.now() - Date.parse(status.start))/1000/60/60).toFixed(2) + ' hours'
@@ -216,11 +215,11 @@ function handler(req, res){
     res.json(status)
     break
   case 'task':
-    clog.info(clientip, 'get all task')
+    clog.info(clientip, 'Get all task');
     res.json(taskMa.info())
     break
   case 'taskinfo':
-    clog.info(clientip, 'get taskinfo', rbody.tid)
+    clog.info(clientip, 'Get taskinfo', rbody.tid);
     if (!rbody.tid || rbody.tid === 'all') {
       let status = taskMa.status()
       status.info = taskMa.info()
@@ -267,13 +266,15 @@ function handler(req, res){
         clog.info(rbody.url, 'download to', dest)
         res.json({
           rescode: 0,
-          message: 'success download ' + rbody.url + ' to ' + dest
+          message: 'success download ' + rbody.url,
+          resdata: dest
         })
       }).catch(e=>{
         clog.error('download', rbody.url, 'error', e)
         res.json({
           rescode: -1,
-          message: 'fail to download ' + rbody.url + ' error: ' + e
+          message: 'fail to download ' + rbody.url,
+          resdata: e
         })
       })
     } else {
@@ -332,7 +333,7 @@ function handler(req, res){
     } else {
       res.json({
         rescode: -1,
-        message: 'command parameter is expect'
+        message: 'parameter command is expect'
       })
     }
     break
@@ -394,13 +395,17 @@ function handler(req, res){
     break
   case 'store':
     if (rbody.op === 'all') {
-      return res.json(store.all())
+      return res.json({
+        rescode: 0,
+        message: 'Get store/cookie list',
+        resdata: store.all()
+      });
     }
     if (!rbody.key) {
-      clog.error('a key is expect on webhook store opration')
+      clog.error('parameter key is expect on webhook store opration')
       return res.json({
         rescode: -1,
-        message: 'a key is expect on webhook store opration'
+        message: 'parameter key is expect'
       })
     }
     switch(rbody.op) {
@@ -436,10 +441,14 @@ function handler(req, res){
       }
       break
     default:
-      clog.info('get store key', rbody.key, 'from webhook')
+      clog.info('Get store key', rbody.key, 'from webhook');
       let storeres = store.get(rbody.key)
-      if (storeres !== false) {
-        res.send(sString(storeres))
+      if (storeres !== undefined) {
+        res.json({
+          rescode: 0,
+          message: 'Get  store/cookie ' + rbody.key + ' value',
+          resdata: storeres
+        });
       } else {
         res.json({
           rescode: -1,
@@ -450,7 +459,11 @@ function handler(req, res){
     break
   case 'security':
     if (rbody.op !== 'put') {
-      return res.json(CONFIG.SECURITY)
+      return res.json({
+        rescode: 0,
+        message: 'Get elecV2P SECURITY config',
+        resdata: CONFIG.SECURITY
+      });
     }
     let secMsg = ''
     if (rbody.enable !== undefined) {
@@ -491,7 +504,7 @@ function handler(req, res){
     res.json({
       rescode: 0,
       message: secMsg.trim() || 'SECURITY config not changed',
-      SECURITY: CONFIG.SECURITY
+      resdata: CONFIG.SECURITY
     })
     break
   case 'proxyport':
@@ -530,9 +543,31 @@ function handler(req, res){
     }
     res.json({
       rescode: 0,
-      message: corsmsg.trim() || 'get cors config',
-      cors: CONFIG.cors
+      message: corsmsg.trim() || 'Get cors config',
+      resdata: CONFIG.cors
     })
+    break
+  case 'newcrt':
+    if (rbody.hostname) {
+      crtHost(rbody.hostname).then(cont=>{
+        res.json({
+          rescode: 0,
+          message: 'Get certificate for ' + rbody.hostname + ' in rootCA directory',
+          resdata: cont
+        })
+      }).catch(error=>{
+        res.json({
+          rescode: -1,
+          message: error
+        })
+      })
+    } else {
+      clog.info('parameter hostname is expect for new crt');
+      res.json({
+        rescode: -1,
+        message: 'parameter hostname is expect'
+      })
+    }
     break
   case 'devdebug':
     // temp debug, 待完成 unfinished
@@ -572,12 +607,12 @@ function handler(req, res){
       api: [
         {
           type: 'status',
-          note: 'get elecV2P memoryUsage status and so on',
+          note: 'Get elecV2P memoryUsage status and so on',
           para: null
         },
         {
           type: 'jslist',
-          note: 'get elecV2P local js file lists',
+          note: 'Get elecV2P local js file lists',
           para: null
         },
         {
