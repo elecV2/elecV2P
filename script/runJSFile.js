@@ -3,14 +3,14 @@ const path = require('path')
 const cheerio = require('cheerio')
 const EventEmitter = require('events')
 
-const { logger, feedAddItem, now, sType, sString, surlName, euid, errStack, downloadfile, Jsfile, file, wsSer, sParam } = require('../utils')
+const { logger, feedAddItem, now, sType, sString, surlName, euid, errStack, downloadfile, Jsfile, file, wsSer, sParam, eAxios } = require('../utils')
 const clog = new logger({ head: 'runJSFile', level: 'debug' })
 
 const vmEvent = new EventEmitter()
 vmEvent.on('error', err=>clog.error(errStack(err)))
 
 const { context } = require('./context')
-const { CONFIG } = require('../config')
+const { CONFIG, CONFIG_Port } = require('../config')
 
 const CONFIG_RUNJS = {
   timeout: 5000,          // JS 运行时间。单位：毫秒
@@ -282,7 +282,8 @@ function runJS(filename, jscode, addContext={}) {
     CONTEXT.final.require.cache = require.cache
   }
 
-  switch (addContext.from) {
+  let addtimeout = addContext.timeout, addfrom = addContext.from;
+  switch (addfrom) {
   case 'feedPush':
     CONTEXT.final.$feed.push = ()=>fconsole.notify(filename, 'is triggered by notification, $feed.push is disabled to avoid circle callback');
     break;
@@ -291,6 +292,10 @@ function runJS(filename, jscode, addContext={}) {
   }
   if (!addContext.$env) {
     CONTEXT.final.$env = { ...process.env, ...addContext.env }
+  }
+  CONTEXT.final.$fend.clear = ()=>{
+    fconsole.info('efh file cache cleared');
+    efhcache.clear();
   }
 
   if (bGrant) {
@@ -308,15 +313,35 @@ function runJS(filename, jscode, addContext={}) {
     if (/^\/\/ +@grant +sudo$/m.test(jscode)) {
       fconsole.notify(filename, 'run in sudo mode');
       CONTEXT.final.$task = require('../func').taskMa;
-
-      CONTEXT.final.$fend.clear = ()=>{
-        fconsole.info('clear efh cache');
-        efhcache.clear();
-      }
+      CONTEXT.final.$webhook = (type, data=null) => {
+        const payload = {
+          token: CONFIG.wbrtoken,
+        };
+        if (sType(type) === 'object') {
+          Object.assign(payload, type);
+        } else {
+          payload.type = type;
+        }
+        if (data && sType(data) === 'object') {
+          Object.assign(payload, data);
+        };
+        if (payload.type === 'runjs' && addfrom === 'webhook') {
+          let msg = `${filename} run from webhook, $webhook type runjs is disabled`;
+          fconsole.error(msg);
+          return Promise.reject(Error(msg));
+        }
+        return eAxios({
+          url: 'http://localhost:' + CONFIG_Port.webst + '/webhook',
+          method: 'post',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          data: payload
+        }, false);
+      };
     }
   }
 
-  let addtimeout = addContext.timeout, addfrom = addContext.from;
   delete addContext.cb
   delete addContext.env
   delete addContext.type

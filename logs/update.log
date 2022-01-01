@@ -1,4 +1,9 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.5.7)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.5.8)
+
+v3.5.8
+ • TASK 列表按名称搜索过滤
+ • 脚本增加 $webhook 函数
+ • efss download progress
 
 v3.5.7  2021.12.26
  • SECURITY 未设置提醒

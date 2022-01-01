@@ -54,10 +54,8 @@ module.exports = () => {
     socket.end('HTTP/1.1 400 Bad Request\r\n')
   })
 
-  const webstPort = process.env.PORT || CONFIG_Port.webst || 80
-
-  server.listen(webstPort, ()=>{
-    clog.notify('elecV2P', 'v' + CONFIG.version, 'started on port', webstPort)
+  server.listen(CONFIG_Port.webst, ()=>{
+    clog.notify('elecV2P', 'v' + CONFIG.version, 'started on port', CONFIG_Port.webst);
   })
 
   websocketSer({ server, path: '/elecV2P' })

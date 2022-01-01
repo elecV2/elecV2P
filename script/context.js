@@ -117,7 +117,8 @@ class contextBase {
     return eAxios(request, (CONFIG.CONFIG_RUNJS.proxy === false) ? false : null).catch(error=>{
       let err = new Error(`$axios ${request.method || 'GET'} ${request.url} Error: ${error.message}`);
       if (error.response) {
-        err.response = error.response;
+        let { request, config, ...res } = error.response;
+        err.response = res;
       }
       if (error.stack) {
         err.stack = error.stack;
@@ -212,6 +213,9 @@ class contextBase {
     }
   };
   $done = (data) => {
+    if (this.$vmEvent) {
+      this.$vmEvent.emit(this.ok, data);
+    }
     let dstr = sString(data);
     if (dstr.length > 1200) {
       dstr = dstr.slice(0, 1200) + '...';
@@ -219,10 +223,7 @@ class contextBase {
       dstr = 'no result';
     }
     this.console.debug('$done:', dstr);
-    if (this.$vmEvent) {
-      this.$vmEvent.emit(this.ok, data)
-    }
-    return data
+    return data;
   }
 }
 

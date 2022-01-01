@@ -14,10 +14,9 @@ const CONFIG = {
 
 if (fs.existsSync(CONFIG.path)) {
   Object.assign(CONFIG, sJson(fs.readFileSync(CONFIG.path, "utf8")))
-  if (CONFIG.webUI?.port) {
-    CONFIG_Port.webst = CONFIG.webUI.port
-  }
 }
+
+CONFIG_Port.webst = process.env.PORT || CONFIG.webUI?.port || CONFIG_Port.webst;
 
 if (CONFIG.anyproxy) {
   if (CONFIG.anyproxy.port) {
