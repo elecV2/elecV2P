@@ -1,5 +1,5 @@
 const { exec } = require('../func')
-const { logger, file, sType, downloadfile, errStack } = require('../utils')
+const { logger, file, sType, downloadfile, errStack, sseSer } = require('../utils')
 
 const clog = new logger({ head: 'webRPC', level: 'debug', file: 'webRPC.log' })
 
@@ -142,6 +142,10 @@ function eRPC(req, res) {
     downloadfile(params[0], {
       folder: params[1],
       name: params[2] || surlName(params[0])
+    }, (options)=>{
+      if (params[3] && !options.finish) {
+        sseSer.Send(params[3], { method: 'message', params: [options.progress, {mid: 'progress'}] });
+      }
     }).then(dest=>{
       res.json({
         rescode: 0,
@@ -165,5 +169,23 @@ function eRPC(req, res) {
 }
 
 module.exports = app => {
-  app.post("/rpc", eRPC)
+  app.post("/rpc", eRPC);
+  app.get("/sse/elecV2P/:sid", (req, res)=>{
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Connection': 'keep-alive',
+      'Cache-Control': 'no-cache'
+    });
+    let target = req.params.sid;
+    if (sseSer.clients.has(target)) {
+      clog.info('end old sse connection', target);
+      sseSer.clients.get(target).end();
+    }
+    sseSer.clients.set(target, res);
+    clog.info('sse connection', target, 'connected, total connections', sseSer.clients.size);
+    req.on('close', ()=>{
+      sseSer.clients.delete(target);
+      clog.info('sse connection', target, 'closed, total connections', sseSer.clients.size);
+    })
+  });
 }

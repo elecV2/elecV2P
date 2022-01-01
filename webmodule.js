@@ -12,12 +12,8 @@ const { wbefss, wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, 
 
 module.exports = () => {
   const app = express()
-  app.use(compression())
   app.use(express.json({ limit: '10mb' }))
-  app.use(express.text({ type: 'text/*' }))
-  app.use(express.raw())
   app.set('json spaces', 2)
-
   app.use((req, res, next)=>{
     if (isAuthReq(req, res)) {
       if (CONFIG.cors?.enable && CONFIG.cors?.origin) {
@@ -28,11 +24,14 @@ module.exports = () => {
       res.status(403).send(`<p>You have no permission to access.</p><p>IP: ${req.headers['x-forwarded-for'] || req.connection.remoteAddress} is recorded.</p><br><p>Powered BY elecV2P: <a href='https://github.com/elecV2/elecV2P'>https://github.com/elecV2/elecV2P</a></p>`)
     }
   })
+  wbrpc(app)
 
+  app.use(compression())
   const ONEMONTH = 60 * 1000 * 60 * 24 * 30                // 页面缓存时间
   app.use(express.static(path.resolve(__dirname, 'web/dist'), { maxAge: ONEMONTH }))
 
-  wbrpc(app)
+  app.use(express.text({ type: 'text/*' }))
+  app.use(express.raw())
   wbconfig(app)
   wbfeed(app)
   wbcrt(app)

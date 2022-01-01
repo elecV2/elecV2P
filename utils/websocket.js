@@ -163,6 +163,30 @@ function websocketSer({ server, path }) {
   })
 }
 
+const sseSer = {
+  clients: new Map(),
+  Send(sid, data) {
+    if (!sid) {
+      clog.error('a sid is expect for sseSer.Send');
+      return;
+    }
+    if (!this.clients.has(sid)) {
+      clog.error('sse', sid, 'not ready yet');
+      return;
+    }
+    let res = this.clients.get(sid);
+    if (data === 'end') {
+      res.end();
+      return;
+    }
+    if (sType(data) !== 'object') {
+      clog.error('a object data is expect for sseSer.Send');
+      return;
+    }
+    res.write('data: ' + sString(data) + '\n\n');
+  }
+}
+
 const messageSend = {
   success() {
     wsSer.send({ type: 'message', data: { type: 'success', data: [...arguments] } })
@@ -179,7 +203,7 @@ const messageSend = {
 }
 
 module.exports = {
-  websocketSer, wsSer,
+  websocketSer, wsSer, sseSer,
   message: new Proxy(messageSend, {
     set(target, prop){
       clog.error('forbid redefine $message method', prop)
