@@ -1,7 +1,11 @@
 const { exec } = require('../func')
-const { logger, file, sType, downloadfile, errStack, sseSer } = require('../utils')
+const { logger, file, sType, sJson, downloadfile, errStack, sseSer } = require('../utils')
 
 const clog = new logger({ head: 'webRPC', level: 'debug', file: 'webRPC.log' })
+
+const statusRPC = {
+  download: new Map(),
+}
 
 function eRPC(req, res) {
   let { method, params } = req.body
@@ -139,24 +143,48 @@ function eRPC(req, res) {
     }
     break
   case 'download':
+    let name = params[2] || surlName(params[0]);
+    let key = params[0] + params[1] + name;
+    if (statusRPC.download.has(key)) {
+      return res.json({
+        rescode: 1,
+        message: `${name} already in download list, try different folder or name`,
+        resdata: name
+      });
+    }
+    let downloaditem = {
+      url: params[0],
+      name: name,
+      folder: params[1],
+      status: 'downloading'
+    }
+    statusRPC.download.set(key, downloaditem);
     downloadfile(params[0], {
       folder: params[1],
-      name: params[2] || surlName(params[0])
+      name: name
     }, (options)=>{
-      if (params[3] && !options.finish) {
-        sseSer.Send(params[3], { method: 'message', params: [options.progress, {mid: 'progress'}] });
+      if (params[3] && options.progress) {
+        sseSer.Send(params[3], {
+          method: 'message',
+          params: [
+            options.progress,
+            { mid: 'progress' + statusRPC.download.size }
+          ]
+        });
       }
     }).then(dest=>{
       res.json({
         rescode: 0,
         message: 'file download to: ' + dest,
         resdata: dest
-      })
+      });
+      downloaditem.status = 'finished';
     }).catch(e=>{
       res.json({
         rescode: -1,
         message: `${params[1] || ''} ${errStack(e)}`
-      })
+      });
+      downloaditem.status = 'aborted';
     })
     break
   default:
@@ -170,6 +198,22 @@ function eRPC(req, res) {
 
 module.exports = app => {
   app.post("/rpc", eRPC);
+  app.get("/rpc/:status", (req, res)=>{
+    switch (req.params.status) {
+    case 'downloadlist':
+      res.json({
+        rescode: 0,
+        message: 'Get current efss download list',
+        resdata: sJson(statusRPC.download)
+      });
+      break;
+    default:
+      res.json({
+        rescode: -1,
+        message: 'unknow rpc status ' + req.params.status
+      })
+    }
+  });
   app.get("/sse/elecV2P/:sid", (req, res)=>{
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
