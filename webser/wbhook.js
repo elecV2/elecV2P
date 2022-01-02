@@ -26,7 +26,11 @@ function handler(req, res){
   clog.notify(clientip, req.method, 'webhook type', rbody.type)
   switch(rbody.type) {
   case 'jslist':
-    res.json(Jsfile.get('list'))
+    res.json({
+      rescode: 0,
+      message: 'Get script file list',
+      resdata: Jsfile.get('list')
+    });
     break
   case 'jsrun':
   case 'runjs':
@@ -151,7 +155,11 @@ function handler(req, res){
     default:
       let jsfilecont = Jsfile.get(rbody.fn)
       if (jsfilecont) {
-        res.send(jsfilecont)
+        res.json({
+          rescode: 0,
+          message: 'Get script file ' + rbody.fn + ' content',
+          resdata: jsfilecont
+        });
       } else {
         res.status(404).json({
           rescode: 404,
@@ -160,6 +168,8 @@ function handler(req, res){
       }
     }
     break
+  case 'dellog':
+  case 'logdel':
   case 'logdelete':
   case 'deletelog':
     let name = rbody.fn
@@ -446,7 +456,7 @@ function handler(req, res){
       if (storeres !== undefined) {
         res.json({
           rescode: 0,
-          message: 'Get  store/cookie ' + rbody.key + ' value',
+          message: 'Get store/cookie ' + rbody.key + ' value',
           resdata: storeres
         });
       } else {
@@ -582,7 +592,11 @@ function handler(req, res){
       res.send(sString(wsSer.recver))
       break
     case 'config':
-      res.json(CONFIG)
+      res.json({
+        rescode: 0,
+        message: 'Get current config',
+        resdata: CONFIG
+      });
       break
     case 'minishell':
       if (rbody.op === 'open') {
@@ -590,7 +604,11 @@ function handler(req, res){
       } else if (rbody.op === 'close') {
         CONFIG.minishell = false
       }
-      res.json({ minishell: CONFIG.minishell })
+      res.json({
+        rescode: 0,
+        message: 'Get minishell config',
+        resdata: CONFIG.minishell
+      });
       break
     default:
       res.json({
@@ -602,7 +620,9 @@ function handler(req, res){
   case 'help':
     // 待完成 unfinished
     return res.json({
-      title: 'elecV2P webhook help',
+      rescode: 0,
+      message: 'elecV2P webhook help',
+      resdata: {
       url: 'https://github.com/elecV2/elecV2P-dei/tree/master/docs/09-webhook.md',
       api: [
         {
@@ -641,7 +661,7 @@ function handler(req, res){
             }
           ]
         }
-      ]
+      ]}
     })
     break
   default:
