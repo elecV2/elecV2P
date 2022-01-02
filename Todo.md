@@ -25,7 +25,7 @@
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
 - [x] 脚本增加 $webhook 函数
-- [x] TASK 列表按名称搜索过滤
+- [x] TASK 列表关键字搜索过滤
 - [x] efss download progress
 - [x] webhook 部分返回结果 JSON 化
 - [x] RULE/REWRITE 执行 efh 文件
