@@ -22,6 +22,8 @@ if(!fs.existsSync(CONFIG_LOG.logspath)) {
   fs.mkdirSync(CONFIG_LOG.logspath)
 }
 
+const logHeadCache = new Map()
+
 class logger {
   _head = 'elecV2P'
   _level = 'info'
@@ -246,6 +248,16 @@ function formArgs() {
 }
 
 function alignHead(str, alignlen = CONFIG_LOG.alignHeadlen) {
+  const cachekey = str + alignlen
+  if (logHeadCache.has(cachekey)) {
+    return logHeadCache.get(cachekey)
+  }
+  const loghaed = alignHeadOrg(str, alignlen)
+  logHeadCache.set(cachekey, loghaed)
+  return loghaed
+}
+
+function alignHeadOrg(str, alignlen = CONFIG_LOG.alignHeadlen) {
   let buf = Buffer.from(str), tlen = (buf.length + str.length) / 2
   if (tlen === alignlen) {
     return str
