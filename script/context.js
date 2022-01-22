@@ -271,14 +271,12 @@ class surgeContext {
       } else {
         sbody = error
       }
-    }).finally(async ()=>{
+    }).finally(()=>{
       if(cb && sType(cb) === 'function') {
-        try {
-          await cb(error, resps, sbody)
-        } catch(err) {
-          this.fconsole.error('$httpClient', req.method, req.url, 'callback', errStack(err, true))
-        }
+        return cb(error, resps, sbody)
       }
+    }).catch(err=>{
+      this.fconsole.error('$httpClient', req.method, req.url, 'callback', errStack(err, true))
     })
   }
 
@@ -358,14 +356,12 @@ class quanxContext {
           resp = errStack(error)
           this.fconsole.error('$task.fetch', req.url, resp)
           reject({ error: resp })
-        }).finally(async ()=>{
+        }).finally(()=>{
           if(cb && sType(cb) === 'function') {
-            try {
-              await cb(resp)
-            } catch(err) {
-              this.fconsole.error('$task.fetch callback', errStack(err, true))
-            }
+            return cb(resp)
           }
+        }).catch(err=>{
+          this.fconsole.error('$task.fetch callback', errStack(err, true))
         })
       })
     }
