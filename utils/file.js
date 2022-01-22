@@ -151,8 +151,10 @@ const file = {
       clog.info('a first parameter is expect, file.get no result')
       return
     }
-    pname = pname.replace(/^(\$home|~)/i, fpath.homedir)
-    pname = pname.replace(/^\$(temp|tmp)/i, fpath.tempdir)
+    if (/^(\$|~)/.test(pname)) {
+      pname = pname.replace(/^(\$home|~)/i, fpath.homedir)
+      pname = pname.replace(/^\$(temp|tmp)/i, fpath.tempdir)
+    }
     let filepath = path.resolve(__dirname, '../', pname)
     if (type === 'path') {
       return filepath
@@ -212,6 +214,14 @@ const file = {
   },
   path(x1, x2){
     if (!(x1 && x2)) return
+    if (/^(\$|~)/.test(x1)) {
+      x1 = x1.replace(/^(\$home|~)/i, fpath.homedir)
+      x1 = x1.replace(/^\$(temp|tmp)/i, fpath.tempdir)
+    }
+    if (/^(\$|~)/.test(x2)) {
+      x2 = x2.replace(/^(\$home|~)/i, fpath.homedir)
+      x2 = x2.replace(/^\$(temp|tmp)/i, fpath.tempdir)
+    }
     const rpath = path.resolve(x1, x2)
     if (fs.existsSync(rpath)) {
       return rpath

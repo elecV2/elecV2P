@@ -265,17 +265,19 @@ function downloadfile(durl, options, cb) {
           total: response.headers['content-length'],
           current: 0,
         }
-        response.data.on('data', async (chunk) => {
+        response.data.on('data', (chunk) => {
           chunkstatus.current += chunk.length
           chunkstatus.step++
           let progress = progressBar({ step: chunkstatus.current, total: chunkstatus.total, name: fname })
           clog.debug(progress)
-          try {
-            await cb({ progress, chunk: chunkstatus.step, name: fname })
-          } catch(e) {
+          new Promise(resolve=>resolve(cb({
+            progress,
+            chunk: chunkstatus.step,
+            name: fname
+          }))).catch(e=>{
             // calllback 错误不影响下载，不 reject
             clog.error(fname, 'download callback error', errStack(e))
-          }
+          })
         })
       }
       if (!path.extname(fname) && !/stream/.test(response.headers['content-type'])) {
@@ -284,20 +286,20 @@ function downloadfile(durl, options, cb) {
       }
       let file = fs.createWriteStream(dest)
       response.data.pipe(file)
-      file.on('finish', async ()=>{
+      file.on('finish', ()=>{
         clog.notify(`success download ${durl} to ${dest}`)
         file.close()
         resolve(dest)
         if (sType(cb) === 'function') {
-          try {
-            await cb({
+          new Promise(resolve=>{
+            resolve(cb({
               progress: progressBar({ step: 2, total: 1, name: fname }),
               finish: `success download ${durl} to ${dest}`,
               name: fname
-            })
-          } catch(e) {
+            }))
+          }).catch(e=>{
             clog.error(fname, 'download callback error', errStack(e))
-          }
+          })
         }
       })
     }).catch(e=>{

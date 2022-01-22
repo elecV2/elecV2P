@@ -47,7 +47,7 @@ wsSer.send.func = (type, target) => {
 
 wsSer.recv.ready = recver => {
   // 客户端 recver 准备接收数据
-  if (wsSer.recverlists.indexOf(recver) < 0) {
+  if (wsSer.recverlists.indexOf(recver) === -1) {
     wsSer.recverlists.push(recver)
   }
 }

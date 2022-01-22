@@ -1,5 +1,6 @@
 /* 一些关于字符操作的基础函数
 ** Author: http://t.me/elecV2
+** Update: https://raw.githubusercontent.com/elecV2/elecV2P/master/utils/string.js
 **/
 
 function sType(obj) {
@@ -325,4 +326,18 @@ function sTypetoExt(ctype) {
   return '';
 }
 
-module.exports = { euid, UUID, iRandom, sJson, sString, strJoin, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, escapeHtml, surlName, progressBar, btoa, atob, sbufBody, sParam, sTypetoExt }
+const crypto = require('crypto')
+
+function sHash(string, algo = 'md5') {
+  const hash = crypto.createHash(algo)
+  hash.update(string)
+  return hash.digest('hex')
+}
+
+function sHmac(string, key = '', algo = 'md5') {
+  const hmac = crypto.createHmac(algo, key)
+  hmac.update(string)
+  return hmac.digest('hex')
+}
+
+module.exports = { euid, UUID, iRandom, sJson, sString, strJoin, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, escapeHtml, surlName, progressBar, btoa, atob, sbufBody, sParam, sTypetoExt, sHash, sHmac }
