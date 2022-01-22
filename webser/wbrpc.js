@@ -1,5 +1,5 @@
 const { exec } = require('../func')
-const { logger, file, sType, sJson, downloadfile, errStack, sseSer } = require('../utils')
+const { logger, file, sType, sJson, downloadfile, errStack, sseSer, sHash } = require('../utils')
 
 const clog = new logger({ head: 'webRPC', level: 'debug', file: 'webRPC.log' })
 
@@ -144,7 +144,7 @@ function eRPC(req, res) {
     break
   case 'download':
     let name = params[2] || surlName(params[0]);
-    let key = params[0] + params[1] + name;
+    let key = sHash(params[0] + params[1] + name);
     if (statusRPC.download.has(key)) {
       return res.json({
         rescode: 1,

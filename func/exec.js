@@ -10,40 +10,78 @@ const CONFIG_exec = {
   maxfdata: 200,                 // 最终返回值，最大保存输出行数
 }
 
+const subprocess = new Map()     // sub process/子进程 列表
+
 /**
  * minishell 执行函数，执行命令及结果通过 websocket 传输
- * @param     {string}    command    exec 命令
+ * @param     {object}    command    exec 命令
  * @return    {none}
  */
 wsSer.recv.shell = command => {
-  if (command === 'cwd') {
+  if (!command?.data) {
+    // 兼容 v3.5.9 之前版本
+    command = {
+      data: command
+    }
+  }
+  command.data = decodeURI(command.data)
+  if (command.type === 'sub') {
+    if (subprocess.has(command.id)) {
+      const subp = subprocess.get(command.id)
+      clog.debug(subp.command, '%', command.data)
+      switch(command.data) {
+      case 'quit':
+      case 'exit':
+        subp.childexec?.stdin.end()
+        break
+      default:
+        subp.childexec?.stdin.write(command.data + '\n')
+      }
+    } else {
+      wsSer.send({ type: 'minishell', data: 'subprocess ' + command.id + ' not exist' })
+      clog.debug('no sub process to deal with', command)
+    }
+    return
+  }
+  if (command.data === 'init') {
+    let initsubp = Object.create(null)
+    subprocess.forEach((sub, id)=>{
+      initsubp[id] = {
+        command: sub.command
+      }
+    })
     wsSer.send({
-      type: 'minishell',
+      type: 'shellinit',
       data: {
-        type: 'cwd',
-        data: CONFIG_exec.shellcwd
+        cwd: CONFIG_exec.shellcwd,
+        subprocess: initsubp
       }
     })
     return
   }
-  command = decodeURI(command)
-  if (/^cd /.test(command)) {
-    let cdd = command.replace('cd ', '')
+  if (command.data === 'cwd') {
+    wsSer.send({
+      type: 'cwd',
+      data: CONFIG_exec.shellcwd
+    })
+    return
+  }
+  if (/^cd /.test(command.data)) {
+    let cdd = command.data.replace('cd ', '')
     let cwd = file.path(CONFIG_exec.shellcwd, cdd)
     if(cwd) {
       CONFIG_exec.shellcwd = cwd
       wsSer.send({
-        type: 'minishell',
-        data: {
-          type: 'cwd',
-          data: CONFIG_exec.shellcwd
-        }
+        type: 'cwd',
+        data: CONFIG_exec.shellcwd
       })
     } else {
       wsSer.send({ type: 'minishell', data: cdd + ' not exist' })
     }
   } else {
-    execFunc(command, {
+    execFunc(command.data, {
+      id: command.id,
+      from: 'minishell',
       cwd: CONFIG_exec.shellcwd,
       cb: data => wsSer.send({ type: 'minishell', data })
     })
@@ -209,6 +247,20 @@ async function execFunc(command, options={}, cb) {
     callback(null, err)
   })
   let childexec = exec(fev.command, fev.options)
+  if (!options.id) {
+    options.id = `${options.from || 'exec'}_${Date.now()}`
+  }
+  subprocess.set(options.id, {
+    command: fev.command,
+    childexec
+  })
+  wsSer.send({
+    type: 'subprocessadd',
+    data: {
+      id: options.id,
+      command: fev.command,
+    }
+  })
 
   execlog.notify('start run command:', fev.command, 'cwd:', options.cwd)
   callback('start run command: ' + fev.command + ' cwd: ' + options.cwd + '\n')
@@ -241,6 +293,13 @@ async function execFunc(command, options={}, cb) {
     }
     execlog.info(fstr)
     callback(options.call ? fdata.join('') : fstr, null, true)
+    if (subprocess.has(options.id)) {
+      subprocess.delete(options.id)
+      wsSer.send({
+        type: 'subprocessexit',
+        data: options.id,
+      })
+    }
   })
 
   if (options.stdin && options.stdin.write !== undefined) {

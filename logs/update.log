@@ -1,6 +1,10 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.5.8)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.5.9)
 
-v3.5.8  2021.01.02
+v3.5.9  2022.01.22
+ • minishell 子进程交互
+ • exec 运行中子进程记录
+
+v3.5.8  2022.01.02
  • TASK 列表关键字搜索过滤
  • 脚本增加 $webhook 函数
  • efss download progress

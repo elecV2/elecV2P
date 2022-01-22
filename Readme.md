@@ -85,7 +85,8 @@ docker run --restart=always \
   -v /elecv2p/efss:/usr/local/app/efss \
   elecv2/elecv2p
 
-# 升级 Docker 镜像。（如果没有使用持久化存储，升级后所有个人数据会丢失，请提前备份）
+# -p/-v 对应环境参数 宿主:容器
+# 升级 Docker 镜像（如果没有使用 -v 持久化存储，容器内数据会丢失，请提前备份）
 docker rm -f elecv2p           # 先删除旧的容器
 docker pull elecv2/elecv2p     # 再拉取新的镜像
 # 再使用之前的 docker run xxxx 命令重新启动一下
@@ -155,7 +156,7 @@ docker logs elecv2p -f
 
 ## 默认端口
 
-- 80：    webUI 后台管理界面。用于添加规则/管理 JS 文件/定时任务/MITM 证书 等
+- 80：    webUI 后台管理界面。用于添加规则/管理脚本/定时任务/MITM 证书 等
 - 8001：  ANYPROXY HTTP代理端口。（*代理端口不是网页，不能通过浏览器直接访问*）
 - 8002：  ANYPROXY 代理请求查看端口
 
@@ -185,10 +186,9 @@ docker logs elecv2p -f
 
 *windows 平台的证书存储位置选择 浏览->受信任的根证书颁发机构*
 
-### 启用自签根证书
+### 使用自签根证书
 
-- 方法一: 打开 webUI->MITM，找到自签根证书管理，上传自签根证书，然后重启 elecV2P
-- 方法二: 将根证书（rootCA.crt/rootCA.key）手动复制到本项目的 **rootCA** 目录，然后启动 elecV2P
+在 webUI->MITM 界面上传自签根证书，然后重启 elecV2P
 
 **注意：使用新的证书后，记得重新下载安装信任证书，并清除由之前根证书签发的域名证书。**
 

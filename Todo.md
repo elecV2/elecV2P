@@ -24,6 +24,12 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [x] minishell 子进程交互
+- [x] minishell cd $home/$temp
+- [x] exec 运行中子进程记录
+- [x] EFSS/favend 设置合并
+- [x] logHead cache
+- [x] string hash/hmac
 - [x] 脚本增加 $webhook 函数
 - [x] TASK 列表关键字搜索过滤
 - [x] efss download progress
