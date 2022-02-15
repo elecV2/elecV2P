@@ -163,9 +163,9 @@ function eAxios(request, proxy=null) {
     request.data = request.body
   }
   // 非 GET 请求 url 参数移动到 body 内
-  if (request.method.toLowerCase() !== 'get' && !request.data && /\?/.test(request.url)) {
-    request.data = request.url.split('?').pop()
-  }
+  // if (request.method.toLowerCase() !== 'get' && !request.data && /\?/.test(request.url)) {
+  //   request.data = request.url.split('?').pop()
+  // }
   if (request.data === undefined || request.data === '') {
     request.data = null
   }
