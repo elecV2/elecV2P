@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const { sJson, UUID } = require('./utils/string')
+const { sJson, UUID, sHash } = require('./utils/string')
 
 const CONFIG_Port = {     // 此处修改对应端口无效
   proxy: 8001,    // anyproxy 代理端口
@@ -40,6 +40,7 @@ if (CONFIG.anyproxy) {
 if (!CONFIG.wbrtoken) {
   CONFIG.wbrtoken = UUID()
 }
+CONFIG.userid  = sHash(CONFIG.wbrtoken)
 CONFIG.version = require('./package.json').version
 CONFIG.vernum  = Number(CONFIG.version.replace(/\.|v/g, ''))
 CONFIG.start   = Date.now()
