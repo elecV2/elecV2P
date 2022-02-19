@@ -312,8 +312,12 @@ const file = {
         clog.info('file aList skip folder', basename)
         return null
       }
-      const rlist = fs.readdirSync(folder)
-      let flist = []
+      let rlist = [], flist = []
+      try {
+        rlist = fs.readdirSync(folder)
+      } catch(e) {
+        clog.error(errStack(e))
+      }
       for (let fo of rlist) {
         if (option.max !== -1 && progress.num >= option.max) {
           break
