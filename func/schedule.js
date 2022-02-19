@@ -24,7 +24,9 @@ module.exports = class {
   start(){
     clog.log("start schedule task:", this.task.name, `${this.repeat}/${this._Task.repeat}, time: ${this.task.time}`)
     this.task.running = true
-    wsSer.send({ type: 'task', data: { tid: this.task.id, op: 'start' }})
+    if (this.task.id) {
+      wsSer.send({ type: 'task', data: { tid: this.task.id, op: 'start' }})
+    }
     if(this._Task.random) {
       let rand = iRandom(Number(this._Task.random))
       this.countdown = Number(this.countdown || this._Task.time) + rand

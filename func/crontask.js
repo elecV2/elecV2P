@@ -9,25 +9,23 @@ module.exports = class {
     this.job = job
   }
 
-  isvalidate(){
-    return cron.validate(this.task.time)
-  }
-
   start(){
     if (this.task) {
       clog.log(`start cron task: ${this.task.name}, time: ${this.task.time}`)
       
-      this.job = cron.schedule(this.task.time, this.job)
+      this.cronjob = cron.schedule(this.task.time, this.job)
       this.task.running = true
-      wsSer.send({ type: 'task', data: { tid: this.task.id, op: 'start' }})
+      if (this.task.id) {
+        wsSer.send({ type: 'task', data: { tid: this.task.id, op: 'start' }})
+      }
     } else {
       clog.error('no taskinfo')
     }
   }
 
   stop(flag = 'stopped'){
-    if (this.job) {
-      this.job.stop()
+    if (this.cronjob) {
+      this.cronjob.stop()
     }
     if (this.task) {
       clog.log(this.task.name, flag)
@@ -39,8 +37,9 @@ module.exports = class {
   }
 
   delete(flag = 'delete'){
-    if (this.job) {
-      this.job.destroy()
+    if (this.cronjob) {
+      this.cronjob.destroy?.()
+      this.cronjob = null
     }
     if (this.task) {
       if (flag !== 'stop') {

@@ -1,11 +1,11 @@
 const nodecron = require('node-cron')
 
-const cron = require('./crontask.js')
+const cron = require('./crontask')
 const schedule = require('./schedule')
 const { exec } = require('./exec')
 const { runJSFile } = require('../script/runJSFile')
 
-const { logger, feedAddItem, sType, sJson, list, file, wsSer, euid } = require('../utils')
+const { logger, feedAddItem, sType, sJson, list, file, wsSer, euid, eAxios } = require('../utils')
 const clog = new logger({ head: 'funcTask', cb: wsSer.send.func('tasklog'), file: 'funcTask' })
 
 class Task {
@@ -58,27 +58,6 @@ class Task {
 const TASKS_INFO = {}             // 任务信息列表
 const TASKS_WORKER = {}           // 执行任务列表
 
-const taskInit = function() {
-  // 初始化任务列表
-  const tlist = sJson(list.get('task.list'))
-  if (tlist) {
-    Object.assign(TASKS_INFO, tlist)
-  }
-
-  if (Object.keys(TASKS_INFO).length) {
-    clog.info('retrieve task from Lists/task.list')
-  }
-  for(let tid in TASKS_INFO) {
-    if (TASKS_INFO[tid].type === 'cron' || TASKS_INFO[tid].type === 'schedule') {
-      if (TASKS_INFO[tid].running) {
-        TASKS_WORKER[tid] = new Task(TASKS_INFO[tid])
-        TASKS_WORKER[tid].start()
-      }
-      TASKS_INFO[tid].id = tid
-    }
-  }
-}();
-
 function bIsValid(info) {
   // 任务合法性检测
   if (sType(info) !== 'object') {
@@ -97,8 +76,8 @@ function bIsValid(info) {
     clog.error(info.time, 'wrong cron time format')
     return false
   }
-  let ftime = info.time.split(' ')
-  if (info.type === 'schedule' && ftime.filter(t=>/^\d+$/.test(t)).length !== ftime.length ) {
+  let ftime = info.time?.split(' ')
+  if (info.type === 'schedule' && ftime.filter(t=>/^\d+$/.test(t)).length !== ftime.length) {
     clog.error(info.time, 'wrong schedule time format')
     return false
   }
@@ -186,7 +165,7 @@ const taskMan = {
 
       let tid = taskinfo.id;         // 带 id 添加的任务将无视同名任务更新规则
       if (!tid && options.type && tname[taskinfo.name]) {
-        clog.info(taskinfo.name, 'exist, new task add type', options.type)
+        clog.info(taskinfo.name, 'exist, new task add type:', options.type)
         switch(options.type) {
         case 'skip':
           message = 'skip add task ' + taskinfo.name
@@ -359,6 +338,39 @@ const taskMan = {
     resmsg.message = resmsg.message.trim()
     return resmsg
   },
+  async update(tid, type){
+    if (TASKS_INFO[tid]?.type !== 'sub') {
+      return {
+        rescode: -1,
+        message: `${tid} is not a sub type task`
+      }
+    }
+    let taskinfo = null, errmsg = ''
+    try {
+      let res = await eAxios(TASKS_INFO[tid].job.target)
+      if (res.data?.list.length) {
+        taskinfo = res.data.list
+      } else {
+        errmsg = TASKS_INFO[tid].job.target + ' dont contain any task'
+        clog.error(errmsg)
+      }
+    } catch(e) {
+      errmsg = `task sub ${TASKS_INFO[tid].name} update fail`
+      clog.error(errmsg, e)
+    }
+    if (taskinfo) {
+      if (!type) type = TASKS_INFO[tid].job.type;
+      taskinfo.forEach(s=>s.belong = tid)
+      clog.notify('start update task sub:', TASKS_INFO[tid].name, 'same name task update type:', type)
+      let resmsg = this.add(taskinfo, { type })
+      wsSer.send({ type: 'task', data: { op: 'init' }})
+      return resmsg
+    }
+    return {
+      rescode: -1,
+      message: errmsg,
+    }
+  },
   async test(taskinfo){
     if (!bIsValid(taskinfo)) {
       return {
@@ -417,6 +429,42 @@ const taskMan = {
     }
     return status
   },
+  startsub(tid){
+    // start sub task cron/schedule
+    if (TASKS_INFO[tid]?.type !== 'sub') {
+      clog.error(TASKS_INFO[tid]?.name, 'is not a sub')
+      return
+    }
+    if (TASKS_WORKER[tid]) {
+      clog.info('delete old sub task worker of', TASKS_INFO[tid]?.name)
+      TASKS_WORKER[tid].stop('restart')
+      TASKS_WORKER[tid].delete('restart')
+      TASKS_WORKER[tid] = null
+    }
+    switch (TASKS_INFO[tid].update_type) {
+    case 'cron':
+      if (nodecron.validate(TASKS_INFO[tid].time)) {
+        clog.notify('set autoupdate for', TASKS_INFO[tid].name, 'cron time:', TASKS_INFO[tid].time)
+        TASKS_WORKER[tid] = new cron(TASKS_INFO[tid], ()=>this.update(tid))
+        TASKS_WORKER[tid].start()
+      } else {
+        clog.error('wrong cron time:', TASKS_INFO[tid].time, 'for', TASKS_INFO[tid].name)
+      }
+      break
+    case 'schedule':
+      let ftime = TASKS_INFO[tid].time?.split(' ')
+      if (ftime && ftime.filter(t=>/^\d+$/.test(t)).length === ftime.length) {
+        clog.notify('set autoupdate for', TASKS_INFO[tid].name, 'schedule time:', TASKS_INFO[tid].time)
+        TASKS_WORKER[tid] = new schedule(TASKS_INFO[tid], ()=>this.update(tid))
+        TASKS_WORKER[tid].start()
+      } else {
+        clog.error('wrong schedule time:', TASKS_INFO[tid].time, 'for', TASKS_INFO[tid].name)
+      }
+      break
+    default:
+      clog.info('no autoupdate for sub task:', TASKS_INFO[tid].name)
+    }
+  },
   save(taskobj){
     if (taskobj) {
       // 保存 taskobj 到 task.list 待优化
@@ -432,6 +480,9 @@ const taskMan = {
         if (JSON.stringify(taskobj[tid]) !== JSON.stringify(TASKS_INFO[tid])) {
           switch (taskobj[tid].type) {
           case 'sub':
+            TASKS_INFO[tid] = taskobj[tid]
+            this.startsub(tid)
+            break
           case 'group':
             TASKS_INFO[tid] = taskobj[tid]
             break
@@ -490,6 +541,33 @@ const taskMan = {
     }
   }
 }
+
+const taskInit = function() {
+  // 初始化任务列表
+  const tlist = sJson(list.get('task.list'))
+  if (tlist) {
+    Object.assign(TASKS_INFO, tlist)
+  }
+
+  if (Object.keys(TASKS_INFO).length) {
+    clog.info('retrieve task from Lists/task.list')
+  }
+  for(let tid in TASKS_INFO) {
+    switch (TASKS_INFO[tid].type ) {
+    case 'cron':
+    case 'schedule':
+      if (TASKS_INFO[tid].running) {
+        TASKS_WORKER[tid] = new Task(TASKS_INFO[tid])
+        TASKS_WORKER[tid].start()
+      }
+      TASKS_INFO[tid].id = tid
+      break
+    case 'sub':
+      taskMan.startsub(tid)
+      break
+    }
+  }
+}();
 
 module.exports = {
   taskMa: new Proxy(taskMan, {
