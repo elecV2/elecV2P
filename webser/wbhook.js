@@ -38,23 +38,24 @@ function handler(req, res){
     let fn = rbody.fn || ''
     if (!rbody.rawcode && !fn) {
       clog.info('can\'t find any javascript code to run')
-      return res.status(400).json({
-        rescode: 400,
+      return res.json({
+        rescode: -1,
         message: 'can\'t find any javascript code to run'
       })
     } else {
       const addContext = {
         from: 'webhook'
       }
+      fn = decodeURI(fn)
       let showfn = ''
       if (rbody.rawcode) {
         addContext.type = 'rawcode'
         fn = rbody.rawcode
         showfn = 'rawcode.js'
       } else if (/^https?:\/\/\S{4,}/.test(fn)) {
-        showfn = surlName(fn)
+        showfn = surlName(fn.split(' ')[0])
       } else {
-        showfn = fn
+        showfn = fn.split(' ')[0]
       }
       if (rbody.rename) {
         if (!/\.js$/i.test(rbody.rename)) {
