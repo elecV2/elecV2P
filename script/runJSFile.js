@@ -276,7 +276,11 @@ function runJS(filename, jscode, addContext={}) {
     compatible.require = true
   }
   if (compatible.nodejs || compatible.require) {
-    CONTEXT.final.require = (request)=>require(require.resolve(request, { paths: [CONTEXT.final.__dirname] }))
+    CONTEXT.final.require = (request)=>{
+      request = require.resolve(request, { paths: [CONTEXT.final.__dirname] })
+      fconsole.notify('require external resource:', request)
+      return require(request)
+    }
     CONTEXT.final.require.resolve = (request)=>require.resolve(request, { paths: [CONTEXT.final.__dirname] })
     CONTEXT.final.require.clear = (request)=>delete require.cache[require.resolve(request, { paths: [CONTEXT.final.__dirname] })]
     CONTEXT.final.require.cache = require.cache
@@ -334,7 +338,7 @@ function runJS(filename, jscode, addContext={}) {
           url: 'http://localhost:' + CONFIG_Port.webst + '/webhook',
           method: 'post',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json; charset=UTF-8'
           },
           data: payload
         }, false);
