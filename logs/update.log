@@ -1,4 +1,9 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.5.9)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.6.0)
+
+v3.6.0  2022.02.19
+ • 订阅任务定时自动更新
+ • 左侧导航栏自定义显示
+ • 脚本引用外部资源提醒
 
 v3.5.9  2022.01.22
  • minishell 子进程交互

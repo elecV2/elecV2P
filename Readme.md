@@ -14,7 +14,7 @@ elecV2P - customize personal network.
 
 ## 安装/INSTALL
 
-***程序开放权限极大，建议局域网使用。公网部署，风险自负***
+***程序开放权限极大，建议局域网使用。公网部署（务必参考 [Advanced.md](https://github.com/elecV2/elecV2P-dei/blob/master/docs/Advanced.md)），风险自负***
 
 ### 方法一：直接 NODEJS 运行
 
@@ -29,7 +29,7 @@ yarn
 
 # elecV2P 默认以 pm2 的方式启动，需要先安装好 pm2
 # pm2 安装方式:
-# - 添加目录 elecV2P所在目录/node_modules/.bin 到系统环境变量 PATH 中
+# - 添加目录 elecV2P 所在目录/node_modules/.bin 到系统环境变量 PATH 中
 # - 或者直接执行 yarn global add pm2
 # 然后执行命令
 yarn start
@@ -42,10 +42,12 @@ node index.js
 # 调试模式(webUI 端口为 12521，正常模式下端口为 80)
 yarn dev
 
-# 升级（【推荐使用自带的 softupdate.js 进行软更新升级】，或者手动执行以下步骤
-# - 先备份好个人数据，比如 根证书，以及 script/JSFile、Store、Lists、Shell 等文件夹，和 efss 文件夹等
-# - 然后再从 Github 拉取最新的代码进行覆盖升级 git pull
-# - 最后再把备份好的文件复制还原到之前的位置
+# 升级（【推荐使用自带的 softupdate.js 进行软更新升级】
+# 或者手动执行以下步骤
+# - 先备份好个人数据，比如 根证书，以及 efss、script/JSFile、Store、Lists、Shell 等文件夹
+# - （推荐在 webUI/efss 界面，右键对应文件夹，然后 zip 打包下载。）
+# - 然后在项目目录下执行命令 git pull，拉取最新的代码进行覆盖升级
+# - 最后再把备份好的文件上传/复制还原到之前的位置
 ```
 
 **【推荐使用的软更新升级文件 [softupdate.js](https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js) 】**
@@ -56,6 +58,7 @@ pm2 stop elecV2P  # 停止 elecV2P
 pm2 stop all      # 停止所有程序
 
 pm2 restart elecV2P   # 重启 elecV2P
+pm2 restart 0
 
 pm2 ls      # 查看运行状态
 pm2 logs    # 查看运行日志
@@ -85,14 +88,14 @@ docker run --restart=always \
   -v /elecv2p/efss:/usr/local/app/efss \
   elecv2/elecv2p
 
-# -p/-v 对应环境参数 宿主:容器
+# -p/-v 对应环境参数 宿主参数:容器内参数
 # 升级 Docker 镜像（如果没有使用 -v 持久化存储，容器内数据会丢失，请提前备份）
 docker rm -f elecv2p           # 先删除旧的容器
 docker pull elecv2/elecv2p     # 再拉取新的镜像
 # 再使用之前的 docker run xxxx 命令重新启动一下
 ```
 
-- *ARM32 平台如果出错，参考 [issues #78](https://github.com/elecV2/elecV2P/issues/78)*
+- ARM32 平台如果出错，参考 [issues #78](https://github.com/elecV2/elecV2P/issues/78)
 
 ### 方法三：DOCKER-COMPOSE （推荐）
 
@@ -131,7 +134,7 @@ services:
       - "/elecv2p/efss:/usr/local/app/efss"
 ```
 
-- *具体使用的映射端口和 volumes 目录，根据个人情况进行调整*
+- 具体使用的映射端口和 volumes 目录，根据个人情况进行调整
 
 文件保存后，在 docker-compose.yaml 同目录下执行以下任一命令
 ``` sh
@@ -142,8 +145,8 @@ docker-compose up -d
 docker-compose pull elecv2p && docker-compose up -d
 ```
 
-- *如果在某些设备上无法启动，尝试把文件开头的 version: '3.7' 更改为 version: '3.3'*
-- *ARM32 平台如果出错，参考 [issues #78](https://github.com/elecV2/elecV2P/issues/78)*
+- 如果在某些设备上无法启动，尝试把文件开头的 version: '3.7' 更改为 version: '3.3'
+- ARM32 平台如果出错，参考 [issues #78](https://github.com/elecV2/elecV2P/issues/78)
 
 其他 docker 相关指令
 ``` sh
@@ -258,9 +261,10 @@ IFTTT/BARK/自定义通知等相关设置参考: [07-feed&notify](https://github
 
 说明文档及一些例程: [https://github.com/elecV2/elecV2P-dei](https://github.com/elecV2/elecV2P-dei)
 
-TG 交流群: https://t.me/elecV2G (主要为方便用户使用交流，开发者24小时不在线，也不负责解答任何问题。)
+如果遇到问题欢迎 [open a issue](https://github.com/elecV2/elecV2P/issues)。尽量说明使用平台，版本，以及附上相关的错误日志（提供的信息越详细，越有助于解决问题）。
 
-如果遇到问题或 Bug 欢迎 [open a issue](https://github.com/elecV2/elecV2P/issues)。尽量说明使用平台，版本，以及附上相关的错误日志（提供的信息越详细，越有助于解决问题）。
+TG 频道: https://t.me/elecV2
+TG 交流群: https://t.me/elecV2G
 
 ## 更新日志
 
