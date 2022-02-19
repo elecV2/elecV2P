@@ -27,7 +27,8 @@ module.exports = app => {
             rule: CONFIG_RULE.ruleenable,
             rewrite: CONFIG_RULE.rewriteenable,
             mitmhost: CONFIG_RULE.mitmhostenable
-          }
+          },
+          menunav: CONFIG.webUI?.nav,
         })
         break
       case 'rules':

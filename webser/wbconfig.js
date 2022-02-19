@@ -1,4 +1,4 @@
-const { logger, setGlog, CONFIG_FEED, CONFIG_Axios, axProxy, list, file, sString } = require('../utils')
+const { logger, setGlog, CONFIG_FEED, CONFIG_Axios, axProxy, list, file, sString, sHash } = require('../utils')
 const clog = new logger({ head: 'wbconfig' })
 
 const { CONFIG } = require('../config')
@@ -16,6 +16,7 @@ module.exports = app => {
           CONFIG_FEED, CONFIG_RUNJS, CONFIG_Axios,
           uagent: CONFIG_RULE.uagent,
           wbrtoken: CONFIG.wbrtoken,
+          userid: CONFIG.userid,
           minishell: CONFIG.minishell || false,
           security: CONFIG.SECURITY || {},
           init: CONFIG.init,
@@ -96,10 +97,12 @@ module.exports = app => {
       case 'wbrtoken':
         if (req.body.data && req.body.data.length >= 6) {
           CONFIG.wbrtoken = req.body.data
+          CONFIG.userid  = sHash(CONFIG.wbrtoken)
           clog.notify('webhook token success changed')
           res.json({
             rescode: 0,
-            message: 'success reset webhook token'
+            message: 'success reset webhook token',
+            resdata: { userid: CONFIG.userid },
           })
         } else {
           clog.error('webhook token', req.body.data, 'is illegal')
@@ -237,12 +240,29 @@ module.exports = app => {
           CONFIG.webUI = Object.assign(CONFIG.webUI || {}, req.body.data)
           res.json({
             rescode: 0,
-            message: 'webUI config success updated'
+            message: 'webUI port config success updated'
           })
         } catch(e) {
           res.json({
             rescode: -1,
-            message: 'fail to change webUI config' + e.message
+            message: 'fail to change webUI port config' + e.message
+          })
+        }
+        break
+      case 'menunav':
+        try {
+          if (!CONFIG.webUI) {
+            CONFIG.webUI = Object.create(null)
+          }
+          CONFIG.webUI.nav = Object.assign(CONFIG.webUI.nav || {}, req.body.data)
+          res.json({
+            rescode: 0,
+            message: 'webUI menunav config success updated'
+          })
+        } catch(e) {
+          res.json({
+            rescode: -1,
+            message: 'fail to change webUI menunav config' + e.message
           })
         }
         break
@@ -272,7 +292,7 @@ module.exports = app => {
     }
     res.json({
       rescode: -1,
-      message: 'fail to import config.json'
+      message: 'fail to import config.json, a file content is expect'
     })
   })
 }

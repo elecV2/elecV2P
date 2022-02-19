@@ -163,10 +163,15 @@ module.exports = app => {
   app.get('/sefss', (req, res)=>{
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'get efss resource')
 
-    let resdata = {}
+    let resdata = {
+      rescode: 0
+    }
     if (req.query.type === 'list' || req.query.type !== 'config') {
-      const efssF = file.get(CONFIG.efss.directory, 'path')
-      resdata.list = CONFIG.efss.enable ? file.aList(efssF, { max: CONFIG.efss.max, dot: CONFIG.efss.dotshow.enable, skip: CONFIG.efss.skip }) : {}
+      resdata.list = CONFIG.efss.enable ? file.aList(file.get(CONFIG.efss.directory, 'path'), {
+        max: CONFIG.efss.max,
+        dot: CONFIG.efss.dotshow.enable,
+        skip: CONFIG.efss.skip
+      }) : {}
     }
     if (req.query.type === 'config' || req.query.type !== 'list') {
       resdata.config = CONFIG.efss
