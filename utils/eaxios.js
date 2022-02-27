@@ -84,7 +84,7 @@ const eData = {
   http: axProxy.http(),
   https: axProxy.https(),
   update: {
-    gap: 1000*60*30,        // 更新检查间隔时间，单位 ms
+    gap: 1000*60*30,        // 更新检查最少间隔时间，单位 ms。默认 30 分钟
   }
 }
 

@@ -136,7 +136,7 @@ const list = {
         }
       }
       fs.writeFileSync(path.join(fpath.list, name), sType(cont) === 'object' ? JSON.stringify(cont, null, 2) : sString(cont), 'utf8')
-      clog.info(name, 'updated')
+      clog.info('elecV2P', name, 'updated')
       return true
     } catch(e) {
       clog.error('put list file error', name, e.stack)
@@ -247,7 +247,7 @@ const file = {
     }
     return 0
   },
-  zip(filelist, targetfile){
+  zip(filelist, targetfile = 'buffer'){
     if (sType(filelist) !== 'array') {
       clog.error('a array parameter is expect when compress zip files')
       return false
@@ -270,8 +270,8 @@ const file = {
         clog.error(file, 'not exist, skip compress')
       }
     })
-    if (!targetfile) {
-      targetfile = filelist[0] + '.etc.zip'
+    if (targetfile === 'buffer') {
+      return zip.toBuffer()
     } else if (!/\.zip$/.test(targetfile)) {
       targetfile = targetfile + '.zip'
     }
