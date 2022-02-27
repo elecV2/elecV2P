@@ -9,9 +9,9 @@ const { logger, feedAddItem, sType, sJson, list, file, wsSer, euid, eAxios } = r
 const clog = new logger({ head: 'funcTask', cb: wsSer.send.func('tasklog'), file: 'funcTask' })
 
 class Task {
-  constructor(info){
+  constructor(info, job=null){
     this.info = info
-    this.job = jobFunc(info.job, { taskname: info.name, taskid: info.id })
+    this.job = job || jobFunc(info.job, { taskname: info.name, taskid: info.id })
   }
 
   stat(){

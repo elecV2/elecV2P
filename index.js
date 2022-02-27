@@ -62,7 +62,7 @@ wsSer.recv.eproxy = (op)=>{
 }
 
 // checkupdate
-if (CONFIG.init && CONFIG.init.checkupdate === false) {
+if (CONFIG.init?.checkupdate === false) {
   delete CONFIG.newversion
 } else {
   checkupdate().then(body=>{

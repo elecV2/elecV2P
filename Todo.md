@@ -3,15 +3,17 @@
 <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
-- 主要功能基本完成，告一段落
-- 后面偶尔修修 Bug，欢迎提交 Issue
-- Project 的坑有时间再填
-- Thanks for using.
+- [ ] $store.put/get 可定义为私有
+- [ ] task bIsValid 函数优化
+- [ ] webUI 主题颜色自定义
+- [ ] $fend cache body.key
+- [ ] efh 自定义运行前端/后台部分
 </pre>
 </div>
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- script_store.efh 应用中心
 - 规则及定时任务的移动和排序
 - 多 token 授权及对应权限管理
 - 使用脚本管理规则($rewrite/$rule
@@ -24,6 +26,9 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [x] EFSS 编辑器 复制粘贴
+- [x] REWRITE 订阅添加优化
+- [x] 导航根据默认语言显示
 - [x] 订阅任务定时自动更新
 - [x] 左侧导航栏自定义显示
 - [x] 脚本运行时引用外部资源提醒
