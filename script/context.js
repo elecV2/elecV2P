@@ -85,6 +85,7 @@ class contextBase {
       return store.get(key, type)
     },
     put: (value, key, options) => {
+      // this 指向当前 class，不要修改此箭头函数的形式
       if (sType(options) === 'object') {
         if (!options.belong) {
           options.belong = this.__name
@@ -98,6 +99,7 @@ class contextBase {
       return store.put(value, key, options)
     },
     set(key, value, options){
+      // this 指向当前 $store
       return this.put(value, key, options)
     }
   }

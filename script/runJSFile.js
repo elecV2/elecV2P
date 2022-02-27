@@ -277,8 +277,8 @@ function runJS(filename, jscode, addContext={}) {
   }
   if (compatible.nodejs || compatible.require) {
     CONTEXT.final.require = (request)=>{
-      request = require.resolve(request, { paths: [CONTEXT.final.__dirname] })
       fconsole.notify('require external resource:', request)
+      request = require.resolve(request, { paths: [CONTEXT.final.__dirname] })
       return require(request)
     }
     CONTEXT.final.require.resolve = (request)=>require.resolve(request, { paths: [CONTEXT.final.__dirname] })
