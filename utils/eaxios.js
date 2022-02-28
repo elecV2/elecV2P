@@ -14,12 +14,12 @@ const { CONFIG, CONFIG_Port } = require('../config')
 const { list, file } = require('./file')
 const uagent = sJson(list.get('useragent.list')) || {
   "iPhone": {
-    "name": "iPhone 6s",
-    "header": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1"
+    "name": "iPhone Safari",
+    "header": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.3 Mobile/15E148 Safari/604.1"
   },
   "chrome": {
-    "name": "chrome85 win10",
-    "header": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36"
+    "name": "chrome win10x64",
+    "header": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.82 Safari/537.36"
   }
 }
 
@@ -89,7 +89,7 @@ const eData = {
 }
 
 function getUagent() {
-  return uagent[CONFIG_Axios.uagent] ? uagent[CONFIG_Axios.uagent].header : null
+  return uagent[CONFIG_Axios.uagent]?.header || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.82 Safari/537.36'
 }
 
 function isBlock(request) {
