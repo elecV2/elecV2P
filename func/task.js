@@ -68,17 +68,17 @@ function bIsValid(info) {
     clog.error('no task name')
     return false
   }
-  if (!/cron|schedule/.test(info.type)) {
+  if (!/cron|schedule|sub/.test(info.type)) {
     clog.error(info.name, 'unknow task type', info.type)
     return false
   }
-  if (info.type === 'cron' && !nodecron.validate(info.time)) {
-    clog.error(info.time, 'wrong cron time format')
+  if ((info.update_type || info.type) === 'cron' && !nodecron.validate(info.time)) {
+    clog.error(info.name, info.type, 'wrong cron time format:', info.time)
     return false
   }
   let ftime = info.time?.split(' ')
-  if (info.type === 'schedule' && ftime.filter(t=>/^\d+$/.test(t)).length !== ftime.length) {
-    clog.error(info.time, 'wrong schedule time format')
+  if ((info.update_type || info.type) === 'schedule' && ftime.filter(t=>/^\d+$/.test(t)).length !== ftime.length) {
+    clog.error(info.name, info.type, 'wrong schedule time format:', info.time)
     return false
   }
   if (!(info.job && info.job.type && info.job.target)) {
@@ -443,22 +443,17 @@ const taskMan = {
     }
     switch (TASKS_INFO[tid].update_type) {
     case 'cron':
-      if (nodecron.validate(TASKS_INFO[tid].time)) {
+      if (bIsValid(TASKS_INFO[tid])) {
         clog.notify('set autoupdate for', TASKS_INFO[tid].name, 'cron time:', TASKS_INFO[tid].time)
         TASKS_WORKER[tid] = new cron(TASKS_INFO[tid], ()=>this.update(tid))
         TASKS_WORKER[tid].start()
-      } else {
-        clog.error('wrong cron time:', TASKS_INFO[tid].time, 'for', TASKS_INFO[tid].name)
       }
       break
     case 'schedule':
-      let ftime = TASKS_INFO[tid].time?.split(' ')
-      if (ftime && ftime.filter(t=>/^\d+$/.test(t)).length === ftime.length) {
+      if (bIsValid(TASKS_INFO[tid])) {
         clog.notify('set autoupdate for', TASKS_INFO[tid].name, 'schedule time:', TASKS_INFO[tid].time)
         TASKS_WORKER[tid] = new schedule(TASKS_INFO[tid], ()=>this.update(tid))
         TASKS_WORKER[tid].start()
-      } else {
-        clog.error('wrong schedule time:', TASKS_INFO[tid].time, 'for', TASKS_INFO[tid].name)
       }
       break
     default:
