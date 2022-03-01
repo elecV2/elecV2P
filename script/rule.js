@@ -50,7 +50,7 @@ function setRewriteRule(list = [], rewritereq = [], rewriteres = []) {
 const CONFIG_RULE = (()=>{
   function getUserAgent() {
     return {
-      uagent: sJson(list.get('useragent.list'), true)
+      uagent: list.get('useragent.list')
     }
   }
 

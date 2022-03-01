@@ -34,7 +34,10 @@ if (!fs.existsSync(fpath.store)) {
 }
 
 const list = {
-  get(name, type){
+  get(name, type = ''){
+    // 待优化：
+    // - 移除对旧 .ini/.toml 类似格式的支持
+    // - 优化返回结果
     let listpath = path.join(fpath.list, name)
     if (type === 'path') {
       return listpath
@@ -73,35 +76,54 @@ const list = {
           }
         }
         break
+      case 'useragent.list':
+        if (Object.keys(listobj).length !== 0) {
+          return listobj
+        }
+        return {
+          "iPhone": {
+            "name": "iPhone Safari",
+            "header": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.3 Mobile/15E148 Safari/604.1"
+          },
+          "chrome": {
+            "name": "chrome win10x64",
+            "header": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.82 Safari/537.36"
+          }
+        }
+        break
+      case 'task.list':
+        return listobj || Object.create(null)
       default:
         return liststr
       }
     }
     clog.error('no list', name)
-    let liststr = '{}'
+    let listobj = Object.create(null)
     switch (name) {
     case 'useragent.list':
-      liststr = `{
-  "iPhone": {
-    "name": "iPhone Safari",
-    "header": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.3 Mobile/15E148 Safari/604.1"
-  },
-  "chrome": {
-    "name": "chrome win10x64",
-    "header": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.82 Safari/537.36"
-  }
-}`
-// no break to make make
+      listobj = {
+        "iPhone": {
+          "name": "iPhone Safari",
+          "header": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.3 Mobile/15E148 Safari/604.1"
+        },
+        "chrome": {
+          "name": "chrome win10x64",
+          "header": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.82 Safari/537.36"
+        }
+      }
+    // no break to make make
     case 'default.list':
     case 'mitmhost.list':
     case 'rewrite.list':
     case 'task.list':
-      clog.info('make new file', name);
-      fs.writeFile(listpath, liststr, 'utf8', (err)=>{
+      clog.info('make new file:', name)
+      fs.writeFile(listpath, JSON.stringify(listobj, null, 2), 'utf8', (err)=>{
         if (err) {
           clog.error(err);
         }
       });
+      return listobj
+    // 不处理其他文件，比如： filter.list, config.json
     }
     return ''
   },

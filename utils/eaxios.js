@@ -12,7 +12,7 @@ const { sJson, sType, errStack, surlName, progressBar, sTypetoExt } = require('.
 const { CONFIG, CONFIG_Port } = require('../config')
 
 const { list, file } = require('./file')
-const uagent = sJson(list.get('useragent.list'), true)
+const uagent = list.get('useragent.list')
 
 const CONFIG_Axios = {
   proxy: {

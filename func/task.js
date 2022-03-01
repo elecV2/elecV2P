@@ -544,7 +544,7 @@ const taskMan = {
 
 const taskInit = function() {
   // 初始化任务列表
-  const tlist = sJson(list.get('task.list'))
+  const tlist = list.get('task.list')
   if (tlist) {
     Object.assign(TASKS_INFO, tlist)
   }

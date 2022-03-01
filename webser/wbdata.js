@@ -39,7 +39,8 @@ module.exports = app => {
         })
         break
       case 'rewritelists':
-        res.json(list.get('rewrite.list') || { rewrite: { list: [] } })
+        let wlist = list.get('rewrite.list')
+        res.json(wlist?.rewrite?.list ? wlist : { rewrite: { list: [] } })
         break
       case 'mitmhost':
         let mlist = list.get('mitmhost.list')
