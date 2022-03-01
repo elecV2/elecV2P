@@ -78,14 +78,26 @@ const list = {
       }
     }
     clog.error('no list', name)
+    let liststr = '{}'
     switch (name) {
+    case 'useragent.list':
+      liststr = `{
+  "iPhone": {
+    "name": "iPhone Safari",
+    "header": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.3 Mobile/15E148 Safari/604.1"
+  },
+  "chrome": {
+    "name": "chrome win10x64",
+    "header": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.82 Safari/537.36"
+  }
+}`
+// no break to make make
     case 'default.list':
     case 'mitmhost.list':
     case 'rewrite.list':
     case 'task.list':
-    case 'useragent.list':
       clog.info('make new file', name);
-      fs.writeFile(listpath, '{}', 'utf8', (err)=>{
+      fs.writeFile(listpath, liststr, 'utf8', (err)=>{
         if (err) {
           clog.error(err);
         }

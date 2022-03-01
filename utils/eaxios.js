@@ -12,16 +12,7 @@ const { sJson, sType, errStack, surlName, progressBar, sTypetoExt } = require('.
 const { CONFIG, CONFIG_Port } = require('../config')
 
 const { list, file } = require('./file')
-const uagent = sJson(list.get('useragent.list')) || {
-  "iPhone": {
-    "name": "iPhone Safari",
-    "header": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_3_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.3 Mobile/15E148 Safari/604.1"
-  },
-  "chrome": {
-    "name": "chrome win10x64",
-    "header": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.82 Safari/537.36"
-  }
-}
+const uagent = sJson(list.get('useragent.list'), true)
 
 const CONFIG_Axios = {
   proxy: {

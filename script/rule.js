@@ -49,18 +49,8 @@ function setRewriteRule(list = [], rewritereq = [], rewriteres = []) {
 
 const CONFIG_RULE = (()=>{
   function getUserAgent() {
-    let ustr = list.get('useragent.list')
     return {
-      uagent: sJson(ustr) || {
-        "iPhone": {
-          "name": "iPhone 6s",
-          "header": "Mozilla/5.0 (iPhone; CPU iPhone OS 11_0 like Mac OS X) AppleWebKit/604.1.38 (KHTML, like Gecko) Version/11.0 Mobile/15A372 Safari/604.1"
-        },
-        "chrome": {
-          "name": "chrome85 win10",
-          "header": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36"
-        }
-      }
+      uagent: sJson(list.get('useragent.list'), true)
     }
   }
 
