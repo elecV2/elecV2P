@@ -1,12 +1,13 @@
 // 清空 elecV2P 所有日志文件，删除部分缓存及释放一些内存
 // 定时任务: 59 23 * * * https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/deletelog.js
-// 最近更新: 2021-09-13
+// 最近更新: 2022-03-01
 
 const CONFIG = {
-  clearlogfile: true,              // 是否清空 logs 目录下的所有日志文件
-  clearanyproxycache: true,        // 是否删除由 ANYPROXY 代理产生的缓存文件
-  flushpm2logs: true,              // 是否清空由 pm2 运行产生的日志文件
-  doneunfinish: false,             // 强制 resolve 尚未结束的脚本（测试，更多说明看下面相关函数中的注释
+  clearlogfile: true,         // 是否清空 logs 目录下的所有日志文件
+  anyproxycache: true,        // 是否删除由 ANYPROXY 代理产生的缓存文件
+  flushpm2logs: true,         // 是否清空由 pm2 运行产生的日志文件
+  doneunfinish: true,         // 强制 resolve 尚未结束的脚本
+  favendcache: true,          // 删除 efh 文件运行产生的缓存
 }
 
 if (CONFIG.clearlogfile !== false) {
@@ -22,7 +23,7 @@ if (CONFIG.clearlogfile !== false) {
     }
   })
 }
-if (CONFIG.clearanyproxycache) {
+if (CONFIG.anyproxycache) {
   cacheClear()
 }
 if (CONFIG.flushpm2logs) {
@@ -30,6 +31,9 @@ if (CONFIG.flushpm2logs) {
 }
 if (CONFIG.doneunfinish) {
   doneunfinish()
+}
+if (CONFIG.favendcache && typeof $fend !== 'undefined') {
+  $fend.clear()
 }
 
 function cacheClear() {
@@ -49,7 +53,6 @@ function cacheClear() {
 
 function doneunfinish() {
   // resolve 还在运行中但并没有 $done 的脚本
-  // 实验测试阶段，有效性待验证
   // 并不结束脚本，只是强制让脚本 resolve/$done
   // 当没有结束的脚本较多时，可释放出部分占用的内存
   let vmnames = $vmEvent.eventNames()
