@@ -4,10 +4,9 @@
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
 - [ ] $store.put/get 可定义为私有
-- [ ] task bIsValid 函数优化
 - [ ] webUI 主题颜色自定义
 - [ ] $fend cache body.key
-- [ ] efh 自定义运行前端/后台部分
+- [ ] websocket evui 日志界面
 </pre>
 </div>
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
@@ -26,6 +25,8 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [x] efh 自定义运行前端/后台部分
+- [x] task bIsValid 函数优化
 - [x] EFSS 编辑器 复制粘贴
 - [x] REWRITE 订阅添加优化
 - [x] 导航根据默认语言显示

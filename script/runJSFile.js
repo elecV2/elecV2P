@@ -463,7 +463,7 @@ async function runJSFile(filename, addContext={}) {
     // 直接运行 efh 文件初版。本地/远程/rawcode 命名
     let efhname = addContext.rename || addContext.filename || filename;
     let efhc = await efhParse(filename, { type: addContext.type, name: addContext.rename || addContext.filename });
-    if (efhc.script && addContext.$request?.method === 'POST') {
+    if (addContext.env.runon === 'backend' || (efhc.script && addContext.$request?.method === 'POST')) {
       runclog.debug('run', efhname, 'backend code from', addContext.from);
       filename = efhc.script;
       addContext.type = efhc.type;
