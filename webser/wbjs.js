@@ -76,14 +76,27 @@ module.exports = app => {
     let jsname = req.body.jsname
     let jscontent = req.body.jscontent
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'post', jsname, req.body.type || 'to save')
-    if (!(jsname && jscontent)) {
+    if (!jsname) {
       return res.json({
         rescode: -1,
-        message: 'a name of js and content is expect'
+        message: 'a name of js is expect'
       })
     }
-    if (req.body.type === 'totest') {
-      runJSFile(req.body.jscontent, {
+    switch (req.body.type) {
+    case 'torun':
+      runJSFile(jsname, {
+        from: 'jsmanage',
+        cb: wsSer.send.func('jsmanage', req.body.id),
+        timeout: 5000
+      }).then(data=>{
+        res.send(sbufBody(data))
+      }).catch(error=>{
+        res.send('error: ' + error)
+        clog.error(errStack(error))
+      })
+      break
+    case 'totest':
+      runJSFile(jscontent, {
         type: 'rawcode',
         filename: jsname.replace(/\.(js|efh)$/, '-test.$1'),
         from: 'test',
@@ -95,8 +108,9 @@ module.exports = app => {
         res.send('error: ' + error)
         clog.error(errStack(error))
       })
-    } else {
-      if (Jsfile.put(jsname, req.body.jscontent)) {
+      break
+    default:
+      if (Jsfile.put(jsname, jscontent)) {
         res.json({
           rescode: 0,
           message: `${jsname} success saved`
