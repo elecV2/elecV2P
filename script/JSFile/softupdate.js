@@ -5,28 +5,28 @@
 // 脚本会先尝试以 PM2 的方式重启，如果失败，将直接重启容器(Docker 模式下)或服务器(pm2 指令不可用的情况下)
 // 
 // 文件地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
-// 最近更新: 2021-10-03
+// 最近更新: 2022-03-02
 //
 // Todo:
 // - 升级/回退版本选择
-// - evui 交互界面
+// - efh 前端设置界面
 
 let CONFIG = {
-  store: 'softupdate_CONFIG',    // 将当前配置内容(CONFIG 值) 常量储存。留空: 表示使用下面的参数进行更新，否则将会读取 store/cookie 常量中的 softupdate_CONFIG 对应值进行更新。如果 softupdate_CONFIG 尚未设置(首次运行)，会先按下面参数执行，并储存当前 CONFIG 内容
+  store: 'softupdate_CONFIG',    // 将当前设置(CONFIG 值)常量储存。留空: 表示使用下面的参数进行更新，否则将会读取 store/cookie 常量中的 softupdate_CONFIG 对应值进行更新。首次运行时，会先按照下面的参数执行并储存
   forceupdate: false,            // 强制更新。false: 检测到新版本时才更新。 true: 不检测版本直接更新
   notify: true,                  // 检测到新版本时是否进行通知。true: 通知, false: 不通知
-  restart: 'elecV2P',            // false: 只更新文件，不重启不应用。 其他值表示 pm2 重启线程名，比如 all/elecV2P/index（暂时不清楚就保持不动）
+  restart: 'elecV2P',            // false: 只更新文件，不重启不应用。 其他值表示 pm2 重启线程名，比如 all/elecV2P/0
   noupdate: [
     'script/Store',        // 设置一些不覆盖更新的文件夹（保留个人数据）。根据个人需求进行调整
     // 'script/JSFile',    // 如果不设置，也只会覆盖更新 elecV2P 自带的同名文件，对其他文件无影响
     // 'script/Shell',
     'script/Lists',
     'rootCA',
-    'Docker',              // 当文件夹或名称中包含 Docker 时，跳过下载更新
-    'Todo',                // 排除单个文件，使用文件名包含的关键字即可
-    '^\\.',                // 也可以使用正则表示式。匹配方式为 new RegExp(str).test(fileurl)
+    'Docker',              // 当文件/文件夹名称中包含 Docker 关键字时，跳过下载更新
+    'Todo',                // 匹配方式为 new RegExp(str关键字).test(fileurl)
+    '^\\.',                // 也可以使用正则表达式的字符串形式
   ],
-  wbtoken: 'a8c259b2-67fe-4c64-8700-7bfdf1f55cb3',    // WEBHOOK TOKEN（在 SETTING 界面查看）用于发送保存当前任务列表的网络请求，可省略。
+  wbtoken: '',             // WEBHOOK TOKEN（在 SETTING/设置 界面查看）用于发送保存当前任务列表的网络请求，可省略。
   cdngit: 'https://raw.githubusercontent.com',        // 可自定义 raw.githubusercontent.com 加速站点
   about: 'elecV2P 软更新配置文件，详情: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js'
 }
@@ -95,7 +95,9 @@ function taskSave() {
         token: CONFIG.wbtoken,
         type: 'tasksave',
       }
-    }, false).then(res=>console.log(res.data)).catch(e=>console.log(e.message))
+    }, false).then(res=>console.log(res.data)).catch(e=>{
+      console.log('当前任务列表保存失败', e.message, '(并不影响此次软更新升级)')
+    })
   } else {
     console.log('没有设置 webhook token, 跳过发送任务保存的网络请求')
   }
@@ -103,10 +105,15 @@ function taskSave() {
 
 async function update() {
   taskSave()
-  console.log('开始获取更新文件列表')
-  let res = {}
+  console.log('开始获取更新文件列表...')
+  let res = null
   try {
-    res = await $axios('https://api.github.com/repos/elecv2/elecv2p/git/trees/master?recursive=1')
+    res = await $axios({
+      url: 'https://api.github.com/repos/elecv2/elecv2p/git/trees/master?recursive=1',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36'
+      }
+    })
   } catch(e) {
     console.error('获取 elecV2P 软更新文件列表失败', e.message || e)
     $message.error('获取 elecV2P 软更新文件列表失败', e.message || e)
@@ -123,14 +130,13 @@ async function update() {
       }, limit: 5
     })
   } catch(e) {
-    console.error('更新部分文件时出错，请检查网络后重试')
-    console.error(e.message || e)
+    console.error('更新部分文件时出错，请检查网络后重试', e.message || e)
     $message.error('更新部分文件时出错，请检查网络后重试')
     return
   }
 
   console.log('文件更新完成')
-  if (CONFIG.restart) {
+  if (CONFIG.restart !== false) {
     console.log('开始重启以应用更新。稍等一下刷新前端网页，查看是否生效')
     autoFresh()
     restart()
