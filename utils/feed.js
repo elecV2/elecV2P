@@ -41,7 +41,7 @@ const CONFIG_FEED = {
   },
   maxbLength: 1200,            // 通知主体最大长度。（超过后会分段发送）
   webmessage: {
-    enable: false,             // 是否在网页前端显示通知
+    enable: true,              // 是否在网页前端显示通知
   }
 }
 

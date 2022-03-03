@@ -701,7 +701,7 @@ if (estartinfo && sType(estartinfo) === 'array') {
 } else {
   estartinfo = [now()];
 }
-store.put(estartinfo, 'elecV2PStartInfo', { note: 'The every time of elecV2P start' });
+store.put(estartinfo, 'elecV2PStartInfo', { note: 'Every time of elecV2P start' });
 clog.info('elecV2P start', estartinfo.length, 'times');
 
 module.exports = { list, Jsfile, store, file }
