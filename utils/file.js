@@ -651,7 +651,11 @@ const store = {
       value = String(value)
     }
     value = JSON.stringify({
-      type, value, note: options.note, belong: options.belong, update: options.update || now(null, false)
+      type, value,
+      note: options.note,
+      belong: options.belong,
+      update: options.update || now(null, false),
+      private: options.private,
     })
     if (Buffer.byteLength(value, 'utf8') > this.maxByte) {
       clog.error('store put error, data length is over limit', this.maxByte)
