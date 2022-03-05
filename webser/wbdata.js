@@ -29,6 +29,7 @@ module.exports = app => {
             mitmhost: CONFIG_RULE.mitmhostenable
           },
           menunav: CONFIG.webUI?.nav,
+          userid: CONFIG.userid,
         })
         break
       case 'rules':
