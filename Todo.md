@@ -3,9 +3,10 @@
 <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
-- [ ] $store.put/get 可定义为私有
 - [ ] webUI 主题颜色自定义
 - [ ] $fend cache body.key
+- [ ] cookie/store 常量加密储存
+- [ ] $store.put/get 可定义为私有
 </pre>
 </div>
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
