@@ -89,6 +89,7 @@ docker run --restart=always \
   elecv2/elecv2p
 
 # -p/-v 对应环境参数 宿主参数:容器内参数
+# 如需更改默认的 80 端口，可在 -e 后面加上 PORT=8000
 # 升级 Docker 镜像（如果没有使用 -v 持久化存储，容器内数据会丢失，请提前备份）
 docker rm -f elecv2p           # 先删除旧的容器
 docker pull elecv2/elecv2p     # 再拉取新的镜像
@@ -135,6 +136,7 @@ services:
 ```
 
 - 具体使用的映射端口和 volumes 目录，根据个人情况进行调整
+- 如需更改默认的 80 端口，在 environment 下添加一行: - PORT=8000
 
 文件保存后，在 docker-compose.yaml 同目录下执行以下任一命令
 ``` sh
