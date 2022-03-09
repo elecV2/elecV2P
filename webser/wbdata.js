@@ -31,6 +31,9 @@ module.exports = app => {
           menunav: CONFIG.webUI?.nav,
           userid: CONFIG.userid,
         })
+        if (req.query.check) {
+          checkupdate()
+        }
         break
       case 'rules':
         let rlist = list.get('default.list')

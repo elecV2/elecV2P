@@ -1,6 +1,6 @@
 {
   "init": {
-    "checkupdate": true,
+    "checkupdate": false,
     "runjs": ""
   },
   "webUI": {
