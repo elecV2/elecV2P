@@ -309,7 +309,7 @@ async function checkupdate(force = false){
   }
   try {
     clog.info('checkupdate from cloudflare cdn...')
-    let res = await eAxios('https://version.elecv2.workers.dev/')
+    let res = await eAxios('https://ver.elecv2.workers.dev/')
     Object.assign(body, res.data)
   } catch(e) {
     clog.error('check update fail', errStack(e))
