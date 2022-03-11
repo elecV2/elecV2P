@@ -29,6 +29,7 @@ module.exports = app => {
             mitmhost: CONFIG_RULE.mitmhostenable
           },
           menunav: CONFIG.webUI?.nav,
+          theme: CONFIG.webUI?.theme,
           userid: CONFIG.userid,
         })
         if (req.query.check) {

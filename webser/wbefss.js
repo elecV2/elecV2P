@@ -164,7 +164,8 @@ module.exports = app => {
     clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'get efss resource')
 
     let resdata = {
-      rescode: 0
+      rescode: 0,
+      userid: CONFIG.userid,
     }
     if (req.query.type === 'list' || req.query.type !== 'config') {
       resdata.list = CONFIG.efss.enable ? file.aList(file.get(CONFIG.efss.directory, 'path'), {

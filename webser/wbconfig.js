@@ -235,7 +235,7 @@ module.exports = app => {
           })
         }
         break
-      case 'webUI':
+      case 'webUIPort':
         try {
           CONFIG.webUI = Object.assign(CONFIG.webUI || {}, req.body.data)
           res.json({
@@ -249,15 +249,21 @@ module.exports = app => {
           })
         }
         break
-      case 'menunav':
+      case 'webUIFront':
         try {
           if (!CONFIG.webUI) {
             CONFIG.webUI = Object.create(null)
           }
-          CONFIG.webUI.nav = Object.assign(CONFIG.webUI.nav || {}, req.body.data)
+          let bdata = req.body.data
+          if (bdata.nav) {
+            CONFIG.webUI.nav = Object.assign(CONFIG.webUI.nav || {}, bdata.nav)
+          }
+          if (bdata.theme) {
+            CONFIG.webUI.theme = Object.assign(CONFIG.webUI.theme || {}, bdata.theme)
+          }
           res.json({
             rescode: 0,
-            message: 'webUI menunav config success updated'
+            message: 'webUI front config success updated'
           })
         } catch(e) {
           res.json({
