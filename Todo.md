@@ -8,12 +8,14 @@
 - [ ] cookie/store 常量加密储存
 - [ ] $store.put/get 可定义为私有
 - [ ] softupdate.js 改为 ZIP 下载
+- [ ] 长授权 Token/Cookie 信息记录
 </pre>
 </div>
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
 - script_store.efh 应用中心
+- EFSS 下载方式扩展 ariac 等
 - 规则及定时任务的移动和排序
 - 多 token 授权及对应权限管理
 - 使用脚本管理规则($rewrite/$rule
@@ -26,6 +28,11 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+- [x] wbrun 快速运行脚本
+- [x] 定时任务快捷查看脚本
+- [x] webUI i18n 新建文件夹
+- [x] 简单主题开发者测试
+- [x] sponsors 用户ID 测试
 - [x] 默认更新检测调整
 - [x] 网页通知默认打开
 - [x] 脚本快捷执行及日志显示优化

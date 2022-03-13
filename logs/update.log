@@ -1,4 +1,11 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.6.1)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.6.2)
+
+v3.6.2  2022-03-13
+ • wbrun 路由运行脚本
+ • 定时任务快捷查看脚本
+ • 网页通知默认打开
+ • 简单主题开发者测试
+ • webUI i18n(新建文件夹
 
 v3.6.1  2022-03-03
  • EFSS 编辑器 复制粘贴
