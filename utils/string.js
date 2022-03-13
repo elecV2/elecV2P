@@ -3,6 +3,8 @@
 ** Update: https://raw.githubusercontent.com/elecV2/elecV2P/master/utils/string.js
 **/
 
+const crypto = require('crypto')
+
 function sType(obj) {
   if (typeof obj !== 'object') {
     return typeof obj
@@ -141,12 +143,7 @@ function euid(len = 8) {
 }
 
 function UUID(){
-  let dt = new Date().getTime()
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    let r = (dt + Math.random()*16)%16 | 0
-    dt = Math.floor(dt/16)
-    return (c=='x' ? r :(r&0x3|0x8)).toString(16)
-  })
+  return crypto.randomUUID()
 }
 
 function iRandom(min, max) {
@@ -325,8 +322,6 @@ function sTypetoExt(ctype) {
   }
   return '';
 }
-
-const crypto = require('crypto')
 
 function sHash(string, algo = 'md5') {
   const hash = crypto.createHash(algo)
