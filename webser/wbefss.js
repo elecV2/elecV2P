@@ -53,7 +53,7 @@ const CONFIG_efss = {
 
 CONFIG.efss = Object.assign(CONFIG_efss, CONFIG.efss)
 
-async function efsshandler(req, res, next) {
+async function efssHandler(req, res, next) {
   if (!req.params.favend) {
     return next()
   }
@@ -105,7 +105,7 @@ async function efsshandler(req, res, next) {
       }).then(jsres=>{
         $response = getJsResponse(jsres, $response)
       }).catch(e=>{
-        $response.body = `favend error on run js ${fend.target} ${errStack(e)}`
+        $response.body = `favend error on run script ${fend.target} ${errStack(e)}`
         clog.error($response.body);
       }).finally(()=>{
         res.set($response.header || $response.headers || {'Content-Type': 'text/html;charset=utf-8'})
@@ -270,5 +270,5 @@ module.exports = app => {
   })
 
   // 性能考虑放最后，* 用于匹配多级 path
-  app.use("/efss/:favend*", efsshandler)
+  app.use("/efss/:favend*", efssHandler)
 }

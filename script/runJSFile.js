@@ -466,7 +466,11 @@ async function runJSFile(filename, addContext={}) {
   if (/\.efh$/.test(addContext.rename || addContext.filename || filename)) {
     // 直接运行 efh 文件初版。本地/远程/rawcode 命名
     let efhname = addContext.rename || addContext.filename || filename;
-    let efhc = await efhParse(filename, { type: addContext.type, name: addContext.rename || addContext.filename });
+    let efhc = await efhParse(filename, {
+      type: addContext.type,
+      name: addContext.rename || addContext.filename,
+      title: efhname,
+    })
     if (addContext.env.runon === 'backend' || (efhc.script && addContext.$request?.method === 'POST')) {
       runclog.debug('run', efhname, 'backend code from', addContext.from);
       filename = efhc.script;
@@ -475,7 +479,7 @@ async function runJSFile(filename, addContext={}) {
     } else {
       runclog.debug('send', efhname, 'html directly');
       return new Promise(resolve=>{
-        if (/^(rule|rewrite|favend)/.test(addContext.from)) {
+        if (/^(rule|rewrite|favend|wbrun)/.test(addContext.from)) {
           resolve({response: {
             statusCode: 200,
             header: { ...addContext.$response?.headers, "Content-Type": "text/html;charset=utf-8" },
