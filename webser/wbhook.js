@@ -2,7 +2,7 @@ const os = require('os')
 const { taskMa, exec, crtHost } = require('../func')
 const { CONFIG_RULE, runJSFile } = require('../script')
 
-const { logger, LOGFILE, Jsfile, list, nStatus, sString, sType, surlName, sBool, stream, downloadfile, now, checkupdate, store, kSize, errStack, sbufBody, wsSer, validate_status } = require('../utils')
+const { logger, LOGFILE, Jsfile, list, nStatus, sString, sType, surlName, sBool, stream, downloadfile, now, checkupdate, store, kSize, errStack, sbufBody, wsSer, validate_status, sJson } = require('../utils')
 const clog = new logger({ head: 'webhook', level: 'debug' })
 
 const { CONFIG } = require('../config')
@@ -383,7 +383,11 @@ function handler(req, res){
     }
 
     if (rbody.debug) {
-      elecV2PInfo.elecV2P.validateStatus = { ...validate_status, black: sString(validate_status.black) }
+      elecV2PInfo.elecV2P.validateStatus = {
+        ...validate_status,
+        black: sJson(validate_status.black),
+        cookieset: sJson(validate_status.cookieset),
+      }
       elecV2PInfo.elecV2P.webhooktoken = CONFIG.wbrtoken
 
       elecV2PInfo.system.userInfo = os.userInfo()

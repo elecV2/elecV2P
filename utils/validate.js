@@ -9,11 +9,13 @@ const { CONFIG } = require('../config')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'access', level: 'debug', file: 'access.log' })
 const { atob, btoa, iRandom } = require('./string')
+const { now } = require('./time')
 
 const validate_status = {
   total: 0,                // 总访问次数
   black: new Map(),        // 非法访问详情
   blacknum: 0,             // 当前非法访问次数
+  cookieset: new Set(),    // 已 cookie 授权的客户端（仅记录本次运行
 }
 
 // 检测某个网络请求是否合法
@@ -65,6 +67,14 @@ function isAuthReq(req, res) {
           httpOnly: true,
           maxAge: 60 * 60 * 24 * days // cookie 有效期
         }))
+        require('./feed').feedPush('set cookie for ' + ipAddress, `Time: ${now()}\nMax-Age: ${days} days\nUser-Agent: ${req.headers['user-agent']}\nIf this wasn't you, please consider changing your WEBHOOK TOKEN`)
+        validate_status.cookieset.add({
+          ip: ipAddress,
+          ua: req.headers['user-agent'],
+          time: now(),
+          path: req.pah,
+          days: days,
+        })
       }
       return true
     }
