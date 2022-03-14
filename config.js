@@ -37,6 +37,10 @@ if (CONFIG.anyproxy) {
   }
 }
 
+if (process.env.TOKEN) {
+  CONFIG.wbrtoken = process.env.TOKEN.trim()
+  delete process.env.TOKEN
+}
 if (!CONFIG.wbrtoken) {
   CONFIG.wbrtoken = UUID()
 }
