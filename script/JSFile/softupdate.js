@@ -5,14 +5,16 @@
 // 脚本会先尝试以 PM2 的方式重启，如果失败，将直接重启容器(Docker 模式下)或服务器(pm2 指令不可用的情况下)
 // 
 // 文件地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
-// 最近更新: 2022-03-02
+// 最近更新: 2022-03-15
 //
 // Todo:
 // - 升级/回退版本选择
 // - efh 前端设置界面
+// - 部分文件夹选择更新
 
 let CONFIG = {
   store: 'softupdate_CONFIG',    // 将当前设置(CONFIG 值)常量储存。留空: 表示使用下面的参数进行更新，否则将会读取 store/cookie 常量中的 softupdate_CONFIG 对应值进行更新。首次运行时，会先按照下面的参数执行并储存
+  updae_type: 'zip',             // 使用 zip 压缩包更新，默认。可选项: file - 单文件下载更新（旧
   forceupdate: false,            // 强制更新。false: 检测到新版本时才更新。 true: 不检测版本直接更新
   notify: true,                  // 检测到新版本时是否进行通知。true: 通知, false: 不通知
   restart: 'elecV2P',            // false: 只更新文件，不重启不应用。 其他值表示 pm2 重启线程名，比如 all/elecV2P/0
@@ -23,7 +25,7 @@ let CONFIG = {
     'script/Lists',
     'rootCA',
     'Docker',              // 当文件/文件夹名称中包含 Docker 关键字时，跳过下载更新
-    'Todo',                // 匹配方式为 new RegExp(str关键字).test(fileurl)
+    'Todo',                // 匹配方式为 new RegExp(str关键字).test(path/file)
     '^\\.',                // 也可以使用正则表达式的字符串形式
   ],
   wbtoken: '',             // WEBHOOK TOKEN（在 SETTING/设置 界面查看）用于发送保存当前任务列表的网络请求，可省略。
@@ -31,6 +33,7 @@ let CONFIG = {
   about: 'elecV2P 软更新配置文件，详情: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js'
 }
 
+/*************** 主函数部分 ******************/
 if (CONFIG.cdngit.endsWith('/')) {
   CONFIG.cdngit = CONFIG.cdngit.slice(0, -1)
 }
@@ -51,6 +54,7 @@ if (CONFIG.forceupdate) {
     bres && update()
   })
 }
+/************** end 主函数部分 *************/
 
 async function checkUpdate(){
   if (typeof(__version) === 'undefined') {
@@ -105,6 +109,23 @@ function taskSave() {
 
 async function update() {
   taskSave()
+  if (CONFIG.updae_type !== 'file' && typeof(__vernum) !== 'undefined' && __vernum > 350) {
+    console.log('开始下载更新所需要的 ZIP 文件...')
+    try {
+      let zipd = await $download('https://github.com/elecV2/elecV2P/archive/master.zip', {
+        folder: './efss',
+        name: `elecV2P_${new Date().toISOString().slice(0, 10)}.zip`,
+        // existskip: true,        // 如果 ZIP 文件存在则不下载
+      }, d=>{
+        if (d && d.progress) console.log(d.progress + '\r')
+      })
+      unzip(zipd)
+      restart()
+      return
+    } catch(e) {
+      console.error('zip 更新方式失败，即将尝试单文件下载的更新方式')
+    }
+  }
   console.log('开始获取更新文件列表...')
   let res = null
   try {
@@ -134,29 +155,51 @@ async function update() {
     $message.error('更新部分文件时出错，请检查网络后重试')
     return
   }
+  restart()
+}
 
-  console.log('文件更新完成')
-  if (CONFIG.restart !== false) {
-    console.log('开始重启以应用更新。稍等一下刷新前端网页，查看是否生效')
-    autoFresh()
-    restart()
-  } else {
-    console.log('此次软更新设置为不重启，所以该更新并没有应用。如需应用，请手动重启 elecV2P')
-  }
+function unzip(dest){
+  let path = require('path')
+  let AdmZip = require('adm-zip')
+
+  let zip = new AdmZip(dest)
+
+  console.log(dest, '下载完成，开始解压进行更新...')
+  zip.getEntries().forEach(zipEntry=>{
+    if (zipEntry.isDirectory) {
+      return
+    }
+    for (let item of CONFIG.noupdate) {
+      if (new RegExp(item).test(zipEntry.entryName)) {
+        console.log('根据 CONFIG.noupdate 规则:', item, '不更新文件:', zipEntry.entryName)
+        return
+      }
+    }
+    let tpath = path.dirname(zipEntry.entryName).replace('elecV2P-master', '.')
+    zip.extractEntryTo(zipEntry.entryName, tpath, false, true)
+    console.log('更新文件:', `${tpath}/${zipEntry.name}`)
+  })
 }
 
 function restart() {
-  $exec('pm2 restart ' + CONFIG.restart, {
-    cb(data, error){
-      if (error) {
-        console.error(error)
-        console.log('尝试使用 pm2 的方式重启失败，将直接重启服务器')
-        $exec('reboot')
-      } else {
-        console.log(data)
+  console.log('全部文件更新完成')
+  if (CONFIG.restart !== false) {
+    console.log('开始重启以应用更新。稍等一下刷新前端网页，查看是否生效')
+    autoFresh()
+    $exec('pm2 restart ' + CONFIG.restart, {
+      cb(data, error){
+        if (error) {
+          console.error(error)
+          console.log('尝试使用 pm2 的方式重启失败，将直接重启服务器')
+          $exec('reboot')
+        } else {
+          console.log(data)
+        }
       }
-    }
-  })
+    })
+  } else {
+    console.log('此次软更新设置为不重启，所以该更新并没有应用。如需应用，请手动重启 elecV2P')
+  }
 }
 
 function autoFresh() {
@@ -170,7 +213,7 @@ function autoFresh() {
     },
     resizable: false,
     script: `console.log("将在 3 秒后自动刷新页面");setTimeout(()=>{location.hash = '';location.reload(true)}, 3000)`
-  }).then(data=>console.log(data)).catch(e=>console.log(e))
+  }).catch(e=>console.log(e))
 }
 
 async function downloadFile(file){
@@ -179,7 +222,7 @@ async function downloadFile(file){
     for (let item of CONFIG.noupdate) {
       if (new RegExp(item).test(file.path)) {
         btoUP = false
-        console.log('根据 CONFIG.noupdate 设置:', item, '跳过', file.path, '更新')
+        console.log('根据 CONFIG.noupdate 规则:', item, '不更新文件:', file.path)
         return
       }
     }
