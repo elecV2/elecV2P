@@ -15,7 +15,7 @@ const CONFIG_efss = {
   },
   max: 600,                // 最大文件显示数。默认：600，-1 表示不限制
   skip: {                  // 跳过显示部分文件/文件夹
-    folder: [],
+    folder: ['node_modules'],
     file: []
   },
   favend: {                // favend 设置
