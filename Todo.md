@@ -4,11 +4,10 @@
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
 - [ ] cookie 授权优化及权限回收
-- [ ] webUI 主题颜色自定义
 - [ ] $fend cache body.key
+- [ ] rss 内存显示前端可视化
 - [ ] cookie/store 常量加密储存
 - [ ] $store.put/get 可定义为私有
-- [ ] softupdate.js 改为 ZIP 下载
 </pre>
 </div>
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
@@ -28,7 +27,12 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
-- [x] 授权 Cookie 信息记录
+- [x] webUI 主题样式自定义
+- [x] ENV 设定默认 WEBHOOK TOKEN
+- [x] cookie 授权通知及记录
+- [x] EFSS 文件全选快捷键
+- [x] EFSS 默认不显示文件夹 node_modules
+- [x] softupdate.js 默认使用 ZIP 更新
 - [x] wbrun 快速运行脚本
 - [x] 定时任务快捷查看脚本
 - [x] webUI i18n 新建文件夹
