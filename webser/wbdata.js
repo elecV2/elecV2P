@@ -84,7 +84,7 @@ module.exports = app => {
         }
         break
       case 'sponsors':
-        eAxios('https://sponsors.elecv2.workers.dev/').then(response=>{
+        eAxios('https://sponsors.elecv2.workers.dev/' + (req.query.param || '')).then(response=>{
           res.json({
             rescode: 0,
             message: 'success get sponsors list',
