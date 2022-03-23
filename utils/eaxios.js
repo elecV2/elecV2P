@@ -75,7 +75,7 @@ const eData = {
   http: axProxy.http(),
   https: axProxy.https(),
   update: {
-    gap: 1000*60*30,        // 更新检查最少间隔时间，单位 ms。默认 30 分钟
+    gap: CONFIG.update_check_gap ?? 1000*60*30,        // 更新检查最少间隔时间，单位 ms。默认 30 分钟
   }
 }
 
@@ -301,7 +301,12 @@ function downloadfile(durl, options, cb) {
 }
 
 async function checkupdate(force = false){
-  if (force === false && eData.update.body && eData.update.lastcheck && (Date.now() - eData.update.lastcheck < eData.update.gap)) {
+  if (force === false
+    && eData.update.gap > 0
+    && eData.update.body
+    && eData.update.lastcheck
+    && (Date.now() - eData.update.lastcheck < eData.update.gap)
+  ) {
     return eData.update.body
   }
   let body = {
