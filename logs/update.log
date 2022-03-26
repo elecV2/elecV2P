@@ -1,4 +1,11 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.6.2)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.6.3)
+
+v3.6.3  2022-03-26
+ • env TOKEN 初始化
+ • EFSS 文件全选快捷键
+ • cookie 授权通知及记录
+ • 主题自定义样式测试优化
+ • softupdate.js 默认使用 ZIP 更新
 
 v3.6.2  2022-03-13
  • wbrun 路由运行脚本

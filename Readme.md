@@ -3,7 +3,7 @@
 elecV2P - customize personal network.
 一款基于 NodeJS，可通过 JS 修改网络请求，以及定时运行脚本或 SHELL 指令的网络工具。
 
-![](https://raw.githubusercontent.com/elecV2/elecV2P-dei/master/docs/res/overview.png)
+![elecV2P overview/预览](https://raw.githubusercontent.com/elecV2/elecV2P-dei/master/docs/res/overview.png)
 
 ### 基础功能
 
@@ -18,7 +18,7 @@ elecV2P - customize personal network.
 
 ### 方法一：直接 NODEJS 运行
 
-**nodejs 版本需大于 14.0.0 (node -v)**
+**nodejs 版本需大于 14.17.0 (node -v)**
 
 ``` sh
 git clone https://github.com/elecV2/elecV2P.git
@@ -139,6 +139,7 @@ services:
 - 如需更改默认的 80 端口，在 environment 下添加一行: - PORT=8000
 
 文件保存后，在 docker-compose.yaml 同目录下执行以下任一命令
+
 ``` sh
 # 直接启动（首次启动命令）
 docker-compose up -d
@@ -151,6 +152,7 @@ docker-compose pull elecv2p && docker-compose up -d
 - ARM32 平台如果出错，参考 [issues #78](https://github.com/elecV2/elecV2P/issues/78)
 
 其他 docker 相关指令
+
 ``` sh
 # 查看是否启动及对应端口
 docker ps

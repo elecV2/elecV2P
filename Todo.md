@@ -4,6 +4,7 @@
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
 - [ ] cookie 授权优化及权限回收
+- [ ] 脚本管理按文件夹展开/收缩
 - [ ] $fend cache body.key
 - [ ] rss 内存显示前端可视化
 - [ ] cookie/store 常量加密储存
