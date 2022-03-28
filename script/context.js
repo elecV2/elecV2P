@@ -73,6 +73,7 @@ class contextBase {
 
   __version = CONFIG.version
   __vernum  = CONFIG.vernum
+  __userid  = CONFIG.userid
   __home = CONFIG.homepage
   __efss = file.get(CONFIG.efss.directory, 'path')
   $ws = {
