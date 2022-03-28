@@ -53,20 +53,20 @@ module.exports = app => {
       case 'config':
         let data = req.body.data
         Object.assign(CONFIG, data)
+        res.json({
+          rescode: 0,
+          message: 'CONFIG updated'
+        })
         if (CONFIG.CONFIG_FEED) {
           CONFIG.CONFIG_FEED.rss.homepage = CONFIG.homepage
           Object.assign(CONFIG_FEED, CONFIG.CONFIG_FEED)
         }
         Object.assign(CONFIG_RUNJS, CONFIG.CONFIG_RUNJS)
         Object.assign(CONFIG_Axios, CONFIG.CONFIG_Axios)
-        axProxy.update()
         if (data.gloglevel !== CONFIG.gloglevel) {
           setGlog(data.gloglevel)
         }
-        res.json({
-          rescode: 0,
-          message: 'save config to ' + CONFIG.path
-        })
+        axProxy.update()
         break
       case 'homepage':
         let homepage = req.body.data.replace(/\/$/, '')

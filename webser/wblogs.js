@@ -1,6 +1,8 @@
 const { logger, LOGFILE, sType, escapeHtml } = require('../utils')
 const clog = new logger({ head: 'wblogs' })
 
+const { CONFIG } = require('../config')
+
 module.exports = app => {
   app.get(["/logs", "/logs*"], (req, res)=>{
     let filename = req.originalUrl.split('?')[0].replace(/\/$/, '').replace('/logs/', '')
@@ -17,9 +19,15 @@ module.exports = app => {
       })
     }
     res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })
-    res.write('<meta name="viewport" content="width=device-width, initial-scale=1.0">')
+    res.write('<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">')
+    let mainbk = '', appbk = '', style = ''
+    if (CONFIG.webUI?.theme?.simple?.enable) {
+      mainbk = CONFIG.webUI.theme.simple.mainbk || '#1890ff'
+      appbk  = CONFIG.webUI.theme.simple.appbk  || ''
+      style  = CONFIG.webUI.theme.simple.style  || ''
+    }
     if (sType(logs) === 'array') {
-      res.write(`<title>elecV2P LOGS - ${logs.length}</title><style>.logs{padding: 0;margin: 0;display: flex;flex-wrap: wrap;justify-content: space-between;}.logs_item {height: 40px;display: inline-flex;align-items: center;line-height: 40px;list-style: none;border-radius: 10px;padding: 0 0 0 15px;margin: 4px 8px;background: #1890ff;color: white;font-size: 18px;font-family: 'Microsoft YaHei', -apple-system, Arial;}.logs_a {color: white;text-decoration: none;}.logs_delete {width: 15px;text-align: center;cursor: pointer;opacity: 0;border-radius: 0 10px 10px 0;background-color: red;}.logs_delete:hover{opacity: 1;}</style>`)
+      res.write(`<title>elecV2P LOGS - ${logs.length}</title><style>body{margin: 0;padding: 0;}#app{min-height: 100vh;background: ${appbk}}.logs{padding: 0;margin: 0;display: flex;flex-wrap: wrap;justify-content: space-between;}.logs_item {height: 40px;display: inline-flex;align-items: center;line-height: 40px;list-style: none;border-radius: 10px;padding: 0 0 0 15px;margin: 4px 8px;background: ${ mainbk };color: white;font-size: 18px;font-family: 'Microsoft YaHei', -apple-system, Arial;}.logs_a {color: white;text-decoration: none;}.logs_delete {width: 1em;text-align: center;cursor: pointer;opacity: 0;border-radius: 0 10px 10px 0;background-color: red;}.logs_delete:hover{opacity: 1;}${style}</style></head><body><div id='app'>`)
       if (logs.length === 0) {
         res.write('<div class="logs_item"><span>暂无 LOGS 日志</span><span class="logs_delete"></span></div>')
       } else {
@@ -30,7 +38,7 @@ module.exports = app => {
         })
         res.write(`</ul><script type='text/javascript'>document.querySelector(".logs").addEventListener("click",t=>{let n=t.target.dataset.name;n&&confirm("确定删除日志 "+n+"？（不可恢复）")&&fetch("/logs",{method:"delete",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:n})}).then(e=>e.json()).then(e=>{0===e.rescode?t.target.parentElement.remove():alert(e.message||e)}).catch(e=>{alert(n+" 删除失败 "+e.message),console.log(e)})});</script>`)
       }
-      res.end()
+      res.end('</div></body>')
     } else {
       res.write(`<title>${filename} - elecV2P</title><style>.logs{background:#1890ff;border-radius:10px;color:#fff;font-family:consolas, monospace;font-size:18px;height:fit-content; overflow-wrap:break-word;padding:8px 12px;text-decoration:none; white-space:pre-wrap; word-break:break-word;}</style>`)
       logs.on('open', ()=>{
