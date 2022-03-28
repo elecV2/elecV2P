@@ -240,6 +240,7 @@ function formRequest($request) {
   return {
     ...$request.requestOptions,
     protocol: $request.protocol,
+    pathname: $request.requestOptions?.path,
     url: $request.url,
     body: $request.requestData.toString(),
     bodyBytes: $request.requestData
@@ -341,9 +342,9 @@ function getJsRequest(jsres, requestDetail) {
     clog.debug(requestDetail.url, 'request body change to', jsres.bodyBytes || jsres.body)
     newRequest.requestData = sbufBody(jsres.bodyBytes || jsres.body)
   }
-  if (jsres.path) {
+  if (jsres.path || jsres.pathname) {
     clog.debug(requestDetail.url, 'request path change to', jsres.path)
-    newRequest.requestOptions = { ...requestDetail.requestOptions, path: jsres.path }
+    newRequest.requestOptions = { ...requestDetail.requestOptions, path: jsres.path || jsres.pathname }
   }
   if (jsres.method) {
     clog.debug(requestDetail.url, 'request method change to', jsres.method)
