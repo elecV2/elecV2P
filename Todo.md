@@ -2,7 +2,7 @@
 <div style="width: 50%;margin: 0 12px;">
 <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
-<pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+<pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
 - [ ] cookie 授权优化及权限回收
 - [ ] 脚本管理按文件夹展开/收缩
 - [ ] $fend cache body.key
@@ -13,13 +13,14 @@
 </div>
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
-<pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+<pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
 - script_store.efh 应用中心
 - EFSS 下载方式扩展 ariac 等
 - 规则及定时任务的移动和排序
 - 多 token 授权及对应权限管理
 - 使用脚本管理规则($rewrite/$rule
 - elecV2P 启动器/快捷方式（$run JSON 格式文件
+- websocket 服务器端(多)点对点信息传递（加密？）
 - eFlow: 不同语言的脚本执行流程可视化控制（天坑）
 - 多语言 [一个可能永远不填的坑..., start ready...]
 </pre>
@@ -27,7 +28,9 @@
 </div>
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
-<pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 1em;text-align: left;display: flex;">
+<pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] 增加 $request.pathname 参数
+- [x] 脚本中增加默认变量 __userid
 - [x] webUI 主题样式自定义
 - [x] ENV 设定默认 WEBHOOK TOKEN
 - [x] cookie 授权通知及记录
