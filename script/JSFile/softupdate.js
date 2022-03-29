@@ -1,20 +1,20 @@
-// elecV2P 软更新脚本。执行前，请先根据自身需求修改下面 CONFIG 变量中的内容。（操作不可恢复，谨慎使用）
-// 该脚本会自动获取 https://github.com/elecV2/elecV2P 库中的最新文件，并进行本地替换。（软更新升级）
+// elecV2P 软更新脚本。执行前，请先根据自身需求修改下面 CONFIG 变量中的内容
+// 该脚本会自动获取 https://github.com/elecV2/elecV2P 库中的文件，然后进行本地替换
 // 使用前请确保当前 elecV2P 服务器可正常连接 raw.githubusercontent.com/或自定义 cdngit 站点
 // 更新后会自动重启，以应用新的版本（请确定已保存好任务列表及其他个人数据）
 // 脚本会先尝试以 PM2 的方式重启，如果失败，将直接重启容器(Docker 模式下)或服务器(pm2 指令不可用的情况下)
 // 
 // 文件地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
-// 最近更新: 2022-03-15
+// 最近更新: 2022-03-29
 //
 // Todo:
-// - 升级/回退版本选择
 // - efh 前端设置界面
 // - 部分文件夹选择更新
 
 let CONFIG = {
   store: 'softupdate_CONFIG',    // 将当前设置(CONFIG 值)常量储存。留空: 表示使用下面的参数进行更新，否则将会读取 store/cookie 常量中的 softupdate_CONFIG 对应值进行更新。首次运行时，会先按照下面的参数执行并储存
   updae_type: 'zip',             // 使用 zip 压缩包更新，默认。可选项: file - 单文件下载更新（旧
+  tags: '',                      // 版本号。可选: 3.6.0/3.5.6 等，全部选项查看 https://github.com/elecV2/elecV2P/tags
   forceupdate: false,            // 强制更新。false: 检测到新版本时才更新。 true: 不检测版本直接更新
   notify: true,                  // 检测到新版本时是否进行通知。true: 通知, false: 不通知
   restart: 'elecV2P',            // false: 只更新文件，不重启不应用。 其他值表示 pm2 重启线程名，比如 all/elecV2P/0
@@ -112,7 +112,11 @@ async function update() {
   if (CONFIG.updae_type !== 'file' && typeof(__vernum) !== 'undefined' && __vernum > 350) {
     console.log('开始下载更新所需要的 ZIP 文件...')
     try {
-      let zipd = await $download('https://github.com/elecV2/elecV2P/archive/master.zip', {
+      let verzip = 'master.zip'
+      if (CONFIG.tags) {
+        verzip = `refs/tags/${CONFIG.tags}.zip`
+      }
+      let zipd = await $download('https://github.com/elecV2/elecV2P/archive/' + verzip, {
         folder: './efss',
         name: `elecV2P_${new Date().toISOString().slice(0, 10)}.zip`,
         // existskip: true,        // 如果 ZIP 文件存在则不下载
@@ -123,7 +127,7 @@ async function update() {
       restart()
       return
     } catch(e) {
-      console.error('zip 更新方式失败，即将尝试单文件下载的更新方式')
+      console.error('zip 更新方式失败', e.message || e, '即将尝试单文件下载的更新方式')
     }
   }
   console.log('开始获取更新文件列表...')
@@ -175,7 +179,7 @@ function unzip(dest){
         return
       }
     }
-    let tpath = path.dirname(zipEntry.entryName).replace('elecV2P-master', '.')
+    let tpath = path.dirname(zipEntry.entryName).replace(`elecV2P-${CONFIG.tags || 'master'}`, '.')
     zip.extractEntryTo(zipEntry.entryName, tpath, false, true)
     console.log('更新文件:', `${tpath}/${zipEntry.name}`)
   })
