@@ -5,7 +5,7 @@
 // 脚本会先尝试以 PM2 的方式重启，如果失败，将直接重启容器(Docker 模式下)或服务器(pm2 指令不可用的情况下)
 // 
 // 文件地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
-// 最近更新: 2022-03-29
+// 最近更新: 2022-03-30
 //
 // Todo:
 // - efh 前端设置界面
@@ -110,12 +110,18 @@ function taskSave() {
 async function update() {
   taskSave()
   if (CONFIG.updae_type !== 'file' && typeof(__vernum) !== 'undefined' && __vernum > 350) {
-    console.log('开始下载更新所需要的 ZIP 文件...')
     try {
       let verzip = 'master.zip'
       if (CONFIG.tags) {
+        console.log('开始检测版本号', CONFIG.tags, '是否存在')
+        let e_tags = await $axios('https://api.github.com/repos/elecV2/elecV2P/tags').then(res=>res.data)
+        if (!e_tags.find(x=>x.name===CONFIG.tags)) {
+          console.log(CONFIG.tags, '并不存在，全部可用版本号请查看：https://api.github.com/repos/elecV2/elecV2P/tags')
+          return
+        }
         verzip = `refs/tags/${CONFIG.tags}.zip`
       }
+      console.log('开始下载更新所需要的 ZIP 文件...')
       let zipd = await $download('https://github.com/elecV2/elecV2P/archive/' + verzip, {
         folder: './efss',
         name: `elecV2P_${new Date().toISOString().slice(0, 10)}.zip`,
@@ -163,12 +169,13 @@ async function update() {
 }
 
 function unzip(dest){
+  let fs = require('fs')
   let path = require('path')
   let AdmZip = require('adm-zip')
 
   let zip = new AdmZip(dest)
 
-  console.log(dest, '下载完成，开始解压进行更新...')
+  console.log('开始解压', dest, '以进行更新...')
   zip.getEntries().forEach(zipEntry=>{
     if (zipEntry.isDirectory) {
       return
@@ -183,6 +190,8 @@ function unzip(dest){
     zip.extractEntryTo(zipEntry.entryName, tpath, false, true)
     console.log('更新文件:', `${tpath}/${zipEntry.name}`)
   })
+  console.log('删除安装包', dest)
+  fs.rmSync(dest)
 }
 
 function restart() {
