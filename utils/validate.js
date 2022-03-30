@@ -67,7 +67,7 @@ function isAuthReq(req, res) {
           httpOnly: true,
           maxAge: 60 * 60 * 24 * days // cookie 有效期
         }))
-        require('./feed').feedPush('set cookie for ' + ipAddress, `Time: ${now()}\nMax-Age: ${days} days\nUser-Agent: ${req.headers['user-agent']}\nIf this wasn't you, please consider changing your WEBHOOK TOKEN`)
+        require('./feed').feedPush('Set cookie for ' + ipAddress, `Time: ${now()}\nMax-Age: ${days} days\nUser-Agent: ${req.headers['user-agent']}\nIf this wasn't you, please consider changing your WEBHOOK TOKEN`)
         validate_status.cookieset.add({
           ip: ipAddress,
           ua: req.headers['user-agent'],
