@@ -157,7 +157,7 @@ async function efssHandler(req, res, next) {
     })
   }
   req.url = requrl.replace('/efss/', '')
-  return express.static(efssdir, { dotfiles })(req, res, next)
+  return express.static(efssdir, { dotfiles, index: false })(req, res, next)
 }
 
 module.exports = app => {
