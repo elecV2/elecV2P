@@ -403,9 +403,9 @@ const taskMan = {
   },
   info(tid = 'all'){
     if (tid === 'all') {
-      return TASKS_INFO
+      return JSON.parse(JSON.stringify(TASKS_INFO))
     }
-    return TASKS_INFO[tid]
+    return JSON.parse(JSON.stringify(TASKS_INFO[tid]))
   },
   status(){
     let status = {
