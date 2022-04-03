@@ -273,7 +273,7 @@ function runJS(filename, jscode, addContext={}) {
   } else if (compatible.surge || (compatible.quanx === false && /\$httpClient|\$persistentStore|\$notification/.test(jscode))) {
     fconsole.debug(`${filename} compatible with Surge script`)
     CONTEXT.add({ surge: true })
-  } else if (compatible.quanx || /\$task|\$prefs|\$notify/.test(jscode)) {
+  } else if (compatible.quanx || /\$task\.fetch|\$prefs|\$notify/.test(jscode)) {
     fconsole.debug(`${filename} compatible with QuantumultX script`)
     CONTEXT.add({ quanx: true })
   } else if (!compatible.require && /require/.test(jscode)) {
