@@ -20,10 +20,10 @@ module.exports = app => {
     }
     res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })
     res.write('<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">')
-    let mainbk = '#2890EE', appbk = '', style = ''
+    let mainbk = '#2890EE', appbk = 'var(--main-fc)', style = ''
     if (CONFIG.webUI?.theme?.simple?.enable) {
       mainbk = CONFIG.webUI.theme.simple.mainbk || '#2890EE'
-      appbk  = CONFIG.webUI.theme.simple.appbk  || ''
+      appbk  = CONFIG.webUI.theme.simple.appbk  || 'var(--main-fc)'
       style  = CONFIG.webUI.theme.simple.style  || ''
     }
     if (sType(logs) === 'array') {
