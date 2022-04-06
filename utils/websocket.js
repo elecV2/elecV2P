@@ -105,6 +105,7 @@ function websocketSer({ server, path }) {
       type: 'init',
       data: {
         id: ws.id,
+        userid: CONFIG.userid,
         vernum: CONFIG.vernum,
         version: CONFIG.version,
         secunset: !CONFIG.SECURITY
