@@ -513,6 +513,10 @@ function handler(req, res){
       }
       secMsg += `SECURITY whitelist is updated`
     }
+    if (rbody.webhook_only !== undefined) {
+      CONFIG.SECURITY.webhook_only = sBool(rbody.webhook_only)
+      secMsg = `SECURITY webhook_only: ${CONFIG.SECURITY.webhook_only}\n`
+    }
     if (secMsg) {
       list.put('config.json', CONFIG)
     }
