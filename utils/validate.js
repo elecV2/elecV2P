@@ -35,6 +35,12 @@ function isAuthReq(req, res) {
     clog.debug(headstr, 'config security is not enable');
     return true;
   }
+  if (CONFIG.SECURITY.webhook_only) {
+    if (req.path !=='/webhook') {
+      clog.error(headstr, 'rejected by elecV2P because of webhook only');
+      return false;
+    }
+  }
   let cookies = cookie.parse(req.headers.cookie || '')
   if (cookies?.token?.length > 10 && (CONFIG.wbrtoken + CONFIG.wbrtoken).indexOf(atob(cookies.token)) !== -1) {
     clog.debug(headstr, 'authorized by cookie')
