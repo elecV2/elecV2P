@@ -40,7 +40,7 @@ module.exports = app => {
       }
       res.end('</div></body>')
     } else {
-      res.write(`<title>${filename} - elecV2P</title><style>:root {--main-bk: ${ mainbk };--main-fc: #FAFAFD;}.logs{background:var(--main-bk);border-radius:10px;color:var(--main-fc);font-family:consolas, monospace;font-size:18px;height:fit-content; overflow-wrap:break-word;padding:8px 12px;text-decoration:none; white-space:pre-wrap; word-break:break-word;}</style></head><body>`)
+      res.write(`<title>${filename} - elecV2P</title><style>:root {--main-bk: ${ mainbk };--main-fc: #FAFAFD;}body{margin: 0;padding: 0;}#app{min-height: 100vh;background: ${appbk}}.logs{background:var(--main-bk);border-radius:10px;color:var(--main-fc);font-family:consolas, monospace;font-size:18px;height:fit-content; overflow-wrap:break-word;padding:8px 12px;text-decoration:none; white-space:pre-wrap; word-break:break-word;}</style></head><body><div id='app'>`)
       logs.on('open', ()=>{
         res.write(`<div class='logs'>`)
       })
@@ -48,7 +48,7 @@ module.exports = app => {
         res.write(escapeHtml(chunk.toString()))
       })
       logs.on('close', ()=>{
-        res.end('</div></body>')
+        res.end('</div></div></body>')
       })
       logs.on('error', (err)=>{
         res.end(err)
