@@ -44,7 +44,12 @@ function isAuthReq(req, res) {
   let cookies = cookie.parse(req.headers.cookie || '')
   if (cookies?.token?.length > 10 && (CONFIG.wbrtoken + CONFIG.wbrtoken).indexOf(atob(cookies.token)) !== -1) {
     clog.debug(headstr, 'authorized by cookie')
-    return true
+    if (req.query?.cookie === 'clear') {
+      clog.notify(headstr, 'cookie cleared')
+      res.clearCookie('token')
+    } else {
+      return true
+    }
   }
   if (CONFIG.wbrtoken) {
     if (!req.query) {
@@ -69,10 +74,12 @@ function isAuthReq(req, res) {
       if (res && req.path !=='/webhook') {
         let days = req.query?.cookie === 'long' ? 365 : 7
         clog.notify('set cookie for', ipAddress, 'Max-Age:', days, 'days')
-        res.setHeader('Set-Cookie', cookie.serialize('token', btoa((CONFIG.wbrtoken + CONFIG.wbrtoken ).substr(iRandom(CONFIG.wbrtoken.length), 10)), {
-          httpOnly: true,
-          maxAge: 60 * 60 * 24 * days // cookie 有效期
-        }))
+        res.setHeader('Set-Cookie', cookie.serialize('token',
+          btoa((CONFIG.wbrtoken + CONFIG.wbrtoken).substr(iRandom(CONFIG.wbrtoken.length), 10)), {
+            httpOnly: true,
+            maxAge: 60 * 60 * 24 * days // cookie 有效期
+          })
+        )
         require('./feed').feedPush('Set cookie for ' + ipAddress, `Time: ${now()}\nMax-Age: ${days} days\nUser-Agent: ${req.headers['user-agent']}\nIf this wasn't you, please consider changing your WEBHOOK TOKEN`)
         validate_status.cookieset.add({
           ip: ipAddress,

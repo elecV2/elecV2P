@@ -1,7 +1,7 @@
 const ws = require('ws')
 
 const { isAuthReq } = require('./validate')
-const { nStatus, euid, sType, sString, sJson } = require('./string')
+const { nStatus, euid, sType, sString, sJson, sHash } = require('./string')
 const { logger, LOGFILE } = require('./logger')
 const { now } = require('./time')
 const clog = new logger({ head: 'webSocket', level: 'debug' })
@@ -105,7 +105,7 @@ function websocketSer({ server, path }) {
       type: 'init',
       data: {
         id: ws.id,
-        userid: CONFIG.userid,
+        userid: sHash(CONFIG.wbrtoken),
         vernum: CONFIG.vernum,
         version: CONFIG.version,
         secunset: !CONFIG.SECURITY
