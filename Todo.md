@@ -3,7 +3,6 @@
 <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
-- [ ] cookie 授权优化及权限回收
 - [ ] 脚本管理按文件夹展开/收缩
 - [ ] $fend cache body.key
 - [ ] rss 内存显示前端可视化
@@ -29,6 +28,8 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] cookie=clear 清除授权 token
+- [x] addEventListener hashchange
 - [x] 可设置仅 webhook 端口可访问
 - [x] 增加 $request.pathname 参数
 - [x] 脚本中增加默认变量 __userid

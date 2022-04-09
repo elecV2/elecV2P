@@ -1,4 +1,11 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.6.3)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.6.4)
+
+v3.6.4  2022-04-09
+ • webUI 首页加入广告模块
+ • 脚本中增加默认变量 __userid
+ • 增加 $request.pathname 参数
+ • 可设置仅 webhook 端口可访问
+ • softupdate.js 指定版本更新
 
 v3.6.3  2022-03-26
  • env TOKEN 初始化
