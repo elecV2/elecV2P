@@ -5,9 +5,9 @@
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
 - [ ] 脚本管理按文件夹展开/收缩
 - [ ] $fend cache body.key
-- [ ] rss 内存显示前端可视化
 - [ ] cookie/store 常量加密储存
 - [ ] $store.put/get 可定义为私有
+- [ ] 引入 $math 用于数学计算
 </pre>
 </div>
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
@@ -28,6 +28,8 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] 脚本编辑快速添加任务
+- [x] 脚本测试运行日志全屏
 - [x] cookie=clear 清除授权 token
 - [x] addEventListener hashchange
 - [x] 可设置仅 webhook 端口可访问
