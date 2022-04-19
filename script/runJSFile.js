@@ -101,7 +101,7 @@ const efhcache = new Map();
 /**
  * efh 文件处理
  * @param     {string}    filename    efh 文件
- * @param     {string}    options     title: efh html 缺省 title
+ * @param     {object}    options     title: efh html 缺省 title
  * @return    {object}                efh 文件处理结果 { html, script }
  */
 async function efhParse(filename, { title='', type='', name } = {}) {

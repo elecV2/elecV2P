@@ -188,25 +188,33 @@ class contextBase {
   }
   $fend = async (key, fn) => {
     // 待优化：
-    // - 多 $fend 匹配优化
     // - 无 $fend 匹配问题
-    if (typeof this.$request === 'undefined') {
-      return this.$done('$fend', key, 'error: $request is expect');
+    // - 多 $fend 匹配优化(done)
+    if (!this.$request) {
+      return this.$done(`$fend ${key || ''} error: $request is expect`);
     }
-
-    let body = this.$request.body;
-    if (!key || !body) {
-      return this.$done('$fend error: key and body are expect');
+    if (this.fendkey === undefined) {
+      let body = this.$request.body;
+      if (!key || !body) {
+        this.fendkey = '';
+        return this.$done('$fend error: key and body are expect');
+      }
+      try {
+        body = JSON.parse(body);
+        this.fendkey = body.key || '';
+        this.fendata = body.data;
+      } catch(e) {
+        this.fendkey = '';
+        return this.$done(`$fend ${key} error: $request.body can\'t be JSON.parse`);
+      }
     }
-    try {
-      body = JSON.parse(body);
-    } catch(e) {
-      return this.$done('$fend', key, 'error: $request.body can\'t be JSON.parse');
+    if (this.fendkey === '') {
+      return this.$done('$fend error: a $request body key is expect');
     }
-    if (body.key === key) {
+    if (this.fendkey === key) {
       if (typeof fn === 'function') {
         try {
-          fn = await fn(body.data);
+          fn = await fn(this.fendata);
         } catch(e) {
           fn = '$fend ' + key + ' error: ' + e.message;
           this.console.error('$fend', key, e);
