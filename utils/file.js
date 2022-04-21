@@ -527,7 +527,7 @@ const Jsfile = {
   },
   clear(){
     // 清空目录下非 JS 文件
-    let nojslist = file.list({ folder: fpath.js, noext: ['.js'] })
+    let nojslist = file.list({ folder: fpath.js, noext: ['.js', '.efh'] })
     nojslist.forEach(f=>file.delete(f, fpath.js))
     return nojslist
   }
