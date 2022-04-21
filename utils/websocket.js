@@ -111,6 +111,13 @@ function websocketSer({ server, path }) {
         secunset: !CONFIG.SECURITY
       }
     }));
+    ws.send(JSON.stringify({
+      type: 'elecV2Pstatus',
+      data: {
+        clients: wsobs.WSS.clients.size,
+        memoryusage: nStatus(),
+      }
+    }));
     wsSer.recver.set(ws.id, {
       IP: ws.ip,
       UA: req.headers['user-agent'],
