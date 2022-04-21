@@ -151,7 +151,7 @@ function iRandom(min, max) {
     max = min
     min = 0
   }
-  return Math.floor(Math.random()*(max - min + 1)) + min
+  return crypto.randomInt(min, max + 1)
 }
 
 function errStack(error, stack = false) {
