@@ -17,6 +17,8 @@ if(!fs.existsSync(rootCApath)) {
 const { logger, errStack, now } = require('../utils')
 const clog = new logger({ head: 'funcCrt' })
 
+const { exec } = require('./exec')
+
 const easyCert = new EasyCert({
   rootDirPath: rootCApath,
   inMemory: false,
@@ -55,6 +57,7 @@ function newRootCrt(evoptions={}) {
             clog.error('fail to generate p12 crt', errStack(err))
           }
         })
+        androidCrt(crtPath)
       }
     })
   })
@@ -109,6 +112,30 @@ function pemToP12(keyPath, crtPath, password='elecV2P') {
   const p12b64 = forge.util.encode64(p12Der)
 
   return p12b64
+}
+
+function androidCrt(crtPath) {
+  exec(`openssl x509 -in ${crtPath} -noout -subject_hash_old`, {
+    cb(data, error) {
+      if (error) {
+        clog.error('fail to get subject_hash_old', errStack(error))
+        return
+      }
+      if (!data) {
+        return
+      }
+      data = data.trim()
+      if (data.length === 8) {
+        fs.copyFile(crtPath, path.join(rootCApath, data + '.0'), err=>{
+          if (err) {
+            clog.error(`fail to generate ${data}.0 certificate`, errStack(err))
+          } else {
+            clog.info(`success generate ${data}.0 certificate`)
+          }
+        })
+      }
+    }
+  })
 }
 
 function cacheClear() {
