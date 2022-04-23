@@ -23,6 +23,7 @@ module.exports = app => {
           anyproxy: CONFIG.anyproxy,
           webUI: CONFIG.webUI,
           newversion: CONFIG.newversion,
+          CONFIG_env: CONFIG.env,
         })
         break
       default:{
@@ -271,6 +272,17 @@ module.exports = app => {
             message: 'fail to change webUI menunav config' + e.message
           })
         }
+        break
+      case 'env':
+        CONFIG.env = req.body.data
+        if (req.body.data?.path) {
+          process.env.PATH = req.body.data.path
+          clog.notify('process env PATH change to', process.env.PATH)
+        }
+        res.json({
+          rescode: 0,
+          message: 'CONFIG env updated'
+        })
         break
       default:{
         clog.error('data put error, unknow type: ' + req.body.type)
