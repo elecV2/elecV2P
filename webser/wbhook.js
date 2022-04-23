@@ -615,7 +615,7 @@ function handler(req, res){
       }
       res.json({
         rescode: 0,
-        message: 'Get minishell config',
+        message: `current minishell is ${CONFIG.minishell ? 'opened' : 'closed'}`,
         resdata: CONFIG.minishell
       });
       break

@@ -7,6 +7,19 @@ const EasyCert = require('node-easy-cert')
 const anycrtpath = path.join(os.homedir(), '.anyproxy/certificates')
 const rootCApath = path.join(__dirname, '../rootCA')
 
+const crt_path = {
+  any: anycrtpath,
+  crt: path.join(rootCApath, 'rootCA.crt'),
+  p12: path.join(rootCApath, 'p12b64.txt'),
+  dot: (()=>{
+    const dcrt = fs.readdirSync(rootCApath).find(s=>/\.0$/.test(s))
+    if (dcrt) {
+      return path.join(rootCApath, dcrt)
+    }
+    return ''
+  })(),
+}
+
 if(!fs.existsSync(anycrtpath)) {
   fs.mkdirSync(anycrtpath, { recursive: true })
 }
@@ -52,9 +65,12 @@ function newRootCrt(evoptions={}) {
         clog.notify('new rootCA generated at', crtPath)
         const password = evoptions.password || 'elecV2P'
         const p12b64 = pemToP12(keyPath, crtPath, password)
-        fs.writeFile(path.join(rootCApath, 'p12b64.txt'), `password = ${password}\np12base64 = ${p12b64}`, 'utf8', err=>{
+        fs.writeFile(crt_path.p12, `password = ${password}\np12base64 = ${p12b64}`, 'utf8', err=>{
           if (err) {
             clog.error('fail to generate p12 crt', errStack(err))
+            crt_path.p12 = ''
+          } else {
+            clog.info('success generate p12b64.txt')
           }
         })
         androidCrt(crtPath)
@@ -126,9 +142,11 @@ function androidCrt(crtPath) {
       }
       data = data.trim()
       if (data.length === 8) {
-        fs.copyFile(crtPath, path.join(rootCApath, data + '.0'), err=>{
+        crt_path.dot = path.join(rootCApath, data + '.0')
+        fs.copyFile(crtPath, crt_path.dot, err=>{
           if (err) {
             clog.error(`fail to generate ${data}.0 certificate`, errStack(err))
+            crt_path.dot = ''
           } else {
             clog.info(`success generate ${data}.0 certificate`)
           }
@@ -180,4 +198,4 @@ function crtHost(hostname) {
   })
 }
 
-module.exports = { clearCrt, rootCrtSync, newRootCrt, cacheClear, crtInfo, crtHost }
+module.exports = { clearCrt, rootCrtSync, newRootCrt, cacheClear, crtInfo, crtHost, crt_path }

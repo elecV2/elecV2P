@@ -1,15 +1,33 @@
 const formidable = require('formidable')
-const homedir = require('os').homedir()
 
 const { logger, errStack, file } = require('../utils')
 const clog = new logger({ head: 'wbcrt' })
 
-const { clearCrt, newRootCrt, cacheClear } = require('../func')
+const { clearCrt, newRootCrt, cacheClear, crt_path } = require('../func')
 
 module.exports = app => {
   app.get('/crt', (req, res)=>{
-    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'download rootCA.crt')
-    res.download(homedir + '/.anyproxy/certificates/rootCA.crt')
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'get rootCA.crt', req.query.type)
+    switch (req.query.type) {
+    case 'p12':
+      crt_path.p12
+      ? res.download(crt_path.p12)
+      : res.json({
+          rescode: -1,
+          message: 'p12 certificate not exist'
+        })
+      break
+    case 'dot':
+      crt_path.dot
+      ? res.download(crt_path.dot)
+      : res.json({
+          rescode: -1,
+          message: '.0 certificate not exist'
+        })
+      break
+    default:
+      res.download(crt_path.any + '/rootCA.crt')
+    }
   })
 
   app.put('/crt', (req, res)=>{
