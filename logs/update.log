@@ -1,4 +1,10 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.6.4)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.6.5)
+
+v3.6.5  2022-04-23
+ • 环境变量 PATH 设置及更新
+ • 根证书多格式生成以及下载
+ • 脚本编辑时快速添加任务
+ • websocket 连接及传输优化
 
 v3.6.4  2022-04-09
  • webUI 首页加入广告模块
