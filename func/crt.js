@@ -27,7 +27,7 @@ if(!fs.existsSync(rootCApath)) {
   fs.mkdirSync(rootCApath, { recursive: true })
 }
 
-const { logger, errStack, now } = require('../utils')
+const { logger, errStack, now, euid } = require('../utils')
 const clog = new logger({ head: 'funcCrt' })
 
 const { exec } = require('./exec')
@@ -63,7 +63,7 @@ function newRootCrt(evoptions={}) {
       } else {
         resolve({ keyPath, crtPath })
         clog.notify('new rootCA generated at', crtPath)
-        const password = evoptions.password || 'elecV2P'
+        const password = evoptions.password || 'elecV2P_' + euid(4)
         const p12b64 = pemToP12(keyPath, crtPath, password)
         fs.writeFile(crt_path.p12, `password = ${password}\np12base64 = ${p12b64}`, 'utf8', err=>{
           if (err) {
