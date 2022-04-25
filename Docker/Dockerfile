@@ -1,4 +1,4 @@
-FROM node:alpine
+FROM node:17-alpine
 
 ADD ./ /usr/local/app
 
