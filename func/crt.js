@@ -105,11 +105,7 @@ async function rootCrtSync() {
   let rcrt = path.join(rootCApath, 'rootCA.crt'),
       rkey = path.join(rootCApath, 'rootCA.key')
   if (!(fs.existsSync(rcrt) && fs.existsSync(rkey))) {
-    try {
-      await newRootCrt()
-    } catch(e) {
-      throw(e)
-    }
+    await newRootCrt()
   }
   clog.info('move rootCA.crt/rootCA.key to', anycrtpath)
   fs.copyFileSync(rcrt, anycrtpath + '/rootCA.crt')
@@ -190,10 +186,15 @@ function crtHost(hostname) {
     easyCert.getCertificate(hostname, (error, keyContent, crtContent) => {
       if (error === 'ROOT_CA_NOT_EXISTS') {
         reject(error);
-        clog.error('fail to get certificate for', hostname, ' reason:', error);
+        clog.error('fail to generate certificate for', hostname, 'reason:', error);
+        return;
       }
-      resolve(easyCert.getRootDirPath());
-      clog.info('get certificate for', hostname);
+      const crt_root = easyCert.getRootDirPath();
+      resolve(crt_root);
+      clog.info('success generate certificate for', hostname);
+      clog.info(`copy ${hostname}.crt/${hostname}.key to`, anycrtpath);
+      fs.copyFile(`${crt_root}/${hostname}.crt`, `${anycrtpath}/${hostname}.crt`, clog.error);
+      fs.copyFile(`${crt_root}/${hostname}.key`, `${anycrtpath}/${hostname}.key`, clog.error);
     });
   })
 }

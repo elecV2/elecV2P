@@ -571,7 +571,7 @@ function handler(req, res){
       crtHost(rbody.hostname).then(cont=>{
         res.json({
           rescode: 0,
-          message: 'Get certificate for ' + rbody.hostname + ' in rootCA directory',
+          message: 'success generate certificate for ' + rbody.hostname,
           resdata: cont
         })
       }).catch(error=>{
