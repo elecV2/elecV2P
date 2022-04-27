@@ -15,7 +15,6 @@
 - script_store.efh 应用中心
 - EFSS 下载方式扩展 ariac 等
 - 规则及定时任务的移动和排序
-- 多 token 授权及对应权限管理
 - 使用脚本管理规则($rewrite/$rule
 - elecV2P 启动器/快捷方式（$run JSON 格式文件
 - websocket 服务器端(多)点对点信息传递（加密？）
@@ -27,6 +26,8 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] 自定义设置其他环境变量参数
+- [x] 使用根证书主动签发域名证书
 - [x] 环境变量 PATH 设置及更新
 - [x] 根证书多格式选择下载
 - [x] pem/.0 后缀证书生成
