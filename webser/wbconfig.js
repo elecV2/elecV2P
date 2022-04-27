@@ -274,14 +274,31 @@ module.exports = app => {
         }
         break
       case 'env':
-        CONFIG.env = req.body.data
-        if (req.body.data?.path) {
-          process.env.PATH = req.body.data.path
-          clog.notify('process env PATH change to', process.env.PATH)
+        const envdata = req.body.data
+        if (envdata.path) {
+          CONFIG.env.path = envdata.path
+          process.env.PATH = envdata.path
+          clog.notify('process env PATH change to', envdata.path)
+        }
+        if (envdata.todel?.length) {
+          envdata.todel.forEach(key=>{
+            clog.info('delete process env', key)
+            delete process.env[key]
+            delete CONFIG.env[key]
+          })
+        }
+        if (envdata.other?.length) {
+          envdata.other.forEach(s=>{
+            if (s[0] && s[1]) {
+              clog.info('new process env', s[0], 'value:', s[1])
+              process.env[s[0]] = s[1]
+              CONFIG.env[s[0]] = s[1]
+            }
+          })
         }
         res.json({
           rescode: 0,
-          message: 'CONFIG env updated'
+          message: 'CONFIG and process env updated'
         })
         break
       default:{

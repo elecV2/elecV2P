@@ -48,8 +48,13 @@ if (!CONFIG.env) {
   CONFIG.env = {
     path: ''
   }
+} else {
+  const { path, PATH, ...config_other } = CONFIG.env
+  for (let enkey in config_other) {
+    process.env[enkey] = config_other[enkey]
+  }
 }
-process.env.PATH = [...new Set((process.env.PATH + (CONFIG.env.path ?? '')).split(path.delimiter).filter(s=>s))].join(path.delimiter)
+process.env.PATH = [...new Set((process.env.PATH + (CONFIG.env.path ?? CONFIG.env.PATH ?? '')).split(path.delimiter).filter(s=>s))].join(path.delimiter)
 CONFIG.env.path = process.env.PATH
 
 CONFIG.userid  = sHash(CONFIG.wbrtoken)
