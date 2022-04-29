@@ -3,10 +3,10 @@
 <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
-- [ ] 脚本管理按文件夹展开/收缩
 - [ ] cookie/store 常量加密储存
 - [ ] $store.put/get 可定义为私有
 - [ ] 引入 $math 用于数学计算
+- [ ] 其他程序扩展下载.efh
 </pre>
 </div>
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
@@ -26,6 +26,7 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] $store.get/put 日志显示
 - [x] 自定义设置其他环境变量参数
 - [x] 使用根证书主动签发域名证书
 - [x] 环境变量 PATH 设置及更新

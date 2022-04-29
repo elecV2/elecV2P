@@ -82,7 +82,8 @@ class contextBase {
   $exec = exec
   $cache = $cacheProxy
   $store = {
-    get(key, type){
+    get: (key, type) => {
+      this.console.log('get store value from:', key)
       return store.get(key, type)
     },
     put: (value, key, options) => {
@@ -97,6 +98,7 @@ class contextBase {
           type: options
         }
       }
+      this.console.log('put store value into:', key)
       return store.put(value, key, options)
     },
     set(key, value, options){
