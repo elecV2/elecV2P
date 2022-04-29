@@ -335,4 +335,42 @@ function sHmac(string, key = '', algo = 'md5') {
   return hmac.digest('hex')
 }
 
-module.exports = { euid, UUID, iRandom, sJson, sString, strJoin, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, escapeHtml, surlName, progressBar, btoa, atob, sbufBody, sParam, sTypetoExt, sHash, sHmac }
+function ebufEncrypt(strorg, key = 'elecV2', encode = 'base64') {
+  const bfs = Buffer.from(strorg);
+  const en_key_buf = Buffer.from(key);
+  let   en_key_idx = 0, en_round = 1;
+  const en_bfs_str = bfs.map(s=>{
+    const en_key = en_key_buf[en_key_idx++];
+    if (en_key_idx >= en_key_buf.length) {
+      en_key_idx = 0;
+      en_round  += 1;
+    }
+    return s + (en_key * en_round ^ en_key_buf[en_key_idx]);
+  });
+  return en_bfs_str.toString(encode);
+}
+/**
+ * 基于 Buffer 的简单对称加密算法
+ * 说明 https://elecv2.github.io/#算法研究之非对称加密的简单示例
+ * Author  https://t.me/elecV2
+ * @param  {string}  加密字符串
+ * @param  {string}  加密密码
+ * @param  {string}  加密后的字符串编码。可选 hex | base64
+ * @return {string}  加密/解密后的字符串
+ */
+function ebufDecrypt(strb64, key = 'elecV2', encode = 'base64') {
+  const en_bfs_str = Buffer.from(strb64, encode);
+  const en_key_buf = Buffer.from(key);
+  let   en_key_idx = 0, en_round = 1;
+  const de_bfs_str = en_bfs_str.map(s=>{
+    const en_key = en_key_buf[en_key_idx++];
+    if (en_key_idx >= en_key_buf.length) {
+      en_key_idx = 0;
+      en_round  += 1;
+    }
+    return s - (en_key * en_round ^ en_key_buf[en_key_idx]);
+  });
+  return de_bfs_str.toString();
+}
+
+module.exports = { euid, UUID, iRandom, sJson, sString, strJoin, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, escapeHtml, surlName, progressBar, btoa, atob, sbufBody, sParam, sTypetoExt, sHash, sHmac, ebufEncrypt, ebufDecrypt }

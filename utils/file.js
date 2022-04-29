@@ -3,7 +3,7 @@ const path = require('path')
 const os = require('os')
 const Zip = require('adm-zip')
 
-const { errStack, sJson, sString, sType, sBool, bEmpty, iRandom, euid, kSize } = require('./string')
+const { errStack, sJson, sString, sType, sBool, bEmpty, iRandom, euid, kSize, ebufEncrypt, ebufDecrypt } = require('./string')
 const { now } = require('./time')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFile', level: 'debug' })
@@ -536,14 +536,14 @@ const Jsfile = {
 const store = {
   maxByte: 1024*1024*2,
   path: fpath.store,
-  get(key, type) {
+  get(key, options = {}) {
     // empty key return undefined, don't change
     if (bEmpty(key)) {
       clog.debug('store.get error: a key is expect')
       return
     }
     key = key.trim()
-    clog.debug('get value for', key)
+    clog.debug('get value from:', key)
     let keypath = path.join(fpath.store, key)
     if (!fs.existsSync(keypath)) {
       clog.debug(key, 'not set yet')
@@ -557,6 +557,19 @@ const store = {
       return 'the size of ' + key + ' is ' + keystat.size + ', over limit ' + this.maxByte
     }
     let value = fs.readFileSync(keypath, 'utf8')
+    let type  = ''
+    if (typeof options === 'string') {
+      type = options
+    } else {
+      type = options && options.type
+      if (options.pass) {
+        switch (options.algo) {
+        case 'ebuf':
+        default:
+          value = ebufDecrypt(value, options.pass)
+        }
+      }
+    }
     if (type === 'raw') {
       return value
     }
@@ -611,7 +624,7 @@ const store = {
       clog.error('store put key: ' + key + ' is longer than 64, maybe put key and value in wrong order. store.put(value, key)')
       return false
     }
-    clog.debug('put value to', key)
+    clog.debug('put value into:', key)
     if (value === '') {
       return this.delete(key)
     }
@@ -622,7 +635,7 @@ const store = {
       type = options && options.type
     }
     if (type === 'a') {
-      let oldval = this.get(key)
+      let oldval = this.get(key, { pass: options.pass, algo: options.algo })
       if (oldval !== undefined) {
         if (typeof oldval === 'string') {
           value = oldval + '\n' + sString(value)
@@ -660,6 +673,13 @@ const store = {
     if (Buffer.byteLength(value, 'utf8') > this.maxByte) {
       clog.error('store put error, data length is over limit', this.maxByte)
       return false
+    }
+    if (options.pass) {
+      switch (options.algo) {
+      case 'ebuf':
+      default:
+        value = ebufEncrypt(value, options.pass)
+      }
     }
     fs.writeFileSync(path.join(fpath.store, key), value, 'utf8')
     return true
