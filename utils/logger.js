@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const { format } = require('util')
 const { now } = require('./time')
-const { sString } = require('./string')
+const { sString, kSize } = require('./string')
 
 const { CONFIG } = require('../config')
 
@@ -326,5 +326,22 @@ function setGlog(level) {
     clog.error('illegal level', level, 'fail to change global loglevel.')
   }
 }
+
+fs.readdir(CONFIG_LOG.logspath, (error, files)=>{
+  if (error) {
+    clog.error(error.message);
+    return;
+  }
+  let total_size = 0;
+  files.forEach(f=>{
+    const f_stat = fs.statSync(path.join(CONFIG_LOG.logspath, f));
+    total_size += f_stat.size;
+  });
+  const total_size_k = kSize(total_size);
+  clog.info('total amount of logs:', files.length, 'total size:', total_size_k);
+  if (total_size > 10 * 1024 * 1024) {
+    require('./feed').feedPush('Total size of elecV2P logs is over 10 M', `Amount: ${files.length}\nTotal Size: ${total_size_k}\n\nPlease consider clearing`, (CONFIG.homepage || '.') + '/logs');
+  }
+});
 
 module.exports = { logger, setGlog, LOGFILE }
