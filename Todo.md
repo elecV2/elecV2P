@@ -5,14 +5,12 @@
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
 - [ ] 其他程序扩展下载.efh
 - [ ] 引入 $math 用于数学计算
-- [ ] $store.put/get 可定义为私有
+- [ ] script_store.efh 应用中心
 </pre>
 </div>
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
-- script_store.efh 应用中心
-- EFSS 下载方式扩展 ariac 等
 - 规则及定时任务的移动和排序
 - 使用脚本管理规则($rewrite/$rule
 - elecV2P 启动器/快捷方式（$run JSON 格式文件
@@ -25,6 +23,7 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] 可设置取消所有 cookie 授权
 - [x] 总日志大小超过 10M 提醒
 - [x] cookie/store 常量加密储存
 - [x] 默认 PATH 添加 script/Shell

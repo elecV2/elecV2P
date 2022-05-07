@@ -41,7 +41,10 @@ function isAuthReq(req, res) {
       return false;
     }
   }
-  let cookies = cookie.parse(req.headers.cookie || '')
+  let cookies = null
+  if (req.headers.cookie && CONFIG.SECURITY.cookie?.enable !== false) {
+    cookies = cookie.parse(req.headers.cookie)
+  }
   if (cookies?.token?.length > 10 && (CONFIG.wbrtoken + CONFIG.wbrtoken).indexOf(atob(cookies.token)) !== -1) {
     clog.debug(headstr, 'authorized by cookie')
     if (req.query?.cookie === 'clear') {
@@ -71,7 +74,7 @@ function isAuthReq(req, res) {
     }
     if (token === CONFIG.wbrtoken) {
       clog.debug(headstr, 'authorized by token')
-      if (res && req.path !=='/webhook') {
+      if (res && req.path !=='/webhook' && CONFIG.SECURITY.cookie?.enable !== false) {
         let days = req.query?.cookie === 'long' ? 365 : 7
         clog.notify('set cookie for', ipAddress, 'Max-Age:', days, 'days')
         res.setHeader('Set-Cookie', cookie.serialize('token',
@@ -85,7 +88,7 @@ function isAuthReq(req, res) {
           ip: ipAddress,
           ua: req.headers['user-agent'],
           time: now(),
-          path: req.pah,
+          path: req.path,
           days: days,
         })
       }
