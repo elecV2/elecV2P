@@ -4,6 +4,7 @@
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
 - [ ] 其他程序扩展下载.efh
+- [ ] 前端可选择后台节点
 - [ ] 引入 $math 用于数学计算
 - [ ] script_store.efh 应用中心
 </pre>

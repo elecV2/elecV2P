@@ -254,9 +254,6 @@ function feedPush(title, description, url) {
   if (CONFIG_FEED.runjs && CONFIG_FEED.runjs.enable && CONFIG_FEED.runjs.list && wsSer.recv.runjs) {
     CONFIG_FEED.runjs.list.split(/ ?, ?|，/).filter(s=>s).forEach(fn=>{
       wsSer.recv.runjs({ fn, addContext: {
-        $title$: title,
-        $body$: description,
-        $url$: url,
         from: 'feedPush',
         grant: 'nodejs',
         env: {
