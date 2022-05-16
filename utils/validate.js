@@ -25,7 +25,7 @@ function isAuthReq(req, res) {
     ipAddress = ipAddress.substr(7)
   }
   validate_status.total++;
-  let headstr = `${ipAddress} ${req.method} ${req.originalUrl || '/'},`
+  const headstr = `${ipAddress} ${req.method} ${req.originalUrl || '/'},`;
   switch (req.path) {
   case '/favicon.ico':
     clog.debug(headstr, 'no need to validate check');
@@ -38,6 +38,7 @@ function isAuthReq(req, res) {
   if (CONFIG.SECURITY.webhook_only) {
     if (req.path !=='/webhook') {
       clog.error(headstr, 'rejected by elecV2P because of webhook only');
+      validStatus(ipAddress);
       return false;
     }
   }
@@ -103,18 +104,22 @@ function isAuthReq(req, res) {
     return true
   } else {
     clog.notify(headstr, 'rejected by elecV2P because of unauthorized');
-    validate_status.blacknum++;
-    validate_status.black.set(ipAddress, (validate_status.black.get(ipAddress) || 0) + 1);
-    if (CONFIG.SECURITY.numtofeed > 0 && validate_status.blacknum % CONFIG.SECURITY.numtofeed === 0) {
-      let feedbody = '';
-      validate_status.black.forEach((count, ip)=>{
-        feedbody += ip + ' try ' + count + ' times\n';
-      });
-      let acclog = (CONFIG.homepage || '.') + '/logs/access.log';
-      feedbody += '\n' + 'access.log ' + acclog;
-      require('./feed').feedPush(ipAddress + ' try to access elecV2P', feedbody, acclog);
-    }
+    validStatus(ipAddress);
     return false
+  }
+}
+
+function validStatus(ipAddress) {
+  validate_status.blacknum++;
+  validate_status.black.set(ipAddress, (validate_status.black.get(ipAddress) || 0) + 1);
+  if (CONFIG.SECURITY.numtofeed > 0 && validate_status.blacknum % CONFIG.SECURITY.numtofeed === 0) {
+    let feedbody = '';
+    validate_status.black.forEach((count, ip)=>{
+      feedbody += ip + ' try ' + count + ' times\n';
+    });
+    let acclog = (CONFIG.homepage || '.') + '/logs/access.log';
+    feedbody += '\n' + 'access.log ' + acclog;
+    require('./feed').feedPush(ipAddress + ' try to access elecV2P', feedbody, acclog);
   }
 }
 
