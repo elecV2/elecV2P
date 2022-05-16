@@ -1,10 +1,10 @@
-// 通知触发的 JS，在 webUI->SETTING 中进行添加
+// 通知触发的 JS，在 webUI->SETTING/设置相关->通知相关设置 中进行添加
 // 功能:
 //   - 过滤通知
 //   - 自定义个性化通知
 //   - 其他 JS 能做的事
 //
-// 通过通知触发的 JS 默认带有三个变量 $title$, $body$, $url$（v3.4.5 之后可使用 $env.title/$env.body/$env.url 读取）
+// 通过通知触发的 JS 默认带有三个附加临时环境变量 $env.title/$env.body/$env.url
 // 通过通知触发的 JS 除 $feed.push 函数不可用之外（防止循环调用），其他默认参数/环境变量都可以直接使用
 // （具体查看: https://github.com/elecV2/elecV2P-dei/blob/master/docs/04-JS.md）
 
@@ -13,7 +13,7 @@ if ($env.title && $env.body) {
 
   // 简单过滤
   if (/重要/.test($env.title)) {
-    // 使用 $enable$ 强制发送通知 
+    // 使用 $enable$ 强制发送通知
     $feed.bark('$enable$【重要通知】 ' + $env.title, $env.body, $env.url)
   } else if (/userid/.test($env.title)) {
     $feed.cust('$enable$特别通知 - ' + $env.title, $env.body, $env.url)
