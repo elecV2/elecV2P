@@ -1,6 +1,5 @@
 const os = require('os')
 const { exec } = require('child_process')
-
 const { logger, file, downloadfile, wsSer, surlName, kSize, errStack, sType } = require('../utils')
 const clog = new logger({ head: 'funcExec', file: 'funcExec', level: 'debug' })
 
@@ -78,6 +77,8 @@ wsSer.recv.shell = command => {
     } else {
       wsSer.send({ type: 'minishell', data: cdd + ' not exist' })
     }
+  } else if (/^run /.test(command.data)) {
+    runRaw(command.data)
   } else {
     execFunc(command.data, {
       id: command.id,
@@ -134,7 +135,7 @@ async function commandSetup(command, options={}, clog) {
     options.cwd = cwd[2]
     command = command.replace(/ -cwd(=| )(\S+)/g, '')
   }
-  if (!file.isExist(options.cwd, true)) {
+  if (!(options.cwd && file.isExist(options.cwd, true))) {
     // 当没有设置 cwd，或设置 cwd 目录不存在时，自动设置默认 cwd
     if (/^node /.test(command)) {
       // 当使用 node 命令开头时，默认 cwd 设置为 script/JSFile
@@ -329,3 +330,54 @@ function sysInfo() {
 }
 
 module.exports = { exec: execFunc, sysInfo }
+
+const { runJSFile } = require('../script/runJSFile')
+
+// 待完成
+// - log 显示问题
+// - id/name 作用
+// - type task/download/notify 等
+function runRaw(command = '') {
+  if (!command) {
+    clog.error('function runRaw expect a command string')
+    return
+  }
+  command = command.replace(/^run +/, '')
+  const args = command.split(/ +/)
+  let idxs = [args.indexOf('-eid'), args.indexOf('-en'), args.indexOf('-et')],
+      id = '', name = '', type = /\.(js|efh)$/i.test(args[0]) ? 'script' : 'exec'
+  if (idxs[0] !== -1) {
+    id = args[idxs[0] + 1]
+    args.splice(idxs[0], 2, '', '')
+  }
+  if (idxs[1] !== -1) {
+    name = args[idxs[1] + 1]
+    args.splice(idxs[1], 2, '', '')
+  }
+  if (idxs[2] !== -1) {
+    type = args[idxs[2] + 1]
+    args.splice(idxs[2], 2, '', '')
+  }
+  return run({
+    id, name, type,
+    args: args.filter(a=>a),
+  })
+}
+
+function run({ id = '', name = '', type = 'script', args = [] }) {
+  switch(type) {
+  case 'exec':
+  case 'shell':
+    execFunc(args.join(' '), {
+      from: 'funcRun',
+      cb: wsSer.send.func('minishell'),
+    })
+    break;
+  case 'script':
+  default:
+    runJSFile(args.join(' '), {
+      from: 'funcRun',
+      cb: wsSer.send.func('minishell'),
+    })
+  }
+}
