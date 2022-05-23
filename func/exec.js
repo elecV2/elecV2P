@@ -1,6 +1,6 @@
 const os = require('os')
 const { exec } = require('child_process')
-const { logger, file, downloadfile, wsSer, surlName, kSize, errStack, sType } = require('../utils')
+const { logger, file, downloadfile, wsSer, surlName, kSize, errStack, sType, feedPush } = require('../utils')
 const clog = new logger({ head: 'funcExec', file: 'funcExec', level: 'debug' })
 
 const CONFIG_exec = {
@@ -333,10 +333,6 @@ module.exports = { exec: execFunc, sysInfo }
 
 const { runJSFile } = require('../script/runJSFile')
 
-// 待完成
-// - log 显示问题
-// - id/name 作用
-// - type task/download/notify 等
 function runRaw(command = '') {
   if (!command) {
     clog.error('function runRaw expect a command string')
@@ -364,6 +360,10 @@ function runRaw(command = '') {
   })
 }
 
+// 待完成
+// - log 显示问题
+// - id/name 作用
+// - type task/download 等
 function run({ id = '', name = '', type = 'script', args = [] }) {
   switch(type) {
   case 'exec':
@@ -373,6 +373,9 @@ function run({ id = '', name = '', type = 'script', args = [] }) {
       cb: wsSer.send.func('minishell'),
     })
     break;
+  case 'notify':
+    feedPush(args[0], args[1], args[2])
+    break
   case 'script':
   default:
     runJSFile(args.join(' '), {
