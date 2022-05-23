@@ -18,6 +18,10 @@ const validate_status = {
   cookieset: new Set(),    // 已 cookie 授权的客户端（仅记录本次运行
 }
 
+module.exports = { isAuthReq, validate_status }
+
+const { feedPush } = require('./feed')
+
 // 检测某个网络请求是否合法
 function isAuthReq(req, res) {
   let ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress
@@ -84,7 +88,7 @@ function isAuthReq(req, res) {
             maxAge: 60 * 60 * 24 * days // cookie 有效期
           })
         )
-        require('./feed').feedPush('Set cookie for ' + ipAddress, `Time: ${now()}\nMax-Age: ${days} days\nUser-Agent: ${req.headers['user-agent']}\nIf this wasn't you, please consider changing your WEBHOOK TOKEN`)
+        feedPush('Set cookie for ' + ipAddress, `Time: ${now()}\nMax-Age: ${days} days\nUser-Agent: ${req.headers['user-agent']}\nIf this wasn't you, please consider changing your WEBHOOK TOKEN`)
         validate_status.cookieset.add({
           ip: ipAddress,
           ua: req.headers['user-agent'],
@@ -119,8 +123,6 @@ function validStatus(ipAddress) {
     });
     let acclog = (CONFIG.homepage || '.') + '/logs/access.log';
     feedbody += '\n' + 'access.log ' + acclog;
-    require('./feed').feedPush(ipAddress + ' try to access elecV2P', feedbody, acclog);
+    feedPush(ipAddress + ' try to access elecV2P', feedbody, acclog);
   }
 }
-
-module.exports = { isAuthReq, validate_status }
