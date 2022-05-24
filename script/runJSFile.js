@@ -168,6 +168,9 @@ async function efhParse(filename, { title='', type='', name } = {}) {
       if (bcode.length === 0) {
         bcode = $("script[runon='backend']");
       }
+      if (bcode.length === 0) {
+        bcode = $("script[favend]")
+      }
       if (bcode.attr('src')) {
         // src 开头 /|./|空，即绝对/相对目录处理
         efhc.script = bcode.attr('src');

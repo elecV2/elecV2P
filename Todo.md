@@ -24,6 +24,8 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] efh script runon 简化
+- [x] minishell run 命令初版
 - [x] 可设置取消所有 cookie 授权
 - [x] 总日志大小超过 10M 提醒
 - [x] cookie/store 常量加密储存

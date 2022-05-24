@@ -10,6 +10,11 @@
       {
         "host": "httpbin.org",
         "enable": true
+      },
+      {
+        "host": "*.test.com",
+        "enable": true,
+        "note": "泛域名匹配"
       }
     ]
   }
