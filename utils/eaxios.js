@@ -301,6 +301,12 @@ function downloadfile(durl, options, cb) {
 }
 
 async function checkupdate(force = false){
+  if (force === false && CONFIG.update_check === false) {
+    clog.debug('skip update check')
+    return {
+      version: CONFIG.version
+    }
+  }
   if (force === false
     && eData.update.gap > 0
     && eData.update.body
