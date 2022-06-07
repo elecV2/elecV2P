@@ -3,6 +3,7 @@
 <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [ ] 多配置文件及快速切换
 - [ ] 其他程序扩展下载.efh
 - [ ] 前端可选择后台节点
 - [ ] 引入 $math 用于数学计算
@@ -24,6 +25,8 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] 增加脚本默认参数 __md5hash
+- [x] 脚本内容缓存提升读取速度
 - [x] efh script runon 简化
 - [x] minishell run 命令初版
 - [x] 可设置取消所有 cookie 授权

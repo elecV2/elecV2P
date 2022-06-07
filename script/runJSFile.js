@@ -3,7 +3,7 @@ const path = require('path')
 const cheerio = require('cheerio')
 const EventEmitter = require('events')
 
-const { logger, feedAddItem, now, sType, sString, surlName, euid, errStack, downloadfile, Jsfile, file, wsSer, sParam, eAxios } = require('../utils')
+const { logger, feedAddItem, now, sType, sString, surlName, euid, errStack, downloadfile, Jsfile, file, wsSer, sParam, eAxios, sHash } = require('../utils')
 const clog = new logger({ head: 'runJSFile', level: 'debug' })
 
 const vmEvent = new EventEmitter()
@@ -97,6 +97,7 @@ function bOutDate(filename) {
 }
 
 const efhcache = new Map();
+const scriptcache = new Map();
 
 /**
  * efh 文件处理
@@ -220,18 +221,7 @@ function runJS(filename, jscode, addContext={}) {
         nodejs: false,         // nodejs 运行模式，不对脚本进行兼容判断
         require: false         // 启用 nodeJS require 函数。不开启时会自动进行判断
       }
-  if (sType(addContext.grant) === 'string') {
-    let grantcode = ''
-    addContext.grant.split('|').forEach(val=>{
-      if (val) {
-        grantcode += '\n// @grant ' + val
-      }
-    })
-    jscode += grantcode
-    bGrant = true
-    delete addContext.grant
-  }
-  if (bGrant || /^\/\/ +@grant/m.test(jscode)) {
+  if (/^\/\/ +@grant/m.test(jscode)) {
     bGrant = true
 
     // compatible 判断
@@ -522,16 +512,53 @@ async function runJSFile(filename, addContext={}) {
     }
   }
 
-  let rawcode = (addContext.type === 'rawcode') ? filename : Jsfile.get(filename);
-  if (rawcode === false) {
-    runclog.error(`${filename} not exist`)
-    return Promise.resolve(`${filename} not exist`)
+  let rawcode = ''
+  if (addContext.type === 'rawcode') {
+    rawcode = filename
+    filename = addContext.filename || addContext.from || 'rawcode.js'
+    addContext.__md5hash = sHash(rawcode)
+  } else {
+    let sdate = Jsfile.get(filename, 'date'), scache = {
+      name: filename,
+      date: 0,
+      code: '',
+      hash: '',
+    }
+    if (scriptcache.has(filename)) {
+      scache = scriptcache.get(filename)
+      if (scache.date === sdate) {
+        rawcode = scache.code
+      } else {
+        // cache outdate
+        scache.date = 0
+      }
+    }
+    if (sdate === false) {
+      runclog.error(`${filename} not exist`)
+      return Promise.resolve(`${filename} not exist`)
+    }
+    if (scache.date === 0) {
+      rawcode = Jsfile.get(filename)
+      scache.date = sdate
+      scache.code = rawcode
+      scache.hash = sHash(rawcode)
+      scriptcache.set(filename, scache)
+    }
+    addContext.__md5hash = scache.hash || sHash(rawcode)
   }
   if (addContext.rename) {
     Jsfile.put(addContext.rename, rawcode);
     filename = addContext.rename
-  } else if (addContext.type === 'rawcode') {
-    filename = addContext.filename || addContext.from || 'rawcode.js'
+  }
+  if (sType(addContext.grant) === 'string') {
+    let grantcode = ''
+    addContext.grant.split('|').forEach(val=>{
+      if (val) {
+        grantcode += '\n// @grant ' + val
+      }
+    })
+    rawcode += grantcode
+    delete addContext.grant
   }
   if (!/\.(js|efh)$/i.test(filename)) {
     filename += '.js'

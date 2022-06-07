@@ -437,7 +437,7 @@ const file = {
 }
 
 const Jsfile = {
-  get(name, type){
+  get(name, type = ''){
     if (bEmpty(name)) {
       return false
     }
