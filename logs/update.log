@@ -1,4 +1,10 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.6.6)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.6.7)
+
+v3.6.7  2022-06-16
+ • 首页快捷运行脚本 eapp
+ • 增加脚本默认参数 __md5hash
+ • minishell run 命令测试初版
+ • 脚本内容缓存提升读取速度
 
 v3.6.6  2022-05-07
  • 自定义设置其他环境变量参数

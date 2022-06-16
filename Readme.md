@@ -16,9 +16,11 @@ elecV2P - customize personal network.
 
 ***程序开放权限极大，建议局域网使用。公网部署（务必参考 [Advanced.md](https://github.com/elecV2/elecV2P-dei/blob/master/docs/Advanced.md)），风险自负***
 
+*elecV2P 所有文件及依赖总大小约 90 M。初始运行时内存占用约 90 M，运行 100 个定时任务时总内存占用约 150 M（仅供参考，不同软硬件条件下程序调用资源可能有所不同）*
+
 ### 方法一：直接 NODEJS 运行
 
-**nodejs 版本需大于 14.17.0 (node -v)**
+**nodejs 版本需 >= 14.17.0 且 < 18.0.0 (node -v)**
 
 ``` sh
 git clone https://github.com/elecV2/elecV2P.git

@@ -12,7 +12,7 @@ const { CONFIG } = require('../config')
 const wsSer = {
   recver: new Map(),     // recver id UA/IP/TM
   recverlists: [],       // 客户端 recverlists
-  send(data, target){
+  send(data, target = ''){
     wsSend(data, target)
   },
   recv(msg, ip){
@@ -39,7 +39,7 @@ const wsobs = {
   }
 }
 
-wsSer.send.func = (type, target) => {
+wsSer.send.func = (type, target = '') => {
   return (data) => {
     wsSend({type, data}, target)
   }
@@ -54,7 +54,7 @@ wsSer.recv.ready = recver => {
 
 wsSer.recv.stopsendstatus = flag => flag ? wsobs.stop() : wsobs.send()
 
-function wsSend(data, target){
+function wsSend(data, target = ''){
   if (sType(data) === 'object') {
     if (wsSer.recverlists.indexOf('minishell') === -1 && wsSer.recverlists.indexOf(data.type) === -1) {
       if (CONFIG.debug?.websocket) {

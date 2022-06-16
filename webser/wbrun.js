@@ -7,7 +7,17 @@ const { CONFIG } = require('../config')
 function runHandler(req, res){
   let filename = req.params.filename
   // 子目录文件 test>test.efh
-  filename = filename.replace(/>/g, '/')
+  if (filename) {
+    filename = filename.replace(/>/g, '/')
+  } else if (req.query.target) {
+    filename = decodeURI(req.query.target)
+    delete req.query.target
+  } else {
+    return res.json({
+      rescode: -1,
+      message: 'a target is expect to run',
+    })
+  }
   let rbody = req.body
   if (!rbody) {
     rbody = req.query
@@ -46,6 +56,8 @@ function runHandler(req, res){
 }
 
 module.exports = app => {
+  app.get('/run', runHandler)
+  app.post('/run', runHandler)
   app.get('/run/:filename', runHandler)
   app.post('/run/:filename', runHandler)
 }

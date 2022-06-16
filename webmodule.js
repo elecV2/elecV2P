@@ -8,7 +8,7 @@ const { CONFIG, CONFIG_Port } = require('./config')
 const { isAuthReq, logger, websocketSer } = require('./utils')
 const clog = new logger({ head: 'webServer' })
 
-const { wbefss, wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook, wbrpc, wbrun } = require('./webser')
+const { wbefss, wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook, wbrpc, wbrun, wbeapp } = require('./webser')
 
 module.exports = () => {
   const app = express()
@@ -44,6 +44,7 @@ module.exports = () => {
   wbhook(app)
   wbefss(app)
   wbrun(app)
+  wbeapp(app)
 
   app.use((req, res, next) => {
     res.status(404).send(`<p>404</p><br><a href="/">BACK TO HOME</a><br><p><span>Powered BY </span><a target="_blank" href="https://github.com/elecV2/elecV2P">elecV2P</a></p>`)
