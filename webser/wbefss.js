@@ -125,7 +125,7 @@ async function efssHandler(req, res, next) {
       if (requrl === reqfav) {
         let flist = file.list({ folder: favdir, max: rbody.max, dotfiles, detail: true })
         res.writeHead(200, {'Content-Type': 'text/html;charset=utf-8'})
-        res.write('<head><meta name="viewport" content="width=device-width, initial-scale=1.0">')
+        res.write('<head><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="apple-touch-icon" href="/efss/logo/elecV2P.png">')
         res.write(`<title>${fend.name} ${flist.length} - EFSS favorite 目录文件列表</title><style>.content{display: flex;flex-direction: column;border: 1px solid;border-radius: 8px;}.file {display: inline-flex;flex-wrap: wrap;width: 100%;padding: 6px 8px;color: #1890ff;border-bottom: 1px solid;justify-content: space-between;align-items: center;box-sizing: border-box;}.file:last-child {margin: 0;border-bottom: none;}.file_link {width: 50%;color: #1890ff;text-decoration: none;font-size: 18px;font-family: 'Microsoft YaHei', -apple-system, Arial;}.file_mtime {color: #003153;font-size: 16px;}.file_size {width: 72px;text-align: right;font-size: 15px;color: #003153;}a {text-decoration: none;}@media screen and (max-width: 600px) {.file_mtime {display: none;}}</style></head><body><div class='content'>`)
         flist.forEach(file=>{
           res.write(`<div class='file'><a class='file_link' href='${reqfav}/${file.name}${ dotfiles === 'allow' ? '?dotfiles=allow' : '' }' target='_blank'>${file.name}</a><span class='file_mtime'>${ now(file.mtime, false) }</span><span class='file_size'>${ file.size }</span></div>`)

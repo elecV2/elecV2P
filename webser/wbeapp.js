@@ -19,7 +19,7 @@ if (!CONFIG.eapp) {
       "hash": "94f669c165f0f33ec73fd32f446b32e3"
     }, {
       "name": "清空日志",
-      "logo": "https://raw.githubusercontent.com/elecV2/elecV2P-scripts/master/data/logo/dlog.png",
+      "logo": "https://raw.githubusercontent.com/elecV2/elecV2P/master/efss/logo/dlog.png",
       "type": "js",
       "target": "https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/deletelog.js",
       "hash": "0e9288d021b42478b102a2ff1e19226d"
@@ -64,6 +64,24 @@ module.exports = app => {
       resdata: app.hash,
     })
     list.put('config.json', JSON.stringify(CONFIG, null, 2))
+  })
+
+  app.post('/eapp', (req, res)=>{
+    const apps = req.body.apps
+    const enable = req.body.enable
+    if (apps?.length) {
+      CONFIG.eapp.apps = apps
+      res.json({
+        rescode: 0,
+        message: 'success save eapp lists'
+      })
+      list.put('config.json', JSON.stringify(CONFIG, null, 2))
+    } else {
+      return res.json({
+        rescode: -1,
+        message: 'eapp list is expect to save'
+      })
+    }
   })
 
   app.delete('/eapp/:idx', (req, res)=>{
