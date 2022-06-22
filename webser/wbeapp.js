@@ -70,7 +70,15 @@ module.exports = app => {
     const apps = req.body.apps
     const enable = req.body.enable
     if (apps?.length) {
-      CONFIG.eapp.apps = apps
+      CONFIG.eapp.apps = apps.filter(app=>{
+        if (app.name && app.type && app.target) {
+          if (app.hash?.length !== 32) {
+            app.hash = sHash(app.name + app.type + app.target)
+          }
+          return true
+        }
+        return false
+      })
       res.json({
         rescode: 0,
         message: 'success save eapp lists'

@@ -225,7 +225,7 @@ async function commandSetup(command, options={}, clog) {
  * @param  {function}  cb               回调函数，优先级高于 options.cb
  * @return {none}                 
  */
-async function execFunc(command, options={}, cb) {
+async function execFunc(command, options={}, cb=null) {
   let execlog = clog
   if (sType(options.logname) === 'string') {
     execlog = new logger({
