@@ -8,6 +8,7 @@ const { CONFIG } = require('../config')
 if (!CONFIG.eapp) {
   CONFIG.eapp = {
     enable: true,
+    logo_type: 1,
     apps: [{
       "name": "说明文档",
       "type": "url",
@@ -66,9 +67,19 @@ module.exports = app => {
     list.put('config.json', JSON.stringify(CONFIG, null, 2))
   })
 
+  app.put('/eapp/logo_type', (req, res)=>{
+    CONFIG.eapp.logo_type = req.body.logo_type || 1
+    res.json({
+      rescode: 0,
+      message: 'eapp logo_type ' + CONFIG.eapp.logo_type,
+    })
+    list.put('config.json', JSON.stringify(CONFIG, null, 2))
+  })
+
   app.post('/eapp', (req, res)=>{
+    CONFIG.eapp.enable = req.body.enable !== false
+    CONFIG.eapp.logo_type = req.body.logo_type
     const apps = req.body.apps
-    const enable = req.body.enable
     if (apps?.length) {
       CONFIG.eapp.apps = apps.filter(app=>{
         if (app.name && app.type && app.target) {
