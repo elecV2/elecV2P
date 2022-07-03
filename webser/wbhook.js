@@ -588,6 +588,30 @@ function handler(req, res){
       })
     }
     break
+  case 'eapp':
+    if (rbody.op === 'put') {
+      if (rbody.enable !== undefined) {
+        CONFIG.eapp.enable = sBool(rbody.enable)
+      }
+      if (rbody.logo_type) {
+        CONFIG.eapp.logo_type = Number(rbody.logo_type)
+      }
+      if (sType(rbody.apps) === 'array') {
+        CONFIG.eapp.apps.push(...rbody.apps.filter(app=>app && app.name && app.type && app.target))
+      }
+      res.json({
+        rescode: 0,
+        message: 'config eapp update',
+        resdata: CONFIG.eapp,
+      })
+      list.put('config.json', CONFIG)
+      return
+    }
+    return res.json({
+      rescode: 0,
+      message: 'get config eapp',
+      resdata: CONFIG.eapp,
+    })
   case 'devdebug':
     // temp debug, 待完成 unfinished
     switch(rbody.get){

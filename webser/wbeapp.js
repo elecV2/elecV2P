@@ -28,6 +28,10 @@ if (!CONFIG.eapp) {
       "name": "PM2 LS",
       "type": "shell",
       "target": "pm2 ls",
+    }, {
+      "name": "查看目录",
+      "type": "shell",
+      "target": "ls -cwd %ei%",
     }]
   }
 }
