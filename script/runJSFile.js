@@ -444,7 +444,7 @@ async function runJSFile(filename, addContext={}) {
       let envlist = jobenvs[1].trim().split(' ')
       envlist.forEach(ev=>{
         let ei = ev.match(/(.*?)=(.*)/)
-        if (ei.length === 3) {
+        if (ei?.length === 3) {
           addContext.env[ei[1]] = decodeURI(ei[2])
         }
       })
@@ -527,6 +527,7 @@ async function runJSFile(filename, addContext={}) {
     if (scriptcache.has(filename)) {
       scache = scriptcache.get(filename)
       if (scache.date === sdate) {
+        clog.debug(`get ${filename} cache code`)
         rawcode = scache.code
       } else {
         // cache outdate
@@ -538,6 +539,7 @@ async function runJSFile(filename, addContext={}) {
       return Promise.resolve(`${filename} not exist`)
     }
     if (scache.date === 0) {
+      clog.debug(`get ${filename} raw code`)
       rawcode = Jsfile.get(filename)
       scache.date = sdate
       scache.code = rawcode
