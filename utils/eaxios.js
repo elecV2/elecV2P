@@ -160,6 +160,9 @@ function eAxios(request, proxy=null) {
   if (request.data === undefined || request.data === '') {
     request.data = null
   }
+  if (request.validateStatus === undefined) {
+    request.validateStatus = status=>status < 500
+  }
 
   // 网络请求代理处理
   if (proxy !== false && (proxy || CONFIG_Axios.proxy.enable)) {
