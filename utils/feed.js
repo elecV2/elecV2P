@@ -80,11 +80,11 @@ function formUrl(url) {
 }
 
 function iftttPush(title, description, url) {
-  if (CONFIG_FEED.iftttid && CONFIG_FEED.iftttid.key && (CONFIG_FEED.iftttid.enable || /^\$enable\$/.test(title))) {
+  if (CONFIG_FEED.iftttid && CONFIG_FEED.iftttid.key && CONFIG_FEED.iftttid.enable) {
     if (bEmpty(title)) {
       title = 'elecV2P 通知'
     } else {
-      title = sString(title).replace(/^\$enable\$/, '')
+      title = sString(title)
     }
     if (bEmpty(description)) {
       description = 'a empty message\n没有任何通知内容'
@@ -125,11 +125,11 @@ function iftttPush(title, description, url) {
 }
 
 function barkPush(title, description, url) {
-  if (CONFIG_FEED.barkkey && CONFIG_FEED.barkkey.key && (CONFIG_FEED.barkkey.enable || /^\$enable\$/.test(title))) {
+  if (CONFIG_FEED.barkkey && CONFIG_FEED.barkkey.key && CONFIG_FEED.barkkey.enable) {
     if (bEmpty(title)) {
       title = 'elecV2P 通知'
     } else {
-      title = sString(title).replace(/^\$enable\$/, '')
+      title = sString(title)
     }
     if (bEmpty(description)) {
       description = 'a empty message\n没有任何通知内容'
@@ -173,11 +173,11 @@ function barkPush(title, description, url) {
 }
 
 function custPush(title, description, url) {
-  if (CONFIG_FEED.custnotify && CONFIG_FEED.custnotify.url && (CONFIG_FEED.custnotify.enable || /^\$enable\$/.test(title))) {
+  if (CONFIG_FEED.custnotify && CONFIG_FEED.custnotify.url && CONFIG_FEED.custnotify.enable) {
     if (bEmpty(title)) {
       title = 'elecV2P 通知'
     } else {
-      title = sString(title).replace(/^\$enable\$/, '')
+      title = sString(title)
     }
     if (bEmpty(description)) {
       description = 'a empty message\n没有任何通知内容'

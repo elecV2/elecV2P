@@ -13,10 +13,9 @@ if ($env.title && $env.body) {
 
   // 简单过滤
   if (/重要/.test($env.title)) {
-    // 使用 $enable$ 强制发送通知
-    $feed.bark('$enable$【重要通知】 ' + $env.title, $env.body, $env.url)
+    $feed.bark('【重要通知】 ' + $env.title, $env.body, $env.url)
   } else if (/userid/.test($env.title)) {
-    $feed.cust('$enable$特别通知 - ' + $env.title, $env.body, $env.url)
+    $feed.cust('特别通知 - ' + $env.title, $env.body, $env.url)
   } else if (/测试/.test($env.title)) {
     $message.success(`一条网页消息 -来自通知触发的 JS\n【标题】 ${$env.title} 【内容】 ${$env.body}\n${$env.url}`, 0)
   }
