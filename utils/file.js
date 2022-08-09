@@ -405,10 +405,11 @@ const file = {
         if (fstat.isDirectory()) {
           subfolder.push((subf ? subf + '/' : '') + fd)
         } else {
-          if (ext.length && ext.indexOf(path.extname(fd)) === -1) {
+          let extname = path.extname(fd).toLowerCase()
+          if (ext.length && ext.indexOf(extname) === -1) {
             continue
           }
-          if (noext.length && noext.indexOf(path.extname(fd)) !== -1) {
+          if (noext.length && noext.indexOf(extname) !== -1) {
             continue
           }
           if (detail) {
