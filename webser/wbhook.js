@@ -220,8 +220,10 @@ function handler(req, res){
     let status = nStatus()
     status.start = now(CONFIG.start, false)
     status.uptime = ((Date.now() - Date.parse(status.start))/1000/60/60).toFixed(2) + ' hours'
+    status.nodejs = process.version
     status.version = CONFIG.version
     status.clients = wsSer.recver.size
+    status.scripts = Jsfile.get('list').length
     status.task = taskMa.status()
     res.json(status)
     break

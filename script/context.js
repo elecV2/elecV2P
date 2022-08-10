@@ -64,6 +64,13 @@ class contextBase {
   constructor({ fconsole, name }){
     this.console = fconsole
     this.__name  = name
+
+    this.$axios.get = (url, config = {})=>{
+      return this.$axios({ url, method: 'get', ...config })
+    }
+    this.$axios.post = (url, config = {})=>{
+      return this.$axios({ url, method: 'post', ...config })
+    }
   }
 
   setTimeout = setTimeout
