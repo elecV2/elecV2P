@@ -1,3 +1,4 @@
+const fs = require('fs')
 const http = require('http')
 const path = require('path')
 const express = require('express')
@@ -5,10 +6,34 @@ const compression = require('compression')
 
 const { CONFIG, CONFIG_Port } = require('./config')
 
+const { crtHost } = require('./func')
 const { isAuthReq, logger, websocketSer } = require('./utils')
 const clog = new logger({ head: 'webServer' })
 
 const { wbefss, wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook, wbrpc, wbrun, wbeapp } = require('./webser')
+
+async function newServer(app) {
+  if (CONFIG?.webUI?.tls?.enable) {
+    let host = CONFIG.webUI.tls.host
+    if (!host) {
+      host = '127.0.0.1'
+    }
+    try {
+      if (!(fs.existsSync(`rootCA/${host}.key`) && fs.existsSync(`rootCA/${host}.crt`))) {
+        await crtHost(host)
+      }
+      clog.notify('enable TLS for webUI, HOST:', host)
+      return require('https').createServer({
+        key: fs.readFileSync(`rootCA/${host}.key`),
+        cert: fs.readFileSync(`rootCA/${host}.crt`)
+      }, app)
+    } catch(error) {
+      clog.error('fail to enable TLS for webUI, reason:', error)
+      return http.createServer(app)
+    }
+  }
+  return http.createServer(app)
+}
 
 module.exports = () => {
   const app = express()
@@ -50,15 +75,18 @@ module.exports = () => {
     res.status(404).send(`<p>404</p><br><a href="/">BACK TO HOME</a><br><p><span>Powered BY </span><a target="_blank" href="https://github.com/elecV2/elecV2P">elecV2P</a></p>`)
   })
 
-  const server = http.createServer(app)
+  newServer(app).then(server=>{
+    server.on('clientError', (err, socket) => {
+      clog.error('elecV2P clientError', err)
+      socket.end('HTTP/1.1 400 Bad Request\r\n')
+    })
 
-  server.on('clientError', (err, socket) => {
-    socket.end('HTTP/1.1 400 Bad Request\r\n')
+    server.listen(CONFIG_Port.webst, ()=>{
+      clog.notify('elecV2P', 'v' + CONFIG.version, 'started on port', CONFIG_Port.webst);
+    })
+
+    websocketSer({ server, path: '/elecV2P' })
+  }).catch(err=>{
+    clog.error('elecV2P new server error:', err)
   })
-
-  server.listen(CONFIG_Port.webst, ()=>{
-    clog.notify('elecV2P', 'v' + CONFIG.version, 'started on port', CONFIG_Port.webst);
-  })
-
-  websocketSer({ server, path: '/elecV2P' })
 }

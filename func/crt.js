@@ -181,10 +181,10 @@ function crtInfo(){
   }
 }
 
-function crtHost(hostname) {
+function getCert(hostname = '') {
   return new Promise((resolve, reject)=>{
     easyCert.getCertificate(hostname, (error, keyContent, crtContent) => {
-      if (error === 'ROOT_CA_NOT_EXISTS') {
+      if (error) {
         reject(error);
         clog.error('fail to generate certificate for', hostname, 'reason:', error);
         return;
@@ -193,10 +193,33 @@ function crtHost(hostname) {
       resolve(crt_root);
       clog.info('success generate certificate for', hostname);
       clog.info(`copy ${hostname}.crt/${hostname}.key to`, anycrtpath);
-      fs.copyFile(`${crt_root}/${hostname}.crt`, `${anycrtpath}/${hostname}.crt`, clog.error);
-      fs.copyFile(`${crt_root}/${hostname}.key`, `${anycrtpath}/${hostname}.key`, clog.error);
+      fs.copyFile(`${crt_root}/${hostname}.crt`, `${anycrtpath}/${hostname}.crt`, error=>{
+        if (error) {
+          clog.error(error)
+        }
+      });
+      fs.copyFile(`${crt_root}/${hostname}.key`, `${anycrtpath}/${hostname}.key`, error=>{
+        if (error) {
+          clog.error(error)
+        }
+      });
     });
   })
+}
+
+async function crtHost(hostname = '') {
+  let crt_root = ''
+  try {
+    crt_root = await getCert(hostname)
+  } catch(error) {
+    if (error === 'ROOT_CA_NOT_EXISTS') {
+      await newRootCrt()
+      crt_root = await getCert(hostname)
+    } else {
+      return Promise.reject(error)
+    }
+  }
+  return crt_root
 }
 
 module.exports = { clearCrt, rootCrtSync, newRootCrt, cacheClear, crtInfo, crtHost, crt_path }

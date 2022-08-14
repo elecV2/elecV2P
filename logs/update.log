@@ -1,5 +1,11 @@
 <a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.6.8)
 
+v3.6.9  2022-08-15
+ • Docker 默认 NodeJS 版本 18.7.0
+ • 移除 enable 强制开启通知的功能
+ • webUI 可选择是否开启 TLS
+ • 脚本后缀名不区分大小写
+
 v3.6.8  2022-07-03
  • EAPP 简单交互输入
  • EAPP 图标样式选择
