@@ -16,13 +16,13 @@ if (!CONFIG.eapp) {
     }, {
       "name": "简易记事本",
       "type": "efh",
-      "target": "https://raw.githubusercontent.com/elecV2/elecV2P-dei/master/examples/JSTEST/efh/notepad.efh",
+      "target": "https://raw.ev2.workers.dev/elecV2/elecV2P-dei/master/examples/JSTEST/efh/notepad.efh",
       "hash": "94f669c165f0f33ec73fd32f446b32e3"
     }, {
       "name": "清空日志",
-      "logo": "https://raw.githubusercontent.com/elecV2/elecV2P/master/efss/logo/dlog.png",
+      "logo": "https://raw.ev2.workers.dev/elecV2/elecV2P/master/efss/logo/dlog.png",
       "type": "js",
-      "target": "https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/deletelog.js",
+      "target": "https://raw.ev2.workers.dev/elecV2/elecV2P/master/script/JSFile/deletelog.js",
       "hash": "0e9288d021b42478b102a2ff1e19226d"
     }, {
       "name": "PM2 LS",

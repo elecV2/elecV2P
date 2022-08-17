@@ -4,6 +4,7 @@
 **/
 
 const crypto = require('crypto')
+const { ansiHtml } = require('./ansi')
 
 function sType(obj) {
   if (typeof obj !== 'object') {
@@ -196,12 +197,15 @@ function nStatus() {
 }
 
 function escapeHtml(str) {
-  const tagsToReplace = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;'
+  if (/[&<>]/.test(str)) {
+    const tagsToReplace = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;'
+    }
+    str = str.replace(/[&<>]/g, tag=>tagsToReplace[tag] || tag)
   }
-  return str.replace(/[&<>]/g, tag=>tagsToReplace[tag] || tag)
+  return ansiHtml(str)
 }
 
 function surlName(url) {

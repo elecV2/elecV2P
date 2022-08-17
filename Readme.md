@@ -18,9 +18,11 @@ elecV2P - customize personal network.
 
 *elecV2P 所有文件及依赖总大小约 90 M。初始运行时内存占用约 90 M，运行 100 个定时任务时总内存占用约 150 M（仅供参考，不同软硬件条件下程序调用资源可能有所不同）*
 
+**在可使用 Docker 的情况下，推荐使用方法三进行安装**
+
 ### 方法一：直接 NODEJS 运行
 
-**nodejs 版本需 >= 14.17.0 且 < 18.0.0 (node -v)**
+**需求 NODEJS 版本 (node -v) >= 14.17.0**
 
 ``` sh
 git clone https://github.com/elecV2/elecV2P.git
@@ -30,31 +32,39 @@ cd elecV2P
 yarn
 
 # elecV2P 默认以 pm2 的方式启动，需要先安装好 pm2
-# pm2 安装方式:
-# - 添加目录 elecV2P 所在目录/node_modules/.bin 到系统环境变量 PATH 中
-# - 或者直接执行 yarn global add pm2
+# pm2 的安装方式:
+# 1. 添加 elecV2P 所在目录/node_modules/.bin 到系统环境变量 PATH 中
+# 2. 或者直接执行 yarn global add pm2
 # 然后执行命令
 yarn start
 
-# 如果要使用基础方式启动，执行命令
+# 其他基础方式启动命令
 node index.js
 # 假如提示 80 端口不可用，尝试命令
-# PORT=8000 node index.js
-
-# 调试模式(webUI 端口为 12521，正常模式下端口为 80)
-yarn dev
-
-# 升级（【推荐使用自带的 softupdate.js 进行软更新升级】
-# 或者手动执行以下步骤
-# - 先备份好个人数据，比如 根证书，以及 efss、script/JSFile、Store、Lists、Shell 等文件夹
-# - （推荐在 webUI/efss 界面，右键对应文件夹，然后 zip 打包下载。）
-# - 然后在项目目录下执行命令 git pull，拉取最新的代码进行覆盖升级
-# - 最后再把备份好的文件上传/复制还原到之前的位置
+# windows 平台：
+# set PORT=8000 && node index.js
+# 其他平台：
+# PORT=8000 TZ=Asia/Shanghai node index.js
+## TZ=Asia/Shanghai 用于设置程序运行时区
 ```
 
-**【推荐使用的软更新升级文件 [softupdate.js](https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js) 】**
+#### 升级
 
-其他 PM2 相关指令
+方式一：使用 [softupdate.js](https://raw.ev2.workers.dev/elecV2/elecV2P/master/script/JSFile/softupdate.js) 软更新升级
+
+- 首先在 webUI/JSMANAGE 脚本管理中找到 softupdate.js 文件，假如不存在就远程推送或本地上传一下
+- 然后按照文件内的说明，根据自身需求更改 CONFIG 设置项
+- 最后点击测试运行即可
+
+方式二：手动升级（不推荐
+
+- 先备份好个人数据，比如 根证书，以及 efss、script/JSFile、Store、Lists、Shell 等文件夹
+- （推荐在 webUI/efss 界面，右键对应文件夹，然后 zip 打包下载。）
+- 然后在项目目录下执行命令 git pull，拉取最新的代码进行覆盖升级
+- 最后再把备份好的文件上传/复制还原到之前的位置
+
+### 其他 PM2 相关指令
+
 ``` sh
 pm2 stop elecV2P  # 停止 elecV2P
 pm2 stop all      # 停止所有程序
