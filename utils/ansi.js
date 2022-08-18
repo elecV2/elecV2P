@@ -1,17 +1,26 @@
 /**
  * 将 ansi color 转换为 html 进行显示
  * Author: http://t.me/elecV2
+ * update: 2022-08-17 18:30
  * 待优化：
- *   - ansi 256
  *   - 当前应用色彩状态保存（便于反色
  **/
 
 const colors = [
   // https://en.wikipedia.org/wiki/ANSI_escape_code
-  // Windows 10 Console
+  // Windows 10 Console. ansi 16 基础色 base color
   "#0c0c0c", "#c50f1f", "#13a10e", "#c19c00", "#0037da", "#881798", "#3a96dd", "#cccccc",
   "#767676", "#e74856", "#16c60c", "#f9f1a5", "#3b78ff", "#b4009e", "#61d6d6", "#f2f2f2",
 ]
+
+// (95 + i * 40).toString(16)
+const c256_base = ["00", "5f", "87", "af", "d7", "ff"]
+// ansi256 其他色彩
+for (let x = 16; x < 232; x++) {
+  colors.push((x - 16).toString(6).padStart(3, '0').split('').reduce((a, x)=>a+c256_base[x], '#'))
+}
+// Gray-scale range. 24
+colors.push(...["#080808", "#121212", "#1c1c1c", "#262626", "#303030", "#3a3a3a", "#444444", "#4e4e4e", "#585858", "#626262", "#6c6c6c", "#767676", "#808080", "#8a8a8a", "#949494", "#9e9e9e", "#a8a8a8", "#b2b2b2", "#bcbcbc", "#c6c6c6", "#d0d0d0", "#dadada", "#e4e4e4", "#eeeeee"])
 
 const code_to_style = new Map([
   ["0", ""],
@@ -90,7 +99,6 @@ function ansiStyle(strcode = '') {
   }
   let codes = strcode.split(';')
   let res = ''
-  // 待优化 ansi256 true color 部分
   for (let idx = 0; idx < codes.length; idx++) {
     let code = codes[idx]
     if (code_to_style.has(code)) {
@@ -100,8 +108,7 @@ function ansiStyle(strcode = '') {
     if (code === '38') {
       // front color
       if (codes[idx+1] === '5' && codes[idx+2]) {
-        // ansi256 待优化
-        res += `color: ${colors[Math.floor(Number(codes[idx+2])/16)]};`
+        res += `color: ${colors[Number(codes[idx+2])]};`
         idx += 2
       } else if (codes[idx+1] === '2' && codes[idx+2] && codes[idx+3] && codes[idx+4]) {
         res += `color: rgb(${Number(codes[idx+2])}, ${Number(codes[idx+3])}, ${Number(codes[idx+4])});`
@@ -113,7 +120,7 @@ function ansiStyle(strcode = '') {
     if (code === '48') {
       // back color
       if (codes[idx+1] === '5' && codes[idx+2]) {
-        res += `background-color: ${colors[Math.floor(Number(codes[idx+2])/16)]};`
+        res += `background-color: ${colors[Number(codes[idx+2])]};`
         idx += 2
       } else if (codes[idx+1] === '2' && codes[idx+2] && codes[idx+3] && codes[idx+4]) {
         res += `background-color: rgb(${Number(codes[idx+2])}, ${Number(codes[idx+3])}, ${Number(codes[idx+4])});`

@@ -30,4 +30,18 @@
   - 使用自签证书 https 访问时，设备需先信任根证书
   - 也可以使用其他合法域名证书，格式 x.xx.com.key/x.xx.com.crt，放置到此目录下
 - 访问时注意带上端口，比如 https://192.168.1.102:8000 （使用 443 端口时，可省略
-- 假如出现错误，可查看 errors.log 或 [open a issue](https://github.com/elecV2/elecV2P/issues)
+
+使用场景示例
+
+开启 TLS，端口设置为 443，HOST 域名任意设置，比如 e.io。
+然后重启，正常情况下 elecV2P 会自动使用自签根证书生成 e.io 的域名证书。根证书和域名证书都保存在当前目录下（即 **项目目录/rootCA**）。也可以通过其他途径生成 e.io 域名证书，然后存放到此目录。域名证书应该包含域名.crt 和 域名.key 两个文件，比如 **e.io.crt 和 e.io.key**。假如出现错误，查看 errors.log 或 [open a issue](https://github.com/elecV2/elecV2P/issues)
+
+接着将 e.io 域名映射到 elecV2P 服务器地址。映射工具可以是系统的 hosts，或者是 clash/surge/小火箭 等代理软件。以修改系统 hosts 文件为例，假如 elecV2P 就运行在本机，则对应映射规则为 **127.0.0.1    e.io**。其他代理软件根据软件说明添加域名到 IP 的映射规则，通常在 dns 相关的设置部分。
+
+设置完成后即可通过 https://e.io 来访问 webUI。
+
+这么做的好处：
+
+- https 总比 http 安全些
+- 使用自签证书别人一般不会信任
+- 内网 IP 访问不授信，比如一些 192/172/127 开头的 IP

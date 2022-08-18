@@ -1,3 +1,9 @@
+/**
+ * 待优化
+ * - isLog cache
+ * - 不输出不处理
+ **/
+
 const fs = require('fs')
 const path = require('path')
 const { format } = require('util')
@@ -8,25 +14,26 @@ const { CONFIG } = require('../config')
 
 const CONFIG_LOG = {
   logspath: path.join(__dirname, '../logs'),
-  levels: {
-    error: 0,
-    notify: 1,
-    info: 2,
-    debug: 3
-  },
   alignHeadlen: 16,               // 日志头部长度
   globalLevel: CONFIG.gloglevel || 'info'
 }
 
+const LOG_LEVELS = {
+  error: 0,
+  notify: 1,
+  info: 2,
+  debug: 3
+}
+
 if(!fs.existsSync(CONFIG_LOG.logspath)) {
-  fs.mkdirSync(CONFIG_LOG.logspath)
+  fs.mkdirSync(CONFIG_LOG.logspath, { recursive: true })
 }
 
 const logHeadCache = new Map()
 
 class logger {
   _head = 'elecV2P'
-  _level = 'info'
+  _level = 2
 
   log = this.info
   err = this.error
@@ -34,7 +41,7 @@ class logger {
 
   constructor({ head, level, isalignHead, cb, file }) {
     if(head) this._head = head
-    if(level && CONFIG_LOG.levels.hasOwnProperty(level)) this._level = level
+    if(level && LOG_LEVELS.hasOwnProperty(level)) this._level = LOG_LEVELS[level]
     if(cb) this._cb = cb
     if (file) {
       file = file.trim().replace(/\/|\\/g, '-');
@@ -58,11 +65,15 @@ class logger {
     this._cb = cb
   }
 
+  isLog(clevel = 'info') {
+    return Math.min(this._level, LOG_LEVELS[CONFIG_LOG.globalLevel]) >= LOG_LEVELS[clevel]
+  }
+
   info(){
     const args = formArgs(...arguments)
     if (!args) return
     const cont = `[${ this.infohead }][${ now() }] ${ args }`
-    if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['info'] && CONFIG_LOG.levels['info'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
+    if (this.isLog('info')) {
       console.log(cont)
     }
     if(this._cb) this._cb(cont)
@@ -73,7 +84,7 @@ class logger {
     const args = formArgs(...arguments)
     if (!args) return
     const cont = `[${ this.notifyhead }][${ now() }] ${ args }`
-    if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['notify'] && CONFIG_LOG.levels['notify'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
+    if (this.isLog('notify')) {
       console.log(cont)
     }
     if(this._cb) this._cb(cont)
@@ -83,8 +94,8 @@ class logger {
   error(){
     const args = formArgs(...arguments)
     if (!args) return
-    const cont = `[${ this.errorhead }][${ now() }] ${ args }`
-    if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['error'] && CONFIG_LOG.levels['error'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
+    const cont = `[${ this.errorhead }][${ now() }] \x1b[31m${ args }\x1b[0m`
+    if (this.isLog('error')) {
       console.error(cont)
     }
     if(this._cb) this._cb(cont)
@@ -93,7 +104,7 @@ class logger {
   }
 
   debug(){
-    if (CONFIG_LOG.levels[this._level] >= CONFIG_LOG.levels['debug'] && CONFIG_LOG.levels['debug'] <= CONFIG_LOG.levels[CONFIG_LOG.globalLevel]) {
+    if (this.isLog('debug')) {
       const args = formArgs(...arguments)
       if (!args) return
       const cont = `[${ this.debughead }][${ now() }] ${ args }`
@@ -319,7 +330,7 @@ function alignHeadOrg(str, alignlen = CONFIG_LOG.alignHeadlen) {
 }
 
 function setGlog(level) {
-  if (CONFIG_LOG.levels.hasOwnProperty(level)) {
+  if (LOG_LEVELS.hasOwnProperty(level)) {
     CONFIG_LOG.globalLevel = level
     clog.notify('global loglevel set to', level)
   } else {
