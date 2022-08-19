@@ -29,7 +29,6 @@ async function newServer(app) {
       }, app)
     } catch(error) {
       clog.error('fail to enable TLS for webUI, reason:', error)
-      return http.createServer(app)
     }
   }
   return http.createServer(app)

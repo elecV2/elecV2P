@@ -15,6 +15,7 @@
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- ev binary 执行程序
 - 规则及定时任务的移动和排序
 - 使用脚本管理规则($rewrite/$rule
 - websocket 服务器端(多)点对点信息传递（加密？）
@@ -26,6 +27,8 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] 自定义 LOGO 图标及文字
+- [x] websocket 重连时间间隔优化
 - [x] 日志输出支持 ansi 彩色
 - [x] webUI 可选择是否开启 TLS
 - [x] $axios method alias get/post

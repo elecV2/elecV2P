@@ -273,6 +273,16 @@ module.exports = app => {
           })
         }
         break
+      case 'webUILogo':
+        if (!CONFIG.webUI) {
+          CONFIG.webUI = Object.create(null)
+        }
+        CONFIG.webUI.logo = req.body.data
+        res.json({
+          rescode: 0,
+          message: 'webUI logo config success updated'
+        })
+        break
       case 'env':
         const envdata = req.body.data
         if (envdata.path) {

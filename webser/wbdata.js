@@ -30,6 +30,7 @@ module.exports = app => {
           },
           menunav: CONFIG.webUI?.nav,
           theme: CONFIG.webUI?.theme,
+          logo: CONFIG.webUI?.logo,
           userid: CONFIG.userid,
         })
         if (req.query.check) {
