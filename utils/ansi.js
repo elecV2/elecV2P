@@ -1,7 +1,7 @@
 /**
  * 将 ansi color 转换为 html 进行显示
- * Author: http://t.me/elecV2
- * update: 2022-08-17 18:30
+ * Author: https://t.me/elecV2
+ * update: 2022-08-18 21:21
  * 待优化：
  *   - 当前应用色彩状态保存（便于反色
  **/
@@ -63,12 +63,12 @@ function ansiHtml(str) {
   let ret = str.replace(/\033\[([\d;]*)m/g, (m, m1)=>{
     if (m1 === '0') {
       // close all tags
-      let ct = ''
-      while(openTags > 0) {
-        ct += '</span>'
-        openTags--
+      if (openTags > 0) {
+        let ct = '</span>'.repeat(openTags)
+        openTags = 0
+        return ct
       }
-      return ct
+      return ''
     }
     if (code_to_close.has(m1)) {
       if (openTags > 0) {
@@ -85,9 +85,8 @@ function ansiHtml(str) {
     return `<span style="${ ansiStyle(m1) }">`
   })
 
-  while (openTags > 0) {
-    ret += '</span>'
-    openTags--
+  if (openTags > 0) {
+    ret += '</span>'.repeat(openTags)
   }
 
   return ret
@@ -113,9 +112,8 @@ function ansiStyle(strcode = '') {
       } else if (codes[idx+1] === '2' && codes[idx+2] && codes[idx+3] && codes[idx+4]) {
         res += `color: rgb(${Number(codes[idx+2])}, ${Number(codes[idx+3])}, ${Number(codes[idx+4])});`
         idx += 4
-      } else {
-        continue
       }
+      continue
     }
     if (code === '48') {
       // back color
@@ -125,9 +123,8 @@ function ansiStyle(strcode = '') {
       } else if (codes[idx+1] === '2' && codes[idx+2] && codes[idx+3] && codes[idx+4]) {
         res += `background-color: rgb(${Number(codes[idx+2])}, ${Number(codes[idx+3])}, ${Number(codes[idx+4])});`
         idx += 4
-      } else {
-        continue
       }
+      continue
     }
   }
   return res
