@@ -3,7 +3,6 @@
 <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
-- [ ] 首页 LOGO 图像及文字自定义
 - [ ] EFSS 简单影音播放器
 - [ ] MITM 自签域名证书管理
 - [ ] 多配置文件及快速切换
@@ -27,6 +26,7 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] fix 部分子命令不退出的问题
 - [x] 自定义 LOGO 图标及文字
 - [x] websocket 重连时间间隔优化
 - [x] 日志输出支持 ansi 彩色

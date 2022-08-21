@@ -32,6 +32,9 @@ wsSer.recv.shell = command => {
       case 'quit':
       case 'exit':
         subp.childexec?.stdin.end()
+        subp.childexec?.stdout.destroy()
+        subp.childexec?.stderr.destroy()
+        subp.childexec?.kill('SIGINT')
         break
       default:
         subp.childexec?.stdin.write(command.data + '\n')
@@ -288,9 +291,13 @@ async function execFunc(command, options={}, cb=null) {
   })
 
   childexec.on('exit', (code, signal) => {
-    let fstr = 'command: ' + command + ' finished'
+    let fstr = 'command: ' + command
     if (options.timeout && signal === 'SIGTERM') {
-      fstr += `(may run timeout of ${options.timeout}ms)`
+      fstr += ` may run timeout of ${options.timeout}ms`
+    } else if (signal === 'SIGINT') {
+      fstr += ' exited'
+    } else {
+      fstr += ' finished'
     }
     execlog.info(fstr)
     callback(options.call ? fdata.join('') : fstr, null, true)
