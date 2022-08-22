@@ -1,10 +1,16 @@
 /**
  * 将 ansi color 转换为 html 进行显示
  * Author: https://t.me/elecV2
- * update: 2022-08-18 21:21
+ * Update: 2022-08-21 13:58
+ * Github: https://github.com/elecV2/ansi-to-span
+ * 为适应 elecV2P 做了部分修改
  * 待优化：
  *   - 当前应用色彩状态保存（便于反色
  **/
+
+const CONFIG = {
+  reverse_style: 'color: #0c0c0c; background-color: #767676',
+}
 
 const colors = [
   // https://en.wikipedia.org/wiki/ANSI_escape_code
@@ -29,7 +35,7 @@ const code_to_style = new Map([
   ["3", "font-style: italic;"],
   ["4", "text-decoration-line: underline;"],
   ["5", ""],  // blink
-  ["7", ""],  // Reverse
+  ["7", `${CONFIG.reverse_style}`],  // Reverse
   ["8", "display: none;"],
   ["9", "text-decoration-line: line-through;"],
 
@@ -52,7 +58,7 @@ const code_to_style = new Map([
   ["47", `background-color: ${colors[7]};`], ["107", `background-color: ${colors[15]};`],
 ])
 
-const code_to_close = new Set(["21", "22", "23", "24", "25", "27", "28", "29", "39", "49"])
+const code_to_close = new Set(["", "21", "22", "23", "24", "25", "27", "28", "29", "39", "49"])
 
 function ansiHtml(str) {
   if (!/(?:(?:\u001b\[)|\u009b)(?:(?:[0-9]{1,3})?(?:(?:;[0-9]{0,3})*)?[A-M|f-m])|\u001b[A-M]/.test(str)) {
