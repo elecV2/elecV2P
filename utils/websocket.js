@@ -111,18 +111,20 @@ function websocketSer({ server, path }) {
         secunset: !CONFIG.SECURITY
       }
     }));
-    ws.send(JSON.stringify({
-      type: 'elecV2Pstatus',
-      data: {
-        clients: wsobs.WSS.clients.size,
-        memoryusage: nStatus(),
-      }
-    }));
     wsSer.recver.set(ws.id, {
       IP: ws.ip,
       UA: req.headers['user-agent'],
       TM: now()
     })
+    // 同步信息到所有客户端
+    wsSend(JSON.stringify({
+      type: 'elecV2Pstatus',
+      data: {
+        clients: wsobs.WSS.clients.size,
+        memoryusage: nStatus(),
+        clientsinfo: sJson(wsSer.recver),
+      }
+    }));
     let initver = setTimeout(()=>{
       ws.send(JSON.stringify({
         type: 'message',
@@ -161,6 +163,15 @@ function websocketSer({ server, path }) {
         clog.notify('all clients disconnected now')
         wsobs.stop()
         wsSer.recverlists = []
+      } else {
+        wsSend(JSON.stringify({
+          type: 'elecV2Pstatus',
+          data: {
+            clients: wsobs.WSS.clients.size,
+            memoryusage: nStatus(),
+            clientsinfo: sJson(wsSer.recver),
+          }
+        }))
       }
     })
   })
