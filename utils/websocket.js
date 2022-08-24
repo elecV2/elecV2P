@@ -63,7 +63,7 @@ function wsSend(data, target = ''){
       return
     }
     if (data.type !== 'elecV2Pstatus' && CONFIG.debug?.websocket) {
-      clog.debug('send client msg:', data)
+      clog.debug(`send to ${target || 'clients'} msg:`, data)
     }
   }
   if (wsobs.WSS) {
