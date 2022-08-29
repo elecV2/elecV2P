@@ -28,14 +28,26 @@ if (CONFIG.anyproxy.enable === false) {
 CONFIG_Port.anyproxy = { ...CONFIG.anyproxy }
 
 // websocket 快速打开/关闭 anyproxy
-wsSer.recv.eproxy = (op)=>{
+wsSer.recv.eproxy = (op = '')=>{
+  if (typeof op === 'object') {
+    if (op.port > 0) {
+      CONFIG_Port.anyproxy.port = op.port
+      aProxyOptions.port = op.port
+    }
+    if (op.webPort > 0) {
+      CONFIG_Port.anyproxy.webPort = op.webPort
+      aProxyOptions.webInterface.webPort = op.webPort
+    }
+    op = op.op || (op.enable ? 'start' : 'close')
+  }
   switch(op) {
     case 'new':
     case 'start':
+    case 'enable':
       if (eProxy === null) {
         eProxy = new eproxy(aProxyOptions)
         eProxy.start()
-        message.success('anyproxy started')
+        message.success(`anyproxy started on port ${CONFIG_Port.anyproxy.port}`)
       } else {
         clog.info('anyproxy already started')
         message.error('anyproxy already started')
@@ -44,6 +56,7 @@ wsSer.recv.eproxy = (op)=>{
       break
     case 'delete':
     case 'close':
+    case 'disable':
       if (eProxy) {
         eProxy.close()
         message.success('anyproxy closed')
@@ -54,8 +67,18 @@ wsSer.recv.eproxy = (op)=>{
       }
       CONFIG_Port.anyproxy.enable = false
       break
+    case 'restart':
+      if (eProxy) {
+        eProxy.close()
+        eProxy = null
+      }
+      eProxy = new eproxy(aProxyOptions)
+      eProxy.start()
+      message.success(`anyproxy restart on port ${CONFIG_Port.anyproxy.port}`)
+      CONFIG_Port.anyproxy.enable = true
+      break
     default:{
-      clog.error('unknow operation on anyproxy')
+      clog.error('unknow operation on anyproxy:', op)
       message.error('unknow operation on anyproxy')
     }
   }

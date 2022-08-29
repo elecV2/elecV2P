@@ -71,7 +71,7 @@ module.exports = () => {
   wbeapp(app)
 
   app.use((req, res, next) => {
-    res.status(404).send(`<p>404</p><br><a href="/">BACK TO HOME</a><br><p><span>Powered BY </span><a target="_blank" href="https://github.com/elecV2/elecV2P">elecV2P</a></p>`)
+    res.status(404).send(`<p>404</p><br><a href="/">BACK TO HOME</a><br><p><span>Powered BY </span><a target="_blank" href="https://github.com/elecV2/elecV2P">elecV2P</a></p><p><span>TG Channel </span><a target="_blank" href="https://t.me/elecV2">@elecV2</a></p>`)
   })
 
   newServer(app).then(server=>{

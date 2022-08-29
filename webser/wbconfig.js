@@ -345,7 +345,7 @@ module.exports = app => {
       }
     }
     if (bSave) {
-      clog.info('current config save to script/Lists/config.json')
+      clog.info('current config saved')
       list.put('config.json', JSON.stringify(CONFIG, null, 2))
     }
   })

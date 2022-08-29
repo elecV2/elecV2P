@@ -53,7 +53,8 @@ module.exports = app => {
         res.json({
           host: mlist?.list || [],
           enable: mlist?.enable !== false,
-          crtinfo: CONFIG_Port.anyproxy.enable ? crtInfo() : { rescode: -1, message: 'ANYPROXY not enabled yet' }
+          eproxy: CONFIG_Port.anyproxy,
+          crtinfo: crtInfo(),
         })
         break
       case 'filter':

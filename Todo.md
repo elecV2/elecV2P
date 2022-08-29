@@ -4,8 +4,6 @@
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
 - [ ] EFSS 简单影音播放器
-- [ ] MITM 自签域名证书管理
-- [ ] 多配置文件及快速切换
 - [ ] 前端可选择后台节点
 - [ ] 引入 $crypto 用于哈希加密
 - [ ] CONFIG 语言偏好设置
@@ -17,7 +15,6 @@
 - ev binary 执行程序
 - 规则及定时任务的移动和排序
 - 使用脚本管理规则($rewrite/$rule
-- websocket 服务器端(多)点对点信息传递（加密？）
 - eFlow: 不同语言的脚本执行流程可视化控制（天坑）
 - 多语言 [一个可能永远不填的坑..., start ready...]
 </pre>
@@ -26,6 +23,8 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] MITM PORT 快捷切换
+- [x] 导航栏默认顺序调整
 - [x] 已连接客户端信息展示
 - [x] favend 选择隐藏部分规则
 - [x] 子命令交互输入框延迟显示

@@ -107,7 +107,7 @@ module.exports = app => {
     if (bSave) {
       CONFIG.CONFIG_FEED = CONFIG_FEED
       list.put('config.json', JSON.stringify(CONFIG, null, 2))
-      clog.info('current config save to', CONFIG.path)
+      clog.info('current config saved')
     }
   })
 }
