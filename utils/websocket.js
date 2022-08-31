@@ -99,7 +99,7 @@ function websocketSer({ server, path }) {
     }
     clog.notify(ws.ip, 'new connection')
 
-    // 初始化 ID 及前端版本检测等
+    // 初始化 ID 及其他信息同步
     ws.id = euid()
     ws.send(JSON.stringify({
       type: 'init',
@@ -116,7 +116,7 @@ function websocketSer({ server, path }) {
       UA: req.headers['user-agent'],
       TM: now()
     })
-    // 同步信息到所有客户端
+    // 同步状态信息到所有客户端
     wsSend(JSON.stringify({
       type: 'elecV2Pstatus',
       data: {
@@ -125,23 +125,6 @@ function websocketSer({ server, path }) {
         clientsinfo: sJson(wsSer.recver),
       }
     }));
-    let initver = setTimeout(()=>{
-      ws.send(JSON.stringify({
-        type: 'message',
-        data: {
-          type: 'error',
-          data: [`当前 webUI 版本低于后台 v${CONFIG.version}，可能正在使用缓存页面\n请点击该通知或使用 ctrl+F5 刷新当前页面\n(如果此提醒一直存在可能需要手动进行升级)`, { url: '?reload' }]
-        }
-      }))
-    }, 5000)
-    wsSer.recv.init = data=>{
-      if (data === 'OK') {
-        clog.debug(ws.ip, 'webUI is newest version', CONFIG.version)
-        clearTimeout(initver)
-        wsSer.recv.init = null
-      }
-    }
-
     // 发送当前服务器内存使用状态
     wsobs.send()
 
