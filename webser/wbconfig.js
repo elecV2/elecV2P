@@ -12,6 +12,7 @@ module.exports = app => {
       case 'setting':
         res.json({
           homepage: CONFIG.homepage,
+          lang: CONFIG.lang,
           gloglevel: CONFIG.gloglevel || 'info',
           CONFIG_FEED, CONFIG_RUNJS, CONFIG_Axios,
           uagent: CONFIG_RULE.uagent,
@@ -76,6 +77,13 @@ module.exports = app => {
         res.json({
           rescode: 0,
           message: 'set homepage success!'
+        })
+        break
+      case 'lang':
+        CONFIG.lang = req.body.data
+        res.json({
+          rescode: 0,
+          message: 'config lang set to ' + CONFIG.lang
         })
         break
       case 'gloglevel':
