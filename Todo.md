@@ -22,6 +22,8 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] 引入 service worker
+- [x] 引入 manifest.json
 - [x] CONFIG 语言偏好设置
 - [x] MITM PORT 快捷切换
 - [x] 导航栏默认顺序调整
