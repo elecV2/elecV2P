@@ -35,7 +35,7 @@ function isAuthReq(req, res) {
     clog.debug(headstr, 'no need to validate check');
     return true;
   }
-  if (!CONFIG.SECURITY || CONFIG.SECURITY.enable === false) {
+  if (CONFIG.SECURITY.enable === false) {
     clog.debug(headstr, 'config security is not enable');
     return true;
   }

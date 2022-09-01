@@ -11,5 +11,15 @@
     "port": 8001,
     "webPort": 8002
   },
-  "gloglevel": "info"
+  "gloglevel": "info",
+  "SECURITY": {
+    "enable": false,
+    "blacklist": [],
+    "whitelist": [],
+    "cookie": {
+      "enable": true
+    },
+    "numtofeed": 0,
+    "webhook_only": false
+  }
 }
