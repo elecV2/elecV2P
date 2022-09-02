@@ -164,7 +164,7 @@ class contextBase {
     if (obj.id === undefined) {
       obj.id = euid()
     }
-    wsSer.send({ type: 'evui', data: { type: 'neweu', data: obj }})
+    wsSer.send({ type: 'evui', data: { type: 'neweu', data: obj }}, this.$env?.wsid)
 
     if (sType(callback) !== 'function' && (obj.cb || obj.callback)) {
       callback = obj.cb || obj.callback

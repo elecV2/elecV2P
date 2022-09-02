@@ -86,6 +86,7 @@ module.exports = app => {
     case 'torun':
       runJSFile(jsname, {
         from: 'jsmanage',
+        env: { wsid: req.body.id },
         cb: wsSer.send.func('jsmanage', req.body.id),
         timeout: 5000
       }).then(data=>{
@@ -100,6 +101,7 @@ module.exports = app => {
         type: 'rawcode',
         filename: jsname.replace(/\.(js|efh)$/, '-test.$1'),
         from: 'test',
+        env: { wsid: req.body.id },
         cb: wsSer.send.func('jsmanage', req.body.id),
         timeout: 5000
       }).then(data=>{

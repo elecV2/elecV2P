@@ -136,6 +136,7 @@ module.exports = app => {
     case 'js':
       runJSFile(app.target, {
         from: 'eapp',
+        env: { wsid: req.body.id },
         cb: wsSer.send.func('eapp', req.body.id),
       }).catch(error=>{
         clog.error(errStack(error))
@@ -147,6 +148,7 @@ module.exports = app => {
       break
     case 'shell':
       // shell 执行日志发送到所有已连接客户端
+      clog.notify(req.ip, 'running shell command')
       exec(app.target, {
         from: 'eapp',
         cb(data, error) {
