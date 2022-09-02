@@ -32,6 +32,7 @@ module.exports = app => {
           theme: CONFIG.webUI?.theme,
           logo: CONFIG.webUI?.logo,
           userid: CONFIG.userid,
+          lang: CONFIG.lang,
         })
         if (req.query.check) {
           checkupdate()

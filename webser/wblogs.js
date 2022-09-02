@@ -19,7 +19,7 @@ module.exports = app => {
       })
     }
     res.writeHead(200, { 'Content-Type': 'text/html;charset=utf-8' })
-    res.write('<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><link rel="apple-touch-icon" href="/efss/logo/elecV2P.png">')
+    res.write('<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><link rel="apple-touch-icon" href="/efss/logo/elecV2P.png">')
     let mainbk = '#2890EE', appbk = 'var(--main-fc)', style = ''
     if (CONFIG.webUI?.theme?.simple?.enable) {
       mainbk = CONFIG.webUI.theme.simple.mainbk || '#2890EE'
