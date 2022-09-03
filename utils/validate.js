@@ -29,7 +29,7 @@ function isAuthReq(req, res) {
     ipAddress = ipAddress.substr(7)
   }
   validate_status.total++;
-  const headstr = `${ipAddress} ${req.method} ${req.originalUrl || '/'},`;
+  const headstr = `${ipAddress} ${req.method} ${req.originalUrl || req.url || '/'},`;
   switch (req.path) {
   case '/favicon.ico':
     clog.debug(headstr, 'no need to validate check');

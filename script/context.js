@@ -162,7 +162,7 @@ class contextBase {
       return Promise.reject('websocket is not ready yet, cant transfer $evui data to client')
     }
     if (obj.id === undefined) {
-      obj.id = euid()
+      obj.id = `evui_${euid(4)}`
     }
     wsSer.send({ type: 'evui', data: { type: 'neweu', data: obj }}, this.$env?.wsid)
 

@@ -1,4 +1,11 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.6.9)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.7.0)
+
+v3.7.0  2022-09-03
+ • LOGO 图标及文字自定义
+ • 连接客户端信息快捷显示
+ • 导航栏默认顺序调整
+ • 引入 service worker
+ • ANSI 彩色日志输出
 
 v3.6.9  2022-08-15
  • Docker 默认 NodeJS 版本 18.7.0

@@ -128,7 +128,7 @@ function websocketSer({ server, path }) {
     // 发送当前服务器内存使用状态
     wsobs.send()
 
-    ws.on('message', (msg, req) => {
+    ws.on('message', (msg) => {
       const recvdata = sJson(msg) || msg
       if (recvdata.type && wsSer.recv[recvdata.type]) {
         // 检查是否设置了特定数据处理函数
