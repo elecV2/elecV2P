@@ -30,6 +30,9 @@ const CONFIG_RUNJS = {
 // 同步 CONFIG 数据
 CONFIG.CONFIG_RUNJS = Object.assign(CONFIG_RUNJS, CONFIG.CONFIG_RUNJS)
 
+const efhcache = new Map();
+const scriptcache = new Map();
+
 // 初始化脚本运行
 if (CONFIG.init?.runjs) {
   CONFIG.init.runjs.split(/ ?, ?|，/).filter(s=>s).forEach(js=>{
@@ -95,9 +98,6 @@ async function taskCount(filename) {
 function bOutDate(filename) {
   return CONFIG_RUNJS.intervals > 0 && new Date().getTime() - Jsfile.get(filename, 'date') > CONFIG_RUNJS.intervals*1000;
 }
-
-const efhcache = new Map();
-const scriptcache = new Map();
 
 /**
  * efh 文件处理
