@@ -1,6 +1,10 @@
+if (!process.env.TZ) {
+  process.env.TZ = 'Asia/Shanghai'
+}
+const tzoffset = (new Date()).getTimezoneOffset() * 60000
+
 module.exports = {
-  now(time, ms=true){
-    const tzoffset = (new Date()).getTimezoneOffset() * 60000
+  now(time = null, ms = true){
     time = time ? (Number(time) || Date.parse(time)) : Date.now()
     return new Date(time - tzoffset).toISOString().slice(0, ms ? -1 : -5).replace('T', ' ')
     // return new Date().toLocaleString('zh', { hour12: false })

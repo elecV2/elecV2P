@@ -176,8 +176,8 @@ function crtInfo(){
   return {
     rescode: 0,
     commonName: pubcrt.subject.getField('CN').value,
-    notBefore: now(pubcrt.validity.notBefore, false),
-    notAfter: now(pubcrt.validity.notAfter, false)
+    notBefore: now(new Date(pubcrt.validity.notBefore), false),
+    notAfter: now(new Date(pubcrt.validity.notAfter), false)
   }
 }
 
