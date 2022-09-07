@@ -14,10 +14,7 @@ const { wbefss, wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, 
 
 async function newServer(app) {
   if (CONFIG?.webUI?.tls?.enable) {
-    let host = CONFIG.webUI.tls.host
-    if (!host) {
-      host = '127.0.0.1'
-    }
+    const host = CONFIG.webUI.tls.host || '127.0.0.1'
     try {
       if (!(fs.existsSync(`rootCA/${host}.key`) && fs.existsSync(`rootCA/${host}.crt`))) {
         await crtHost(host)
