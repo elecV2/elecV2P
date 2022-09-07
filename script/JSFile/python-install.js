@@ -29,13 +29,16 @@ function checkCmd(cmd) {
   return new Promise((resolve, reject)=>{
     $exec(cmd, {
       timeout: 0,
-      cb(data, error){
+      cb(data, error, finish){
+        if (finish) {
+          resolve('OK')
+          return
+        }
         if (error) {
           console.error(error)
           reject(error.message || error)
         } else {
           console.log(data)
-          resolve('OK')
         }
       }
     })
