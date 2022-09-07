@@ -50,7 +50,7 @@ node index.js
 
 #### 升级
 
-方式一：使用 [softupdate.js](https://raw.ev2.workers.dev/elecV2/elecV2P/master/script/JSFile/softupdate.js) 软更新升级
+方式一：使用 [softupdate.js](https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js) 软更新升级
 
 - 首先在 webUI/JSMANAGE 脚本管理中找到 softupdate.js 文件，假如不存在就远程推送或本地上传一下
 - 然后按照文件内的说明，根据自身需求更改 CONFIG 设置项
@@ -100,12 +100,13 @@ docker run --restart=always \
   -v /elecv2p/efss:/usr/local/app/efss \
   elecv2/elecv2p
 
-# -p/-v 对应环境参数 宿主参数:容器内参数
+# -p/-v 对应参数 宿主:容器
 # 如需更改默认的 80 端口，可在 -e 后面加上 PORT=8000
 # 升级 Docker 镜像（如果没有使用 -v 持久化存储，容器内数据会丢失，请提前备份）
 docker rm -f elecv2p           # 先删除旧的容器
 docker pull elecv2/elecv2p     # 再拉取新的镜像
 # 再使用之前的 docker run xxxx 命令重新启动一下
+# 如果拉取到的镜像不是最新的版本，请修改 Docker 当前使用的仓库地址
 ```
 
 - ARM32 平台如果出错，参考 [issues #78](https://github.com/elecV2/elecV2P/issues/78)
@@ -113,17 +114,22 @@ docker pull elecv2/elecv2p     # 再拉取新的镜像
 ### 方法三：DOCKER-COMPOSE （推荐）
 
 ``` sh
+# 创建 elecV2P 持久化数据保存目录
 mkdir /elecv2p && cd /elecv2p
-curl -sL https://git.io/JLw7s > docker-compose.yaml
+# 假如失败，请尝试在其他有权限的目录进行创建
+# 后面 docker-compose.yaml 映射目录保持和创建的目录一致
 
+# 下载 docker-compose.yaml 文件
+curl -sL https://git.io/JLw7s > docker-compose.yaml
+# 启动运行 elecV2P
 docker-compose up -d
 
 # 注意: 需提前安装好 docker-compose 管理器
-# 另外，默认把 80/8001/8002 端口分别映射成了 8100/8101/8102，以防出现端口占用的情况，访问时注意
-# 如果需要设置为其他端口，可以自行修改下面的内容然后手动保存
+# 默认将 80/8001/8002 端口分别映射到了宿主机的 8100/8101/8102 端口，以防出现占用的情况
+# 如果需要设置为其他端口，请自行修改 docker-compose.yaml 文件内容，然后重新启动
 ```
 
-或者将以下的内容手动保存为 docker-compose.yaml 文件。
+以下为 docker-compose.yaml 文件内容，可根据自身需求进行修改。
 
 ``` yaml
 version: '3.7'
@@ -147,10 +153,7 @@ services:
       - "/elecv2p/efss:/usr/local/app/efss"
 ```
 
-- 具体使用的映射端口和 volumes 目录，根据个人情况进行调整
-- 如需更改默认的 80 端口，在 environment 下添加一行: - PORT=8000
-
-文件保存后，在 docker-compose.yaml 同目录下执行以下任一命令
+修改后保存文件，然后在 docker-compose.yaml 文件所在目录下执行以下任一命令
 
 ``` sh
 # 直接启动（首次启动命令）
@@ -176,7 +179,7 @@ docker logs elecv2p -f
 ## 默认端口
 
 - 80：    webUI 后台管理界面。用于添加规则/管理脚本/定时任务/MITM 证书 等
-- 8001：  ANYPROXY HTTP代理端口。（*代理端口不是网页，不能通过浏览器直接访问*）
+- 8001：  ANYPROXY HTTP 代理端口。（*代理端口不是网页，不能通过浏览器直接访问*）
 - 8002：  ANYPROXY 代理请求查看端口
 
 **ANYPROXY 相关端口默认关闭。可在 webUI 首页双击 ANYPROXY 临时开启。**
