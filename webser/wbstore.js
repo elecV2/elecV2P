@@ -41,14 +41,14 @@ module.exports = app => {
       }
 
       if (!files.backup) {
-        clog.info('no backup file to upload');
+        clog.info('a zip backup file is expect');
         return res.json({
-          rescode: 204,
-          message: 'no backup file upload'
+          rescode: -1,
+          message: 'a zip backup file is expect'
         })
       }
-      clog.notify('upload store backup file:', files.backup.name);
-      if (file.unzip(files.backup.path, store.path, { overwrite: true })) {
+      clog.notify('upload store backup file:', files.backup.originalFilename);
+      if (file.unzip(files.backup.filepath, store.path, { overwrite: true })) {
         return res.json({
           rescode: 0,
           message: 'store backup upload success',

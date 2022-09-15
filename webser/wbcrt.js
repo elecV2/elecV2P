@@ -77,21 +77,17 @@ module.exports = app => {
         })
       }
 
-      if (!files.crt) {
+      if (!(files['rootCA.crt'] && files['rootCA.key'])) {
         clog.info('no crt file to upload')
         return res.json({
           rescode: -1,
           message: 'root crt files are expect'
         })
       }
-      if (files.crt.length) {
-        files.crt.forEach(sgfile=>{
-          clog.notify('upload rootCA file:', sgfile.name)
-          file.copy(sgfile.path, file.get('rootCA/' + sgfile.name, 'path'))
-        })
-      } else {
-        clog.notify('upload rootCA file:', files.crt.name)
-        file.copy(files.crt.path, file.get('rootCA/' + files.crt.name, 'path'))
+      for (const name in files) {
+        const sgfile = files[name]
+        clog.notify('upload rootCA file:', sgfile.originalFilename)
+        file.copy(sgfile.filepath, file.get('rootCA/' + sgfile.originalFilename, 'path'))
       }
       return res.json({
         rescode: 0,

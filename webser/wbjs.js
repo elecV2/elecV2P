@@ -1,7 +1,7 @@
 const formidable = require('formidable')
 
 const { logger, downloadfile, eAxios, errStack, sType, Jsfile, file, wsSer, sbufBody, surlName } = require('../utils')
-const clog = new logger({ head: 'wbjsfile', cb: wsSer.send.func('jsmanage') })
+const clog = new logger({ head: 'wbscript', cb: wsSer.send.func('jsmanage') })
 
 const { runJSFile } = require('../script')
 
@@ -9,14 +9,14 @@ module.exports = app => {
   // req.params 方式在多目录下不实用，暂不考虑引入
   app.get('/jsfile', (req, res)=>{
     let jsfn = req.query.jsfn
-    clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'get js file', jsfn || 'list')
+    clog.info(req.ip, 'get script', jsfn || 'list')
     if (!jsfn) {
       return res.json(Jsfile.get('list'))
     }
     if (/\.\./.test(jsfn)) {
       return res.json({
         rescode: -1,
-        message: 'illegal request to get js file ' + jsfn
+        message: 'illegal request to get script ' + jsfn
       })
     }
     let jscont = Jsfile.get(jsfn)
@@ -29,6 +29,20 @@ module.exports = app => {
       res.status(404).json({
         rescode: 404,
         message: jsfn + ' not exist'
+      })
+    }
+  })
+
+  app.get('/script/*', (req, res)=>{
+    const filename = req.originalUrl.replace(/\/$/, '').replace('/script/', '')
+    clog.info(req.ip, 'get script', filename)
+    const jscont = Jsfile.get(filename)
+    if (jscont) {
+      res.send(jscont)
+    } else {
+      res.status(404).json({
+        rescode: 404,
+        message: `script ${filename} not exist`
       })
     }
   })
@@ -53,7 +67,7 @@ module.exports = app => {
         }).then(jsl=>{
           res.json({
             rescode: 0,
-            message: 'download js file to: ' + jsl
+            message: 'download script to: ' + jsl
           })
         }).catch(e=>{
           res.json({
@@ -65,7 +79,7 @@ module.exports = app => {
       default: {
         res.json({
           rescode: -1,
-          message: op + ' - wrong operation on js file'
+          message: op + ' - wrong operation on script'
         })
         break
       }
@@ -128,7 +142,7 @@ module.exports = app => {
 
   app.delete('/jsfile', (req, res)=>{
     const jsfn = req.body.jsfn
-    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'delete js file ' + jsfn)  // 自动转化 array
+    clog.notify(req.ip, 'delete script ' + jsfn)  // 自动转化 array
     if (jsfn) {
       let bDelist = Jsfile.delete(jsfn)
       if (bDelist) {
@@ -150,7 +164,7 @@ module.exports = app => {
         })
       }
     } else {
-      clog.error('a js file name is expect')
+      clog.error('a script name is expect')
       res.json({
         rescode: -1,
         message: 'a parameter jsfn is expect'
@@ -173,21 +187,10 @@ module.exports = app => {
         })
       }
 
-      if (!files.js) {
-        clog.info('no js file to upload')
-        return res.json({
-          rescode: 404,
-          message: 'no js file upload'
-        })
-      }
-      if (files.js.length) {
-        files.js.forEach(sgfile=>{
-          clog.notify('upload js file:', sgfile.name)
-          file.copy(sgfile.path, Jsfile.get(sgfile.name, 'path'))
-        })
-      } else {
-        clog.notify('upload js file:', files.js.name)
-        file.copy(files.js.path, Jsfile.get(files.js.name, 'path'))
+      for (const name in files) {
+        const sgfile = files[name]
+        clog.notify('upload script:', sgfile.originalFilename)
+        file.copy(sgfile.filepath, Jsfile.get(sgfile.originalFilename, 'path'))
       }
       return res.json({
         rescode: 0,

@@ -5,7 +5,7 @@
 // 脚本会先尝试以 PM2 的方式重启，如果失败，将直接重启容器(Docker 模式下)或服务器(pm2 指令不可用的情况下)
 // 
 // 文件地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
-// 最近更新: 2022-03-30
+// 最近更新: 2022-09-15
 //
 // Todo:
 // - efh 前端设置界面
@@ -75,7 +75,7 @@ async function checkUpdate(){
       if (CONFIG.notify) {
         $feed.push('elecV2P 检测到新版本 ' + newversion, '当前版本 ' + __version + '\n即将进行软更新升级\n\n更新日志: https://github.com/elecV2/elecV2P/blob/master/logs/update.log', /127|192|172|10|localhost/.test(__home) ? '' : __home)
       }
-      await dependenciesCheck(Object.keys(res.data.dependencies))
+      CONFIG.dependencies_update = await dependenciesCheck(JSON.stringify(res.data.dependencies))
       return true
     }
     console.log('没有检测到新的版本。如果需要强制更新，请将脚本 forceupdate 参数对应值修改为 true')
@@ -194,8 +194,16 @@ function unzip(dest){
   fs.rmSync(dest)
 }
 
-function restart() {
+async function restart() {
   console.log('全部文件更新完成')
+  if (CONFIG.dependencies_update) {
+    console.log('开始更新默认依赖')
+    try {
+      await execP('yarn')
+    } catch(e) {
+      console.error('更新默认依赖错误', e)
+    }
+  }
   if (CONFIG.restart !== false) {
     console.log('开始重启以应用更新。稍等一下刷新前端网页，查看是否生效')
     autoFresh()
@@ -251,37 +259,22 @@ async function downloadFile(file){
 }
 
 /**
- * elecV2P 默认依赖检测
- * 待完成: 版本检测及升级/自定义模块添加及检测
- * @param     {array}    dependencies    待检测的依赖
- * @return    {undefined}
+ * elecV2P 检测默认依赖是否更新
+ * @param     {string}    dependencies    待检测的依赖
+ * @return    {boolean}
  */
-async function dependenciesCheck(dependencies = []) {
-  const fs = require('fs')
+async function dependenciesCheck(dependencies = '') {
   const path = require('path')
 
-  console.log('开始检测默认依赖是否安装')
-  let uninstall_dependencies = dependencies.filter(n=>{
-    if (fs.existsSync(path.join('node_modules', n))) {
-      console.log('module', n, 'installed')
-      return false
-    }
-    return true
-  })
+  console.log('开始检测默认依赖是否更新')
+  const dependencies_old = JSON.stringify(require(path.resolve('package.json')).dependencies)
 
-  if (uninstall_dependencies.length === 0) {
-    console.log('所有默认依赖已安装')
-    return true
-  }
-  uninstall_dependencies = uninstall_dependencies.join(' ')
-  console.log('开始安装默认依赖', uninstall_dependencies)
-  try {
-    await execP('yarn add ' + uninstall_dependencies)
-    return true
-  } catch(e) {
-    console.error(e)
+  if (dependencies === dependencies_old) {
+    console.log('默认依赖已是最新')
     return false
   }
+  console.log('默认依赖需要更新')
+  return true
 }
 
 function execP(command) {

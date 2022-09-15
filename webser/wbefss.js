@@ -191,12 +191,19 @@ module.exports = app => {
         message: 'efss is closed'
       })
     }
-    const subpath = decodeURI(req.query.subpath || '')
+    const efssF = file.get(CONFIG.efss.directory + decodeURI(req.query.subpath || ''), 'path')
+    if (!file.isExist(efssF)) {
+      clog.error('efss folder:', efssF, 'not exist')
+      return res.json({
+        rescode: -1,
+        message: efssF + ' not exist'
+      })
+    }
     const uploadfile = new formidable.IncomingForm()
     uploadfile.maxFieldsSize = 200 * 1024 * 1024 // 限制为最大 200M
     uploadfile.keepExtensions = true
     uploadfile.multiples = true
-    // uploadfile.uploadDir = file.get(CONFIG.efss.directory, 'path')
+    // uploadfile.uploadDir = efssF
     uploadfile.parse(req, (err, fields, files) => {
       if (err) {
         clog.error(errStack(err, true))
@@ -206,29 +213,10 @@ module.exports = app => {
         })
       }
 
-      if (!files.efss) {
-        clog.info('no efss file to upload')
-        return res.json({
-          rescode: -1,
-          message: 'a file is expect'
-        })
-      }
-      const efssF = file.get(CONFIG.efss.directory + subpath, 'path')
-      if (!file.isExist(efssF)) {
-        clog.error('efss folder:', efssF, 'not exist')
-        return res.json({
-          rescode: -1,
-          message: efssF + ' not exist'
-        })
-      }
-      if (files.efss.length) {
-        files.efss.forEach(sgfile=>{
-          clog.notify('upload file:', sgfile.name, 'to', efssF)
-          file.copy(sgfile.path, efssF + '/' + sgfile.name)
-        })
-      } else if (files.efss.name) {
-        clog.notify('upload a file:', files.efss.name, 'to', efssF)
-        file.copy(files.efss.path, efssF + '/' + files.efss.name)
+      for (const name in files) {
+        const sgfile = files[name]
+        clog.notify('upload file:', sgfile.originalFilename, 'to', efssF)
+        file.copy(sgfile.filepath, efssF + '/' + sgfile.originalFilename)
       }
       res.json({
         rescode: 0,

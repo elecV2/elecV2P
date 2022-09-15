@@ -27,13 +27,13 @@
     "shell"
   ],
   "dependencies": {
-    "adm-zip": "^0.5.7",
+    "adm-zip": "^0.5.9",
     "anyproxy": "^4.1.3",
-    "axios": "^0.21.4",
-    "cheerio": "^1.0.0-rc.10",
-    "formidable": "^1.2.2",
-    "node-cron": "^2.0.3",
-    "pm2": "^5.1.2",
+    "axios": "^0.27.2",
+    "cheerio": "^1.0.0-rc.12",
+    "formidable": "^2.0.1",
+    "node-cron": "^3.0.2",
+    "pm2": "^5.2.0",
     "rss": "^1.2.2"
   },
   "devDependencies": {},
