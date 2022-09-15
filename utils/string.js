@@ -37,7 +37,7 @@ function sJson(str, force=false) {
     return Array.from(str)
   case 'map':
     return Array.from(str).reduce((obj, [key, value]) => {
-      obj[key] = value
+      obj[key] = typeof(value) === 'object' ? sJson(value) : value
       return obj
     }, {})
   }
@@ -124,9 +124,9 @@ function bEmpty(obj) {
   return false
 }
 
-function sUrl(url){
+function sUrl(url, host = ''){
   try {
-    return new URL(url)
+    return new URL(url, host || undefined)
   } catch(e) {
     return false
   }

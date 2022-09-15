@@ -410,7 +410,7 @@ module.exports = {
       }
     }
     if ('hold' === matchreq.ctype) {
-      if (wsSer.recverlists.length === 0) {
+      if (wsSer.recverlists.size === 0) {
         clog.notify('no websocket connected, skip $HOLD rule')
         return null
       }
@@ -458,7 +458,7 @@ module.exports = {
             resolve(null)
             wsSer.recv.hold = null
             wsSer.send({ type: 'hold', data: 'over' })
-            clog.notify(requestDetail.url, '$HOLD timeout of', matchreq.target, 'seconds, continue with orignal data')
+            clog.notify(requestDetail.url, '$HOLD timeout of', matchreq.target, 'seconds, continue with original data')
           }, Number(matchreq.target) * 1000)
         }
       })
@@ -546,7 +546,7 @@ module.exports = {
       return null
     }
     if (matchres.ctype === 'hold') {
-      if (wsSer.recverlists.length === 0) {
+      if (wsSer.recverlists.size === 0) {
         clog.notify('no websocket connected, skip $HOLD rule')
         return null
       }
@@ -572,7 +572,7 @@ module.exports = {
             resolve(null)
             wsSer.recv.hold = null
             wsSer.send({ type: 'hold', data: 'over' })
-            clog.notify('$HOLD timeout, continue with orignal data')
+            clog.notify('$HOLD timeout, continue with original data')
           }, Number(matchres.target) * 1000)
         }
       })
@@ -615,7 +615,7 @@ module.exports = {
         })
       })
     }
-    clog.info('unknown match rule type, return the orignal response')
+    clog.info('unknown match rule type, return the original response')
     return null
   },
   *beforeDealHttpsRequest(requestDetail) {

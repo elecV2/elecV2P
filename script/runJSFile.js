@@ -238,8 +238,10 @@ function runJS(filename, jscode, addContext={}) {
     }
     // 日志显示类型判断
     if (/^\/\/ +@grant +(still|silent)$/m.test(jscode)) {
+      clog.notify('log of', filename, 'is disabled')
       fconsole = { log(){},err(){},info(){},error(){},notify(){},debug(){},clear(){} }
     } else if (/^\/\/ +@grant +calm$/m.test(jscode)) {
+      clog.notify('log of', filename, 'keep in file, but no stdout')
       fconsole = new logger({ head: filename, level: 'error', file: CONFIG_RUNJS.jslogfile ? filename : false })
     }
   }
@@ -301,6 +303,7 @@ function runJS(filename, jscode, addContext={}) {
 
   if (bGrant) {
     if (/^\/\/ +@grant +(quiet|silent)$/m.test(jscode)) {
+      fconsole.notify('default notification is disabled for script', filename);
       CONTEXT.final.$feed = { push(){}, bark(){}, ifttt(){}, cust(){} };
       if (CONTEXT.final.$notify) {
         CONTEXT.final.$notify = ()=>{};

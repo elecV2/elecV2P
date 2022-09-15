@@ -158,7 +158,7 @@ class contextBase {
       this.console.error('$evui expect a object in first arguments')
       return Promise.reject('$evui expect a object in first argument')
     }
-    if (wsSer.recverlists.length === 0) {
+    if (wsSer.recverlists.size === 0) {
       return Promise.reject('websocket is not ready yet, cant transfer $evui data to client')
     }
     if (obj.id === undefined) {

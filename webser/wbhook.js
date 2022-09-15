@@ -624,7 +624,18 @@ function handler(req, res){
       res.send(sString(rbody.key ? CONFIG_RULE.cache[rbody.key] : CONFIG_RULE.cache.host))
       break
     case 'wsclient':
-      res.send(sString(wsSer.recver))
+      res.json({
+        rescode: 0,
+        message: 'get websocket clients information',
+        resdata: sJson(wsSer.recver)
+      })
+      break
+    case 'wsrecverlist':
+      res.json({
+        rescode: 0,
+        message: 'get client recverlists',
+        resdata: sJson(wsSer.recverlists)
+      })
       break
     case 'config':
       res.json({
@@ -700,6 +711,22 @@ function handler(req, res){
     })
     break
   default:
+    if (CONFIG.webhook?.script && CONFIG.webhook.script_enable) {
+      const { token, ...payload } = rbody
+      return runJSFile(CONFIG.webhook.script, { env: { payload } }).then(data=>{
+        res.json({
+          rescode: 0,
+          message: 'run webhook script ' + CONFIG.webhook.script,
+          resdata: data
+        })
+      }).catch(error=>{
+        res.json({
+          rescode: -1,
+          message: 'fail to run webhook script ' + CONFIG.webhook.script,
+          resdata: error
+        })
+      });
+    }
     return res.json({
       rescode: -1,
       message: 'webhook type ' + rbody.type + ' not support yet'

@@ -10,18 +10,44 @@ const { CONFIG } = require('../config')
 
 // 服务器 websocket 发送/接收 数据
 const wsSer = {
-  recver: new Map(),     // recver id UA/IP/TM
-  recverlists: [],       // 客户端 recverlists
+  recver: new Map(),     // recver id UA/IP/TM, alias client
+  recverlists: new Map(),       // 客户端 recverlists
   send(data, target = ''){
     wsSend(data, target)
   },
   recv(msg, ip){
     clog.debug('receive message from:', ip, msg)
-  }
+  },
+  getReadyTarget(recver = '', target = '') {
+    if (this.recverlists.size === 0) {
+      return new Set()
+    }
+    const target_list = this.recverlists.get(recver) || this.recverlists.get('minishell') || new Set()
+    if (target === '') {
+      return target_list
+    }
+    if (target_list.has(target)) {
+      return new Set([target])
+    } else {
+      return new Set()
+    }
+  },
 }
 
 const wsobs = {
   send() {
+    if (wsSer.recverlists.get('elecV2Pstatus')?.size === 0) {
+      this.stop()
+      return
+    }
+    wsSend({
+      type: 'elecV2Pstatus',
+      data: {
+        clients: wsobs.WSS.clients.size,
+        memoryusage: nStatus(),
+        clientsinfo: sJson(wsSer.recver),
+      }
+    })
     if (this.intval) return
     this.intval = setInterval(()=>{
       if (this.WSS) {
@@ -34,7 +60,8 @@ const wsobs = {
   stop() {
     if (this.intval) {
       clearInterval(this.intval)
-      delete this.intval
+      this.intval = null
+      clog.debug('stop send elecV2Pstatus data')
     }
   }
 }
@@ -45,37 +72,50 @@ wsSer.send.func = (type, target = '') => {
   }
 }
 
-wsSer.recv.ready = recver => {
+wsSer.recv.ready = (recver, target = '') => {
   // 客户端 recver 准备接收数据
-  if (wsSer.recverlists.indexOf(recver) === -1) {
-    wsSer.recverlists.push(recver)
+  if (wsSer.recverlists.has(recver)) {
+    const recver_set = wsSer.recverlists.get(recver)
+    if (!recver_set.has(target)) {
+      recver_set.add(target)
+    }
+  } else {
+    wsSer.recverlists.set(recver, new Set([target]))
+  }
+  clog.debug('client:', target, 'recver:', recver, 'is ready')
+  if (recver === 'elecV2Pstatus') {
+    wsobs.send()
   }
 }
 
-wsSer.recv.stopsendstatus = flag => flag ? wsobs.stop() : wsobs.send()
+wsSer.recv.stopsendstatus = (flag, target) => {
+  const estatus = wsSer.recverlists.get('elecV2Pstatus')
+  if (flag) {
+    estatus?.delete(target)
+    if (estatus?.size === 0) {
+      wsobs.stop()
+    }
+  } else {
+    estatus?.add(target)
+    wsobs.send()
+  }
+}
 
 function wsSend(data, target = ''){
-  if (sType(data) === 'object') {
-    if (wsSer.recverlists.indexOf('minishell') === -1 && wsSer.recverlists.indexOf(data.type) === -1) {
-      if (CONFIG.debug?.websocket) {
-        clog.debug('client recver', data.type, 'no ready yet')
-      }
-      return
-    }
-    if (data.type !== 'elecV2Pstatus' && CONFIG.debug?.websocket) {
-      clog.debug(`send to ${target || 'clients'} msg:`, data)
-    }
+  const target_list = wsSer.getReadyTarget(data.type, target)
+  if (target_list.size === 0) {
+    clog.debug('client recver:', data.type, 'not ready yet')
+    return
   }
   if (wsobs.WSS) {
-    data = sString(data)
+    const data_str = sString(data)
+    const state_open = ws.OPEN
     wsobs.WSS.clients.forEach(client=>{
-      if (target) {
-        if (client.id === target) {
-          clog.debug('send data to target', client.id)
-          client.send(data)
+      if (client.readyState === state_open && target_list.has(client.id)) {
+        client.send(data_str)
+        if (CONFIG.debug?.websocket) {
+          clog.debug('send data to client:', client.id, 'type:', data.type)
         }
-      } else if (client.readyState === ws.OPEN) {
-        client.send(data)
       }
     })
   } else if (CONFIG.debug?.websocket) {
@@ -88,7 +128,7 @@ function websocketSer({ server, path }) {
   clog.notify('websocket on path:', path)
 
   wsobs.WSS.on('connection', (ws, req)=>{
-    ws.ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress
+    ws.ip = (req.headers['x-forwarded-for'] || req.connection.remoteAddress).replace(/^::ffff:/, '')
     if (isAuthReq(req)) {
       LOGFILE.put('access.log', `${ws.ip} is connected`, 'access notify')
     } else {
@@ -97,10 +137,10 @@ function websocketSer({ server, path }) {
       ws.close(4003, `have no permission. IP: ${ws.ip} is recorded`)
       return
     }
-    clog.notify(ws.ip, 'new connection')
 
     // 初始化 ID 及其他信息同步
     ws.id = euid()
+    clog.notify(ws.ip, 'connected, set id:', ws.id)
     ws.send(JSON.stringify({
       type: 'init',
       data: {
@@ -117,15 +157,6 @@ function websocketSer({ server, path }) {
       TM: now()
     })
     // 同步状态信息到所有客户端
-    wsSend(JSON.stringify({
-      type: 'elecV2Pstatus',
-      data: {
-        clients: wsobs.WSS.clients.size,
-        memoryusage: nStatus(),
-        clientsinfo: sJson(wsSer.recver),
-      }
-    }));
-    // 发送当前服务器内存使用状态
     wsobs.send()
 
     ws.on('message', (msg) => {
@@ -139,22 +170,18 @@ function websocketSer({ server, path }) {
     })
 
     ws.on('close', ev=>{
-      clog.notify(ws.ip, 'disconnected', 'reason:', ev)
+      clog.notify(ws.ip, 'disconnected', 'id:', ws.id, 'reason:', ev)
       LOGFILE.put('access.log', `${ws.ip} is disconnected`, 'access notify')
       wsSer.recver.delete(ws.id)
       if(!wsobs.WSS.clients || wsobs.WSS.clients.size <= 0) {
         clog.notify('all clients disconnected now')
         wsobs.stop()
-        wsSer.recverlists = []
+        wsSer.recverlists.clear()
       } else {
-        wsSend(JSON.stringify({
-          type: 'elecV2Pstatus',
-          data: {
-            clients: wsobs.WSS.clients.size,
-            memoryusage: nStatus(),
-            clientsinfo: sJson(wsSer.recver),
-          }
-        }))
+        wsSer.recverlists.forEach(recvers=>{
+          recvers.delete(ws.id)
+        })
+        wsobs.send()
       }
     })
   })
