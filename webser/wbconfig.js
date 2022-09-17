@@ -14,6 +14,7 @@ module.exports = app => {
           homepage: CONFIG.homepage,
           lang: CONFIG.lang,
           gloglevel: CONFIG.gloglevel || 'info',
+          glogslicebegin: CONFIG.glogslicebegin,
           CONFIG_FEED, CONFIG_RUNJS, CONFIG_Axios,
           uagent: CONFIG_RULE.uagent,
           wbrtoken: CONFIG.wbrtoken,
@@ -102,6 +103,13 @@ module.exports = app => {
           clog.error('global log level change fail ' + e.message)
           bSave = false
         }
+        break
+      case 'glogslicebegin':
+        CONFIG.glogslicebegin = Number(req.body.data) || 0
+        res.json({
+          rescode: 0,
+          message: 'global log format set slice begin at ' + CONFIG.glogslicebegin
+        })
         break
       case 'wbrtoken':
         if (req.body.data && req.body.data.length >= 6) {

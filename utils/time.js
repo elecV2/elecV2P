@@ -1,12 +1,14 @@
+const { CONFIG } = require('../config')
+
 if (!process.env.TZ) {
-  process.env.TZ = 'Asia/Shanghai'
+  process.env.TZ = CONFIG.TZ || 'Asia/Shanghai'
 }
 const tzoffset = (new Date()).getTimezoneOffset() * 60000
 
 module.exports = {
-  now(time = null, ms = true){
+  now(time = null, ms = true, slicebegin = CONFIG.glogslicebegin ?? 0){
     time = time ? (Number(time) || Date.parse(time)) : Date.now()
-    return new Date(time - tzoffset).toISOString().slice(0, ms ? -1 : -5).replace('T', ' ')
+    return new Date(time - tzoffset).toISOString().slice(slicebegin, ms ? -1 : -5).replace('T', ' ')
     // return new Date().toLocaleString('zh', { hour12: false })
   },
   /**

@@ -148,7 +148,8 @@ function websocketSer({ server, path }) {
         userid: sHash(CONFIG.wbrtoken),
         vernum: CONFIG.vernum,
         version: CONFIG.version,
-        secunset: !CONFIG.SECURITY
+        secunset: !CONFIG.SECURITY,
+        glogslicebegin: CONFIG.glogslicebegin,
       }
     }));
     wsSer.recver.set(ws.id, {
