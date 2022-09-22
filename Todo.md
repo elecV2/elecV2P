@@ -4,8 +4,8 @@
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
 - [ ] 临时访问 token 限时及路径
-- [ ] EFSS 文件通用预览模块
-- [ ] EAPP 订阅
+- [ ] EAPP 订阅/分类
+- [ ] EFSS 文件搜索
 - [ ] 前端可选择后台节点
 - [ ] 引入 $crypto 用于哈希加密
 </pre>
@@ -24,6 +24,8 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] LOGS 日志查看界面优化
+- [x] EFSS 基础文件预览
 - [x] 可选择日志时间格式
 - [x] webhook 通用 payload 处理
 - [x] 部分 dependencies 更新

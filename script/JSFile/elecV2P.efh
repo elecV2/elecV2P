@@ -1,5 +1,5 @@
 <h3>efh - elecV2P favend html, 一个同时包含前后端运行代码的 html 扩展格式。</h3>
-<p>目前仅可运行于 elecV2P favend, 相关说明参考：<a href="https://github.com/elecV2/elecV2P-dei/blob/master/docs/08-logger&efss.md" target="_blank">elecV2P-dei/efss.md</a> 相关部分</p>
+<p>目前仅可运行于 elecV2P favend。更多说明参考：<a href="https://github.com/elecV2/elecV2P-dei/blob/master/docs/08-logger&efss.md" target="_blank">elecV2P-dei/efss.md</a> 相关部分</p>
 <div>
   <label>请求后台数据测试 $fend:</label>
   <input type="text" name="test" class="key" placeholder="akey">
@@ -15,14 +15,21 @@
   <a href='https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/elecV2P.efh' target='_blank'>https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/elecV2P.efh</a>
 </p>
 
+<!-- 前端部分可使用多个 script 标签引入远程 axios/vue/react 等框架文件
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+-->
 <script type="text/javascript">
-  // 前端部分可使用多个 script 标签引入远程 axios/vue/UI 框架等文件
-  // $fend 默认函数用于前后端数据交互（本质为一个 fetch 的 post 请求
   function dataFetch() {
     let key = document.querySelector('.key').value;
     let data = document.querySelector('.data').value;
     let ress = document.querySelector('.result');
     console.log('send data to $fend', key, data);
+
+    // $fend 默认函数用于前后端数据交互
     $fend(key, data).then(res=>res.text()).then(res=>{
       console.log(res);
       ress.innerText = res;
@@ -32,10 +39,9 @@
   }
 </script>
 
-<script type="text/javascript" runon="elecV2P" srcd="favend.js">
-  // 使用 runon="elecV2P" 属性来表示此部分是运行在后台的代码
-  // 使用 src 属性表示使用服务器上的 JS 作为后台代码（支持远程
-  // 当有 src 属性时下面的代码无效（建议测试时去掉
+<!-- 使用 runon="elecV2P" 属性来表示此部分是运行在后台的代码 -->
+<!-- v3.6.7 之后可简写为 <script favend>  -->
+<script type="text/javascript" runon="elecV2P">
   // 后台 $fend 第一参数需与前端对应，第二参数为返回数据
   $fend('akey', {
     hello: 'elecV2P favend',

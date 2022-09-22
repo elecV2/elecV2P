@@ -1,4 +1,11 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.7.0)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.7.1)
+
+v3.7.1  2022-09-22
+ • 部分默认依赖版本更新
+ • EFSS 基础文件预览模块
+ • LOGS 日志查看界面优化
+ • webhook payload 处理脚本
+ • websocket 多客户端体验优化
 
 v3.7.0  2022-09-03
  • LOGO 图标及文字自定义
