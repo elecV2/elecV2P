@@ -25,6 +25,11 @@ if (!CONFIG.eapp) {
       "target": "https://raw.ev2.workers.dev/elecV2/elecV2P/master/script/JSFile/deletelog.js",
       "hash": "0e9288d021b42478b102a2ff1e19226d"
     }, {
+      "name": "PY 安装",
+      "logo": "/efss/logo/py_install.png",
+      "type": "js",
+      "target": "https://raw.ev2.workers.dev/elecV2/elecV2P/master/script/JSFile/python-install.js",
+    }, {
       "name": "PM2 LS",
       "type": "shell",
       "target": "pm2 ls",

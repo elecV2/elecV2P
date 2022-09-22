@@ -1,7 +1,12 @@
 // 在 Docker 下安装 python 执行环境
+// 最近更新: 2022-09-18 10:43
 // 远程地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/python-install.js
 
 checkCmd('python3 -V').then(data=>console.log(data, 'python 已安装')).catch(e=>{
+  if ($env.OS === 'Windows_NT') {
+    console.notify('windows 环境下请手动安装 python。 安装地址: https://www.python.org/downloads/')
+    return
+  }
   // 开始安装 python
   $exec('apk add python3 py3-pip', {
     call: true, timeout: 0,
@@ -28,7 +33,6 @@ checkCmd('python3 -V').then(data=>console.log(data, 'python 已安装')).catch(e
 function checkCmd(cmd) {
   return new Promise((resolve, reject)=>{
     $exec(cmd, {
-      timeout: 0,
       cb(data, error, finish){
         if (finish) {
           resolve('OK')
