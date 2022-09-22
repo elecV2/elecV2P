@@ -18,6 +18,7 @@ module.exports = app => {
           CONFIG_FEED, CONFIG_RUNJS, CONFIG_Axios,
           uagent: CONFIG_RULE.uagent,
           wbrtoken: CONFIG.wbrtoken,
+          wbrscript: CONFIG.webhook?.script,
           userid: CONFIG.userid,
           minishell: CONFIG.minishell || false,
           security: CONFIG.SECURITY || {},
@@ -126,6 +127,25 @@ module.exports = app => {
           res.json({
             rescode: -1,
             message: 'webhook token is illegal'
+          })
+        }
+        break
+      case 'wbrscript':
+        if (typeof req.body.data === 'object') {
+          if (CONFIG.webhook) {
+            CONFIG.webhook.script = req.body.data
+          } else {
+            CONFIG.webhook = { script: req.body.data }
+          }
+          res.json({
+            rescode: 0,
+            message: 'success update webhook script'
+          })
+        } else {
+          clog.error('fail to update webhook script', req.body.data)
+          res.json({
+            rescode: -1,
+            message: 'a object is expect for webhook script'
           })
         }
         break

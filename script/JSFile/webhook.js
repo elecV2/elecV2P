@@ -1,4 +1,6 @@
 console.log('hello')
 console.log('marco')
 
-'hello elecV2P, from webhook'
+if (typeof $env !== 'undefined') {
+  $done($env.payload || 'hello elecV2P, from webhook')
+}

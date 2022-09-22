@@ -711,18 +711,18 @@ function handler(req, res){
     })
     break
   default:
-    if (CONFIG.webhook?.script && CONFIG.webhook.script_enable) {
+    if (CONFIG.webhook?.script && CONFIG.webhook.script.enable) {
       const { token, ...payload } = rbody
-      return runJSFile(CONFIG.webhook.script, { env: { payload } }).then(data=>{
+      return runJSFile(CONFIG.webhook.script.target, { from: 'webhook', env: { payload } }).then(data=>{
         res.json({
           rescode: 0,
-          message: 'run webhook script ' + CONFIG.webhook.script,
+          message: 'success run webhook script ' + CONFIG.webhook.script.target,
           resdata: data
         })
       }).catch(error=>{
         res.json({
           rescode: -1,
-          message: 'fail to run webhook script ' + CONFIG.webhook.script,
+          message: 'fail to run webhook script ' + CONFIG.webhook.script.target,
           resdata: error
         })
       });
