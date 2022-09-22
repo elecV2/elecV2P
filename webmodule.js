@@ -48,8 +48,7 @@ module.exports = () => {
   wbrpc(app)
 
   app.use(compression())
-  const ONEMONTH = 60 * 1000 * 60 * 24 * 30                // 页面缓存时间
-  app.use(express.static(path.resolve(__dirname, 'web/dist'), { maxAge: ONEMONTH }))
+  app.use(express.static(path.resolve(__dirname, 'web/dist')))
 
   app.use(express.text({ type: 'text/*' }))
   app.use(express.raw())
