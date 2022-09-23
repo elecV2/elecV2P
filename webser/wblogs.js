@@ -6,13 +6,8 @@ const { CONFIG } = require('../config')
 let LOGS_LIST_CACHE = LOGFILE.get('all')
 
 module.exports = app => {
-  app.get(["/logs", "/logs*"], (req, res)=>{
-    let filename = req.originalUrl.split('?')[0].replace(/\/$/, '').replace('/logs/', '')
-    if (!filename || filename === '/logs') {
-      filename = 'all'
-    } else {
-      filename = decodeURI(filename)
-    }
+  app.get(["/logs", "/logs/*"], (req, res)=>{
+    let filename = req.params[0]?.replace(/\/$/, '') || 'all'
     clog.info((req.headers['x-forwarded-for'] || req.connection.remoteAddress), "get logs", filename)
     let logs = LOGFILE.get(filename)
     if (!logs) {
@@ -67,7 +62,7 @@ module.exports = app => {
   })
 
   app.get('/log/*', (req, res)=>{
-    const filename = decodeURI(req.originalUrl.replace(/\/$/, '').replace('/log/', ''))
+    const filename = req.params[0].replace(/\/$/, '')
     clog.info(req.ip, 'get log', filename)
     const logcont = LOGFILE.get(filename)
     if (logcont) {

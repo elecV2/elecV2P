@@ -34,7 +34,7 @@ module.exports = app => {
   })
 
   app.get('/script/*', (req, res)=>{
-    const filename = req.originalUrl.replace(/\/$/, '').replace('/script/', '')
+    const filename = req.params[0].replace(/\/$/, '')
     clog.info(req.ip, 'get script', filename)
     const jscont = Jsfile.get(filename)
     if (jscont) {
