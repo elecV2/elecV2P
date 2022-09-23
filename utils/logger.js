@@ -187,14 +187,14 @@ const LOGFILE = {
       clog.debug('stream', filename, 'created')
       this.streamList[name].on('close', ()=>{
         clearInterval(this.statusList[name]?.interval);
-        clog.debug(filename + ' stream closed')
+        clog.debug('stream', filename, 'closed')
         delete this.streamList[name]
         delete this.statusList[name]
         delete this.filethList[name]
       })
       this.streamList[name].on('error', ()=>{
         clearInterval(this.statusList[name]?.interval);
-        clog.debug(filename + ' stream error')
+        clog.debug('stream', filename, 'error')
         delete this.streamList[name]
         delete this.statusList[name]
         delete this.filethList[name]

@@ -218,7 +218,7 @@ function handler(req, res){
   case 'status':
     clog.info(clientip, 'Get server status');
     let status = nStatus()
-    status.start = now(CONFIG.start, false)
+    status.start = now(CONFIG.start, false, 0)
     status.uptime = ((Date.now() - Date.parse(status.start))/1000/60/60).toFixed(2) + ' hours'
     status.nodejs = process.version
     status.version = CONFIG.version
@@ -354,7 +354,7 @@ function handler(req, res){
     let elecV2PInfo = {
       elecV2P: {
         version: CONFIG.version,
-        start: now(CONFIG.start, false),
+        start: now(CONFIG.start, false, 0),
         uptime: ((Date.now() - CONFIG.start)/1000/60/60).toFixed(2) + ' hours',
         clients: wsSer.recver.size,
         taskStatus: taskMa.status(),

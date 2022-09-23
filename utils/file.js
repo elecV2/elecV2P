@@ -668,7 +668,7 @@ const store = {
       type, value,
       note: options.note,
       belong: options.belong,
-      update: options.update || now(null, false),
+      update: options.update || now(null, false, 0),
       private: options.private,
     })
     if (Buffer.byteLength(value, 'utf8') > this.maxByte) {
@@ -722,9 +722,9 @@ if (estartinfo && sType(estartinfo) === 'array') {
     clog.info('elecV2P start for', estartinfo.length, 'times, reset to 1');
     estartinfo = [];
   }
-  estartinfo.push(now());
+  estartinfo.push(now(null, true, 0));
 } else {
-  estartinfo = [now()];
+  estartinfo = [now(null, true, 0)];
 }
 store.put(estartinfo, 'elecV2PStartInfo', { note: 'Every time of elecV2P start' });
 clog.info('elecV2P start', estartinfo.length, 'times');
