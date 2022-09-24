@@ -380,30 +380,43 @@ const file = {
       }
     }
   },
-  list({ folder, max=1000, dotfiles='deny', ext=[], noext=[], detail=false }) {
+  list({ folder, max=1000, dotfiles='deny', ext=[], noext=[], detail=false, index='' }) {
     // ext: 只返回该 extension 的文件, noext: 不包括该后缀名的文件
-    if (!(folder && fs.existsSync(folder))) {
+    // detail: true 返回 array<object>, false 返回 array<string>
+    // index: 有值且 folder 下存在该文件时，返回且仅返回首个匹配到的 index 文件
+    // index type<string|array<string>>，不支持子目录，最终返回 [{ ..., index: true}]
+    if (!(folder && fs.existsSync(folder)) || max <= 0) {
       return []
     }
-    if (!fs.statSync(folder).isDirectory()) {
-      return [folder]
+    const fileInfo = (sub, fd, fstat={}) => {
+      return detail ? {
+        name: sub + fd,
+        size: kSize(fstat.size),
+        mtime: fstat.mtimeMs
+      } : sub + fd
     }
-    if (!(max>0)) {
-      return []
+    let fstat = fs.statSync(folder)
+    if (!fstat.isDirectory()) {
+      return [fileInfo('', folder, fstat)]
     }
 
-    let curnum = 0, fnlist = [], subfolder = []
+    let curnum = 0, fnlist = [], subfolder = [], newfolder = folder
     while (curnum<max) {
       let subf = subfolder.length ? subfolder.shift() : ''
-      let newfolder = path.join(folder, subf)
-      let list = fs.readdirSync(newfolder)
-      for (let fd of list) {
+      if (subf) {
+        newfolder = path.join(folder, subf)
+        subf = subf + '/'
+        index = ''        // 子目录不进行 index 检测
+      }
+      let list = fs.readdirSync(newfolder), list_len = list.length
+      for (let i = 0;i < list_len;i++) {
+        let fd = list[i]
         if (dotfiles !== 'allow' && /^\./.test(fd)) {
           continue
         }
         let fstat = fs.statSync(path.join(newfolder, fd))
         if (fstat.isDirectory()) {
-          subfolder.push((subf ? subf + '/' : '') + fd)
+          subfolder.push(subf + fd)
         } else {
           let extname = path.extname(fd).toLowerCase()
           if (ext.length && ext.indexOf(extname) === -1) {
@@ -412,15 +425,15 @@ const file = {
           if (noext.length && noext.indexOf(extname) !== -1) {
             continue
           }
-          if (detail) {
-            fnlist.push({
-              name: (subf ? subf + '/' : '') + fd,
+          if (index && index.includes(fd)) {
+            return [{
+              name: subf + fd,
               size: kSize(fstat.size),
-              mtime: fstat.mtimeMs
-            })
-          } else {
-            fnlist.push((subf ? subf + '/' : '') + fd)
+              mtime: fstat.mtimeMs,
+              index: true,
+            }]
           }
+          fnlist.push(fileInfo(subf, fd, fstat))
           curnum++
           if (curnum >= max) {
             return fnlist
