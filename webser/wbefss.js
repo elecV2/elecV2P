@@ -92,8 +92,8 @@ async function efssHandler(req, res, next) {
           method: req.method,
           hostname: req.hostname,
           host: req.get('host'),
-          path: req.baseUrl,
-          pathname: req.baseUrl,
+          path: req.baseUrl + req.path,
+          pathname: req.baseUrl + req.path,
           url: `${req.headers['x-forwarded-proto'] || req.protocol}://${req.get('host')}${req.originalUrl}`,
           body: sString(rbody),
         },
@@ -117,21 +117,19 @@ async function efssHandler(req, res, next) {
           message: 'directory ' + fend.target + ' not exist'
         })
       }
-      let reqfav = '/efss/' + req.params.favend
-      if (req.params[0] === '') {
+      if (req.path === '/') {
         let flist = file.list({ folder: favdir, max: rbody.max, dotfiles, detail: true, index: rbody.index ?? 'index.html' })
         if (flist[0]?.index) {
-          return /\/$/.test(req.originalUrl) ? res.sendFile(favdir + '/' + flist[0].name) : res.redirect(307, reqfav + '/')
+          return /\/$/.test(req.originalUrl) ? res.sendFile(favdir + '/' + flist[0].name) : res.redirect(307, req.baseUrl + '/')
         }
         res.writeHead(200, {'Content-Type': 'text/html;charset=utf-8'})
         res.write('<head><meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"><meta name="theme-color" content="#003153"><link rel="apple-touch-icon" href="/efss/logo/elecV2P.png">')
         res.write(`<title>${fend.name} ${flist.length} - EFSS favorite</title><style>.content{display: flex;flex-direction: column;border: 1px solid;border-radius: 8px;}.file {display: inline-flex;flex-wrap: wrap;width: 100%;padding: 6px 8px;color: #1890ff;border-bottom: 1px solid;justify-content: space-between;align-items: center;box-sizing: border-box;}.file:last-child {margin: 0;border-bottom: none;}.file_link {width: 50%;color: #1890ff;text-decoration: none;font-size: 18px;font-family: 'Microsoft YaHei', -apple-system, Arial;}.file_mtime {color: #003153;font-size: 16px;}.file_size {width: 72px;text-align: right;font-size: 15px;color: #003153;}a {text-decoration: none;}@media screen and (max-width: 600px) {.file_mtime {display: none;}}</style></head><body><div class='content'>`)
         flist.forEach(file=>{
-          res.write(`<div class='file'><a class='file_link' href='${reqfav}/${file.name}${ dotfiles === 'allow' ? '?dotfiles=allow' : '' }' target='_blank'>${file.name}</a><span class='file_mtime'>${ now(file.mtime, false, 0) }</span><span class='file_size'>${ file.size }</span></div>`)
+          res.write(`<div class='file'><a class='file_link' href='${req.baseUrl}/${file.name}${ dotfiles === 'allow' ? '?dotfiles=allow' : '' }' target='_blank'>${file.name}</a><span class='file_mtime'>${ now(file.mtime, false, 0) }</span><span class='file_size'>${ file.size }</span></div>`)
         })
         return res.end('</div></body>')
       }
-      req.url = req.originalUrl.replace(reqfav, '')
       return express.static(favdir, { dotfiles, index: rbody.index })(req, res, next)
     default:
       res.json({
@@ -257,6 +255,5 @@ module.exports = app => {
     }
   })
 
-  // 性能考虑放最后，* 用于匹配多级 path
-  app.use("/efss/:favend*", efssHandler)
+  app.use("/efss/:favend", efssHandler)
 }

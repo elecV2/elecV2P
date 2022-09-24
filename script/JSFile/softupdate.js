@@ -5,7 +5,7 @@
 // 脚本会先尝试以 PM2 的方式重启，如果失败，将直接重启容器(Docker 模式下)或服务器(pm2 指令不可用的情况下)
 // 
 // 文件地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
-// 最近更新: 2022-09-15
+// 最近更新: 2022-09-24
 //
 // Todo:
 // - efh 前端设置界面
@@ -30,6 +30,7 @@ let CONFIG = {
   ],
   wbtoken: '',             // WEBHOOK TOKEN（在 SETTING/设置 界面查看）用于发送保存当前任务列表的网络请求，可省略。
   cdngit: 'https://raw.githubusercontent.com',        // 可自定义 raw.githubusercontent.com 加速站点
+  dependencies_update: true,      // 检测默认依赖(dependencies)是否有更新。仅当为 false 时，表示不检测
   about: 'elecV2P 软更新配置文件，详情: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js'
 }
 
@@ -75,7 +76,9 @@ async function checkUpdate(){
       if (CONFIG.notify) {
         $feed.push('elecV2P 检测到新版本 ' + newversion, '当前版本 ' + __version + '\n即将进行软更新升级\n\n更新日志: https://github.com/elecV2/elecV2P/blob/master/logs/update.log', /127|192|172|10|localhost/.test(__home) ? '' : __home)
       }
-      CONFIG.dependencies_update = await dependenciesCheck(JSON.stringify(res.data.dependencies))
+      if (CONFIG.dependencies_update !== false) {
+        CONFIG.dependencies_update = await dependenciesCheck(JSON.stringify(res.data.dependencies))
+      }
       return true
     }
     console.log('没有检测到新的版本。如果需要强制更新，请将脚本 forceupdate 参数对应值修改为 true')
