@@ -98,7 +98,7 @@ async function efssHandler(req, res, next) {
           body: sString(rbody),
         },
         from: 'favend', env,
-        timeout: rbody.timeout ?? CONFIG.efss.favendtimeout
+        timeout: rbody.timeout ?? rbody.data?.timeout ?? CONFIG.efss.favendtimeout
       }).then(jsres=>{
         $response = getJsResponse(jsres, $response)
       }).catch(e=>{

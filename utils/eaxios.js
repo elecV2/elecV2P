@@ -263,7 +263,7 @@ function downloadfile(durl, options, cb) {
           chunkstatus.current += chunk.length
           chunkstatus.step++
           let progress = progressBar({ step: chunkstatus.current, total: chunkstatus.total, name: fname })
-          clog.debug(progress)
+          clog.debug(progress, '\x1b[F')
           new Promise(resolve=>resolve(cb({
             progress,
             chunk: chunkstatus.step,

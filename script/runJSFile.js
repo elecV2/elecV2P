@@ -164,7 +164,7 @@ async function efhParse(filename, { title='', type='', name } = {}) {
       if (title && $('title').length === 0) {
         $('head').append('<title>' + title + '</title>');
       }
-      $('head').append(`<script>function $fend(key, data){if(!key) {let msg='a key for $fend is expect';alert(msg);return Promise.reject(msg)};return fetch('', {method: 'post',body: JSON.stringify({key, data})})}</script>`);
+      $('head').append(`<script>function $fend(key, data){if(!key) {let msg='a key for $fend is expect';alert(msg);return Promise.reject(msg)};return fetch('', {method: 'post',headers: {'Content-Type': 'application/json'},body: JSON.stringify({key, data})})}</script>`);
       let bcode = $("script[runon='elecV2P']");
       if (bcode.length === 0) {
         bcode = $("script[runon='backend']");
@@ -368,7 +368,7 @@ function runJS(filename, jscode, addContext={}) {
           vmtout = setTimeout(()=>{
             let message = `run ${filename} timeout of ${tout} ms`
             if (addtimeout !== undefined) {
-              message = `${filename} still running...`
+              message = `${filename} still running after ${tout}ms...`
             }
             if (addfrom === 'favend') {
               message += `\ncheck the favend setting on webUI/efss`

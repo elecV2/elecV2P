@@ -12,7 +12,7 @@
     "node": ">=14.17.0"
   },
   "scripts": {
-    "start": "pm2 start index.js -n elecV2P -o logs/pm2.log -e logs/pm2-error.log --no-daemon",
+    "start": "pm2 start index.js -n elecV2P --no-daemon",
     "dev": "set port=12521 && nodemon index.js"
   },
   "license": "Apache-2.0",

@@ -11,4 +11,4 @@ ENV TZ=Asia/Shanghai PATH=/usr/local/app/script/Shell:/usr/local/app/node_module
 
 EXPOSE 80 8001 8002
 
-CMD ["pm2-runtime", "index.js", "-n", "elecV2P", "--output", "logs/pm2.log", "--error", "logs/pm2-error.log"]
+CMD ["pm2-runtime", "index.js", "-n", "elecV2P"]
