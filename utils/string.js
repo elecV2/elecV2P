@@ -222,35 +222,29 @@ function surlName(url) {
 
 function progressBar({step=0, total, name='file', initLength=50}) {
   // 简易下载进度条
-  let procbar = '', endtip = ''
-  if (total === undefined) {
-    endtip = 'downloading'
+  total = Number(total)
+  if (!total) {
+    const procbar = []
     while(initLength > 0) {
-      procbar += Math.random() > 0.5 ? '>' : '='
-      initLength--
+      procbar.push(Math.random() > 0.5 ? '>==>>' : '=>=>=')
+      initLength = initLength - 5
     }
-    return `${name} [${procbar}] ${endtip}`
+    if (initLength < 0) {
+      procbar.splice(-1, 1, '='.repeat(5+initLength))
+    }
+    return `${name} [${procbar.join('')}] downloading`
+  }
+  step = Number(step) || 0
+  if (step === 0) {
+    return `${name} [${'='.repeat(initLength)}] 0.00%`
   }
   if (total <= step) {
-    while(initLength > 0) {
-      procbar += '>'
-      initLength--
-    }
-    return `${name} [${procbar}] 100%`
+    return `${name} [${'>'.repeat(initLength)}] 100.00%`
   }
-  let percent = Number(step)/Number(total)
+  let percent = step/total
   let perdone = Math.round(percent * initLength)
-  let perundo = initLength - perdone
-  while(perdone > 0) {
-    procbar += '>'
-    perdone--
-  }
-  while(perundo > 0) {
-    procbar += '='
-    perundo--
-  }
-  endtip = (percent * 100).toFixed(2) + '%'
-  return `${name} [${procbar}] ${endtip}`
+  let endtip = (percent * 100).toFixed(2) + '%'
+  return `${name} [${'>'.repeat(perdone) + '='.repeat(initLength - perdone)}] ${endtip}`
 }
 
 function btoa(str = 'Hello elecV2P!') {
