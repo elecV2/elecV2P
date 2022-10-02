@@ -1,10 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="theme-color" content="var(--main-bk)">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>efh - 一种 html 扩展格式</title>
+  <style type="text/css">
+    :root {
+      --main-bk: #003153;
+      --main-fc: #FAFAFD;
+      --main-cl: #2890EE;
+      --note-bk: #EF7A82;
+      --secd-fc: #003153B8;
+      --green-bk: #66FF0088;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      max-width: 100%;
+      font-size: 16px;
+      letter-spacing: 1px;
+      word-break: break-word;
+      scroll-behavior: smooth;
+      font-family: 'Microsoft YaHei',-apple-system,Helvetica,Arial;
+    }
+    body {
+      padding: 0 1em;
+      background: var(--main-bk);
+      color: var(--main-fc);
+    }
+    a {
+      color: var(--main-cl);
+    }
+    .eflex {
+      display: inline-flex;
+      justify-content: space-between;
+      align-items: center;
+      align-content: center;
+    }
+    .eflex--wrap {
+      flex-wrap: wrap;
+    }
+    .einput, .ebutton {
+      height: 32px;
+      min-width: 72px;
+      box-sizing: border-box;
+      padding: 0 6px;
+      margin: 3px;
+      border: none;
+      border-radius: .5em;
+      font-size: 18px;
+    }
+    .ebutton {
+      background: var(--main-cl);
+      color: var(--main-fc);
+    }
+    .result {
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body><noscript><strong>Please enable JavaScript to continue.</strong></noscript>
 <h3>efh - elecV2P favend html, 一个同时包含前后端运行代码的 html 扩展格式。</h3>
-<p>目前仅可运行于 elecV2P favend。更多说明参考：<a href="https://github.com/elecV2/elecV2P-dei/blob/master/docs/08-logger&efss.md" target="_blank">elecV2P-dei/efss.md</a> 相关部分</p>
-<div>
+<p>目前仅可运行于 elecV2P。相关说明参考：<a href="https://github.com/elecV2/elecV2P-dei/blob/master/docs/08-logger&efss.md" target="_blank">elecV2P-dei/efss.md</a> EFSS 相关部分</p>
+<div class="eflex eflex--wrap">
   <label>请求后台数据测试 $fend:</label>
-  <input type="text" name="test" class="key" placeholder="akey">
-  <input type="text" name="test" class="data" placeholder="data">
-  <button onclick="dataFetch()">获取</button>
+  <input type="text" name="test" class="einput key" placeholder="akey">
+  <input type="text" name="test" class="einput data" placeholder="data">
+  <button class="ebutton" onclick="dataFetch()">获取</button>
 </div>
 <div>
   <p>$fend 返回结果：</p>
@@ -39,6 +102,7 @@
   }
 </script>
 
+<!-- 后台代码仅能使用一个 script 标签 -->
 <!-- 使用 runon="elecV2P" 属性来表示此部分是运行在后台的代码 -->
 <!-- v3.6.7 之后可简写为 <script favend>  -->
 <script type="text/javascript" runon="elecV2P">
@@ -50,3 +114,5 @@
   });
   $done('no $fend match, try akey');
 </script>
+</body>
+</html>
