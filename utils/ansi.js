@@ -66,7 +66,11 @@ function ansiHtml(str) {
   }
 
   let openTags = 0
-  let ret = str.replace(/\033\[([\d;]*)m/g, (m, m1)=>{
+  let ret = str.replace(/\033\[([\d;]*)([A-M|f-m])/g, (m, m1, m2)=>{
+    if (m2 !== 'm') {
+      // 直接移除 [H[J[F 等控制型指令字符（待优化
+      return ''
+    }
     if (m1 === '0') {
       // close all tags
       if (openTags > 0) {

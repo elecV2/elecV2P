@@ -36,7 +36,7 @@ const wsSer = {
 
 const wsobs = {
   send() {
-    if (wsSer.recverlists.get('elecV2Pstatus')?.size === 0) {
+    if (!wsSer.recverlists.get('elecV2Pstatus')?.size) {
       this.stop()
       return
     }
@@ -61,8 +61,8 @@ const wsobs = {
     if (this.intval) {
       clearInterval(this.intval)
       this.intval = null
-      clog.debug('stop send elecV2Pstatus data')
     }
+    clog.debug('elecV2Pstatus data send stopped')
   }
 }
 
