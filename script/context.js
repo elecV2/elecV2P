@@ -1,7 +1,7 @@
 const cheerio = require('cheerio')
 
 const { CONFIG } = require('../config')
-const { errStack, euid, sType, sString, sJson, bEmpty, feedPush, iftttPush, barkPush, custPush, store, eAxios, jsfile, file, downloadfile, wsSer, message } = require('../utils')
+const { errStack, euid, sType, sString, sJson, bEmpty, feedPush, iftttPush, barkPush, custPush, store, eAxios, jsfile, file, downloadfile, wsSer, sseSer, message } = require('../utils')
 
 const { exec } = require('../func/exec')
 
@@ -84,6 +84,7 @@ class contextBase {
   __home = CONFIG.homepage
   __efss = file.get(CONFIG.efss.directory, 'path')
   $ws = {
+    sse: sseSer.Send.bind(sseSer),
     send: wsSer.send
   }
   $exec = exec
