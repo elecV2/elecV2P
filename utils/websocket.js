@@ -193,27 +193,21 @@ function websocketSer({ server, path }) {
   })
 }
 
+// 待优化
+// - Send 指定同一路径的单个接收端
 const sseSer = {
   clients: new Map(),
   Send(sid, data) {
-    if (!sid) {
-      clog.error('a sid is expect for sseSer.Send');
-      return;
-    }
     if (!this.clients.has(sid)) {
-      clog.error('sse', sid, 'not ready yet');
+      clog.error('sse connection', sid, 'not ready yet');
       return;
     }
-    let res = this.clients.get(sid);
+    const resset = this.clients.get(sid);
     if (data === 'end') {
-      res.end();
+      resset.forEach(res=>res.end());
       return;
     }
-    if (sType(data) !== 'object') {
-      clog.error('a object data is expect for sseSer.Send');
-      return;
-    }
-    res.write('data: ' + sString(data) + '\n\n');
+    resset.forEach(res=>res.write('data: ' + sString(data) + '\n\n'));
   }
 }
 

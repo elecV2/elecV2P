@@ -159,17 +159,18 @@ function eRPC(req, res) {
       status: 'downloading'
     }
     statusRPC.download.set(key, downloaditem);
+    const mid = 'progress' + statusRPC.download.size;
     downloadfile(params[0], {
       folder: params[1],
       name: name
     }, (options)=>{
-      if (params[3] && options.progress) {
-        sseSer.Send(params[3], {
-          method: 'message',
-          params: [
-            options.progress,
-            { mid: 'progress' + statusRPC.download.size }
-          ]
+      if (options.progress) {
+        sseSer.Send('efss', {
+          type: 'message',
+          data: {
+            progress: options.progress,
+            mid,
+          }
         });
       }
     }).then(dest=>{
@@ -220,16 +221,20 @@ module.exports = app => {
       'Connection': 'keep-alive',
       'Cache-Control': 'no-cache'
     });
-    let target = req.params.sid;
-    if (sseSer.clients.has(target)) {
-      clog.info('end old sse connection', target);
-      sseSer.clients.get(target).end();
+    let id = req.params.sid, target = sseSer.clients.get(id);
+    if (target) {
+      target.add(res);
+    } else {
+      target = new Set([res]);
+      sseSer.clients.set(id, target);
     }
-    sseSer.clients.set(target, res);
-    clog.info('sse connection', target, 'connected, total connections', sseSer.clients.size);
+    res.write('data: ' + JSON.stringify({
+      type: 'init', data: { id, ip: req.ip },
+    }) + '\n\n');
+    clog.info('sse connection', id, 'connected, connections', target.size);
     req.on('close', ()=>{
-      sseSer.clients.delete(target);
-      clog.info('sse connection', target, 'closed, total connections', sseSer.clients.size);
+      target.delete(res);
+      clog.info('sse connection', id, 'closed, connections', target.size);
     })
   });
 }
