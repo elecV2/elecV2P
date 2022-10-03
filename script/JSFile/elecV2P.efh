@@ -90,6 +90,8 @@
     let key = document.querySelector('.key').value;
     let data = document.querySelector('.data').value;
     let ress = document.querySelector('.result');
+    // v3.7.2 之后可使用内置的简易 $ 选择噐函数，比如：
+    // let key = $('.key').value, data = $('.data').value;
     console.log('send data to $fend', key, data);
 
     // $fend 默认函数用于前后端数据交互

@@ -128,7 +128,7 @@ class contextBase {
       this.console.log(request.method || 'GET', request.url)
     }
     return eAxios(request, (CONFIG.CONFIG_RUNJS.proxy === false) ? false : null).catch(error=>{
-      let err = new Error(`$axios ${request.method || 'GET'} ${request.url} Error: ${error.message}`);
+      let err = new Error(`$axios ${request.method || 'GET'} ${request.url} Error: ${error.message || error}`);
       if (error.response) {
         let { request, config, ...res } = error.response;
         err.response = res;
@@ -136,7 +136,7 @@ class contextBase {
       if (error.stack) {
         err.stack = error.stack;
       }
-      if (CONFIG.gloglevel === 'debug') {
+      if (CONFIG.gloglevel === 'debug' && error.config) {
         err.config = {
           url: error.config.url,
           method: error.config.method,
