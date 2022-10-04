@@ -5,17 +5,19 @@
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
 - [ ] 临时访问 token 限时及路径
 - [ ] EAPP 订阅/分类
-- [ ] 前端可选择后台节点
 - [ ] EFSS 自定义文件处理脚本
 - [ ] 引入 $crypto 用于哈希加密
+- [ ] EAPP 增加备注及自动运行选择项
 </pre>
 </div>
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Project</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
 - ev binary 执行程序
+- 前端可选择后台节点
 - 规则及定时任务的移动和排序
 - 使用脚本管理规则($rewrite/$rule
+- CTRL+K 全局搜索（规则/任务/脚本 等
 - eFlow: 不同语言的脚本执行流程可视化控制（天坑）
 - 多语言 [一个可能永远不填的坑..., start ready...]
 </pre>

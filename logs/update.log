@@ -1,4 +1,11 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.7.1)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.7.2)
+
+v3.7.2  2022-10-04
+ • EFSS 媒体文件预览优化
+ • EFSS 文件搜索过滤显示
+ • SSE  数据传输逻辑优化
+ • download callback 函数优化
+ • Fix: 部分情况下 LOGS 显示问题
 
 v3.7.1  2022-09-22
  • 部分默认依赖版本更新
