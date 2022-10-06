@@ -26,6 +26,10 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] headers case insensitive
+- [x] stream with status and headers
+- [x] sw 缓存清理及策略优化
+- [x] EAPP 默认图标生成逻辑优化
 - [x] efh 增加简易 $ 选择器函数
 - [x] SSE 数据传输逻辑优化
 - [x] 脚本可通过 sse 向前端发送数据

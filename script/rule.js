@@ -505,7 +505,7 @@ module.exports = {
   *beforeSendResponse(requestDetail, responseDetail) {
     const $response = responseDetail.response
 
-    if (/^(audio|video|image)|(ogg|stream)$/.test($response.header['Content-Type'])) {
+    if (/^(audio|video|image|multipart|font|model)|(ogg|stream)$/.test($response.header['Content-Type'])) {
       // 跳过图片/音频/视频类数据处理
       clog.info('skip modify', requestDetail.url, 'type:', $response.header['Content-Type'])
       return null

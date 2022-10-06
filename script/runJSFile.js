@@ -84,7 +84,7 @@ async function taskCount(filename) {
       des.push(`${jsname}: ${runstatus.detail[jsname]}`)
     }
     runstatus.detail = {}
-    feedAddItem('run javascript ' + CONFIG_RUNJS.numtofeed + ' times', des.join(', ') + ` from ${runstatus.start}`)
+    feedAddItem('run script ' + CONFIG_RUNJS.numtofeed + ' times', des.join(', ') + ` from ${runstatus.start}`)
     runstatus.times = CONFIG_RUNJS.numtofeed
     runstatus.start = now(null, false)
   }
@@ -207,8 +207,8 @@ async function efhParse(filename, { title='', type='', name } = {}) {
  */
 function runJS(filename, jscode, addContext={}) {
   if (!filename || !jscode) {
-    clog.error('some javascript code are expect')
-    return Promise.resolve('no javascript code to run')
+    clog.error('some script code are expect')
+    return Promise.resolve('no script code to run')
   }
   clog.notify('run', filename, 'from', addContext.from)
   taskCount(filename)
@@ -413,13 +413,39 @@ function runJS(filename, jscode, addContext={}) {
  */
 async function runJSFile(filename, addContext={}) {
   if (sType(filename) !== 'string' || (filename = filename.trim()) === '') {
-    return Promise.resolve('a javascript filename or code is expect')
+    return Promise.resolve('a script filename or code is expect')
   }
   if (sType(addContext) !== 'object') {
     return Promise.resolve('type of addContext must be object')
   }
   if (sType(addContext.env) !== 'object') {
     addContext.env = {}
+  }
+  if (addContext.$request?.headers) {
+    const header = Object.create(null)
+    const headers = addContext.$request.headers
+    for (let key in headers) {
+      header[key.toLowerCase()] = headers[key]
+    }
+    addContext.$request.headers = new Proxy(header, {
+      get(target, prop){
+        if (typeof(prop) !== 'string') return ''
+        return target[prop] ?? target[prop.toLowerCase()]
+      }
+    })
+  }
+  if (addContext.$response?.headers) {
+    const header = Object.create(null)
+    const headers = addContext.$response.headers
+    for (let key in headers) {
+      header[key.toLowerCase()] = headers[key]
+    }
+    addContext.$response.headers = new Proxy(header, {
+      get(target, prop){
+        if (typeof(prop) !== 'string') return ''
+        return target[prop] ?? target[prop.toLowerCase()]
+      }
+    })
   }
 
   // filename 附带参数处理

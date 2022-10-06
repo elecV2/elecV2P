@@ -1,6 +1,6 @@
-// $request.url, $request.headers, $request.body<string>, $request.bodyBytes<buffer>
-// $request.method, $request.protocol, $request.hostname, $request.port, $request.path
-// $response.status, $response.statusCode, $response.headers, $response.body<string>, $response.bodyBytes<buffer>
+// $request.url<string>, $request.headers<object>, $request.body<string>, $request.bodyBytes<buffer>
+// $request.method<string>, $request.protocol<string>, $request.hostname<string>, $request.port<?number>, $request.path<string>
+// $response.status<?number>, $response.statusCode<number>, $response.headers<object>, $response.body<string>, $response.bodyBytes<buffer>
 
 // elecV2P 示例脚本
 // 更新地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/0body.js
