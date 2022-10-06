@@ -37,10 +37,10 @@ function handler(req, res){
   case 'runscript':
     let fn = rbody.fn || ''
     if (!rbody.rawcode && !fn) {
-      clog.info('can\'t find any javascript code to run')
+      clog.info('can\'t find any script code to run')
       return res.json({
         rescode: -1,
-        message: 'can\'t find any javascript code to run'
+        message: 'can\'t find any script code to run'
       })
     } else {
       const addContext = {
@@ -104,7 +104,7 @@ function handler(req, res){
       })
     }
     let jsfn = rbody.fn
-    clog.info(clientip, 'delete javascript file', jsfn)
+    clog.info(clientip, 'delete script file', jsfn)
     let bDelist = Jsfile.delete(jsfn)
     if (bDelist) {
       if (sType(bDelist) === 'array') {
@@ -301,8 +301,11 @@ function handler(req, res){
   case 'stream':
     clog.notify(clientip, 'stream from', rbody.url)
     if (rbody.url && rbody.url.startsWith('http')) {
-      stream(rbody.url).then(response=>{
-        response.pipe(res)
+      stream(rbody.url, req.headers).then(response=>{
+        res.status(response.status)
+        res.set(response.headers)
+
+        response.data.pipe(res)
       }).catch(e=>{
         res.json({
           rescode: -1,
@@ -313,7 +316,7 @@ function handler(req, res){
       clog.error('wrong stream url', rbody.url)
       res.json({
         rescode: -1,
-        message: 'wrong stream url ' + req.query.url
+        message: 'wrong stream url ' + rbody.url
       })
     }
     break
@@ -683,26 +686,26 @@ function handler(req, res){
         },
         {
           type: 'runjs',
-          note: 'run a javascript',
+          note: 'run a script',
           para: [
             {
               name: 'fn',
-              note: 'javascript file name or a http url of the javascript',
+              note: 'script file name or a http url of the script',
               need: 'required'
             },
             {
               name: 'rawcode',
-              note: 'this raw javascript code to run.(if fn is missing, the rawcode is required)',
+              note: 'this raw script code to run.(if fn is missing, the rawcode is required)',
               need: 'optional'
             },
             {
               name: 'rename',
-              note: 'rename the javascript file or code',
+              note: 'rename the script file or code',
               need: 'optional'
             },
             {
               name: 'env',
-              note: 'the extra environment variable when run this javascript',
+              note: 'the extra environment variable when run this script',
               need: 'optional'
             }
           ]

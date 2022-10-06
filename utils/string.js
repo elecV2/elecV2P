@@ -175,7 +175,7 @@ function errStack(error, stack = false) {
   return error
 }
 
-function kSize(size, k = 1024) {
+function kSize(size = 0, k = 1024) {
   if (size < k) {
     return size + ' B'
   }

@@ -70,8 +70,11 @@ module.exports = app => {
         break
       case 'stream':
         if (req.query.url && /^https?:\/\/\S{4}/.test(req.query.url)) {
-          stream(req.query.url).then(response=>{
-            response.pipe(res)
+          stream(req.query.url, req.headers).then(response=>{
+            res.status(response.status)
+            res.set(response.headers)
+
+            response.data.pipe(res)
           }).catch(e=>{
             res.json({
               rescode: -1,

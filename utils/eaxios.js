@@ -177,22 +177,17 @@ function eAxios(request, proxy=null) {
   return axios(request)
 }
 
-function stream(url) {
-  return new Promise((resolve, reject)=>{
-    eAxios({
-      url: url,
-      responseType: 'stream'
-    }).then(response=>{
-      if (response.status !== 200) {
-        clog.error('stream ' + url + ' fail with status code ' + response.status)
-        reject('stream ' + url + ' status code: ' + response.status)
-        return
-      }
-      resolve(response.data)
-    }).catch(e=>{
-      reject('stream fail! ' + e.message)
-      clog.error(url, 'stream fail!', errStack(e))
-    })
+function stream(url = '', orgheaders = {}) {
+  clog.debug('stream', url)
+  const { authorization, cookie, host, origin, referer, ...headers } = orgheaders
+  return eAxios({
+    url, headers,
+    maxRedirects: 0,
+    decompress: false,
+    responseType: 'stream',
+  }).catch(error=>{
+    clog.error('stream', url, 'fail', error)
+    return errStack(error)
   })
 }
 
