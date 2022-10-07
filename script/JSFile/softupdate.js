@@ -5,7 +5,7 @@
 // 脚本会先尝试以 PM2 的方式重启，如果失败，将直接重启容器(Docker 模式下)或服务器(pm2 指令不可用的情况下)
 // 
 // 文件地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
-// 最近更新: 2022-09-24
+// 最近更新: 2022-10-07
 //
 // Todo:
 // - efh 前端设置界面
@@ -77,7 +77,7 @@ async function checkUpdate(){
         $feed.push('elecV2P 检测到新版本 ' + newversion, '当前版本 ' + __version + '\n即将进行软更新升级\n\n更新日志: https://github.com/elecV2/elecV2P/blob/master/logs/update.log', /127|192|172|10|localhost/.test(__home) ? '' : __home)
       }
       if (CONFIG.dependencies_update !== false) {
-        CONFIG.dependencies_update = await dependenciesCheck(JSON.stringify(res.data.dependencies))
+        CONFIG.dependencies_update = dependenciesCheck(res.data.dependencies)
       }
       return true
     }
@@ -263,21 +263,22 @@ async function downloadFile(file){
 
 /**
  * elecV2P 检测默认依赖是否更新
- * @param     {string}    dependencies    待检测的依赖
- * @return    {boolean}
+ * @param     {object}    dependencies    最新的依赖
+ * @return    {boolean}   true: 有更新 false: 无更新
  */
-async function dependenciesCheck(dependencies = '') {
+function dependenciesCheck(dependencies = {}) {
   const path = require('path')
 
   console.log('开始检测默认依赖是否更新')
-  const dependencies_old = JSON.stringify(require(path.resolve('package.json')).dependencies)
-
-  if (dependencies === dependencies_old) {
-    console.log('默认依赖已是最新')
-    return false
+  const dependencies_old = require(path.resolve('package.json')).dependencies
+  for (let dep in dependencies) {
+    if (dependencies_old[dep] !== dependencies[dep]) {
+      console.log(dep, '需要更新到', dependencies[dep])
+      return true
+    }
   }
-  console.log('默认依赖需要更新')
-  return true
+  console.log('默认依赖不需要更新')
+  return false
 }
 
 function execP(command) {

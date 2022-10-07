@@ -11,11 +11,11 @@ const { CONFIG_FEED, feedAddItem, iftttPush, barkPush, custPush, feedPush, feedX
 const clog = new logger({ head: 'elecV2Proc', file: 'elecV2Proc' })
 
 process.on('unhandledRejection', err => {
-  clog.error('unhandledRejection at Promise', err.stack)
+  clog.error('unhandledRejection at Promise', err.stack || err)
 })
 
 process.on('uncaughtException', err => {
-  clog.error('Caught exception', err.stack)
+  clog.error('Caught exception', err.stack || err)
 })
 
 process
