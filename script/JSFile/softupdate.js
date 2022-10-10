@@ -5,7 +5,7 @@
 // 脚本会先尝试以 PM2 的方式重启，如果失败，将直接重启容器(Docker 模式下)或服务器(pm2 指令不可用的情况下)
 // 
 // 文件地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
-// 最近更新: 2022-10-07
+// 最近更新: 2022-10-10
 //
 // Todo:
 // - efh 前端设置界面
@@ -204,7 +204,12 @@ async function restart() {
     try {
       await execP('yarn')
     } catch(e) {
-      console.error('更新默认依赖错误', e)
+      console.error('yarn 更新默认依赖错误', e)
+      try {
+        await execP('npm i')
+      } catch(e) {
+        console.error('npm i 更新默认依赖错误', e)
+      }
     }
   }
   if (CONFIG.restart !== false) {
