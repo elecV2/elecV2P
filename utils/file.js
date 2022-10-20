@@ -169,7 +169,7 @@ const list = {
           cont = { mitmhost: orglist }
         }
       }
-      fs.writeFileSync(path.join(fpath.list, name), sType(cont) === 'object' ? JSON.stringify(cont, null, 2) : sString(cont), 'utf8')
+      fs.writeFileSync(name === 'config.json' ? CONFIG.path : path.join(fpath.list, name), sType(cont) === 'object' ? JSON.stringify(cont, null, 2) : sString(cont), 'utf8')
       clog.info('elecV2P', name, 'updated')
       return true
     } catch(e) {

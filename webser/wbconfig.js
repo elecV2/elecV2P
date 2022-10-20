@@ -39,7 +39,7 @@ module.exports = app => {
           }
         }
         if (token === CONFIG.wbrtoken) {
-          res.download(list.get('config.json', 'path'))
+          res.download(CONFIG.path)
         } else {
           res.json({
             rescode: -1,

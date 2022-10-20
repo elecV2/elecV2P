@@ -9,8 +9,9 @@ const CONFIG_Port = {     // 此处修改对应端口无效
 }
 
 const CONFIG = {
-  path: path.join(__dirname, 'script', 'Lists', 'config.json'),
+  path: path.resolve(__dirname, 'script/Lists', process.env.CONFIG || 'config.json'),
 }
+delete process.env.CONFIG
 
 if (fs.existsSync(CONFIG.path)) {
   Object.assign(CONFIG, sJson(fs.readFileSync(CONFIG.path, "utf8")))
