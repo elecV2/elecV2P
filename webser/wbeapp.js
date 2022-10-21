@@ -34,9 +34,13 @@ if (!CONFIG.eapp) {
       "type": "shell",
       "target": "pm2 ls",
     }, {
-      "name": "查看目录",
+      "name": "查看目录文件",
       "type": "shell",
       "target": "ls -cwd %ei%",
+    }, {
+      "name": "随机配色",
+      "type": "eval",
+      "target": "const s=['--secd-fc','--secd-bk','--icon-bk'],r=Math.random().toString(16).slice(2),f=[],ht=h=>h.reduce((a,c)=>a+c.toString(16).padStart(2,'0'),'');['--main-bk','--main-cl','--icon-run'].forEach((v,i)=>{let hc=r.slice(i*2,i*2+6);if (i<2){let hs=hc.match(/\\w{2}/g).map(s=>parseInt(s,16)),h1=160-Math.max(...hs);h1<0&&(hs=hs.map(s=>Math.max(0,s+h1)))&&(hc=ht(hs));i&&(f.push('--main-fc'+': #'+ht(hs.map(s=>255-s))));}f.push(v+': #'+hc);f.push(s[i]+': #'+hc+'b8');});document.body.style=f.join(';');",
     }]
   }
 }
@@ -56,15 +60,22 @@ module.exports = app => {
   })
 
   app.put('/eapp', (req, res)=>{
-    const app = {
-      name: req.body.name,
-      logo: req.body.logo,
-      type: req.body.type,
-      target: req.body.target,
+    const { name, logo, type, target, run, note, idx } = req.body
+    if (!(name && type && target)) {
+      return res.json({
+        rescode: -1,
+        message: 'name and type and target are expect'
+      })
     }
+    const app = {
+      name, logo, type, target,
+    }
+    run && (app.run = run)
+    note && (app.note = note)
+
     app.hash = sHash(app.name + app.type + app.target)
-    if (CONFIG.eapp.apps[req.body.idx]) {
-      CONFIG.eapp.apps[req.body.idx] = app
+    if (CONFIG.eapp.apps[idx]) {
+      CONFIG.eapp.apps[idx] = app
     } else {
       CONFIG.eapp.apps.push(app)
     }

@@ -73,7 +73,7 @@ module.exports = () => {
   newServer(app).then(server=>{
     server.on('clientError', (err, socket) => {
       clog.error('elecV2P clientError', err)
-      socket.end('HTTP/1.1 400 Bad Request\r\n')
+      socket.end('HTTP/1.1 400 Bad Request\r\n\r\n'+err.message)
     })
 
     server.listen(CONFIG_Port.webst, ()=>{

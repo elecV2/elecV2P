@@ -3,11 +3,10 @@
 <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
-- [ ] 临时访问 token 限时及路径
+- [ ] 临时 token 访问
 - [ ] EAPP 订阅/分类
 - [ ] EFSS 自定义文件处理脚本
 - [ ] 引入 $crypto 用于哈希加密
-- [ ] EAPP 增加备注及自动运行选择项
 </pre>
 </div>
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">
@@ -26,6 +25,13 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] 增加默认 EAPP 随机配色
+- [x] webUI 增加背景及其他优化
+- [x] 主题元素背景替换为文字色彩
+- [x] env CONFIG 指定配置文件路径
+- [x] EAPP 增加备注及自动运行选择项
+- [x] 重连中计数逻辑调整
+- [x] 软更新默认依赖检测逻辑优化
 - [x] headers case insensitive
 - [x] stream with status and headers
 - [x] sw 缓存清理及策略优化
