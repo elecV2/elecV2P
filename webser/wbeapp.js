@@ -41,17 +41,18 @@ if (!CONFIG.eapp) {
       "name": "随机配色",
       "type": "eval",
       "target": "const s=['--secd-fc','--secd-bk','--icon-bk'],r=Math.random().toString(16).slice(2),f=[],ht=h=>h.reduce((a,c)=>a+c.toString(16).padStart(2,'0'),'');['--main-bk','--main-cl','--icon-run'].forEach((v,i)=>{let hc=r.slice(i*2,i*2+6);if (i<2){let hs=hc.match(/\\w{2}/g).map(s=>parseInt(s,16)),h1=160-Math.max(...hs);h1<0&&(hs=hs.map(s=>Math.max(0,s+h1)))&&(hc=ht(hs));i&&(f.push('--main-fc'+': #'+ht(hs.map(s=>255-s))));}f.push(v+': #'+hc);f.push(s[i]+': #'+hc+'b8');});document.body.style=f.join(';');",
+      "note": "给当前页面生成一个随机配色方案",
     }]
   }
 }
+CONFIG.eapp.apps.forEach(app=>{
+  if (!app.hash || app.hash.length !== 32) {
+    app.hash = sHash(app.name + app.type + app.target + app.run)
+  }
+})
 
 module.exports = app => {
   app.get('/eapp', (req, res)=>{
-    CONFIG.eapp.apps.forEach(app=>{
-      if (!app.hash || app.hash.length !== 32) {
-        app.hash = sHash(app.name + app.type + app.target)
-      }
-    })
     res.json({
       rescode: 0,
       message: 'success get eapp config',
@@ -73,7 +74,7 @@ module.exports = app => {
     run && (app.run = run)
     note && (app.note = note)
 
-    app.hash = sHash(app.name + app.type + app.target)
+    app.hash = sHash(name + type + target + run)
     if (CONFIG.eapp.apps[idx]) {
       CONFIG.eapp.apps[idx] = app
     } else {
@@ -104,7 +105,7 @@ module.exports = app => {
       CONFIG.eapp.apps = apps.filter(app=>{
         if (app.name && app.type && app.target) {
           if (app.hash?.length !== 32) {
-            app.hash = sHash(app.name + app.type + app.target)
+            app.hash = sHash(app.name + app.type + app.target + app.run)
           }
           return true
         }
