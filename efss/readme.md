@@ -77,6 +77,8 @@ $done({
 // === $done({ response: { statusCode, headers, body } })
 ```
 
+**更多说明查看 [说明文档 EFSS 部分](https://github.com/elecV2/elecV2P-dei/blob/master/docs/08-logger&efss.md)**
+
 ## 使用 PM2 运行 (v3.4.3 beta 测试阶段...)
 
 使用方式：在需要运行的程序文件右键，然后选择 PM2 运行
@@ -91,4 +93,4 @@ $done({
 
 ### 增加此选项的原因
 
-*可使用此方式运行一些提供 web ui 管理界面的程序，比如 aria2/clash 等。未来可能扩展到这些程序和 elecV2P 进行交互。*
+可使用此方式运行一些提供 webUI 管理界面的程序，比如 aria2/clash 等。未来可能扩展到这些程序和 elecV2P 进行交互。

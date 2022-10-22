@@ -1,4 +1,9 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.7.2)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.7.3)
+
+v3.7.3  2022-10-22
+ • webUI 背景及其他优化
+ • EAPP 增加自动运行选项及备注
+ • 软更新默认依赖检测及更新优化
 
 v3.7.2  2022-10-04
  • EFSS 媒体文件预览优化

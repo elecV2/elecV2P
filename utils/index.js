@@ -19,7 +19,7 @@ process.on('uncaughtException', err => {
 })
 
 process
-.on('exit', ()=>console.log('elecV2P exited.'))
+.on('exit', ()=>console.log(`[elecV2Proc  info][${now()}] elecV2P exited`))
 .on('SIGINT', ()=>{
   clog.info('thanks for using, see you next time.')
   process.exit()
