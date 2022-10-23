@@ -4,8 +4,8 @@ ADD ./ /usr/local/app
 
 WORKDIR /usr/local/app
 RUN apk add --update --no-cache tzdata \
-    && chmod -cfR 777 /usr/local/app \
-    && npm install
+    && chmod -R 777 /usr/local/app \
+    && yarn install --prod
 
 ENV TZ=Asia/Shanghai PATH=/usr/local/app/script/Shell:/usr/local/app/node_modules/.bin:$PATH
 

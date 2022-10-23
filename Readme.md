@@ -112,6 +112,7 @@ docker pull elecv2/elecv2p     # 再拉取新的镜像
 ```
 
 - ARM32 平台如果出错，参考 [issues #78](https://github.com/elecV2/elecV2P/issues/78)
+- v3.7.3 之后 Github Actions 一直无法生成 ARM32 平台的 Docker。建议通过软更新脚本进行升级 [softupdate.js](https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js) 。（其他平台的 Docker 不受影响）
 
 ### 方法三：DOCKER-COMPOSE （推荐）
 
