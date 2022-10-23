@@ -7,6 +7,7 @@
 - [ ] EAPP 订阅/分类
 - [ ] EFSS 自定义文件处理脚本
 - [ ] 引入 $crypto 用于哈希加密
+- [ ] require 自定义可运行/禁用模块
 </pre>
 </div>
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">

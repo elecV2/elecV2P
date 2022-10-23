@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const { sJson, UUID, sHash } = require('./utils/string')
+const { UUID, sHash } = require('./utils/string')
 
 const CONFIG_Port = {     // 此处修改对应端口无效
   proxy: 8001,    // anyproxy 代理端口
@@ -14,7 +14,9 @@ const CONFIG = {
 delete process.env.CONFIG
 
 if (fs.existsSync(CONFIG.path)) {
-  Object.assign(CONFIG, sJson(fs.readFileSync(CONFIG.path, "utf8")))
+  const _config = require(CONFIG.path)
+  delete _config.path
+  Object.assign(CONFIG, _config)
 }
 
 CONFIG_Port.webst = process.env.PORT || CONFIG.webUI?.port || CONFIG_Port.webst;
@@ -69,7 +71,7 @@ CONFIG.env.path = process.env.PATH
 
 CONFIG.userid  = sHash(CONFIG.wbrtoken)
 CONFIG.version = require('./package.json').version
-CONFIG.vernum  = Number(CONFIG.version.replace(/\.|v/g, ''))
+CONFIG.vernum  = Number(CONFIG.version.replace(/\D/g, ''))
 CONFIG.start   = Date.now()
 
 module.exports = { CONFIG, CONFIG_Port }

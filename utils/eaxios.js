@@ -255,7 +255,7 @@ function downloadfile(durl, options, cb) {
       const total = Number(response.headers['content-length']);
       if (sType(cb) === 'function') {
         let dsize = 0, step = 0;
-        let bname = fname.length < 20 ? fname : fname.slice(0, 16) + '...';
+        let bname = fname.length < 23 ? fname : fname.slice(0,7) + '...' + fname.slice(-12);
         Promise.resolve(cb({
           progress: progressBar({ step: 0, total: 1, name: bname }),
           name: fname, start: dest,
