@@ -1,6 +1,6 @@
 const cheerio = require('cheerio')
 
-const { CONFIG } = require('../config')
+const { CONFIG, CONFIG_Port } = require('../config')
 const { errStack, euid, sType, sString, sJson, bEmpty, feedPush, iftttPush, barkPush, custPush, store, eAxios, jsfile, file, downloadfile, wsSer, sseSer, message } = require('../utils')
 
 const { exec } = require('../func/exec')
@@ -78,9 +78,9 @@ class contextBase {
   clearTimeout = clearTimeout
   clearInterval = clearInterval
 
-  __version = CONFIG.version
-  __vernum  = CONFIG.vernum
-  __userid  = CONFIG.userid
+  __version = CONFIG_Port.version
+  __vernum  = CONFIG_Port.vernum
+  __userid  = CONFIG_Port.userid
   __home = CONFIG.homepage
   __efss = file.get(CONFIG.efss.directory, 'path')
   $ws = {

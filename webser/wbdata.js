@@ -18,10 +18,10 @@ module.exports = app => {
           jslistslen: Jsfile.get('list').length,
           taskstatus: taskMa.status(),
           mitmhostlen: CONFIG_RULE.mitmhost.length,
-          version: CONFIG.version,
-          start: CONFIG.start,
+          version: CONFIG_Port.version,
+          start: CONFIG_Port.start,
           anyproxy: CONFIG_Port.anyproxy,
-          newversion: CONFIG.newversion,
+          newversion: CONFIG_Port.newversion,
           sysinfo: sysInfo(),
           enablelist: {
             rule: CONFIG_RULE.ruleenable,
@@ -31,7 +31,7 @@ module.exports = app => {
           menunav: CONFIG.webUI?.nav,
           theme: CONFIG.webUI?.theme,
           logo: CONFIG.webUI?.logo,
-          userid: CONFIG.userid,
+          userid: CONFIG_Port.userid,
           lang: CONFIG.lang,
         })
         if (req.query.check) {
@@ -90,12 +90,12 @@ module.exports = app => {
         }
         break
       case 'sponsors':
-        eAxios(`https://sponsors.elecv2.workers.dev/${ req.query.param || '' }?userid=${ CONFIG.userid }`).then(response=>{
+        eAxios(`https://sponsors.elecv2.workers.dev/${ req.query.param || '' }?userid=${ CONFIG_Port.userid }`).then(response=>{
           res.json({
             rescode: 0,
             message: 'success get sponsors list',
             resdata: {
-              userid: CONFIG.userid,
+              userid: CONFIG_Port.userid,
               sponsors: response.data,
             }
           })

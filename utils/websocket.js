@@ -6,7 +6,7 @@ const { logger, LOGFILE } = require('./logger')
 const { now } = require('./time')
 const clog = new logger({ head: 'webSocket', level: 'debug' })
 
-const { CONFIG } = require('../config')
+const { CONFIG, CONFIG_Port } = require('../config')
 
 // 服务器 websocket 发送/接收 数据
 const wsSer = {
@@ -107,18 +107,19 @@ function wsSend(data, target = ''){
     clog.debug('client recver:', data.type, 'not ready yet')
     return
   }
+  const debug_ws = CONFIG.debug?.websocket
   if (wsobs.WSS) {
     const data_str = sString(data)
     const state_open = ws.OPEN
     wsobs.WSS.clients.forEach(client=>{
       if (client.readyState === state_open && target_list.has(client.id)) {
         client.send(data_str)
-        if (CONFIG.debug?.websocket) {
+        if (debug_ws) {
           clog.debug('send data to client:', client.id, 'type:', data.type)
         }
       }
     })
-  } else if (CONFIG.debug?.websocket) {
+  } else if (debug_ws) {
     clog.debug('no websocket clients yet, cant send data:', data)
   }
 }
@@ -146,8 +147,8 @@ function websocketSer({ server, path }) {
       data: {
         id: ws.id,
         userid: sHash(CONFIG.wbrtoken),
-        vernum: CONFIG.vernum,
-        version: CONFIG.version,
+        vernum: CONFIG_Port.vernum,
+        version: CONFIG_Port.version,
         secunset: !CONFIG.SECURITY,
         glogslicebegin: CONFIG.glogslicebegin,
       }

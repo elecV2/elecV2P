@@ -85,9 +85,7 @@ wsSer.recv.eproxy = (op = '')=>{
 }
 
 // checkupdate
-if (CONFIG.init?.checkupdate === false) {
-  delete CONFIG.newversion
-} else {
+if (CONFIG.init?.checkupdate !== false) {
   checkupdate().then(body=>{
     if (body.updateversion) {
       clog.notify(`elecV2P v${body.updateversion} is available`)

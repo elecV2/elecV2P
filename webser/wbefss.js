@@ -4,7 +4,7 @@ const formidable = require('formidable')
 const { logger, file, sType, sString, errStack, now } = require('../utils')
 const clog = new logger({ head: 'wbefss', level: 'debug' })
 
-const { CONFIG } = require('../config')
+const { CONFIG, CONFIG_Port } = require('../config')
 const { runJSFile, getJsResponse } = require('../script')
 
 const CONFIG_efss = {
@@ -163,7 +163,7 @@ module.exports = app => {
 
     let resdata = {
       rescode: 0,
-      userid: CONFIG.userid,
+      userid: CONFIG_Port.userid,
     }
     if (req.query.type === 'list' || req.query.type !== 'config') {
       resdata.list = CONFIG.efss.enable ? file.aList(file.get(CONFIG.efss.directory, 'path'), {

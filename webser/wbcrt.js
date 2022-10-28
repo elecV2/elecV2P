@@ -7,7 +7,7 @@ const { clearCrt, newRootCrt, cacheClear, crt_path, crtHost } = require('../func
 
 module.exports = app => {
   app.get('/crt', (req, res)=>{
-    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'get rootCA.crt', req.query.type)
+    clog.notify((req.headers['x-forwarded-for'] || req.connection.remoteAddress), 'get rootCA.crt', req.query.type || 'pem')
     switch (req.query.type) {
     case 'p12':
       crt_path.p12
@@ -26,7 +26,7 @@ module.exports = app => {
         })
       break
     default:
-      res.download(crt_path.any + '/rootCA.crt')
+      res.download(crt_path.crt)
     }
   })
 

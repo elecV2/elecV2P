@@ -13,7 +13,7 @@ const clog = new logger({ head: 'webServer' })
 const { wbefss, wbconfig, wbfeed, wbcrt, wbjs, wbtask, wblogs, wbstore, wbdata, wblist, wbhook, wbrpc, wbrun, wbeapp } = require('./webser')
 
 async function newServer(app) {
-  if (CONFIG?.webUI?.tls?.enable) {
+  if (CONFIG.webUI.tls?.enable) {
     const host = CONFIG.webUI.tls.host || '127.0.0.1'
     try {
       if (!(fs.existsSync(`rootCA/${host}.key`) && fs.existsSync(`rootCA/${host}.crt`))) {
@@ -77,7 +77,7 @@ module.exports = () => {
     })
 
     server.listen(CONFIG_Port.webst, ()=>{
-      clog.notify('elecV2P', 'v' + CONFIG.version, 'started on port', CONFIG_Port.webst);
+      clog.notify('elecV2P', 'v' + CONFIG_Port.version, 'started on port', CONFIG_Port.webst);
     })
 
     websocketSer({ server, path: '/elecV2P' })

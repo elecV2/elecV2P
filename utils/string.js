@@ -70,9 +70,13 @@ function sString(obj) {
     return obj.trim()
   case 'map':
   case 'set':
-  case 'buffer':
     return JSON.stringify({
       type, data: Array.from(obj)
+    })
+  case 'buffer':
+    return JSON.stringify({
+      type, encode: 'base64',
+      data: obj.toString('base64'),
     })
   case 'array':
   case 'object':
