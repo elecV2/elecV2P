@@ -3,6 +3,8 @@ const { exec } = require('child_process')
 const { logger, file, downloadfile, wsSer, surlName, kSize, errStack, sType, feedPush } = require('../utils')
 const clog = new logger({ head: 'funcExec', file: 'funcExec', level: 'debug' })
 
+const { CONFIG_Port } = require('../config')
+
 const CONFIG_exec = {
   shellcwd: process.cwd(),       // minishell cwd
   timeout:  60000,               // exec 命令最大执行时间，单位：毫秒
@@ -142,19 +144,19 @@ async function commandSetup(command, options={}, clog) {
     // 当没有设置 cwd，或设置 cwd 目录不存在时，自动设置默认 cwd
     if (/^node /.test(command)) {
       // 当使用 node 命令开头时，默认 cwd 设置为 script/JSFile
-      options.cwd = 'script/JSFile'
+      options.cwd = CONFIG_Port.path_script
     } else {
       // 其他情况，默认 cwd 为 script/Shell
-      options.cwd = 'script/Shell'
+      options.cwd = CONFIG_Port.path_shell
     }
   }
 
   // options.stdin 处理
-  if (sType(options.stdin) !== 'object') {
-    options.stdin = {}
-  }
   let stdin = command.match(/ -stdin(=| )(\S+)/)
   if (stdin && stdin[2]) {
+    if (sType(options.stdin) !== 'object') {
+      options.stdin = {}
+    }
     options.stdin.write = decodeURI(stdin[2])
     command = command.replace(/ -stdin(=| )(\S+)/g, '')
   }
@@ -272,7 +274,7 @@ async function execFunc(command, options={}, cb=null) {
 
   let fdata = []
   childexec.stdout.on('data', data => {
-    data = data.toString()
+    data = data.toString().trim()
     execlog.info(data)
     callback(data)
     if (options.call) {
@@ -284,7 +286,7 @@ async function execFunc(command, options={}, cb=null) {
   })
 
   childexec.stderr.on('data', err => {
-    err = err.toString()
+    err = err.toString().trim()
     execlog.error(err)
     callback(null, err)
     wsSer.send({ type: 'minishell', data: err })

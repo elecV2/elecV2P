@@ -128,9 +128,8 @@ function jobFunc(job, { taskname, taskid }) {
     }
   } else if (job.type === 'exec') {
     return ()=>new Promise((resolve)=>{
-      let cwd = /^node /.test(job.target) ? 'script/JSFile' : 'script/Shell'
       exec(job.target, {
-        cwd, from: 'task',
+        from: 'task',
         cb(data, error, finish){
           if (finish) {
             resolve(data)
@@ -545,7 +544,7 @@ const taskInit = function() {
   }
 
   if (Object.keys(TASKS_INFO).length) {
-    clog.info('retrieve task from Lists/task.list')
+    clog.info('retrieve task from task.list')
   }
   for(let tid in TASKS_INFO) {
     switch (TASKS_INFO[tid].type ) {

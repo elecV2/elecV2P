@@ -75,7 +75,7 @@ pm2 restart elecV2P   # 重启 elecV2P
 pm2 restart 0
 
 pm2 ls      # 查看运行状态
-pm2 logs    # 查看运行日志
+pm2 logs --raw    # 查看运行日志
 
 pm2 -h      # 查看 PM2 帮助列表
 ```

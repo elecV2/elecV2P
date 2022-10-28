@@ -1,7 +1,7 @@
 const { logger, setGlog, CONFIG_FEED, CONFIG_Axios, axProxy, list, file, sString, sHash } = require('../utils')
 const clog = new logger({ head: 'wbconfig' })
 
-const { CONFIG } = require('../config')
+const { CONFIG, CONFIG_Port } = require('../config')
 const { CONFIG_RUNJS, CONFIG_RULE } = require('../script')
 
 module.exports = app => {
@@ -19,14 +19,21 @@ module.exports = app => {
           uagent: CONFIG_RULE.uagent,
           wbrtoken: CONFIG.wbrtoken,
           wbrscript: CONFIG.webhook?.script,
-          userid: CONFIG.userid,
+          userid: CONFIG_Port.userid,
           minishell: CONFIG.minishell || false,
           security: CONFIG.SECURITY || {},
           init: CONFIG.init,
           anyproxy: CONFIG.anyproxy,
           webUI: CONFIG.webUI,
-          newversion: CONFIG.newversion,
+          newversion: CONFIG_Port.newversion,
           CONFIG_env: CONFIG.env,
+          CONFIG_Path: {
+            config: CONFIG_Port.path,
+            lists: CONFIG.path_lists, lists_final: CONFIG_Port.path_lists,
+            script: CONFIG.path_script, script_final: CONFIG_Port.path_script,
+            store: CONFIG.path_store, store_final: CONFIG_Port.path_store,
+            shell: CONFIG.path_shell, shell_final: CONFIG_Port.path_shell,
+          },
         })
         break
       default:{
@@ -39,7 +46,7 @@ module.exports = app => {
           }
         }
         if (token === CONFIG.wbrtoken) {
-          res.download(CONFIG.path)
+          res.download(CONFIG_Port.path)
         } else {
           res.json({
             rescode: -1,
@@ -113,14 +120,14 @@ module.exports = app => {
         })
         break
       case 'wbrtoken':
-        if (req.body.data && req.body.data.length >= 6) {
+        if (req.body.data?.length >= 10) {
           CONFIG.wbrtoken = req.body.data
-          CONFIG.userid  = sHash(CONFIG.wbrtoken)
+          CONFIG_Port.userid = sHash(CONFIG.wbrtoken)
           clog.notify('webhook token success changed')
           res.json({
             rescode: 0,
             message: 'success reset webhook token',
-            resdata: { userid: CONFIG.userid },
+            resdata: { userid: CONFIG_Port.userid },
           })
         } else {
           clog.error('webhook token', req.body.data, 'is illegal')
@@ -158,6 +165,7 @@ module.exports = app => {
             message: 'success! set eAxios'
           })
           axProxy.update()
+          process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = CONFIG_Axios.reject_unauthorized === false ? 0 : 1
         } catch(e) {
           res.json({
             rescode: -1,
@@ -370,6 +378,17 @@ module.exports = app => {
             message: 'unknow favend config prop ' + prop
           })
         }
+        break
+      case 'datapath':
+        const { lists, script, store, shell } = req.body.data
+        CONFIG.path_lists = lists
+        CONFIG.path_script = script
+        CONFIG.path_store = store
+        CONFIG.path_shell = shell
+        res.json({
+          rescode: 0,
+          message: 'success update config path data',
+        })
         break
       default:{
         clog.error('data put error, unknow type: ' + req.body.type)

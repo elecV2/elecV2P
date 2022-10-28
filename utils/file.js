@@ -8,29 +8,50 @@ const { now } = require('./time')
 const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFile', level: 'debug' })
 
-const { CONFIG } = require('../config')
+const { CONFIG_Port } = require('../config')
 
 const fpath = {
-  list: path.join(__dirname, '../script', 'Lists'),
-  js: path.join(__dirname, '../script', 'JSFile'),
-  store: path.join(__dirname, '../script', 'Store'),
+  list: CONFIG_Port.path_lists,
+  js: CONFIG_Port.path_script,
+  store: CONFIG_Port.path_store,
   homedir: os.homedir(),
   tempdir: os.tmpdir()
 }
 
 if (!fs.existsSync(fpath.list)) {
   fs.mkdirSync(fpath.list, { recursive: true })
-  clog.notify('mkdir new Lists folder')
+  clog.notify('make a new Lists directory', fpath.list)
+} else if (fs.statSync(fpath.list).isDirectory()) {
+  clog.debug('Lists  directory:', fpath.list)
+} else {
+  clog.error(fpath.list, 'is not a directory')
 }
 
 if (!fs.existsSync(fpath.js)) {
   fs.mkdirSync(fpath.js, { recursive: true })
-  clog.notify('mkdir new JSFile folder')
+  clog.notify('make a new Script directory', fpath.js)
+} else if (fs.statSync(fpath.js).isDirectory()) {
+  clog.debug('Script directory:', fpath.js)
+} else {
+  clog.error(fpath.js, 'is not a directory')
 }
 
 if (!fs.existsSync(fpath.store)) {
   fs.mkdirSync(fpath.store, { recursive: true })
-  clog.notify('mkdir new Store folder')
+  clog.notify('make a new Store directory', fpath.store)
+} else if (fs.statSync(fpath.store).isDirectory()) {
+  clog.debug('Store  directory:', fpath.store)
+} else {
+  clog.error(fpath.store, 'is not a directory')
+}
+
+if (!fs.existsSync(CONFIG_Port.path_shell)) {
+  fs.mkdirSync(CONFIG_Port.path_shell, { recursive: true })
+  clog.notify('make a new Shell directory', CONFIG_Port.path_shell)
+} else if (fs.statSync(CONFIG_Port.path_shell).isDirectory()) {
+  clog.debug('Shell  directory:', CONFIG_Port.path_shell)
+} else {
+  clog.error(CONFIG_Port.path_shell, 'is not a directory')
 }
 
 const list = {
@@ -129,6 +150,7 @@ const list = {
   },
   put(name, cont, option = {}){
     try {
+      name = name.trim()
       if (option.type === 'add') {
         if (name === 'mitmhost.list') {
           let orglist = this.get('mitmhost.list')
@@ -169,7 +191,7 @@ const list = {
           cont = { mitmhost: orglist }
         }
       }
-      fs.writeFileSync(name === 'config.json' ? CONFIG.path : path.join(fpath.list, name), sType(cont) === 'object' ? JSON.stringify(cont, null, 2) : sString(cont), 'utf8')
+      fs.writeFileSync(name === 'config.json' ? CONFIG_Port.path : path.join(fpath.list, name), sType(cont) === 'object' ? JSON.stringify(cont, null, 2) : sString(cont), 'utf8')
       clog.info('elecV2P', name, 'updated')
       return true
     } catch(e) {
