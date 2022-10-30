@@ -54,6 +54,7 @@
     .ebutton {
       background: var(--main-cl);
       color: var(--main-fc);
+      cursor: pointer;
     }
     .result {
       white-space: pre-wrap;
@@ -66,7 +67,7 @@
 <div class="eflex eflex--wrap">
   <label>请求后台数据测试 $fend:</label>
   <input type="text" name="test" class="einput key" placeholder="akey">
-  <input type="text" name="test" class="einput data" placeholder="data">
+  <input type="text" name="test" class="einput data" placeholder="data" onkeyup="event.keyCode===13&&dataFetch()">
   <button class="ebutton" onclick="dataFetch()">获取</button>
 </div>
 <div>

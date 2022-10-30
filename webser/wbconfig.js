@@ -254,17 +254,11 @@ module.exports = app => {
       case 'init':
         CONFIG.init = Object.assign(CONFIG.init || {}, req.body.data.CONFIG_init)
         let cktip = 'checkupdate is ' + (CONFIG.init.checkupdate === false ? 'off' : 'on')
-        if (req.body.data.CONFIG_init.runjs) {
-          res.json({
-            rescode: 0,
-            message: cktip + '\nadd initialization runjs: ' + req.body.data.CONFIG_init.runjs
-          })
-        } else {
-          res.json({
-            rescode: 0,
-            message: cktip + '\ninitialization runjs is cleared'
-          })
-        }
+        res.json({
+          rescode: 0,
+          message: cktip + '\ninitialization runjs ' + (CONFIG.init.runjsenable === false ? 'disabled' : 'enabled'),
+          resdata: CONFIG.init.runjs
+        })
         break
       case 'anyproxy':
         try {

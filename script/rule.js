@@ -361,6 +361,11 @@ module.exports = {
   summary: 'elecV2P - customize personal network',
   CONFIG_RULE, getJsResponse, setRewriteRule,
   *beforeSendRequest(requestDetail) {
+    if (/^multipart/.test(requestDetail.requestOptions.headers['Content-Type'])) {
+      // 跳过文件类数据处理
+      clog.info('skip modify', requestDetail.url, 'type:', requestDetail.requestOptions.headers['Content-Type'])
+      return null
+    }
     if (bCircle.check(requestDetail.requestOptions.hostname + ':' + requestDetail.requestOptions.port)) {
       let error = 'access ' + requestDetail.requestOptions.hostname + ' be blocked, because of visiting over ' + bCircle.max + ' times in ' + bCircle.gap + ' milliseconds'
       clog.error(error)

@@ -1,8 +1,4 @@
 {
-  "init": {
-    "checkupdate": false,
-    "runjs": ""
-  },
   "webUI": {
     "port": 80
   },
@@ -11,15 +7,107 @@
     "port": 8001,
     "webPort": 8002
   },
+  "CONFIG_FEED": {
+    "enable": true,
+    "rss": {
+      "enable": true,
+      "homepage": "https://github.com/elecV2/elecV2P"
+    },
+    "runjs": {
+      "enable": false,
+      "list": "notify.js"
+    },
+    "maxbLength": 1200,
+    "webmessage": {
+      "enable": true
+    }
+  },
+  "CONFIG_RUNJS": {
+    "timeout": 5000,
+    "intervals": 86400,
+    "numtofeed": 50,
+    "jslogfile": true,
+    "eaxioslog": false,
+    "proxy": true,
+    "white": {
+      "enable": false,
+      "list": [
+        "softupdate.js"
+      ]
+    }
+  },
+  "CONFIG_Axios": {
+    "proxy": {
+      "enable": false,
+      "host": "",
+      "port": 8001
+    },
+    "timeout": 5000,
+    "uagent": "iPhone",
+    "block": {
+      "enable": false,
+      "regexp": ""
+    },
+    "only": {
+      "enable": false,
+      "regexp": ""
+    },
+    "reject_unauthorized": true
+  },
+  "eapp": {
+    "enable": true,
+    "logo_type": 1
+  },
+  "efss": {
+    "enable": true,
+    "directory": "./efss",
+    "dotshow": {
+      "enable": false
+    },
+    "max": 600,
+    "skip": {
+      "folder": [
+        "node_modules"
+      ],
+      "file": []
+    },
+    "favendtimeout": 5000
+  },
+  "env": {
+    "path": ""
+  },
   "gloglevel": "info",
+  "glogslicebegin": 5,
+  "homepage": "http://127.0.0.1",
+  "init": {
+    "checkupdate": true,
+    "runjsenable": true,
+    "runjs": ""
+  },
+  "minishell": false,
   "SECURITY": {
     "enable": false,
-    "blacklist": [],
-    "whitelist": [],
+    "blacklist": [
+      "*"
+    ],
+    "whitelist": [
+      "127.0.0.1",
+      "::1"
+    ],
     "cookie": {
       "enable": true
     },
     "numtofeed": 0,
     "webhook_only": false
-  }
+  },
+  "webhook": {
+    "script": {
+      "enable": false,
+      "target": "webhook.js"
+    }
+  },
+  "path_lists": "",
+  "path_script": "",
+  "path_store": "",
+  "path_shell": ""
 }
