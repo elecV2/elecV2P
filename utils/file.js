@@ -20,7 +20,7 @@ const fpath = {
 
 if (!fs.existsSync(fpath.list)) {
   fs.mkdirSync(fpath.list, { recursive: true })
-  clog.notify('make a new Lists directory', fpath.list)
+  clog.notify('make a new Lists directory:', fpath.list)
 } else if (fs.statSync(fpath.list).isDirectory()) {
   clog.debug('Lists  directory:', fpath.list)
 } else {
@@ -29,7 +29,7 @@ if (!fs.existsSync(fpath.list)) {
 
 if (!fs.existsSync(fpath.js)) {
   fs.mkdirSync(fpath.js, { recursive: true })
-  clog.notify('make a new Script directory', fpath.js)
+  clog.notify('make a new Script directory:', fpath.js)
 } else if (fs.statSync(fpath.js).isDirectory()) {
   clog.debug('Script directory:', fpath.js)
 } else {
@@ -38,7 +38,7 @@ if (!fs.existsSync(fpath.js)) {
 
 if (!fs.existsSync(fpath.store)) {
   fs.mkdirSync(fpath.store, { recursive: true })
-  clog.notify('make a new Store directory', fpath.store)
+  clog.notify('make a new Store directory:', fpath.store)
 } else if (fs.statSync(fpath.store).isDirectory()) {
   clog.debug('Store  directory:', fpath.store)
 } else {
@@ -47,7 +47,7 @@ if (!fs.existsSync(fpath.store)) {
 
 if (!fs.existsSync(CONFIG_Port.path_shell)) {
   fs.mkdirSync(CONFIG_Port.path_shell, { recursive: true })
-  clog.notify('make a new Shell directory', CONFIG_Port.path_shell)
+  clog.notify('make a new Shell directory:', CONFIG_Port.path_shell)
 } else if (fs.statSync(CONFIG_Port.path_shell).isDirectory()) {
   clog.debug('Shell  directory:', CONFIG_Port.path_shell)
 } else {
@@ -745,7 +745,7 @@ const store = {
       clog.info('backup store', fpath.store, 'to', targetfile);
       return true;
     } else {
-      clog.info('export stroe', fpath.store, 'as buffer');
+      clog.info('export store', fpath.store, 'as buffer');
       return zip.toBuffer();
     }
   },

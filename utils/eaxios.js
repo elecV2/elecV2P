@@ -27,7 +27,8 @@ const CONFIG_Axios = {
   only: {                   // 启用时，表示仅允许符合该规则的 url 通过
     enable: false,
     regexp: ''
-  }
+  },
+  "reject_unauthorized": true
 }
 
 if (CONFIG.CONFIG_Axios) {

@@ -4,11 +4,11 @@
 
 const cookie = require('cookie')
 const { parse } = require('url')
-const { CONFIG } = require('../config')
+const { CONFIG, CONFIG_Port } = require('../config')
 
 const { logger } = require('./logger')
 const clog = new logger({ head: 'access', level: 'debug', file: 'access.log' })
-const { atob, btoa, iRandom } = require('./string')
+const { atob } = require('./string')
 const { now } = require('./time')
 
 const validate_status = {
@@ -50,7 +50,10 @@ function isAuthReq(req, res) {
   if (req.headers.cookie && CONFIG.SECURITY.cookie?.enable !== false) {
     cookies = cookie.parse(req.headers.cookie)
   }
-  if (cookies?.token?.length > 10 && (CONFIG.wbrtoken + CONFIG.wbrtoken).indexOf(atob(cookies.token)) !== -1) {
+  if (cookies?.token?.length > 10
+      && (cookies.token === CONFIG_Port.userid
+      || (CONFIG.wbrtoken + CONFIG.wbrtoken).includes(atob(cookies.token)))
+  ) {
     clog.debug(headstr, 'authorized by cookie')
     if (req.query?.cookie === 'clear') {
       clog.notify(headstr, 'cookie cleared')
@@ -83,7 +86,7 @@ function isAuthReq(req, res) {
         let days = req.query?.cookie === 'long' ? 365 : 7
         clog.notify('set cookie for', ipAddress, 'Max-Age:', days, 'days')
         res.setHeader('Set-Cookie', cookie.serialize('token',
-          btoa((CONFIG.wbrtoken + CONFIG.wbrtoken).substr(iRandom(CONFIG.wbrtoken.length), 10)), {
+          CONFIG_Port.userid, {
             httpOnly: true,
             maxAge: 60 * 60 * 24 * days // cookie 有效期
           })
