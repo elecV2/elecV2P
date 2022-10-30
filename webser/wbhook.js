@@ -8,7 +8,6 @@ const clog = new logger({ head: 'webhook', level: 'debug' })
 const { CONFIG, CONFIG_Port } = require('../config')
 
 function handler(req, res){
-  res.set({ 'Access-Control-Allow-Origin': '*' })
   if (!CONFIG.wbrtoken) {
     return res.status(500).json({
       rescode: -1,
@@ -545,31 +544,6 @@ function handler(req, res){
       rescode: 0,
       message: 'validate black status is reset'
     });
-    break
-  case 'cors':
-    if (!CONFIG.cors) {
-      CONFIG.cors = {
-        enable: false,
-        origin: ''
-      }
-    }
-    let corsmsg = ''
-    if (rbody.enable !== undefined) {
-      CONFIG.cors.enable = sBool(rbody.enable)
-      corsmsg += 'CORS ' + (CONFIG.cors.enable ? 'enabled' : 'disabled')
-    }
-    if (rbody.origin !== undefined) {
-      CONFIG.cors.origin = rbody.origin
-      corsmsg += '\nCORS allow origin set to ' + CONFIG.cors.origin
-    }
-    if (corsmsg) {
-      list.put('config.json', CONFIG)
-    }
-    res.json({
-      rescode: 0,
-      message: corsmsg.trim() || 'Get cors config',
-      resdata: CONFIG.cors
-    })
     break
   case 'newcrt':
     if (rbody.hostname) {
