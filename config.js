@@ -62,6 +62,15 @@ if (!CONFIG.SECURITY) {
   CONFIG.SECURITY = {
     enable: false,
   }
+} else if (CONFIG.SECURITY.tokens) {
+  const tokens = {}
+  for (let rawkey in CONFIG.SECURITY.tokens) {
+    let token = CONFIG.SECURITY.tokens[rawkey]
+    if (token.token && token.token !== CONFIG.wbrtoken) {
+      tokens[sHash(token.token)] = token
+    }
+  }
+  CONFIG.SECURITY.tokens = tokens
 }
 if (!CONFIG.webUI) {
   CONFIG.webUI = {

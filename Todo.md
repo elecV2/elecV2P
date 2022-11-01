@@ -3,8 +3,8 @@
 <div style="background-color: #1890ff;list-style: none;border-radius: 8px;padding: 0;margin: 0;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
-- [ ] 临时 token 访问
 - [ ] EAPP 订阅/分类
+- [ ] 403/404 页面优化
 - [ ] EFSS 自定义文件处理脚本
 - [ ] 引入 $crypto 用于哈希加密
 - [ ] require 自定义可运行/禁用模块
@@ -26,6 +26,7 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] 临时 token 访问
 - [x] 默认 CORS Origin *
 - [x] 使用 userid 作为 cookie
 - [x] CONFIG 配置文件参数优化

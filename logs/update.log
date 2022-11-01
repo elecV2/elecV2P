@@ -1,6 +1,7 @@
 <a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.7.4)
 
-v3.7.4  2022-10-30
+v3.7.4  2022-11-01
+ • 临时 token 访问
  • 自定义规则、脚本、定时任务等保存目录
  • CONFIG 默认配置文件优化
  • 默认 CORS Origin *

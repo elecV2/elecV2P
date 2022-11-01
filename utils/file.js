@@ -9,6 +9,7 @@ const { logger } = require('./logger')
 const clog = new logger({ head: 'utilsFile', level: 'debug' })
 
 const { CONFIG_Port } = require('../config')
+clog.debug('CONFIG path:', CONFIG_Port.path)
 
 const fpath = {
   list: CONFIG_Port.path_lists,

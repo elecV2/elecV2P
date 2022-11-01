@@ -8,7 +8,7 @@ const { CONFIG, CONFIG_Port } = require('../config')
 
 const { logger } = require('./logger')
 const clog = new logger({ head: 'access', level: 'debug', file: 'access.log' })
-const { atob } = require('./string')
+const { atob, sHash } = require('./string')
 const { now } = require('./time')
 
 const validate_status = {
@@ -50,16 +50,23 @@ function isAuthReq(req, res) {
   if (req.headers.cookie && CONFIG.SECURITY.cookie?.enable !== false) {
     cookies = cookie.parse(req.headers.cookie)
   }
-  if (cookies?.token?.length > 10
-      && (cookies.token === CONFIG_Port.userid
-      || (CONFIG.wbrtoken + CONFIG.wbrtoken).includes(atob(cookies.token)))
-  ) {
-    clog.debug(headstr, 'authorized by cookie')
-    if (req.query?.cookie === 'clear') {
-      clog.notify(headstr, 'cookie cleared')
-      res.clearCookie('token')
+  if (cookies?.token?.length > 10) {
+    if (cookies.token === CONFIG_Port.userid || (CONFIG.wbrtoken + CONFIG.wbrtoken).includes(atob(cookies.token))) {
+      clog.debug(headstr, 'authorized by cookie')
+      if (req.query?.cookie === 'clear') {
+        clog.notify(headstr, 'cookie cleared')
+        res.clearCookie('token')
+      } else {
+        return true
+      }
     } else {
-      return true
+      const tokens = CONFIG.SECURITY.tokens
+      if (tokens?.[cookies.token]?.enable && new RegExp(tokens[cookies.token].path, 'i').test(req.path)) {
+        clog.info(headstr, 'authorized by temp cookie')
+        const curt = tokens[cookies.token].times
+        tokens[cookies.token].times = curt > 0 ? curt + 1 : 1
+        return true
+      }
     }
   }
   if (CONFIG.wbrtoken) {
@@ -82,25 +89,19 @@ function isAuthReq(req, res) {
     }
     if (token === CONFIG.wbrtoken) {
       clog.debug(headstr, 'authorized by token')
-      if (res && req.path !=='/webhook' && CONFIG.SECURITY.cookie?.enable !== false) {
-        let days = req.query?.cookie === 'long' ? 365 : 7
-        clog.notify('set cookie for', ipAddress, 'Max-Age:', days, 'days')
-        res.setHeader('Set-Cookie', cookie.serialize('token',
-          CONFIG_Port.userid, {
-            httpOnly: true,
-            maxAge: 60 * 60 * 24 * days // cookie 有效期
-          })
-        )
-        feedPush('Set cookie for ' + ipAddress, `Time: ${now()}\nMax-Age: ${days} days\nUser-Agent: ${req.headers['user-agent']}\nIf this wasn't you, please consider changing your WEBHOOK TOKEN`)
-        validate_status.cookieset.add({
-          ip: ipAddress,
-          ua: req.headers['user-agent'],
-          time: now(),
-          path: req.path,
-          days: days,
-        })
-      }
+      cookieSet(req, res, CONFIG_Port.userid, ipAddress)
       return true
+    }
+    if (token && CONFIG.SECURITY.tokens) {
+      const token_hash = sHash(token)
+      const tokens = CONFIG.SECURITY.tokens
+      if (tokens[token_hash]?.enable && new RegExp(tokens[token_hash].path, 'i').test(req.path)) {
+        clog.info(headstr, 'authorized by temp token', token_hash)
+        cookieSet(req, res, token_hash, ipAddress)
+        const curt = tokens[token_hash].times
+        tokens[token_hash].times = curt > 0 ? curt + 1 : 1
+        return true
+      }
     }
   }
   let blacklist = CONFIG.SECURITY.blacklist || []
@@ -113,6 +114,22 @@ function isAuthReq(req, res) {
     clog.notify(headstr, 'rejected by elecV2P because of unauthorized');
     validStatus(ipAddress);
     return false
+  }
+}
+
+function cookieSet(req, res, token=CONFIG_Port.userid, ipAddress) {
+  if (res && req.path !=='/webhook' && CONFIG.SECURITY.cookie?.enable !== false) {
+    const days = req.query?.cookie === 'long' ? 365 : 7
+    clog.notify('set cookie for', ipAddress, 'Max-Age:', days, 'days')
+    res.cookie('token', token, { httpOnly: true, maxAge: days * 60 * 60 * 24 * 1000 })
+    feedPush('Set cookie for ' + ipAddress, `Time: ${now()}\nMax-Age: ${days} days\nUser-Agent: ${req.headers['user-agent']}\nIf this wasn't you, please consider changing your WEBHOOK TOKEN`)
+    validate_status.cookieset.add({
+      ip: ipAddress,
+      ua: req.headers['user-agent'],
+      time: now(),
+      path: req.path,
+      days: days,
+    })
   }
 }
 

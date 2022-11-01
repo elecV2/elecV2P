@@ -241,15 +241,23 @@ module.exports = app => {
         res.json(msg)
         break
       case 'security':
+        const tokens_old = CONFIG.SECURITY.tokens || {}
         CONFIG.SECURITY = req.body.data
-        let secmsg = {
+        const tokens_new = {}
+        if (req.body.data.tokens) {
+          for (let rawkey in CONFIG.SECURITY.tokens) {
+            let token = CONFIG.SECURITY.tokens[rawkey]
+            if (token.token && token.token !== CONFIG.wbrtoken) {
+              tokens_new[sHash(token.token)] = { ...token, times: tokens_old[rawkey]?.times || 0 }
+            }
+          }
+          CONFIG.SECURITY.tokens = tokens_new
+        }
+        res.json({
           rescode: 0,
-          message: 'security access is cancelled'
-        }
-        if (CONFIG.SECURITY.enable) {
-          secmsg.message = 'security updated'
-        }
-        res.json(secmsg)
+          message: 'config of security is updated',
+          resdata: tokens_new
+        })
         break
       case 'init':
         CONFIG.init = Object.assign(CONFIG.init || {}, req.body.data.CONFIG_init)
