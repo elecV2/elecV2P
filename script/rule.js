@@ -227,7 +227,7 @@ function getRewriteRes(rtarget, { rmatch = '', type = 'response', request = {}, 
         $request: formRequest(request),
         $response: formResponse(response)
       }).then(jsres=>{
-        resolve({ response: getJsResponse(jsres, response) })
+        resolve(ruleResponse(jsres, response))
       }).catch(e=>{
         resolve(null)
         clog.error('rewrite', request.url, 'response error on run js', rtarget, errStack(e))
@@ -242,7 +242,9 @@ function formRequest($request) {
     protocol: $request.protocol,
     pathname: $request.requestOptions?.path,
     url: $request.url,
-    body: $request.requestData.toString(),
+    body: $request.requestOptions?.headers?.['Content-Type']?.startsWith('application/x-protobuf')
+          ? $request.requestData
+          : $request.requestData.toString(),
     bodyBytes: $request.requestData
   }
 }
@@ -252,13 +254,18 @@ function formResponse($response) {
     statusCode: $response.statusCode,
     status: $response.statusCode,
     headers: $response.header,
-    body: $response.body.toString(),
+    body: $response.header?.['Content-Type']?.startsWith('application/x-protobuf')
+          ? $response.body
+          : $response.body.toString(),
     bodyBytes: $response.body
   }
 }
 
 function getJsResponse(jsres, orires = { ...localResponse.reject }) {
   if (sType(jsres) === 'object') {
+    if (Object.keys(jsres).length === 0) {
+      return orires
+    }
     if (jsres.response) {
       return {
         statusCode: jsres.response.statusCode || jsres.response.status || orires.statusCode,
@@ -277,7 +284,7 @@ function getJsResponse(jsres, orires = { ...localResponse.reject }) {
     if (jsres.body === undefined && !jsres.statusCode && !jsres.status && !jsres.header && !jsres.headers) {
       return {
         statusCode: 200,
-        header: { "Content-Type": "application/json;charset=utf-8" },
+        header: { ...orires.header, "Content-Type": "application/json;charset=utf-8" },
         body: sbufBody(jsres)
       }
     }
@@ -292,12 +299,12 @@ function getJsResponse(jsres, orires = { ...localResponse.reject }) {
   }
 }
 
-function getJsRequest(jsres, requestDetail) {
+function getJsRequest(jsres, requestDetail={}) {
   if (sType(jsres) !== 'object') {
     return {
       response: {
         statusCode: 200,
-        header: { "Content-Type": "text/plain;charset=utf-8" },
+        header: requestDetail.requestOptions?.headers || { "Content-Type": "text/plain;charset=utf-8" },
         body: sbufBody(jsres)
       }
     }
@@ -355,6 +362,14 @@ function getJsRequest(jsres, requestDetail) {
     newRequest.requestOptions = { ...(newRequest.requestOptions || requestDetail.requestOptions), headers: jsres.headers || jsres.header }
   }
   return newRequest
+}
+
+function ruleResponse(scriptRes, response) {
+  if (sType(scriptRes) === 'object' && Object.keys(scriptRes).length === 0) {
+    return null
+  } else {
+    return { response: getJsResponse(scriptRes, response) }
+  }
 }
 
 module.exports = {
@@ -613,7 +628,7 @@ module.exports = {
           $request: formRequest(requestDetail),
           $response: formResponse($response)
         }).then(jsres=>{
-          resolve({ response: getJsResponse(jsres, $response) })
+          resolve(ruleResponse(jsres, $response))
         }).catch(e=>{
           resolve(null)
           clog.error('modify', requestDetail.url, 'response error on run js', matchres.target, errStack(e))
