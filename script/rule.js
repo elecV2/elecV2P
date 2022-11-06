@@ -1,5 +1,5 @@
 const { logger, sJson, sUrl, sType, sString, list, wsSer, errStack, sbufBody } = require('../utils')
-const clog = new logger({ head: 'elecV2P', level: 'debug' })
+const clog = new logger({ head: 'eV2Proxy', level: 'debug' })
 
 const { runJSFile } = require('./runJSFile')
 
@@ -133,7 +133,7 @@ const localResponse = {
   json: {
     statusCode: 200,
     header: { "Content-Type": "application/json;charset=utf-8" },
-    body: '{"data": "hello elecV2P"}'
+    body: '{"rescode": 0, "message": "local response from elecV2P"}'
   },
   array: {
     statusCode: 200,
@@ -152,19 +152,25 @@ const localResponse = {
       }
       return this.reject
     }
-    if (headers.Accept.includes('json')) {
+    const amatch = headers.Accept.match(/html|json|plain|image/)
+    if (!amatch) {
+      return this.reject
+    }
+    switch (amatch[0]) {
+    case 'html':
+      return {...this.imghtml, body: sString(body) }
+    case 'plain':
+      return {...this.reject, body: sString(body) }
+    case 'json':
       if (body) {
         return {...this.json, body: sString(body) }
       }
       return this.json
-    }
-    if (headers.Accept.includes('image')) {
-      if (body) {
-        return {...this.tinyimg, body }
-      }
+    case 'image':
       return this.tinyimg
+    default:
+      return this.reject
     }
-    return this.reject
   }
 }
 
@@ -376,6 +382,10 @@ module.exports = {
   summary: 'elecV2P - customize personal network',
   CONFIG_RULE, getJsResponse, setRewriteRule,
   *beforeSendRequest(requestDetail) {
+    if (requestDetail.protocol === 'http' && requestDetail._req.url.startsWith('/')) {
+      // 禁止直接访问 no direct access to proxy
+      return { response: localResponse.get(requestDetail.requestOptions.headers, `<p>Congratulations! Anyproxy is enabled. Please use it as a proxy.</p><p><span>Powered BY </span><a target="_blank" href="https://github.com/elecV2/elecV2P">elecV2P</a></p><p><span>TG Channel </span><a target="_blank" href="https://t.me/elecV2">@elecV2</a></p>`) }
+    }
     if (/^multipart/.test(requestDetail.requestOptions.headers['Content-Type'])) {
       // 跳过文件类数据处理
       clog.info('skip modify', requestDetail.url, 'type:', requestDetail.requestOptions.headers['Content-Type'])
@@ -386,7 +396,7 @@ module.exports = {
       clog.error(error)
       return { response: localResponse.get(requestDetail.requestOptions.headers, error) }
     }
-    clog.debug('bCircle status:', bCircle.max, bCircle.count, bCircle.host)
+    clog.debug('bCircle status:', bCircle.host, `${bCircle.count}/${bCircle.max}`)
 
     if (CONFIG_RULE.rewriteenable === false) {
       // rewrite 列表不启用时不直接返回，继续 rule 匹配

@@ -16,16 +16,20 @@ const aProxyOptions = {
 const { eproxy, wsSer, logger, message, checkupdate } = require('./utils')
 const clog = new logger({ head: 'elecV2P', level: 'debug' })
 
+// anyproxy 临时设置
+CONFIG_Port.anyproxy = { ...CONFIG.anyproxy }
+
+if (process.env.PROXYEN) {
+  CONFIG_Port.anyproxy.enable = true
+}
+
 let eProxy = null
-if (CONFIG.anyproxy.enable === false && !process.env.PROXYEN) {
+if (CONFIG_Port.anyproxy.enable === false) {
   clog.info('anyproxy not enabled yet')
 } else {
   eProxy = new eproxy(aProxyOptions)
   eProxy.start()
 }
-
-// anyproxy 临时设置
-CONFIG_Port.anyproxy = { ...CONFIG.anyproxy }
 
 // websocket 快速打开/关闭 anyproxy
 wsSer.recv.eproxy = (op = '')=>{
