@@ -675,5 +675,28 @@ module.exports = {
     clog.debug('no match for', requestDetail.host, 'in mitmhost list')
     CONFIG_RULE.cache.host.set(requestDetail.host, false)
     return false
+  },
+  onError(requestDetail, error) {
+    return {
+      response: {
+        statusCode: 200,
+        header: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json;charset=utf-8',
+          'X-Powered-By': 'elecV2P',
+        },
+        body: JSON.stringify({
+          rescode: -1,
+          message: error.message,
+          resdata: {
+            error: errStack(error),
+            url: requestDetail.url,
+            method: requestDetail.requestOptions.method,
+            headers: requestDetail.requestOptions.headers,
+            body: requestDetail.requestData.byteLength ? requestDetail.requestData.toString() : undefined,
+          }
+        }, null, 2)
+      }
+    }
   }
 }

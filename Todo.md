@@ -4,7 +4,7 @@
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
 - [ ] EAPP 订阅/分类
-- [ ] 403/404 页面优化
+- [ ] script axios cookie
 - [ ] EFSS 自定义文件处理脚本
 - [ ] 引入 $crypto 用于哈希加密
 - [ ] require 自定义可运行/禁用模块
@@ -26,6 +26,9 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] anyproxy 默认错误页面修改
+- [x] env PROXYEN 启动时打开代理
+- [x] type protobuf body buffer
 - [x] 临时 token 访问
 - [x] 默认 CORS Origin *
 - [x] 使用 userid 作为 cookie
