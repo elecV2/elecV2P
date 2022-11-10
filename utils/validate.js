@@ -64,6 +64,11 @@ function isAuthReq(req, res) {
     } else {
       const tokens = CONFIG.SECURITY.tokens
       if (tokens?.[cookies.token]?.enable && new RegExp(tokens[cookies.token].path, 'i').test(req.path)) {
+        if (tokens[cookies.token].method && !new RegExp(tokens[cookies.token].method, 'i').test(req.method)) {
+          clog.error(headstr, 'rejected by elecV2P because of temp cookie method limit')
+          validStatus(ipAddress)
+          return false
+        }
         clog.info(headstr, 'authorized by temp cookie')
         const curt = tokens[cookies.token].times
         tokens[cookies.token].times = curt > 0 ? curt + 1 : 1
@@ -98,6 +103,11 @@ function isAuthReq(req, res) {
       const token_hash = sHash(token)
       const tokens = CONFIG.SECURITY.tokens
       if (tokens[token_hash]?.enable && new RegExp(tokens[token_hash].path, 'i').test(req.path)) {
+        if (tokens[token_hash].method && !new RegExp(tokens[token_hash].method, 'i').test(req.method)) {
+          clog.error(headstr, 'rejected by elecV2P because of temp token method limit')
+          validStatus(ipAddress)
+          return false
+        }
         clog.info(headstr, 'authorized by temp token', token_hash)
         cookieSet(req, res, token_hash, ipAddress)
         const curt = tokens[token_hash].times
@@ -113,7 +123,7 @@ function isAuthReq(req, res) {
     clog.debug(headstr, 'authorized by IP')
     return true
   } else {
-    clog.notify(headstr, 'rejected by elecV2P because of unauthorized');
+    clog.error(headstr, 'rejected by elecV2P because of unauthorized');
     validStatus(ipAddress);
     return false
   }

@@ -26,6 +26,8 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] 临时 token 可限制请求方法
+- [x] 404 显示页面优化
 - [x] 403 界面增加授权登录框
 - [x] webUI 多语言优化一点点
 - [x] anyproxy 直接访问提醒
