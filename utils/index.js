@@ -5,17 +5,17 @@ const { logger, setGlog, LOGFILE } = require('./logger')
 const { list, Jsfile, store, file } = require('./file')
 const { websocketSer, wsSer, message, sseSer } = require('./websocket')
 const { eAxios, axProxy, stream, downloadfile, CONFIG_Axios, checkupdate } = require('./eaxios')
-const { euid, sJson, sString, strJoin, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, UUID, iRandom, escapeHtml, surlName, progressBar, btoa, atob, sbufBody, sParam, sTypetoExt, sHash, sHmac } = require('./string')
+const { euid, sJson, sString, strJoin, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, UUID, iRandom, escapeHtml, surlName, progressBar, btoa, atob, sbufBody, sParam, sTypetoExt, sHash, sHmac, htmlTemplate } = require('./string')
 const { CONFIG_FEED, feedAddItem, iftttPush, barkPush, custPush, feedPush, feedXml, feedClear } = require('./feed')
 
 const clog = new logger({ head: 'elecV2Proc', file: 'elecV2Proc' })
 
 process.on('unhandledRejection', err => {
-  clog.error('unhandledRejection at Promise', err.stack || err)
+  clog.error('unhandledRejection at Promise', errStack(err))
 })
 
 process.on('uncaughtException', err => {
-  clog.error('Caught exception', err.stack || err)
+  clog.error('Caught exception', errStack(err))
 })
 
 process
@@ -36,6 +36,6 @@ module.exports = {
   list, Jsfile, store, file,
   websocketSer, wsSer, message, sseSer,
   eAxios, axProxy, stream, downloadfile, CONFIG_Axios, checkupdate,
-  euid, sJson, sString, strJoin, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, UUID, iRandom, escapeHtml, surlName, progressBar, btoa, atob, sbufBody, sParam, sTypetoExt, sHash, sHmac,
+  euid, sJson, sString, strJoin, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, UUID, iRandom, escapeHtml, surlName, progressBar, btoa, atob, sbufBody, sParam, sTypetoExt, sHash, sHmac, htmlTemplate,
   CONFIG_FEED, feedAddItem, iftttPush, barkPush, custPush, feedPush, feedXml, feedClear
 }

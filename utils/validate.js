@@ -29,9 +29,11 @@ function isAuthReq(req, res) {
     ipAddress = ipAddress.substr(7)
   }
   validate_status.total++;
-  const headstr = `${ipAddress} ${req.method} ${req.originalUrl || req.url || '/'},`;
+  const headstr = `${ipAddress} ${req.method} ${req.query?.token ? req.path : req.originalUrl || req.url || '/'},`;
   switch (req.path) {
   case '/favicon.ico':
+  case '/manifest.json':
+  case '/efss/logo/elecV2P.png':
     clog.debug(headstr, 'no need to validate check');
     return true;
   }
