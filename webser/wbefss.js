@@ -69,6 +69,7 @@ async function efssHandler(req, res, next) {
     dotfiles = (CONFIG.efss.dotshow && CONFIG.efss.dotshow.enable) ?  'allow' : 'deny'
   }
   if (fend && fend.enable !== false) {
+    const [pathname, search] = req.originalUrl.split('?')
     switch(fend.type) {
     case 'runjs':
       let $response = {
@@ -92,8 +93,8 @@ async function efssHandler(req, res, next) {
           method: req.method,
           hostname: req.hostname,
           host: req.get('host'),
-          path: req.baseUrl + req.path,
-          pathname: req.baseUrl + req.path,
+          path: pathname,
+          pathname: pathname,
           url: `${req.headers['x-forwarded-proto'] || req.protocol}://${req.get('host')}${req.originalUrl}`,
           body: sString(rbody),
         },
@@ -120,7 +121,7 @@ async function efssHandler(req, res, next) {
       if (req.path === '/') {
         let flist = file.list({ folder: favdir, max: rbody.max, dotfiles, detail: true, index: rbody.index ?? 'index.html' })
         if (flist[0]?.index) {
-          return /\/$/.test(req.originalUrl) ? res.sendFile(favdir + '/' + flist[0].name) : res.redirect(307, req.baseUrl + '/')
+          return /\/$/.test(pathname) ? res.sendFile(favdir + '/' + flist[0].name) : res.redirect(307, req.baseUrl + '/' + (search?'?'+search:''))
         }
         res.writeHead(200, {'Content-Type': 'text/html;charset=utf-8'})
         res.write('<head><meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"><meta name="theme-color" content="#003153"><link rel="apple-touch-icon" href="/efss/logo/elecV2P.png">')

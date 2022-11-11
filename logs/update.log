@@ -1,4 +1,10 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.7.4)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.7.5)
+
+v3.7.5  2022-11-11
+ • 403 界面增加授权登录框
+ • webUI 多语言优化（一点点
+ • 临时 token 限制可请求方法
+ • 增强 protobuf 数据类型处理
 
 v3.7.4  2022-11-01
  • 临时 token 访问
