@@ -44,7 +44,7 @@ if (CONFIG.init?.runjs && CONFIG.init.runjsenable !== false) {
 wsSer.recv.runjs = (data={})=>runJSFile(data.fn, data.addContext)
 
 const runstatus = {
-  start: now(null, false),
+  start: now(),
   times: CONFIG_RUNJS.numtofeed,
   detail: {},
   total: 0
@@ -86,7 +86,7 @@ async function taskCount(filename) {
     runstatus.detail = {}
     feedAddItem('run script ' + CONFIG_RUNJS.numtofeed + ' times', des.join(', ') + ` from ${runstatus.start}`)
     runstatus.times = CONFIG_RUNJS.numtofeed
-    runstatus.start = now(null, false)
+    runstatus.start = now()
   }
 }
 
@@ -165,12 +165,12 @@ async function efhParse(filename, { title='', type='', name } = {}) {
         $('head').append('<title>' + title + '</title>');
       }
       $('head').append(`<script>function $fend(key, data){if(!key) {let msg='a key for $fend is expect';alert(msg);return Promise.reject(msg)};return fetch('', {method: 'post',headers: {'Content-Type': 'application/json'},body: JSON.stringify({key, data})})};let $=(s,a='')=>a?document.querySelectorAll(s):document.querySelector(s);</script>`);
-      let bcode = $("script[runon='elecV2P']");
+      let bcode = $("script[favend]");
       if (bcode.length === 0) {
-        bcode = $("script[runon='backend']");
-      }
-      if (bcode.length === 0) {
-        bcode = $("script[favend]")
+        bcode = $("script[runon='elecV2P']");
+        if (bcode.length === 0) {
+          bcode = $("script[runon='backend']");
+        }
       }
       if (bcode.attr('src')) {
         // src 开头 /|./|空，即绝对/相对目录处理
@@ -512,8 +512,11 @@ async function runJSFile(filename, addContext={}) {
           resolve(efhc.html);
         }
         let res = efhc.html;
-        if (res.length > 480) {
+        if (CONFIG.gloglevel === 'debug') {
           runclog.debug(`run ${efhname} result: ${res.slice(0, 1200)}`);
+          return;
+        }
+        if (res.length > 480) {
           res = res.slice(0, 480) + '...';
         }
         runclog.info(`run ${efhname} result: ${res}`);
@@ -557,7 +560,7 @@ async function runJSFile(filename, addContext={}) {
     if (scriptcache.has(filename)) {
       scache = scriptcache.get(filename)
       if (scache.date === sdate) {
-        clog.debug(`get ${filename} cache code`)
+        clog.debug(`get ${filename} from cache`)
         rawcode = scache.code
       } else {
         // cache outdate
@@ -601,8 +604,11 @@ async function runJSFile(filename, addContext={}) {
       resolve(res)
       if (res !== undefined) {
         res = sString(res)
-        if (res.length > 480) {
+        if (CONFIG.gloglevel === 'debug') {
           runclog.debug(`run ${filename} result: ${res.slice(0, 1200)}`)
+          return
+        }
+        if (res.length > 480) {
           res = res.slice(0, 480) + '...'
         }
         runclog.info(`run ${filename} result: ${res}`)

@@ -13,7 +13,7 @@ function sType(obj) {
   if (Buffer.isBuffer(obj)) {
     return 'buffer'
   }
-  return Object.prototype.toString.call(obj).slice(8, -1).toLocaleLowerCase()
+  return Object.prototype.toString.call(obj).slice(8, -1).toLowerCase()
 }
 
 /**
@@ -402,4 +402,11 @@ function htmlTemplate(body='', head='', title='') {
 </html>`
 }
 
-module.exports = { euid, UUID, iRandom, sJson, sString, strJoin, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, escapeHtml, surlName, progressBar, btoa, atob, sbufBody, sParam, sTypetoExt, sHash, sHmac, ebufEncrypt, ebufDecrypt, htmlTemplate }
+function bBufType(contentype='') {
+  if (!contentype) {
+    return false
+  }
+  return /^(audio|video|image|multipart|font|model)|(ogg|stream|protobuf)$/.test(contentype)
+}
+
+module.exports = { euid, UUID, iRandom, sJson, sString, strJoin, bEmpty, sUrl, sType, sBool, errStack, kSize, nStatus, escapeHtml, surlName, progressBar, btoa, atob, sbufBody, sParam, sTypetoExt, sHash, sHmac, ebufEncrypt, ebufDecrypt, htmlTemplate, bBufType }

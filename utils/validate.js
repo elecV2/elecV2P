@@ -130,7 +130,7 @@ function isAuthReq(req, res) {
 }
 
 function cookieSet(req, res, token=CONFIG_Port.userid, ipAddress) {
-  if (res && req.path !=='/webhook' && CONFIG.SECURITY.cookie?.enable !== false) {
+  if (res && req.path !=='/webhook' && req.headers['user-agent'] && CONFIG.SECURITY.cookie?.enable !== false) {
     const days = req.query?.cookie === 'long' ? 365 : 7
     clog.notify('set cookie for', ipAddress, 'Max-Age:', days, 'days')
     res.cookie('token', token, { httpOnly: true, maxAge: days * 60 * 60 * 24 * 1000 })

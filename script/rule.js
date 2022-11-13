@@ -1,4 +1,4 @@
-const { logger, sJson, sUrl, sType, sString, list, wsSer, errStack, sbufBody } = require('../utils')
+const { logger, sJson, sUrl, sType, sString, list, wsSer, errStack, sbufBody, htmlTemplate, bBufType } = require('../utils')
 const clog = new logger({ head: 'eV2Proxy', level: 'debug' })
 
 const { runJSFile } = require('./runJSFile')
@@ -179,11 +179,11 @@ function getMatchRule($request, $response, lists) {
     url: $request.url,
     host: $request.requestOptions.hostname,
     reqmethod: $request.requestOptions.method,
-    reqbody: $request.requestData.toString(),
+    reqbody: bBufType($request.requestOptions.headers["Content-Type"]) ? "" : $request.requestData.toString(),
     useragent: $request.requestOptions.headers["User-Agent"],
     resstatus: $response ? $response.statusCode : "",
     restype: $response ? $response.header["Content-Type"] : "",
-    resbody: $response ? $response.body.toString() : ""
+    resbody: $response && !bBufType($response.header["Content-Type"]) ? $response.body.toString() : ""
   }
   for (let mr of lists) {
     // 逐行正则匹配，待优化
@@ -192,6 +192,7 @@ function getMatchRule($request, $response, lists) {
       return mr
     }
   }
+  clog.debug('no match for:', $request.url, 'skip modify')
   return false
 }
 
@@ -248,7 +249,7 @@ function formRequest($request) {
     protocol: $request.protocol,
     pathname: $request.requestOptions?.path,
     url: $request.url,
-    body: $request.requestOptions?.headers?.['Content-Type']?.startsWith('application/x-protobuf')
+    body: bBufType($request.requestOptions?.headers?.['Content-Type'])
           ? $request.requestData
           : $request.requestData.toString(),
     bodyBytes: $request.requestData
@@ -260,7 +261,7 @@ function formResponse($response) {
     statusCode: $response.statusCode,
     status: $response.statusCode,
     headers: $response.header,
-    body: $response.header?.['Content-Type']?.startsWith('application/x-protobuf')
+    body: bBufType($response.header?.['Content-Type'])
           ? $response.body
           : $response.body.toString(),
     bodyBytes: $response.body
@@ -300,8 +301,10 @@ function getJsResponse(jsres, orires = { ...localResponse.reject }) {
       body: sbufBody(jsres.bodyBytes || jsres.body) || orires.body
     }
   } else {
-    orires.body = sbufBody(jsres)
-    return orires
+    return {
+      ...orires,
+      body: sbufBody(jsres)
+    }
   }
 }
 
@@ -321,7 +324,6 @@ function getJsRequest(jsres, requestDetail={}) {
   if (jsres.response) {
     // 直接返回结果，不访问目标网址
     clog.notify(requestDetail.url, 'request force to local response')
-    clog.debug(requestDetail.url, 'response:', jsres.response)
     return {
       response: {
         statusCode: jsres.response.statusCode || jsres.response.status || 200,
@@ -384,12 +386,7 @@ module.exports = {
   *beforeSendRequest(requestDetail) {
     if (requestDetail.protocol === 'http' && requestDetail._req.url.startsWith('/')) {
       // 禁止直接访问 no direct access to proxy
-      return { response: localResponse.get(requestDetail.requestOptions.headers, `<p>Congratulations! Anyproxy is enabled. Please use it as a proxy.</p><p><span>Powered BY </span><a target="_blank" href="https://github.com/elecV2/elecV2P">elecV2P</a></p><p><span>TG Channel </span><a target="_blank" href="https://t.me/elecV2">@elecV2</a></p>`) }
-    }
-    if (/^multipart/.test(requestDetail.requestOptions.headers['Content-Type'])) {
-      // 跳过文件类数据处理
-      clog.info('skip modify', requestDetail.url, 'type:', requestDetail.requestOptions.headers['Content-Type'])
-      return null
+      return { response: localResponse.get(requestDetail.requestOptions.headers, htmlTemplate(`<h2 style="margin-top: 0;padding-top: 120px;">Congratulations! Anyproxy is enabled. Please use it as a proxy.</h2><p><span>Powered BY </span><a target="_blank" href="https://github.com/elecV2/elecV2P">elecV2P</a></p><p><span>TG Channel </span><a target="_blank" href="https://t.me/elecV2">@elecV2</a></p>`)) }
     }
     if (bCircle.check(requestDetail.requestOptions.hostname + ':' + requestDetail.requestOptions.port)) {
       let error = 'access ' + requestDetail.requestOptions.hostname + ' be blocked, because of visiting over ' + bCircle.max + ' times in ' + bCircle.gap + ' milliseconds'
@@ -534,12 +531,6 @@ module.exports = {
   },
   *beforeSendResponse(requestDetail, responseDetail) {
     const $response = responseDetail.response
-
-    if (/^(audio|video|image|multipart|font|model)|(ogg|stream)$/.test($response.header['Content-Type'])) {
-      // 跳过图片/音频/视频类数据处理
-      clog.info('skip modify', requestDetail.url, 'type:', $response.header['Content-Type'])
-      return null
-    }
 
     if ($response.body.byteLength > CONFIG_RULE.maxResBytes) {
       clog.info('response body byteLength:', $response.body.byteLength, 'is bigger than', CONFIG_RULE.maxResBytes, ', skip modify')

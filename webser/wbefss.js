@@ -1,7 +1,7 @@
 const express = require('express')
 const formidable = require('formidable')
 
-const { logger, file, sType, sString, errStack, now } = require('../utils')
+const { logger, file, sType, sbufBody, errStack, now } = require('../utils')
 const clog = new logger({ head: 'wbefss', level: 'debug' })
 
 const { CONFIG, CONFIG_Port } = require('../config')
@@ -86,6 +86,7 @@ async function efssHandler(req, res, next) {
       if (sType(rbody.env) === 'object') {
         Object.assign(env, rbody.env)
       }
+      const [host, port] = req.get('host').split(':')
       runJSFile(fend.target, {
         $request: {
           protocol: req.protocol,
@@ -93,10 +94,11 @@ async function efssHandler(req, res, next) {
           method: req.method,
           hostname: req.hostname,
           host: req.get('host'),
+          port: Number(port) || (req.protocol === 'http' ? 80 : 443),
           path: pathname,
           pathname: pathname,
           url: `${req.headers['x-forwarded-proto'] || req.protocol}://${req.get('host')}${req.originalUrl}`,
-          body: sString(rbody),
+          body: sbufBody(rbody),
         },
         from: 'favend', env,
         timeout: rbody.timeout ?? rbody.data?.timeout ?? CONFIG.efss.favendtimeout

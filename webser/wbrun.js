@@ -1,4 +1,4 @@
-const { logger, sType, sString, errStack } = require('../utils')
+const { logger, sType, sbufBody, errStack } = require('../utils')
 const clog = new logger({ head: 'wbrun', level: 'debug' })
 
 const { runJSFile, getJsResponse } = require('../script')
@@ -31,6 +31,8 @@ function runHandler(req, res){
       'X-Powered-By': 'elecV2P'
     }
   }
+  const [host, port] = req.get('host').split(':')
+  const [pathname] = req.originalUrl.split('?')
   runJSFile(filename, {
     $request: {
       protocol: req.protocol,
@@ -38,9 +40,11 @@ function runHandler(req, res){
       method: req.method,
       hostname: req.hostname,
       host: req.get('host'),
-      path: req.baseUrl + req.path,
+      port: Number(port) || (req.protocol === 'http' ? 80 : 443),
+      path: pathname,
+      pathname: pathname,
       url: `${req.headers['x-forwarded-proto'] || req.protocol}://${req.get('host')}${req.originalUrl}`,
-      body: sString(rbody),
+      body: sbufBody(rbody),
     },
     from: 'wbrun', env: sType(rbody.env) === 'object' ? rbody.env : null,
     timeout: rbody.timeout ?? CONFIG.efss.favendtimeout
