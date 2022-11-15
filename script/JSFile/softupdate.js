@@ -1,11 +1,10 @@
 // elecV2P 软更新脚本。执行前，请先根据自身需求修改下面 CONFIG 变量中的内容
 // 该脚本会自动获取 https://github.com/elecV2/elecV2P 库中的文件，然后进行本地替换
-// 使用前请确保当前 elecV2P 服务器可正常连接 raw.githubusercontent.com/或自定义 cdngit 站点
 // 更新后会自动重启，以应用新的版本（请确定已保存好任务列表及其他个人数据）
 // 脚本会先尝试以 PM2 的方式重启，如果失败，将直接重启容器(Docker 模式下)或服务器(pm2 指令不可用的情况下)
 // 
 // 文件地址: https://raw.githubusercontent.com/elecV2/elecV2P/master/script/JSFile/softupdate.js
-// 最近更新: 2022-11-14
+// 最近更新: 2022-11-15
 //
 // Todo:
 // - efh 前端设置界面
@@ -15,9 +14,9 @@
 let CONFIG = {
   store: 'softupdate_CONFIG',    // 将当前设置(CONFIG 值)常量储存。留空: 表示使用下面的参数进行更新，否则将会读取 store/cookie 常量中的 softupdate_CONFIG 对应值进行更新。首次运行时，会先按照下面的参数执行并储存
   updae_type: 'zip',             // 使用 zip 压缩包更新，默认。可选项: file - 单文件下载更新（旧
-  tags: '',                      // 版本号。可选: 3.6.0/3.5.6 等，全部选项查看 https://github.com/elecV2/elecV2P/tags
-  forceupdate: false,            // 强制更新。false: 检测到新版本时才更新。 true: 不检测版本直接更新
-  notify: true,                  // 检测到新版本时是否进行通知。true: 通知, false: 不通知
+  tags: '',                      // 版本号，留空表示更新到最新。可选: 3.6.0/3.5.6 等，全部选项查看 https://github.com/elecV2/elecV2P/tags
+  forceupdate: false,            // 强制更新。false: 检测到新版本时才更新。 true: 强制更新
+  notify: true,                  // 更新时是否发送通知。true: 通知, false: 不通知
   restart: 'elecV2P',            // false: 只更新文件，不重启不应用。 其他值表示 pm2 重启线程名，比如 all/elecV2P/0
   noupdate: [
     'script/Store',        // 设置一些不覆盖更新的文件夹（保留个人数据）。根据个人需求进行调整
@@ -48,13 +47,9 @@ if (CONFIG.store) {
   }
 }
 
-if (CONFIG.forceupdate) {
-  update()
-} else {
-  checkUpdate().then(bres=>{
-    bres && update()
-  })
-}
+checkUpdate().then(bres=>{
+  bres && update()
+})
 /************** end 主函数部分 *************/
 
 async function checkUpdate(){
@@ -62,33 +57,28 @@ async function checkUpdate(){
     return true
   }
   try {
-    console.log('开始获取 elecV2P 最新版本号...')
-    let res = await $axios('https://ver.elecv2.workers.dev/')
+    console.log('elecV2P 当前版本:', __version, '开始获取新版本号...')
+    let res = CONFIG.tags ? { data: { version: CONFIG.tags } } : await $axios('https://ver.elecv2.workers.dev/')
     let newversion = res.data.version
-    if (newversion) {
-      console.log('elecV2P 当前版本:', __version, '最新版本:', newversion)
-    } else {
-      console.log('获取最新版本号失败，可能是网络存在问题，请重试')
-      return false
-    }
-    if (__version !== newversion) {
-      console.log('检测到有新的版本:', newversion)
+    if ((newversion && __version !== newversion) || CONFIG.forceupdate) {
+      console.log('检测到版本:', newversion, `即将进行${ CONFIG.forceupdate ? '强制' : '' }更新`)
       if (CONFIG.notify) {
         $feed.push(
-          '检测到新版本 elecV2P ' + newversion,
-          `当前版本 ${__version}\n${ res.data.changelog ? '更新内容：\n' + res.data.changelog : '' }即将进行软更新升级\n\n历史更新日志: https://github.com/elecV2/elecV2P/blob/master/logs/update.log`,
+          '正在将 elecV2P 更新到 ' + newversion,
+          `当前版本 ${__version}\n${ res.data.changelog ? '更新内容：\n' + res.data.changelog : '' }\n历史更新日志: https://github.com/elecV2/elecV2P/blob/master/logs/update.log`,
           /127|192|172|10|localhost/.test(__home) ? '' : __home
         )
       }
       if (CONFIG.dependencies_update !== false) {
         CONFIG.dependencies_update = dependenciesCheck(res.data.dependencies)
       }
+      CONFIG.newversion = newversion
       return true
     }
     console.log('没有检测到新的版本。如果需要强制更新，请将脚本 forceupdate 参数对应值修改为 true')
     return false
   } catch(e) {
-    console.error('检查更新失败', e.message)
+    console.error('获取 elecV2P 最新版本号失败，可能是网络存在问题，请重试', e.message || e)
     return false
   }
 }
@@ -138,10 +128,10 @@ async function update() {
       console.log('开始下载更新所需要的 ZIP 文件...')
       let zipd = await $download('https://github.com/elecV2/elecV2P/archive/' + verzip, {
         folder: './efss',
-        name: `elecV2P_${new Date().toISOString().slice(0, 10)}.zip`,
+        name: `elecV2P_${CONFIG.newversion}.zip`,
         // existskip: true,        // 如果 ZIP 文件存在则不下载
       }, d=>{
-        if (d && d.progress) console.log(d.progress + '\r')
+        if (d && d.progress && !(d.chunk%10)) console.log(d.progress + '\r')
       })
       unzip(zipd)
       restart()
