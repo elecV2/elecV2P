@@ -127,7 +127,16 @@ class contextBase {
       // 白名单之外才显示 url
       this.console.log(request.method || 'GET', request.url)
     }
-    return eAxios(request, (CONFIG.CONFIG_RUNJS.proxy === false) ? false : null).catch(error=>{
+    return eAxios(request, (CONFIG.CONFIG_RUNJS.proxy === false) ? false : null).then(res=>{
+      return {
+        status: res.status,
+        statusCode: res.status,
+        statusText: res.statusText,
+        headers: res.headers,
+        data: res.data,
+        body: res.data,
+      }
+    }).catch(error=>{
       let err = new Error(`$axios ${request.method || 'GET'} ${request.url} Error: ${error.message || error}`);
       if (error.response) {
         let { request, config, ...res } = error.response;
@@ -365,6 +374,7 @@ class quanxContext {
       return new Promise((resolve, reject) => {
         eAxios(req, (CONFIG.CONFIG_RUNJS.proxy === false) ? false : null).then(response=>{
           resp = {
+            status: response.status,
             statusCode: response.status,
             headers: response.headers,
             body: sString(response.data)

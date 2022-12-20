@@ -294,7 +294,11 @@ function runJS(filename, jscode, addContext={}) {
     break;
   }
   if (!addContext.$env) {
-    CONTEXT.final.$env = { ...process.env, ...addContext.env }
+    CONTEXT.final.$env = {
+      ...process.env,
+      lang: CONFIG.lang,
+      ...addContext.env
+    }
   }
   CONTEXT.final.$fend.clear = ()=>{
     fconsole.info('efh file cache cleared');
