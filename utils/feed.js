@@ -82,7 +82,7 @@ function formUrl(url) {
 function iftttPush(title, description, url) {
   if (CONFIG_FEED.iftttid && CONFIG_FEED.iftttid.key && CONFIG_FEED.iftttid.enable) {
     if (bEmpty(title)) {
-      title = 'elecV2P 通知'
+      title = 'elecV2P notification'
     } else {
       title = sString(title)
     }
@@ -127,7 +127,7 @@ function iftttPush(title, description, url) {
 function barkPush(title, description, url) {
   if (CONFIG_FEED.barkkey && CONFIG_FEED.barkkey.key && CONFIG_FEED.barkkey.enable) {
     if (bEmpty(title)) {
-      title = 'elecV2P 通知'
+      title = 'elecV2P notification'
     } else {
       title = sString(title)
     }
@@ -175,7 +175,7 @@ function barkPush(title, description, url) {
 function custPush(title, description, url) {
   if (CONFIG_FEED.custnotify && CONFIG_FEED.custnotify.url && CONFIG_FEED.custnotify.enable) {
     if (bEmpty(title)) {
-      title = 'elecV2P 通知'
+      title = 'elecV2P notification'
     } else {
       title = sString(title)
     }
@@ -227,7 +227,7 @@ function custPush(title, description, url) {
 
 function feedPush(title, description, url) {
   if (bEmpty(title)) {
-    title = 'elecV2P 通知'
+    title = 'elecV2P notification'
   } else {
     title = sString(title)
   }
@@ -238,7 +238,7 @@ function feedPush(title, description, url) {
   }
   url = formUrl(url)
   if (CONFIG_FEED.webmessage && CONFIG_FEED.webmessage.enable) {
-    message.success(`【elecV2P 网页通知】 ${title}\n${description}\n${url || ''}`, { url })
+    message.success(`【elecV2P web notify】 ${title}\n${description}\n${url || ''}`, { url })
   }
   if (CONFIG_FEED.rss.enable) {
     const date = new Date()
@@ -284,7 +284,7 @@ const mergefeed = {
       clog.debug('default notification is closed')
       return
     }
-    feedPush('elecV2P 合并通知 ' + this.content.length, this.content.join('\n'))
+    feedPush('elecV2P merge notify ' + this.content.length, this.content.join('\n'))
     this.content = []
     this.timefulled = false
     if (this.setTime) {
