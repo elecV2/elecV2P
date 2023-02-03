@@ -11,6 +11,13 @@ module.exports = {
     return new Date(time - tzoffset).toISOString().slice(slicebegin, ms ? -1 : -5).replace('T', ' ')
     // return new Date().toLocaleString('zh', { hour12: false })
   },
+  hDays(time = Date.now()){
+    let hours = (Date.now() - time)/1000/60/60
+    if (hours > 100) {
+      return (hours / 24).toFixed(2) + ' days'
+    }
+    return hours.toFixed(2) + ' hours'
+  },
   /**
    * 等待 s 秒，返回数据 data
    * @param     {Number}     s       等待时间，单位：秒。

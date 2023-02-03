@@ -1,6 +1,6 @@
 const { eproxy } = require('./eproxy')
 const { isAuthReq, validate_status } = require('./validate')
-const { now, wait, waituntil } = require('./time')
+const { now, wait, waituntil, hDays } = require('./time')
 const { logger, setGlog, LOGFILE } = require('./logger')
 const { list, Jsfile, store, file } = require('./file')
 const { websocketSer, wsSer, message, sseSer } = require('./websocket')
@@ -31,7 +31,7 @@ process
 
 module.exports = {
   eproxy, isAuthReq, validate_status,
-  now, wait, waituntil,
+  now, wait, waituntil, hDays,
   logger, setGlog, LOGFILE,
   list, Jsfile, store, file,
   websocketSer, wsSer, message, sseSer,

@@ -2,7 +2,7 @@ const os = require('os')
 const { taskMa, exec, crtHost } = require('../func')
 const { CONFIG_RULE, runJSFile } = require('../script')
 
-const { logger, LOGFILE, Jsfile, list, nStatus, sString, sType, surlName, sBool, stream, downloadfile, now, checkupdate, store, kSize, errStack, sbufBody, wsSer, validate_status, sJson } = require('../utils')
+const { logger, LOGFILE, Jsfile, list, nStatus, sString, sType, surlName, sBool, stream, downloadfile, now, checkupdate, store, kSize, errStack, sbufBody, wsSer, validate_status, sJson, hDays } = require('../utils')
 const clog = new logger({ head: 'webhook', level: 'debug' })
 
 const { CONFIG, CONFIG_Port } = require('../config')
@@ -218,7 +218,7 @@ function handler(req, res){
     clog.info(clientip, 'Get server status');
     let status = nStatus()
     status.start = now(CONFIG_Port.start, false, 0)
-    status.uptime = ((Date.now() - Date.parse(status.start))/1000/60/60).toFixed(2) + ' hours'
+    status.uptime = hDays(CONFIG_Port.start)
     status.nodejs = process.version
     status.version = CONFIG_Port.version
     status.clients = wsSer.recver.size
