@@ -99,7 +99,7 @@ module.exports = app => {
   app.get('/crt/new/:hostname', (req, res)=>{
     const hostname = encodeURI(req.params.hostname)
     crtHost(hostname).then(root_dir=>{
-      res.set('Content-Disposition', `attachment; filename="${hostname}.zip"`)
+      res.set('Content-Disposition', `attachment; filename="${hostname}.crt.zip"`)
       const crt_host = `${root_dir}/${hostname}`
       res.end(file.zip([`${crt_host}.crt`, `${crt_host}.key`]))
     }).catch(error=>{

@@ -1,4 +1,9 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.7.5)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.7.6)
+
+v3.7.6  2023-02-04
+ • 软更新通知显示内容优化
+ • webUI 多语言继续优化（一点点
+ • 脚本网络请求结果优化
 
 v3.7.5  2022-11-13
  • 403 界面增加授权登录框

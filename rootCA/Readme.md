@@ -30,6 +30,7 @@
   - 使用自签证书 https 访问时，设备需先信任根证书
   - 也可以使用其他合法域名证书，格式 x.xx.com.key/x.xx.com.crt，放置到此目录下
 - 访问时注意带上端口，比如 https://192.168.1.102:8000 （使用 443 端口时，可省略
+- 假如出现错误，可查看 errors.log 或 [open a issue](https://github.com/elecV2/elecV2P/issues)
 
 使用场景示例
 

@@ -268,8 +268,8 @@ async function execFunc(command, options={}, cb=null) {
     }
   })
 
-  execlog.notify('start run command:', fev.command, 'cwd:', options.cwd)
-  callback('start run command: ' + fev.command + ' cwd: ' + options.cwd + '\n')
+  execlog.notify('start run command:', fev.command, 'cwd:', fev.options.cwd)
+  callback('start run command: ' + fev.command + ' cwd: ' + fev.options.cwd + '\n')
   execlog.debug('start run command:', fev.command, 'with options:', { ...fev.options, env: '...process.env' })
 
   let fdata = []
