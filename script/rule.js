@@ -112,6 +112,11 @@ const CONFIG_RULE = (()=>{
       ...getUserAgent()
     }
 
+  if (config.mitmhostenable && config.mitmhost.indexOf('*') !== -1) {
+    clog.notify('MITM enabled for all host')
+    config.mitmtype = 'all'
+  }
+
   clog.notify(`default rules: ${ config.ruleenable ? (config.reqlists.length + config.reslists.length) : 'disabled' }`)
   clog.notify(`rewrite rules: ${ config.rewriteenable ? (config.rewritereq.length + config.rewriteres.length) : 'disabled' }`)
   clog.notify(`MITM hosts: ${ config.mitmhostenable ? config.mitmhost.length : 'disabled' }`)

@@ -56,6 +56,7 @@ module.exports = app => {
           enable: mlist?.enable !== false,
           eproxy: CONFIG_Port.anyproxy,
           crtinfo: crtInfo(),
+          pacproxy: CONFIG.pac?.proxy,
         })
         break
       case 'filter':
@@ -226,10 +227,12 @@ module.exports = app => {
             message: 'success saved mitmhost list ' + enhost.length + '/' + mhost.length
           })
           CONFIG_RULE.mitmhostenable = req.body.mitmhostenable !== false
-          if (CONFIG_RULE.mitmhostenable && enhost.indexOf('*') !== -1) {
+          if (CONFIG_RULE.mitmhostenable) {if (enhost.indexOf('*') !== -1) {
             clog.info('MITM enable for all host')
             CONFIG_RULE.mitmtype = 'all'
-          }
+          } else {
+            CONFIG_RULE.mitmtype = 'list'
+          }}
           CONFIG_RULE.mitmhost = enhost
           clog.info('clear mitmhost match results cache')
           CONFIG_RULE.cache.host.clear()
