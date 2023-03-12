@@ -4,7 +4,8 @@
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Todo</h3>
 <pre style="white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
 - [ ] EAPP 订阅/分类
-- [ ] RULE 重复网络请求
+- [ ] RULE mock 修改方式
+- [ ] RULE repeat 网络请求
 - [ ] EFSS 自定义文件处理脚本
 - [ ] 自定义常用功能的快捷键
 - [ ] require 自定义可运行/禁用模块
@@ -26,6 +27,7 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] PAC 文件自动生成
 - [x] 网络请求返回结果简化
 - [x] 软更新 tags 及通知优化
 - [x] 临时 token 可限制请求方法

@@ -1,4 +1,8 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.7.6)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.7.7)
+
+v3.7.7  2023-03-12
+ • 根据 MITM host 列表自动生成 PAC
+ • webUI 部分模块多语言优化
 
 v3.7.6  2023-02-04
  • 软更新通知显示内容优化
