@@ -17,8 +17,25 @@ module.exports = app => {
   app.get('/pac', (req, res)=>{
     res.set('Content-Type', 'application/x-ns-proxy-autoconfig')
     res.set('Content-Disposition', 'attachment; filename="proxy.pac"')
+    let eproxy = '127.0.0.1:' + CONFIG_Port.proxy
+    let efinal = 'DIRECT'
+    if (CONFIG.pac) {
+      if (CONFIG.pac.proxy) {
+        eproxy = CONFIG.pac.proxy
+        if (eproxy !== 'DIRECT' && !eproxy.startsWith('PROXY ')) {
+          eproxy = 'PROXY ' + eproxy
+        }
+      }
+      if (CONFIG.pac.final) {
+        efinal = CONFIG.pac.final
+        if (efinal !== 'DIRECT' && !efinal.startsWith('PROXY ')) {
+          efinal = 'PROXY ' + efinal
+        }
+      }
+    }
     res.end(`const CONFIG = {
-  eproxy: "${CONFIG.pac?.proxy || ('127.0.0.1:' + CONFIG_Port.proxy)}",
+  eproxy: "${eproxy}",
+  efinal: "${efinal}",
   enable: ${CONFIG_RULE.mitmhostenable},
   mitmall: ${CONFIG_RULE.mitmtype === 'all'},
   mitmhost: ${JSON.stringify((CONFIG_RULE.mitmhostenable && CONFIG_RULE.mitmtype !== 'all') ? CONFIG_RULE.mitmhost : [])},
@@ -26,20 +43,20 @@ module.exports = app => {
 
 function FindProxyForURL(url, host) {
   if (CONFIG.enable === false) {
-    return 'DIRECT'
+    return CONFIG.efinal
   }
   if (CONFIG.mitmall) {
-    return 'PROXY ' + CONFIG.eproxy
+    return CONFIG.eproxy
   }
   if (CONFIG.mitmhost.indexOf(host) !== -1) {
-    return 'PROXY ' + CONFIG.eproxy
+    return CONFIG.eproxy
   }
   for (let h of CONFIG.mitmhost) {
     if (/\\*/.test(h) && new RegExp(h.replace(/\\./g, '\\\\.').replace(/\\*/g, '.*')).test(host)) {
-      return 'PROXY ' + CONFIG.eproxy
+      return CONFIG.eproxy
     }
   }
-  return 'DIRECT'
+  return CONFIG.efinal
 }`)
   })
   app.put('/pac', (req, res)=>{
@@ -47,6 +64,7 @@ function FindProxyForURL(url, host) {
       CONFIG.pac = {
         ...CONFIG.pac,
         proxy: req.body.proxy,
+        final: req.body.final || 'DIRECT',
       }
       res.json({
         rescode: 0,

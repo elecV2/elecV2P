@@ -57,6 +57,7 @@ module.exports = app => {
           eproxy: CONFIG_Port.anyproxy,
           crtinfo: crtInfo(),
           pacproxy: CONFIG.pac?.proxy,
+          pacfinal: CONFIG.pac?.final,
         })
         break
       case 'filter':
