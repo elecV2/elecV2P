@@ -13,7 +13,7 @@ function sType(obj) {
   if (Buffer.isBuffer(obj)) {
     return 'buffer'
   }
-  return Object.prototype.toString.call(obj).slice(8, -1).toLowerCase()
+  return Object.prototype.toString.call(obj).slice(8, -1).toLowerCase() || 'object'
 }
 
 /**

@@ -434,7 +434,7 @@ async function runJSFile(filename, addContext={}) {
     }
     addContext.$request.headers = new Proxy(header, {
       get(target, prop){
-        if (typeof(prop) !== 'string') return ''
+        if (typeof(prop) !== 'string') return Reflect.get(target, prop)
         return target[prop] ?? target[prop.toLowerCase()]
       }
     })
@@ -447,7 +447,7 @@ async function runJSFile(filename, addContext={}) {
     }
     addContext.$response.headers = new Proxy(header, {
       get(target, prop){
-        if (typeof(prop) !== 'string') return ''
+        if (typeof(prop) !== 'string') return Reflect.get(target, prop)
         return target[prop] ?? target[prop.toLowerCase()]
       }
     })
