@@ -76,6 +76,7 @@ const CONFIG_RULE = (()=>{
     let reqlists = [], reslists = []
     let robj = list.get('default.list')
     let ruleenable = robj?.rules?.enable !== false
+    let ruleenbody = robj?.rules?.enbody === true
     if (ruleenable && robj?.rules?.list?.length) {
       robj.rules.list.filter(r=>r.enable !== false).forEach(r=>{
         if (r.stage === 'req') {
@@ -85,7 +86,7 @@ const CONFIG_RULE = (()=>{
         }
       })
     }
-    return { ruleenable, reqlists, reslists }
+    return { ruleenable, ruleenbody, reqlists, reslists }
   }
 
   function getMitmhost() {
@@ -99,7 +100,7 @@ const CONFIG_RULE = (()=>{
   }
 
   const config = {
-      maxResBytes: 5*1024*1024,      // 当 response.body.byteLength 大于此值时，不进行处理。默认 5M
+      maxResBytes: 15*1024*1024,      // 当 response.body.byteLength 大于此值时，不进行处理。默认 15M
       mitmtype: 'list',
       cache: {
         host: new Map(),
@@ -184,11 +185,11 @@ function getMatchRule($request, $response, lists) {
     url: $request.url,
     host: $request.requestOptions.hostname,
     reqmethod: $request.requestOptions.method,
-    reqbody: bBufType($request.requestOptions.headers["Content-Type"]) ? "" : $request.requestData.toString(),
+    reqbody: (CONFIG_RULE.ruleenbody && !bBufType($request.requestOptions.headers["Content-Type"])) ? $request.requestData.toString() : "",
     useragent: $request.requestOptions.headers["User-Agent"],
     resstatus: $response ? $response.statusCode : "",
     restype: $response ? $response.header["Content-Type"] : "",
-    resbody: $response && !bBufType($response.header["Content-Type"]) ? $response.body.toString() : ""
+    resbody: (CONFIG_RULE.ruleenbody && $response && !bBufType($response.header["Content-Type"])) ? $response.body.toString() : ""
   }
   for (let mr of lists) {
     // 逐行正则匹配，待优化
@@ -374,7 +375,7 @@ function getJsRequest(jsres, requestDetail={}) {
     clog.debug(requestDetail.url, 'request headers change to', jsres.headers || jsres.header)
     newRequest.requestOptions = { ...(newRequest.requestOptions || requestDetail.requestOptions), headers: jsres.headers || jsres.header }
   }
-  return newRequest
+  return Object.keys(newRequest).length ? newRequest : null
 }
 
 function ruleResponse(scriptRes, response) {

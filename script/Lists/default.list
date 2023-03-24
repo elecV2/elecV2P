@@ -2,6 +2,7 @@
   "rules": {
     "note": "elecV2P RULES 规则列表",
     "enable": false,
+    "enbody": false,
     "list": [
       {
         "mtype": "url",

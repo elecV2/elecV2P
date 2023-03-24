@@ -1,4 +1,10 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.7.7)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.7.8)
+
+v3.7.8  2023-03-24
+ • MITM 效率性能提升
+ • PAC 自动生成文件优化
+ • token 登录后自动隐藏
+ • Fix: headers 返回值问题
 
 v3.7.7  2023-03-12
  • 根据 MITM host 列表自动生成 PAC

@@ -27,6 +27,11 @@
 <div style="width: 50%;background-color: #2d8800;border-radius: 8px;margin: 0 12px; max-height: 480px; overflow: hidden auto;">
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
+- [x] RULES 默认不对 body 进行匹配
+- [x] 可处理最大返回数据大小修改为 15M
+- [x] ws 断线后 LOGO 变化
+- [x] token 登录后隐藏信息
+- [x] PAC 自动生成文件优化
 - [x] PAC 文件自动生成
 - [x] 网络请求返回结果简化
 - [x] 软更新 tags 及通知优化
