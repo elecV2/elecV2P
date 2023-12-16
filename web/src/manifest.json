@@ -1,0 +1,14 @@
+{
+  "name": "elecV2P - customize personal network",
+  "short_name": "elecV2P",
+  "description": "一款基于 NodeJS，可通过 JS 修改网络请求，以及定时运行脚本或 SHELL 指令的网络工具。",
+  "display": "standalone",
+  "start_url": "/",
+  "theme_color": "#003153",
+  "background_color": "#FAFAFD",
+  "icons": [{
+    "src": "/efss/logo/elecV2P.png",
+    "type": "image/png",
+    "sizes": "180x180"
+  }]
+}
