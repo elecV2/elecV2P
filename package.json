@@ -12,7 +12,9 @@
     "node": ">=14.17.0"
   },
   "scripts": {
+    "build": "webpack --config config/webpack.product.config.js",
     "start": "pm2 start index.js -n elecV2P --no-daemon",
+    "webdev": "webpack --config config/webpack.dev.config.js",
     "dev": "set port=12521 && nodemon index.js"
   },
   "license": "Apache-2.0",
@@ -36,7 +38,39 @@
     "pm2": "^5.2.0",
     "rss": "^1.2.2"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@babel/core": "^7.19.0",
+    "@babel/preset-env": "^7.19.0",
+    "babel-eslint": "^10.1.0",
+    "babel-loader": "^8.2.2",
+    "babel-plugin-import": "^1.13.3",
+    "babel-polyfill": "^6.26.0",
+    "clean-webpack-plugin": "^3.0.0",
+    "compression-webpack-plugin": "^7.1.2",
+    "copy-webpack-plugin": "^7.0.0",
+    "css-loader": "^6.7.1",
+    "css-minimizer-webpack-plugin": "^4.1.0",
+    "eslint": "^7.18.0",
+    "eslint-plugin-vue": "^7.4.1",
+    "file-loader": "^6.2.0",
+    "html-webpack-plugin": "^5.5.0",
+    "mini-css-extract-plugin": "^2.6.1",
+    "optimize-css-assets-webpack-plugin": "^6.0.1",
+    "postcss": "^8.4.16",
+    "postcss-loader": "^7.0.1",
+    "style-loader": "^3.3.1",
+    "uglifyjs-webpack-plugin": "^2.2.0",
+    "url-loader": "^4.1.1",
+    "vue": "^2.7.10",
+    "vue-draggable-resizable": "^2.3.0",
+    "vue-loader": "^15.10.0",
+    "vue-template-compiler": "^2.7.10",
+    "vue2-editor": "^2.10.3",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0",
+    "webpack-dev-server": "^4.11.0",
+    "webpack-merge": "^5.8.0"
+  },
   "nodemonConfig": {
     "ignore": [
       "logs",
