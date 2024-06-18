@@ -1,4 +1,9 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.7.8)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.8.0)
+
+v3.8.0  2024-06-16
+ • 项目前端代码开源
+ • 首页广告模块移除
+ • Docker基础nodejs更新到22.3.0
 
 v3.7.8  2023-03-24
  • MITM 效率性能提升
