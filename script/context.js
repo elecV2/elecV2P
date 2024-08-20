@@ -350,6 +350,9 @@ class surgeContext {
       feedPush(data[0] + ' ' + data[1], data[2], data[3])
     }
   }
+  $environment = {
+    'surge-version': true
+  }
 }
 
 class quanxContext {
