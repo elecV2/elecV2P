@@ -10,12 +10,12 @@ const CopyPlugin = require("copy-webpack-plugin")
 
 module.exports = {
   entry: {
-    index: path.join(__dirname, 'web/src/index.js'),
-    'efss/index': path.join(__dirname, 'web/src/efss/index.js')
+    index: path.join(__dirname, '../web/src/index.js'),
+    'efss/index': path.join(__dirname, '../web/src/efss/index.js')
   },
   output: {
     filename: '[name].[contenthash].js',
-    path: path.join(__dirname, 'web/dist')
+    path: path.join(__dirname, '../web/dist')
   },
   module: {
     rules: [
@@ -44,11 +44,11 @@ module.exports = {
   },
   plugins: [
     new webpack.DefinePlugin({
-      VERSION: JSON.stringify(require('./package.json').version),
+      VERSION: JSON.stringify(require('../package.json').version),
     }),
     new HtmlWebpackPlugin({
-      template: path.join(__dirname, 'web/src', 'index.html'),
-      favicon: path.join(__dirname, 'web/src', 'favicon.ico'),
+      template: path.join(__dirname, '../web/src', 'index.html'),
+      favicon: path.join(__dirname, '../web/src', 'favicon.ico'),
       inject: false,
       chunks: ['index'],
       minify: {
@@ -56,7 +56,7 @@ module.exports = {
       }
     }),
     new HtmlWebpackPlugin({
-      template: path.join(__dirname, 'web/src/efss', 'index.html'),
+      template: path.join(__dirname, '../web/src/efss', 'index.html'),
       filename: 'efss/index.html',
       inject: false,
       publicPath: '/',
@@ -72,8 +72,8 @@ module.exports = {
     }),
     new CopyPlugin({
       patterns: [
-        { from: path.join(__dirname, 'web/src', 'manifest.json') },
-        { from: path.join(__dirname, 'web/src', 'sw.js') },
+        { from: path.join(__dirname, '../web/src', 'manifest.json') },
+        { from: path.join(__dirname, '../web/src', 'sw.js') },
       ],
     }),
   ],
