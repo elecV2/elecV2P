@@ -214,28 +214,10 @@ function runJS(filename, jscode, addContext={}) {
   taskCount(filename)
 
   let fconsole = null,
-      bGrant   = false,
-      compatible = {
-        surge: false,          // Surge 脚本调试模式
-        quanx: false,          // Quanx 脚本调试模式。都为 false 时，会进行自动判断
-        nodejs: false,         // nodejs 运行模式，不对脚本进行兼容判断
-        require: false         // 启用 nodeJS require 函数。不开启时会自动进行判断
-      }
+      bGrant   = false
   if (/^\/\/ +@grant/m.test(jscode)) {
     bGrant = true
 
-    // compatible 判断
-    if (/^\/\/ +@grant +nodejs$/m.test(jscode)) {
-      compatible.nodejs = true
-    } else if (/^\/\/ +@grant +surge$/m.test(jscode)) {
-      compatible.surge = true
-    } else if (/^\/\/ +@grant +quanx$/m.test(jscode)) {
-      compatible.quanx = true
-    }
-    // require 可与以上模式同时存在
-    if (/^\/\/ +@grant +require$/m.test(jscode)) {
-      compatible.require = true
-    }
     // 日志显示类型判断
     if (/^\/\/ +@grant +(still|silent)$/m.test(jscode)) {
       clog.notify('log of', filename, 'is disabled')
@@ -253,37 +235,14 @@ function runJS(filename, jscode, addContext={}) {
   CONTEXT.final.__filename = Jsfile.get(filename, 'path')
   CONTEXT.final.__taskname = addContext.__taskname
   CONTEXT.final.__taskid   = addContext.__taskid
-
-  if (compatible.nodejs) {
-    fconsole.debug(filename, 'run in nodejs mode')
-    CONTEXT.final.module = module
-    CONTEXT.final.process = process
-    CONTEXT.final.exports = exports
-    CONTEXT.final.Buffer = Buffer
-    CONTEXT.final.TextEncoder = TextEncoder
-    CONTEXT.final.TextDecoder = TextDecoder
-
-    CONTEXT.final.URL = URL
-    CONTEXT.final.URLSearchParams = URLSearchParams
-  } else if (compatible.surge || (compatible.quanx === false && /\$httpClient|\$persistentStore|\$notification/.test(jscode))) {
-    fconsole.debug(`${filename} compatible with Surge script`)
-    CONTEXT.add({ surge: true })
-  } else if (compatible.quanx || /\$task\.fetch|\$prefs|\$notify/.test(jscode)) {
-    fconsole.debug(`${filename} compatible with QuantumultX script`)
-    CONTEXT.add({ quanx: true })
-  } else if (!compatible.require && /require/.test(jscode)) {
-    compatible.require = true
+  CONTEXT.final.require = (request)=>{
+    fconsole.notify('require external resource:', request)
+    request = require.resolve(request, { paths: [CONTEXT.final.__dirname] })
+    return require(request)
   }
-  if (compatible.nodejs || compatible.require) {
-    CONTEXT.final.require = (request)=>{
-      fconsole.notify('require external resource:', request)
-      request = require.resolve(request, { paths: [CONTEXT.final.__dirname] })
-      return require(request)
-    }
-    CONTEXT.final.require.resolve = (request)=>require.resolve(request, { paths: [CONTEXT.final.__dirname] })
-    CONTEXT.final.require.clear = (request)=>delete require.cache[require.resolve(request, { paths: [CONTEXT.final.__dirname] })]
-    CONTEXT.final.require.cache = require.cache
-  }
+  CONTEXT.final.require.resolve = (request)=>require.resolve(request, { paths: [CONTEXT.final.__dirname] })
+  CONTEXT.final.require.clear = (request)=>delete require.cache[require.resolve(request, { paths: [CONTEXT.final.__dirname] })]
+  CONTEXT.final.require.cache = require.cache
 
   let addtimeout = addContext.timeout, addfrom = addContext.from;
   switch (addfrom) {
@@ -359,7 +318,7 @@ function runJS(filename, jscode, addContext={}) {
   delete addContext.timeout
   delete addContext.__taskid
   delete addContext.__taskname
-  CONTEXT.add({ addContext })
+  Object.assign(CONTEXT.final, addContext)
 
   return new Promise((resolve, reject)=>{
     try {

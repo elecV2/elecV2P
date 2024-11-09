@@ -78,6 +78,15 @@ class contextBase {
   clearTimeout = clearTimeout
   clearInterval = clearInterval
 
+  URL = URL
+  module = module
+  process = process
+  exports = exports
+  Buffer = Buffer
+  TextEncoder = TextEncoder
+  TextDecoder = TextDecoder
+  URLSearchParams = URLSearchParams
+
   __version = CONFIG_Port.version
   __vernum  = CONFIG_Port.vernum
   __userid  = CONFIG_Port.userid
@@ -114,13 +123,29 @@ class contextBase {
       return this.put(value, key, options)
     }
   }
+  $prefs = {
+    valueForKey(key) {
+      return store.get(key, 'string')
+    },
+    setValueForKey: (value, key)=>{
+      return store.put(value, key, { belong: this.__name })
+    }
+  }
+  $persistentStore = {
+    read(key) {
+      return store.get(key, 'string')
+    },
+    write: (value, key) => {
+      return store.put(value, key, { belong: this.__name })
+    }
+  }
   $axios = (request)=>{
     if (typeof(request) === 'string') {
       request = {
         url: request
       }
     }
-    if (CONFIG.CONFIG_RUNJS.white?.enable && CONFIG.CONFIG_RUNJS.white.list?.length && CONFIG.CONFIG_RUNJS.white.list.indexOf(this.__name) !== -1) {
+    if (CONFIG.CONFIG_RUNJS.white?.enable && CONFIG.CONFIG_RUNJS.white.list?.length && CONFIG.CONFIG_RUNJS.white.list.includes(this.__name)) {
       // 白名单检测
       request.token = CONFIG.wbrtoken
     } else if (CONFIG.CONFIG_RUNJS.eaxioslog) {
@@ -158,6 +183,120 @@ class contextBase {
       this.console.debug(err);
       throw err;
     });
+  }
+  $task = {
+    fetch: (req, cb) => {
+      if (typeof(req) === 'string') {
+        req = {
+          url: req
+        }
+      }
+      if (CONFIG.CONFIG_RUNJS.white?.enable && CONFIG.CONFIG_RUNJS.white.list?.length && CONFIG.CONFIG_RUNJS.white.list.includes(this.__name)) {
+        req.token = CONFIG.wbrtoken
+      } else if (CONFIG.CONFIG_RUNJS.eaxioslog) {
+        this.console.log(req.method || 'GET', req.url)
+      }
+      let resp = null
+      return new Promise((resolve, reject) => {
+        eAxios(req, (CONFIG.CONFIG_RUNJS.proxy === false) ? false : null).then(response=>{
+          resp = {
+            status: response.status,
+            statusCode: response.status,
+            headers: response.headers,
+            body: sString(response.data)
+          }
+          if (resp['headers'] && resp['headers']['set-cookie'] && sType(resp['headers']['set-cookie']) === 'array') {
+            resp['headers']['Set-Cookie'] = resp['headers']['set-cookie'].join(',')
+          }
+          resolve(resp)
+        }).catch(error=>{
+          resp = errStack(error)
+          this.console.error('$task.fetch', req.url, resp)
+          reject({ error: resp })
+        }).finally(()=>{
+          if(cb && sType(cb) === 'function') {
+            return cb(resp)
+          }
+        }).catch(err=>{
+          this.console.error('$task.fetch callback', errStack(err, true))
+        })
+      })
+    }
+  }
+  httpRequest(req, cb) {
+    if (typeof(req) === 'string') {
+      req = {
+        url: req
+      }
+    }
+    if (CONFIG.CONFIG_RUNJS.white?.enable && CONFIG.CONFIG_RUNJS.white.list?.length && CONFIG.CONFIG_RUNJS.white.list.includes(this.__name)) {
+      req.token = CONFIG.wbrtoken
+    } else if (CONFIG.CONFIG_RUNJS.eaxioslog) {
+      this.console.log(req.method || 'GET', req.url)
+    }
+    let error = null,
+        resps = {},
+        sbody  = ''
+    eAxios(req, (CONFIG.CONFIG_RUNJS.proxy === false) ? false : null).then(response=>{
+      resps = {
+        status: response.status,
+        headers: response.headers,
+      }
+      if (resps['headers'] && resps['headers']['set-cookie'] && sType(resps['headers']['set-cookie']) === 'array') {
+        resps['headers']['Set-Cookie'] = resps['headers']['set-cookie'].join(',')
+      }
+      sbody = sString(response.data)
+    }).catch(err=>{
+      error = errStack(err)
+      this.console.error('$httpClient', req.method || 'GET', req.url || req, error)
+      if (err.response) {
+        resps = {
+          status: err.response.status,
+          headers: err.response.headers,
+        }
+        sbody = sString(err.response.data)
+      } else if (err.request) {
+        error = `$httpClient ${req.method} ${req.url} error: ${error}`
+        sbody = sString(req)
+      } else {
+        sbody = error
+      }
+    }).finally(()=>{
+      if(cb && sType(cb) === 'function') {
+        return cb(error, resps, sbody)
+      }
+    }).catch(err=>{
+      this.console.error('$httpClient', req.method, req.url, 'callback', errStack(err, true))
+    })
+  }
+  $httpClient = {
+    get: (req, cb) => {
+      this.httpRequest(req, cb)
+    },
+    post: (req, cb) => {
+      if (sType(req) === 'string') {
+        req = { url: req }
+      }
+      req.method = 'post'
+      this.httpRequest(req, cb)
+    },
+    put: (req, cb) => {
+      if (sType(req) === 'string') {
+        req = { url: req }
+      }
+      req.method = 'put'
+      this.httpRequest(req, cb)
+    },
+    delete: (req, cb) => {
+      if (sType(req) === 'string') {
+        req = { url: req }
+      }
+      req.method = 'delete'
+      this.httpRequest(req, cb)
+    }
+  }
+  $environment = {
+    'surge-version': true
   }
   $cheerio = cheerio
   $message = message
@@ -204,6 +343,16 @@ class contextBase {
     ifttt: iftttPush,
     bark:  barkPush,
     cust:  custPush
+  }
+  $notify = (...data)=>{
+    this.console.notify(data.map(arg=>sString(arg)).join(' '))
+    feedPush(data[0] + ' ' + data[1], data[2], data[3])
+  }
+  $notification = {
+    post: (...data) => {
+      this.console.notify(data.map(arg=>sString(arg)).join(' '))
+      feedPush(data[0] + ' ' + data[1], data[2], data[3])
+    }
   }
   $fend = async (key, fn) => {
     // 待优化：
@@ -257,177 +406,9 @@ class contextBase {
   }
 }
 
-class surgeContext {
-  constructor({ fconsole, name }){
-    this.fconsole = fconsole
-    this.__name = name
-  }
-
-  surgeRequest(req, cb) {
-    if (typeof(req) === 'string') {
-      req = {
-        url: req
-      }
-    }
-    if (CONFIG.CONFIG_RUNJS.white?.enable && CONFIG.CONFIG_RUNJS.white.list?.length && CONFIG.CONFIG_RUNJS.white.list.indexOf(this.__name) !== -1) {
-      req.token = CONFIG.wbrtoken
-    } else if (CONFIG.CONFIG_RUNJS.eaxioslog) {
-      this.fconsole.log(req.method || 'GET', req.url)
-    }
-    let error = null,
-        resps = {},
-        sbody  = ''
-    eAxios(req, (CONFIG.CONFIG_RUNJS.proxy === false) ? false : null).then(response=>{
-      resps = {
-        status: response.status,
-        headers: response.headers,
-      }
-      if (resps['headers'] && resps['headers']['set-cookie'] && sType(resps['headers']['set-cookie']) === 'array') {
-        resps['headers']['Set-Cookie'] = resps['headers']['set-cookie'].join(',')
-      }
-      sbody = sString(response.data)
-    }).catch(err=>{
-      error = errStack(err)
-      this.fconsole.error('$httpClient', req.method || 'GET', req.url || req, error)
-      if (err.response) {
-        resps = {
-          status: err.response.status,
-          headers: err.response.headers,
-        }
-        sbody = sString(err.response.data)
-      } else if (err.request) {
-        error = `$httpClient ${req.method} ${req.url} error: ${error}`
-        sbody = sString(req)
-      } else {
-        sbody = error
-      }
-    }).finally(()=>{
-      if(cb && sType(cb) === 'function') {
-        return cb(error, resps, sbody)
-      }
-    }).catch(err=>{
-      this.fconsole.error('$httpClient', req.method, req.url, 'callback', errStack(err, true))
-    })
-  }
-
-  $httpClient = {
-    get: (req, cb) => {
-      this.surgeRequest(req, cb)
-    },
-    post: (req, cb) => {
-      if (sType(req) === 'string') {
-        req = { url: req }
-      }
-      req.method = 'post'
-      this.surgeRequest(req, cb)
-    },
-    put: (req, cb) => {
-      if (sType(req) === 'string') {
-        req = { url: req }
-      }
-      req.method = 'put'
-      this.surgeRequest(req, cb)
-    },
-    delete: (req, cb) => {
-      if (sType(req) === 'string') {
-        req = { url: req }
-      }
-      req.method = 'delete'
-      this.surgeRequest(req, cb)
-    }
-  }
-  $persistentStore = {
-    read(key) {
-      return store.get(key, 'string')
-    },
-    write: (value, key) => {
-      return store.put(value, key, { belong: this.__name })
-    }
-  }
-  $notification = {
-    post: (...data) => {
-      this.fconsole.notify(data.map(arg=>sString(arg)).join(' '))
-      feedPush(data[0] + ' ' + data[1], data[2], data[3])
-    }
-  }
-  $environment = {
-    'surge-version': true
-  }
-}
-
-class quanxContext {
-  constructor({ fconsole, name }){
-    this.fconsole = fconsole
-    this.__name = name
-  }
-
-  $task = {
-    fetch: (req, cb) => {
-      if (typeof(req) === 'string') {
-        req = {
-          url: req
-        }
-      }
-      if (CONFIG.CONFIG_RUNJS.white?.enable && CONFIG.CONFIG_RUNJS.white.list?.length && CONFIG.CONFIG_RUNJS.white.list.indexOf(this.__name) !== -1) {
-        req.token = CONFIG.wbrtoken
-      } else if (CONFIG.CONFIG_RUNJS.eaxioslog) {
-        this.fconsole.log(req.method || 'GET', req.url)
-      }
-      let resp = null
-      return new Promise((resolve, reject) => {
-        eAxios(req, (CONFIG.CONFIG_RUNJS.proxy === false) ? false : null).then(response=>{
-          resp = {
-            status: response.status,
-            statusCode: response.status,
-            headers: response.headers,
-            body: sString(response.data)
-          }
-          if (resp['headers'] && resp['headers']['set-cookie'] && sType(resp['headers']['set-cookie']) === 'array') {
-            resp['headers']['Set-Cookie'] = resp['headers']['set-cookie'].join(',')
-          }
-          resolve(resp)
-        }).catch(error=>{
-          resp = errStack(error)
-          this.fconsole.error('$task.fetch', req.url, resp)
-          reject({ error: resp })
-        }).finally(()=>{
-          if(cb && sType(cb) === 'function') {
-            return cb(resp)
-          }
-        }).catch(err=>{
-          this.fconsole.error('$task.fetch callback', errStack(err, true))
-        })
-      })
-    }
-  }
-  $prefs = {
-    valueForKey(key) {
-      return store.get(key, 'string')
-    },
-    setValueForKey: (value, key)=>{
-      return store.put(value, key, { belong: this.__name })
-    }
-  }
-  $notify = (...data)=>{
-    this.fconsole.notify(data.map(arg=>sString(arg)).join(' '))
-    feedPush(data[0] + ' ' + data[1], data[2], data[3])
-  }
-}
-
 class context {
   constructor({ fconsole, name }){
     this.final = new contextBase({ fconsole, name })
-  }
-
-  add({ surge, quanx, addContext }){
-    if (surge) {
-      Object.assign(this.final, new surgeContext({ fconsole: this.final.console, name: this.final.__name }))
-    } else if (quanx) {
-      Object.assign(this.final, new quanxContext({ fconsole: this.final.console, name: this.final.__name }))
-    }
-    if (addContext) {
-      Object.assign(this.final, addContext)
-    }
   }
 }
 
