@@ -202,7 +202,7 @@ async function efhParse(filename, { title='', type='', name } = {}) {
  * 脚本执行函数
  * @param  {string} filename   脚本文件名
  * @param  {string} jscode     脚本执行代码
- * @param  {object} addContext 附加环境变量 context
+ * @param  {object} addContext 附加执行参数 context
  * @return {promise}     脚本执行结果
  */
 function runJS(filename, jscode, addContext={}) {
@@ -252,12 +252,14 @@ function runJS(filename, jscode, addContext={}) {
   default:
     break;
   }
-  if (!addContext.$env) {
-    CONTEXT.final.$env = {
-      ...process.env,
-      lang: CONFIG.lang,
-      ...addContext.env
-    }
+  CONTEXT.final.$env = {
+    ...process.env,
+    lang: CONFIG.lang,
+    userid: CONFIG_Port.userid,
+    vernum: CONFIG_Port.vernum,
+    version: CONFIG_Port.version,
+    ...addContext.env,
+    ...addContext.$env,
   }
   CONTEXT.final.$fend.clear = ()=>{
     fconsole.info('efh file cache cleared');
@@ -312,6 +314,7 @@ function runJS(filename, jscode, addContext={}) {
 
   delete addContext.cb
   delete addContext.env
+  delete addContext.$env
   delete addContext.type
   delete addContext.from
   delete addContext.rename
