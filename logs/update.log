@@ -1,4 +1,8 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.8.0)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.8.1)
+
+v3.8.1  2024-11-10
+ • 前端打包配置文件修复
+ • 增加脚本运行环境的兼容性
 
 v3.8.0  2024-06-16
  • 项目前端代码开源
