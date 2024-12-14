@@ -1,4 +1,4 @@
-FROM arm64v8/node:alpine
+FROM arm64v8/node:22.12.0-alpine
 
 ADD ./ /usr/local/app
 COPY ./Docker/qemu-aarch64-static /usr/bin
