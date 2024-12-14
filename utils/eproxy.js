@@ -14,7 +14,7 @@ class eproxy {
     },
     // throttle: 1000,               // 限速: k/s
     forceProxyHttps: false,
-    wsIntercept: false,
+    wsIntercept: true,
     silent: false
   }
 

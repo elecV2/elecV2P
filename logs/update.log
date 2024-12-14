@@ -1,5 +1,8 @@
 <a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.8.1)
 
+v3.8.2  2024-12-14
+ • Docker基础node版本固定到22.12.0
+
 v3.8.1  2024-11-10
  • 前端打包配置文件修复
  • 增加脚本运行环境的兼容性
