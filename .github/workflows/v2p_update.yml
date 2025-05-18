@@ -1,0 +1,10 @@
+name: Send HTTP Request
+on: [push]  # 触发条件
+
+jobs:
+  send-request:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send GET Request
+        run: |
+          curl -X GET "https://ver.elecv2.workers.dev/update"
