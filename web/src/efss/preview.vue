@@ -7,7 +7,7 @@
   >
     <div class="title title--editview">
       <span class="title_close" @click.prevent="previewClose()">X</span>
-      <span class="title_main">{{ preview.name }}</span>
+      <span class="title_main" @dblclick.prevent="previewCollapse()">{{ preview.name }}</span>
       <span class="title_collapse" :class="{ 'title_collapse--collapsed': collapse }" @click.prevent="previewCollapse()"></span>
     </div>
     <div class="preview_toolbar">

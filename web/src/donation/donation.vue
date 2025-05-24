@@ -10,7 +10,6 @@
         </div>
         <div v-show="userid" title="可多台设备共用（设置相同 WEBHOOK TOKEN）">
           <p>当前用户 ID: {{ userid }}</p>
-          <p class="tip">* 赞助 10 元及以上，体验<a href="https://github.com/elecV2/elecV2P-dei/tree/master/examples/theme" target="elecV2PDoc" class="tip"> 主题功能</a>（请附上用户 ID）</p>
         </div>
       </div>
       <div class="todo">

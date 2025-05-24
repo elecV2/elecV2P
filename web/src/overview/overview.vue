@@ -102,7 +102,6 @@ export default {
         if (this.userid !== this.$uApi.store.get('userid')) {
           this.$uApi.store.set('userid', this.userid)
         }
-        this.$uApi.store.setCache('bSponsor', this.$uApi.store.getCache('sponsors').has(this.userid))
         Object.assign(this.enablelist, res.data.enablelist)
         if (typeof res.data.menunav === 'object') {
           this.$emit('menunav', { ...res.data.menunav })
@@ -110,12 +109,8 @@ export default {
         if (typeof res.data.logo === 'object') {
           this.$emit('theme', { type: 'logo', ...res.data.logo })
         }
-        if (this.$uApi.store.getCache('bSponsor')) {
-          let rtheme = res.data.theme
-          rtheme && this.$emit('theme', rtheme.simple || rtheme)
-        } else {
-          this.$emit('theme', { enable: false })
-        }
+        let rtheme = res.data.theme
+        rtheme && this.$emit('theme', rtheme.simple || rtheme)
         if (res.data.taskstatus) {
           this.taskstatus = res.data.taskstatus.running + '/' + res.data.taskstatus.total + '/' + res.data.taskstatus.sub
         }

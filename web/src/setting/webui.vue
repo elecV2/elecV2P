@@ -25,7 +25,7 @@
       </ul>
       <span class="tip tip--small"> • SETTING/DONATION 暂时不可隐藏      • 隐藏界面可通过 #hash 的形式直接访问</span>
     </div>
-    <div class="border setting setting--inline" v-if="$uApi.store.getCache('bSponsor')" v-show="!collapse">
+    <div class="border setting setting--inline" v-show="!collapse">
       <div class="eflex">
         <label>启用主题：</label>
         <checkbox :oCheck="theme_simple" />

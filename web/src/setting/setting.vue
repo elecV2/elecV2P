@@ -508,7 +508,6 @@ export default {
       if (this.userid !== this.$uApi.store.get('userid')) {
         this.$uApi.store.set('userid', this.userid)
       }
-      this.$uApi.store.setCache('bSponsor', this.$uApi.store.getCache('sponsors').has(this.userid))
       if (res.data.webUI) {
         Object.assign(this.webUI, res.data.webUI)
         if (res.data.webUI.nav) {
@@ -517,12 +516,8 @@ export default {
         if (res.data.webUI.logo) {
           this.$emit('theme', { type: 'logo', ...res.data.webUI.logo })
         }
-        if (this.$uApi.store.getCache('bSponsor')) {
-          let rtheme = res.data.webUI.theme
-          rtheme && this.$emit('theme', rtheme.simple || rtheme)
-        } else {
-          this.$emit('theme', { enable: false })
-        }
+        let rtheme = res.data.webUI.theme
+        rtheme && this.$emit('theme', rtheme.simple || rtheme)
       }
       if (res.data.lang && this.lang !== res.data.lang) {
         this.lang = res.data.lang
