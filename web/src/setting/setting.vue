@@ -311,9 +311,9 @@ export default {
     return {
       icon,
       collapse: {
-        notify: this.$uStr.iRandom(0, 10) > 5,
-        runjs: this.$uStr.iRandom(0, 10) > 5,
-        other: this.$uStr.iRandom(0, 10) > 5,
+        notify: true,
+        runjs: true,
+        other: true,
         init: true,
       },
       init_url: CONFIG.base_url,

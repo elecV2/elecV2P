@@ -116,7 +116,7 @@ export default {
   data(){
     return {
       icon,
-      collapse: this.$uStr.iRandom(0, 10) > 5,
+      collapse: true,
       bUAManage: false
     }
   },
