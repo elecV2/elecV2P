@@ -1,5 +1,5 @@
 <template>
-  <div class="eapp" v-if="eapp.enable">
+  <div class="eapp" :class="{ 'eapp--full': bFull }" v-if="eapp.enable">
     <div class="eapp_container">
       <div v-for="(app, idx) in apps" class="eapp_item" :class="{ 'eapp_item--run': bRun[idx] }"
         :key="app.hash"
@@ -15,13 +15,16 @@
         <span class="eapp_delete" :class="{ hide: !bEdit }" @click.prevent="epMove(idx)">X</span>
       </div>
       <div class="eapp_item eapp_item--edit">
-        <button v-if="!bEdit" class="elecBtn elecBtn--h36 bk_main_bk" @click.prevent="epEdit()">{{ $t('neweapp') }}</button>
-        <select v-else class="elecBtn elecBtn--h36 minw100" v-model.number="eapp.logo_type" :title="$t('choose')+' LOGO '+$t('style')">
-          <option value="1" selected>{{ $t('style') }} 1</option>
-          <option value="2">{{ $t('style') }} 2</option>
-          <option value="3">{{ $t('style') }} 3</option>
-        </select>
-        <button class="elecBtn elecBtn--h36" :class="{ 'bk_main_bk': !bEdit }" @click.prevent="epSave()">{{ bEdit ? $t('editexit') : $t('editmode') }}</button>
+        <div class="eapp_edit_row">
+          <button v-if="!bEdit" class="elecBtn elecBtn--h36 elecBtn--narrow bk_main_bk" :title="$t('neweapp')" @click.prevent="epEdit()">＋</button>
+          <button v-if="!bEdit" class="elecBtn elecBtn--h36 elecBtn--narrow" :class="{ 'bk_main_bk': !bFull }" :title="bFull ? $t('exit_fullscreen') : $t('fullscreen')" @click.prevent="bFull=!bFull">{{ bFull ? '✕' : '⛶' }}</button>
+          <select v-else class="elecBtn elecBtn--h36 minw100" v-model.number="eapp.logo_type" :title="$t('choose')+' LOGO '+$t('style')">
+            <option value="1" selected>{{ $t('style') }} 1</option>
+            <option value="2">{{ $t('style') }} 2</option>
+            <option value="3">{{ $t('style') }} 3</option>
+          </select>
+        </div>
+        <button class="elecBtn elecBtn--h36" :class="{ 'bk_main_bk': !bEdit }" :title="bEdit ? $t('editexit') : $t('editmode')" @click.prevent="epSave()">{{ bEdit ? '✓' : '✎' }}</button>
       </div>
     </div>
     <log :logs="logs" :title="'EAPP ' + $t('logs')" @clear="logs=[]" />
@@ -44,6 +47,7 @@ export default {
       apps: [],
       logs: [],
       bEdit: false,
+      bFull: false,
       dragSce: null,
       dragIdx: -1,
       toSave: false,
@@ -334,6 +338,28 @@ export default {
   margin-bottom: 6em;
   border-radius: var(--radius-bs);
 }
+.eapp--full {
+  position: fixed;
+  z-index: 3;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  padding: .5em;
+  box-sizing: border-box;
+  margin-bottom: 0;
+  background: var(--main-bk);
+  overflow-y: auto;
+}
+.eapp--full .eapp_container {
+  border: none;
+  border-radius: var(--radius-bs);
+  background: var(--app-bg, var(--body-bg-image));
+}
+.elecBtn--narrow {
+  min-width: 44px;
+  padding: 4px 6px;
+}
 .eapp_container {
   display: grid;
   grid-template-columns: repeat(auto-fill, 108px);
@@ -359,7 +385,28 @@ export default {
 }
 .eapp_item--edit {
   height: 82px;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 4px;
+}
+.eapp_item--edit .elecBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.eapp_edit_row {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
   justify-content: space-between;
+}
+.eapp_edit_row select {
+  width: 100%;
+}
+.eapp_item--edit > .elecBtn {
+  width: 100%;
 }
 .eapp_logo {
   width: 60px;

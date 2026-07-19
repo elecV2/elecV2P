@@ -310,5 +310,7 @@
   "rename": "重命名",
   "zip": "ZIP打包",
   "cut": "剪切",
-  "type": "类型"
+  "type": "类型",
+  "fullscreen": "全屏",
+  "exit_fullscreen": "退出全屏"
 }

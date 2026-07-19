@@ -11,7 +11,7 @@ html, body {
   font-family: var(--font-fm);
 }
 body {
-  background-image: linear-gradient(110deg, var(--secd-fc) 25%, transparent 0%),linear-gradient(315deg, transparent 30%, var(--tras-bk) 30%),linear-gradient(45deg, transparent 66%, var(--secd-bk) 0%),linear-gradient(333deg, var(--icon-bk) 53%, transparent 0%);
+  background-image: var(--body-bg-image);
 }
 
 h1, h2, h3, h4, h5, h6, ul {
@@ -55,6 +55,7 @@ tbody {
   --radius-hf: 8px;
   --font-fm: 'Microsoft YaHei', -apple-system, Helvetica, Arial;
   --font-ms: consolas, monospace;
+  --body-bg-image: linear-gradient(110deg, var(--secd-fc) 25%, transparent 0%),linear-gradient(315deg, transparent 30%, var(--tras-bk) 30%),linear-gradient(45deg, transparent 66%, var(--secd-bk) 0%),linear-gradient(333deg, var(--icon-bk) 53%, transparent 0%);
 }
 noscript {
   position: fixed;
