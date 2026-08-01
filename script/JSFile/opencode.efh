@@ -41,6 +41,17 @@
     .header .dropdown-trigger .arr { font-size: 8px; margin-left: 2px; }
     .header .dropdown-trigger + .dropdown-trigger { margin-left: 24px; }
     .header .ver { font-size: 10px; color: var(--fc3); margin-left: 4px; white-space: nowrap; }
+    .ctx {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-right: 12px; font-size: 11px; color: var(--fc2); white-space: nowrap;
+      cursor: default; border: 1px solid var(--bd); border-radius: 8px; padding: 2px 8px;
+      background: var(--bk3);
+    }
+    .ctx-bar { width: 56px; height: 5px; border-radius: 3px; background: var(--bd); overflow: hidden; }
+    .ctx-bar i { display: block; height: 100%; background: var(--ac); border-radius: 3px; }
+    .ctx-bar.warn i { background: #e3b341; }
+    .ctx-bar.danger i { background: var(--del); }
+    .ctx-num { font-family: 'Cascadia Code', Consolas, monospace; }
     .header .load { position: absolute; left: 50%; transform: translateX(-50%); font-size: 22px; color: var(--ac); letter-spacing: 4px; animation: loadPulse 1.2s ease-in-out infinite; }
     @keyframes loadPulse { 0%,100% { opacity: .25; } 50% { opacity: 1; } }
     #modelDropdown { left: auto; right: 0; }
@@ -317,6 +328,10 @@
       </div>
     </span>
     <div class="spacer"></div>
+    <span class="ctx" v-if="ctxLimit" :title="ctxUsed + ' / ' + ctxLimit + ' tokens'">
+      <span class="ctx-bar" :class="{ warn: ctxPct >= 80 && ctxPct < 95, danger: ctxPct >= 95 }"><i :style="ctxStyle"></i></span>
+      <span class="ctx-num">{{ ctxLabel }} · {{ ctxPct }}%</span>
+    </span>
     <button @click="clearChat()">Clear</button>
   </div>
 
@@ -352,7 +367,7 @@
       </div>
     </div>
     <div class="input-bar">
-      <textarea ref="inputEl" rows="1" placeholder="Type a message... (Ctrl+Enter to send)" v-model="inputText" @input="onInput" @keydown="onKey"></textarea>
+      <textarea ref="inputEl" rows="1" placeholder="Type a message... (Enter to send, Ctrl+Enter for newline)" v-model="inputText" @input="onInput" @keydown="onKey"></textarea>
       <button v-if="busy" @click="stop()">Stop</button>
       <button @click="send()" :disabled="busy">Send</button>
     </div>
@@ -373,7 +388,8 @@
         histList: [], histIdx: -1, histDraft: '',
         sessionPanelOpen: false, dropdown: '',
         notifyMsg: '', notifyShow: false, loading: false,
-        ocVersion: '', installOverlay: true, installErr: '', installProgress: 'This may take a minute'
+        ocVersion: '', installOverlay: true, installErr: '', installProgress: 'This may take a minute',
+        ctxUsed: 0, ctxLimit: 0, ctxPct: 0, ctxModel: ''
       }
     },
     computed: {
@@ -401,11 +417,23 @@
           return !q || c.name.toLowerCase().indexOf(q) === 0 || c.description.toLowerCase().indexOf(q) >= 0
         })
         return out.slice(0, 8)
+      },
+      ctxLabel() {
+        if (!this.ctxLimit) return ''
+        return this.fmtK(this.ctxUsed) + ' / ' + this.fmtK(this.ctxLimit)
+      },
+      ctxStyle() {
+        return { width: Math.min(100, this.ctxPct) + '%' }
       }
     },
     methods: {
       esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') },
       fmtTime(ts) { if (!ts) return ''; try { return new Date(ts).toLocaleString() } catch(e) { return '' } },
+      fmtK(n) {
+        n = Number(n) || 0
+        if (n >= 1000) return (n / 1000).toFixed(1) + 'k'
+        return String(n)
+      },
       sessionTitle(s) { return s.title || s.prompt || s.id },
       renderMd(t) {
         if (!t) return ''
@@ -462,6 +490,7 @@
         this.currentModel = (m || '').replace(/\r/g, '')
         localStorage.setItem('aichat_last_model', this.currentModel)
         this.dropdown = ''
+        this.refreshCtx()
       },
       selectSession(id) {
         this.sessionId = id
@@ -588,6 +617,7 @@
           if (e.key === 'Enter' && !(e.ctrlKey || e.metaKey)) {
             e.preventDefault()
             this.pickCmd(this.cmdFiltered[this.cmdIdx >= 0 ? this.cmdIdx : 0])
+            this.send()
             return
           }
           if (e.key === 'Escape') {
@@ -607,7 +637,28 @@
           this.histNav(1)
           return
         }
-        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); this.send() }
+        if (e.key === 'Enter') {
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault()
+            this.insertNewline()
+          } else {
+            e.preventDefault()
+            this.send()
+          }
+        }
+      },
+      insertNewline() {
+        var el = this.$refs.inputEl
+        if (!el) return
+        var start = el.selectionStart
+        var end = el.selectionEnd
+        this.inputText = this.inputText.slice(0, start) + '\n' + this.inputText.slice(end)
+        this.autosize()
+        var self = this
+        this.$nextTick(function() {
+          el.focus()
+          el.setSelectionRange(start + 1, start + 1)
+        })
       },
       scrollBottom() {
         var self = this
@@ -645,6 +696,7 @@
         var runId = Date.now() + '-' + Math.random().toString(36).slice(2, 8)
         this.runId = runId
         this.todos = []
+        if (this.currentModel) this.ctxModel = this.currentModel
 
         var es = new EventSource('/sse/elecV2P/' + runId)
 
@@ -668,15 +720,30 @@
             if (data.type === 'todo') {
               self.todos = data.data || []
             }
+            if (data.type === 'ctx') {
+              self.ctxUsed = data.used || 0
+              self.ctxLimit = data.limit || 0
+              self.ctxPct = data.pct || 0
+              if (data.model) self.ctxModel = data.model
+              try {
+                if (self.ctxLimit) localStorage.setItem('aichat_ctx_limit', String(self.ctxLimit))
+                if (self.ctxModel) localStorage.setItem('aichat_ctx_model', self.ctxModel)
+              } catch(e) {}
+            }
             if (data.type === 'done') {
               if (data.content) el.parts.push({ t: 'text', c: data.content })
               el.streaming = false
               es.close()
               var meta = Math.round((Date.now() - startTime) / 1000) + 's'
               if (data.tokens) meta += ' | ⚙ ' + data.tokens.total + ' tokens'
+              if (data.steps) meta += ' | ' + data.steps + ' steps'
               if (data.model) meta += ' | ' + data.model
               if (data.timeout) meta += ' | timed out'
               el.meta = meta
+              if (data.model) self.ctxModel = data.model
+              try {
+                if (data.model) localStorage.setItem('aichat_ctx_model', data.model)
+              } catch(e) {}
               self.busy = false
               self.runId = ''
               self.todos = []
@@ -691,7 +758,8 @@
               return
             }
             if (data.type === 'error') {
-              el.role = 'error'; el.parts = []; el.content = 'Error: ' + data.content; el.streaming = false
+              el.role = 'error'; el.streaming = false
+              el.parts = [{ t: 'text', c: 'Error: ' + data.content }]
               es.close()
               self.busy = false
               self.runId = ''
@@ -706,7 +774,8 @@
 
         this.fetchFend('start', { prompt: prompt, runId: runId, session: this.sessionId, model: this.currentModel }, 120000).then(function(data) {
           if (!data.ok) {
-            el.role = 'error'; el.parts = []; el.content = 'Error: ' + (data.error || 'failed to start'); el.streaming = false
+            el.role = 'error'; el.streaming = false
+            el.parts = [{ t: 'text', c: 'Error: ' + (data.error || 'failed to start') }]
             self.busy = false
             self.runId = ''
             self.todos = []
@@ -718,7 +787,8 @@
             el.streaming = false
             el.meta = 'Connection closed'
           } else {
-            el.role = 'error'; el.parts = []; el.content = 'Error: ' + e.message
+            el.role = 'error'; el.streaming = false
+            el.parts = [{ t: 'text', c: 'Error: ' + e.message }]
           }
           self.busy = false
           self.runId = ''
@@ -763,8 +833,25 @@
           }
           var savedModel = localStorage.getItem('aichat_last_model')
           if (savedModel) self.currentModel = savedModel.replace(/\r/g, '')
+          self.refreshCtx()
         })
-      }
+      },
+      refreshCtx() {
+        var self = this
+        this.fetchFend('ctxinfo', { model: this.currentModel }, 10000).then(function(data) {
+          if (data && data.limit) {
+            self.ctxUsed = 0
+            self.ctxLimit = data.limit
+            self.ctxPct = 0
+            if (data.model) self.ctxModel = data.model
+          } else {
+            var saved = localStorage.getItem('aichat_ctx_limit')
+            if (saved) self.ctxLimit = Number(saved)
+            var savedModel = localStorage.getItem('aichat_ctx_model')
+            if (savedModel && !self.ctxModel) self.ctxModel = savedModel
+          }
+        }).catch(function() {})
+      },
     },
     mounted() {
       var self = this
@@ -840,6 +927,57 @@ function ensureServer() {
   }
 }
 
+function parseModel(modelStr) {
+  var pid = 'opencode', mid = ''
+  if (modelStr) {
+    var sl = modelStr.indexOf('/')
+    if (sl > 0) { pid = modelStr.slice(0, sl); mid = modelStr.slice(sl + 1) }
+    else mid = modelStr
+  }
+  return { pid: pid, mid: mid }
+}
+
+function getCtxLimit(modelStr) {
+  return new Promise(function(resolve) {
+    var pm = parseModel(modelStr)
+    if (!pm.mid) return resolve(0)
+    var cacheKey = 'aichat_ctx_limit_' + pm.pid + '_' + pm.mid
+    try {
+      var cached = Number($store.get(cacheKey))
+      if (cached > 0) return resolve(cached)
+    } catch(e) {}
+    var httpMod = require('http')
+    var req = httpMod.get({ host: '127.0.0.1', port: 14096, path: '/provider' }, function(res) {
+      var buf = ''
+      res.on('data', function(c) { buf += c })
+      res.on('end', function() {
+        try {
+          var all = JSON.parse(buf).all || []
+          for (var i = 0; i < all.length; i++) {
+            var prov = all[i]
+            if (prov.id === pm.pid && prov.models && prov.models[pm.mid] && prov.models[pm.mid].limit && prov.models[pm.mid].limit.context) {
+              var limit = prov.models[pm.mid].limit.context
+              try { $store.set(cacheKey, String(limit)) } catch(e2) {}
+              return resolve(limit)
+            }
+          }
+        } catch(e) {}
+        resolve(0)
+      })
+    })
+    req.on('error', function() { resolve(0) })
+    req.setTimeout(8000, function() { req.destroy(); resolve(0) })
+  })
+}
+
+$fend('ctxinfo', (data) => {
+  var modelStr = data && data.model ? data.model : ''
+  var pm = parseModel(modelStr)
+  return getCtxLimit(modelStr).then(function(limit) {
+    return { model: pm.mid || '', limit: limit }
+  })
+})
+
 $fend('start', (data) => {
   if (!data || !data.prompt) return { error: 'prompt is required' }
   var runId = data.runId || Date.now() + '-' + Math.random().toString(36).slice(2, 8)
@@ -874,14 +1012,26 @@ $fend('start', (data) => {
         sessionId = JSON.parse(created.body).id
       }
       try { $store.set('aichat_run_' + runId, sessionId) } catch(e) {}
+      var ctxLimit = await getCtxLimit(data.model)
 
       var streamEnded = false
       var model = null
+      var modelShown = false
+      var stepCount = 0
       var seenTools = {}
       var lastToolOut = {}
       var tokens = null
       var watchdog = null
       var aliveTimer = null
+
+      function emitCtx(used) {
+        if (!used) return
+        $ws.sse(runId, JSON.stringify({
+          type: 'ctx', used: used, limit: ctxLimit,
+          pct: ctxLimit ? Math.round(used / ctxLimit * 1000) / 10 : 0,
+          model: model
+        }))
+      }
 
       var es = httpMod.get({
         host: '127.0.0.1', port: 14096, path: '/event',
@@ -915,7 +1065,7 @@ $fend('start', (data) => {
         if (aliveTimer) clearInterval(aliveTimer)
         try { es.destroy() } catch(e) {}
         try { $store.delete('aichat_run_' + runId) } catch(e) {}
-        $ws.sse(runId, JSON.stringify(Object.assign({ type: 'done' }, payload || {})))
+        $ws.sse(runId, JSON.stringify(Object.assign({ type: 'done', steps: stepCount }, payload || {})))
       }
 
       function fail(msg) {
@@ -947,7 +1097,11 @@ $fend('start', (data) => {
           var sid2 = part.sessionID || p.sessionID || ev.sessionID
           if (sid2 && sid2 !== sessionId) return
           if (part.type === 'step-start') {
-            sendRef('▶ step')
+            stepCount++
+            return
+          }
+          if (part.type === 'step-finish') {
+            if (part.tokens && part.tokens.total) emitCtx(part.tokens.total)
             return
           }
           if (part.type === 'reasoning') {
@@ -998,7 +1152,13 @@ $fend('start', (data) => {
           if (info.role === 'assistant' && info.error) {
             fail((info.error.name ? info.error.name + ': ' : '') + (info.error.message || 'opencode error'))
           }
-          if (info.model && info.model.modelID) model = info.model.providerID + '/' + info.model.modelID
+          if (info.model && info.model.modelID) {
+            model = info.model.providerID + '/' + info.model.modelID
+            if (!modelShown) {
+              modelShown = true
+              sendRef('> build · ' + model, 'info')
+            }
+          }
           return
         }
         if (ev.type === 'session.status') {
@@ -1016,7 +1176,12 @@ $fend('start', (data) => {
           return
         }
         if (ev.type === 'session.error') {
-          fail((p.error && p.error.message) || 'session error')
+          var errObj = p.error || {}
+          var errMsg = errObj.message || (errObj.name ? errObj.name : '') || 'session error'
+          var errCode = errObj.code ? ' (' + errObj.code + ')' : ''
+          var errDetail = errObj.detail || errObj.stack || ''
+          if (errDetail) errDetail = String(errDetail).split('\n')[0]
+          fail((errMsg + errCode + (errDetail ? ': ' + errDetail : '')).trim())
           return
         }
         if (ev.type === 'session.compacted') {
@@ -1033,7 +1198,10 @@ $fend('start', (data) => {
           return
         }
         if (ev.type === 'session.next.step.ended') {
-          if (p.tokens) tokens = p.tokens
+          if (p.tokens) {
+            tokens = p.tokens
+            if (p.tokens.total) emitCtx(p.tokens.total)
+          }
           return
         }
       }

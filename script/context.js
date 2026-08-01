@@ -94,6 +94,10 @@ class contextBase {
   __efss = file.get(CONFIG.efss.directory, 'path')
   $ws = {
     sse: sseSer.Send.bind(sseSer),
+    sseExists: (sid) => {
+      const t = sseSer.clients.get(sid)
+      return !!t && t.size > 0
+    },
     send: wsSer.send
   }
   $exec = exec
