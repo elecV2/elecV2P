@@ -81,7 +81,7 @@ export default {
   data(){
     return {
       icon,
-      collapse: false,
+      collapse: true,
     }
   },
   components: { checkbox },

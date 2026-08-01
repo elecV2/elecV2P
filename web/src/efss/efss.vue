@@ -143,8 +143,8 @@ export default {
       },
       filecheck: [],
       collapse: {
-        titlearrow: this.$uStr.iRandom(0, 10) > 5,
-        efssset: this.$uStr.iRandom(0, 10) > 7,
+        titlearrow: false,
+        efssset: true,
       },
       filedownloadurl: '',
       preview: {

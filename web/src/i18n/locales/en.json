@@ -309,5 +309,7 @@
   "unzip": "UNZIP",
   "rename": "RENAME",
   "zip": "ZIP",
-  "cut": "CUT"
+  "cut": "CUT",
+  "fullscreen": "FULLSCREEN",
+  "exit_fullscreen": "EXIT FULLSCREEN"
 }

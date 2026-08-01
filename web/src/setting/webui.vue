@@ -84,7 +84,7 @@ export default {
   props: ["menunav", "theme", "logo"],
   data(){
     return {
-      collapse: this.$uStr.iRandom(0, 10) > 5,
+      collapse: true,
       navkey: [
         'overview', 'task', 'mitm',
         'rules', 'rewrite', 'jsmanage',

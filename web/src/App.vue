@@ -248,7 +248,7 @@ export default {
             if (/^http/.test(theme.appbk)) {
               theme.appbk = `url(${theme.appbk})`
             }
-            theme_css += `background: ${ theme.appbk };`
+            theme_css += `background: ${ theme.appbk };--app-bg: ${ theme.appbk };`
           }
           if (theme_css) {
             theme_css = `.app-root{${ theme_css }}`

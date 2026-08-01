@@ -133,7 +133,7 @@ console.log('更多脚本相关说明请查看说明文档: https://github.com/e
       logs: [],
       icon,
       collapse: {
-        titlearrow: this.$uStr.iRandom(0, 10) > 2,
+        titlearrow: false,
         loginfo: true,
         editor: true,
       },
