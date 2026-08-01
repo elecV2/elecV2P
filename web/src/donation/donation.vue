@@ -33,28 +33,6 @@
         tododata: ''
       }
     },
-    created(){
-      if (!this.$uApi.store.getCache('bSponsor')) {
-        this.$axios.get('/data?type=sponsors').then(res=>{
-          if (res.data.rescode === 0) {
-            let resdata = res.data.resdata
-            this.$uApi.store.set('sponsors', this.$uStr.ebufEncrypt(JSON.stringify(resdata.sponsors), 'elecV2P_sponsors'))
-            if (this.userid !== resdata.userid) {
-              this.userid = resdata.userid
-              this.$uApi.store.set('userid', this.userid)
-            }
-            let bSponsor = this.$uApi.store.getCache('sponsors').has(this.userid) || resdata.sponsors.indexOf(this.userid) !== -1
-            if (bSponsor) {
-              this.$message.success('感谢您的赞助，相关权益已激活，请回到首页并刷新')
-              this.$uApi.store.setCache('bSponsor', true)
-            }
-          }
-          console.debug('get sponsors lists', res.data)
-        }).catch(e=>{
-          console.debug('获取 sponsors lists 失败', e.message)
-        })
-      }
-    },
     methods: {
       todoget(){
         if (this.tododata) return

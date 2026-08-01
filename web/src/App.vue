@@ -141,15 +141,10 @@ export default {
   computed: {
     navlist(){
       let nlist = Object.create(null)
-      let bSponsor = this.$uApi.store.getCache('bSponsor')
       for (let nav in this.menulist) {
         let item = this.menulist[nav]
         if (nav === 'setting') {
           nlist[nav] = item
-        } else if (nav === 'donation') {
-          if (!bSponsor) {
-            nlist[nav] = item
-          }
         } else if (item.show !== false) {
           nlist[nav] = item
         }

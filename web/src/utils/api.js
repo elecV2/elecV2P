@@ -1,4 +1,4 @@
-import { ebufDecrypt, strToHex } from './string'
+import { strToHex } from './string'
 
 // document/浏览器相关 api
 function open(url = '') {
@@ -32,36 +32,7 @@ function getCursorPos(event, mw = 160, mh = 100) {
 }
 
 const storeCache = new Map()
-const sponsors = new Map()
-sponsors.set('082bc4ee40bfef100f79579dc780dff7', {
-  name: 'elecV2',
-  homepage: 'https://github.com/elecV2',
-})
-sponsors.set('cd2458b5e43827ee9a2009b56f29ffd5', {
-  name: 'Public test',
-  homepage: 'https://t.me/elecV2',
-})
-sponsors.set('b9b2e3354b6520261c1b5c375dc2bf74', {
-  name: 'Oreomeow',
-  homepage: 'https://github.com/Oreomeow'
-})
-let sponsors_cache = localStorage.getItem('sponsors')
-if (sponsors_cache) {
-  try {
-    let spons = JSON.parse(ebufDecrypt(sponsors_cache, 'elecV2P_sponsors'))
-    spons.forEach(spon=>{
-      sponsors.set(spon, Object.create(null))
-    })
-  } catch(e) {
-    console.debug('parse localStorage sponsors', e)
-  }
-}
-storeCache.set('sponsors', sponsors)
 storeCache.set('bChecked', localStorage.getItem('bcheck') === new Date().getDate().toString())
-
-if (sponsors.has(localStorage.getItem('userid'))) {
-  storeCache.set('bSponsor', true)
-}
 const store = {
   get(key){
     return localStorage.getItem(key)

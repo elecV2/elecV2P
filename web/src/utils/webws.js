@@ -186,9 +186,6 @@ WEBWS.wsrecv.add('init', data=>{
   if (data.userid) {
     console.debug(`[${logHead('elecV2P notify')}][${sTime(null, 1)}] 当前 elecV2P userid ${data.userid}`);
     store.set('userid', data.userid);
-    if (store.getCache('sponsors').has(data.userid)) {
-      store.setCache('bSponsor', true);
-    }
   }
   if (data.glogslicebegin) {
     CONFIG.glogslicebegin = data.glogslicebegin
