@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>OpenCode By elecV2</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    :root {
+      --bk: #0d1117; --bk2: #161b22; --bk3: #1c2128;
+      --fc: #e6edf3; --fc2: #7d8590; --fc3: #484f58;
+      --ac: #58a6ff; --ok: #3fb950; --del: #f85149;
+      --bd: #30363d; --code-bk: #0d1117;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font: 14px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bk); color: var(--fc); height: 100vh;
+      display: flex; flex-direction: column;
+    }
+    #app { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .header {
+      display: flex; align-items: center; gap: 10px; padding: 10px 16px; position: relative;
+      background: var(--bk2); border-bottom: 1px solid var(--bd); flex-shrink: 0;
+    }
+    .header h1 { font-size: 16px; color: var(--ac); white-space: nowrap; cursor: pointer; }
+    .header h1:hover { opacity: .8; }
+    .header .spacer { flex: 1; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); display: inline-block; }
+    .dot.run { background: var(--ac); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .header button {
+      padding: 4px 10px; border-radius: 6px; border: 1px solid var(--bd);
+      background: var(--bk3); color: var(--fc2); font-size: 12px; cursor: pointer;
+    }
+    .header button:hover { color: var(--fc); border-color: var(--fc3); }
+    .header .dropdown-trigger { font-size: 12px; color: var(--fc2); cursor: pointer; position: relative; white-space: nowrap; }
+    .header .dropdown-trigger b { color: var(--ok); }
+    .header .dropdown-trigger:hover b { text-decoration: underline; }
+    .header .dropdown-trigger .arr { font-size: 8px; margin-left: 2px; }
+    .header .dropdown-trigger + .dropdown-trigger { margin-left: 24px; }
+    .header .ver { font-size: 10px; color: var(--fc3); margin-left: 4px; white-space: nowrap; }
+    .header .load { position: absolute; left: 50%; transform: translateX(-50%); font-size: 22px; color: var(--ac); letter-spacing: 4px; animation: loadPulse 1.2s ease-in-out infinite; }
+    @keyframes loadPulse { 0%,100% { opacity: .25; } 50% { opacity: 1; } }
+    #modelDropdown { left: auto; right: 0; }
+    .dropdown {
+      position: absolute; top: 100%; left: 0; margin-top: 4px;
+      background: var(--bk2); border: 1px solid var(--bd); border-radius: 8px;
+      min-width: 260px; max-height: 350px; overflow-y: auto; z-index: 200;
+      box-shadow: 0 8px 24px rgba(0,0,0,.4); display: none;
+    }
+    .dropdown.show { display: block; }
+    .dropdown .d-item {
+      padding: 7px 12px; cursor: pointer; border-bottom: 1px solid var(--bd);
+      transition: background .15s;
+    }
+    .dropdown .d-item:last-child { border-bottom: none; }
+    .dropdown .d-item:hover { background: var(--bk3); }
+    .dropdown .d-item.active { background: var(--bk3); border-left: 3px solid var(--ac); }
+    .dropdown .d-item .d-title { font-size: 13px; color: var(--fc); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dropdown .d-item .d-sub { font-size: 10px; color: var(--fc3); }
+    .dropdown .d-empty { padding: 20px; text-align: center; color: var(--fc3); font-size: 12px; }
+    .dropdown .d-more { padding: 8px 12px; text-align: center; font-size: 12px; color: var(--ac); cursor: pointer; border-top: 1px solid var(--bd); }
+    .dropdown .d-more:hover { background: var(--bk3); }
+    .messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .welcome { color: var(--fc2); text-align: center; margin: auto; font-size: 15px; line-height: 2; }
+    .welcome b { color: var(--ac); }
+    .msg { max-width: 85%; padding: 10px 14px; border-radius: 10px; line-height: 1.7; word-break: break-word; font-size: 14px; }
+    .msg.user { align-self: flex-end; background: var(--ac); color: #000; border-bottom-right-radius: 2px; }
+    .msg.assistant { align-self: flex-start; background: var(--bk2); border: 1px solid var(--bd); border-bottom-left-radius: 2px; }
+    .msg.error { align-self: flex-start; background: #2d1215; border: 1px solid #5b2a2e; color: var(--del); }
+    .msg .meta { font-size: 11px; color: var(--fc3); margin-top: 8px; border-top: 1px solid var(--bd); padding-top: 6px; }
+    .msg.user .meta { color: rgba(0,0,0,.4); }
+    .msg.assistant p { margin: .4em 0; }
+    .msg.assistant p:first-child { margin-top: 0; }
+    .msg.assistant p:last-child { margin-bottom: 0; }
+    .msg.assistant ul, .msg.assistant ol { padding-left: 1.5em; margin: .4em 0; }
+    .msg.assistant blockquote { border-left: 3px solid var(--bd); padding-left: 10px; color: var(--fc2); margin: .5em 0; }
+    .msg.assistant h1, .msg.assistant h2, .msg.assistant h3, .msg.assistant h4 { margin: .6em 0 .3em; line-height: 1.3; }
+    .msg.assistant h1 { font-size: 1.3em; } .msg.assistant h2 { font-size: 1.15em; } .msg.assistant h3 { font-size: 1.05em; }
+    .msg.assistant table { border-collapse: collapse; margin: .5em 0; width: 100%; }
+    .msg.assistant th, .msg.assistant td { border: 1px solid var(--bd); padding: 4px 8px; font-size: 13px; }
+    .msg.assistant th { background: var(--bk3); }
+    .msg.assistant a { color: var(--ac); text-decoration: none; }
+    .msg.assistant a:hover { text-decoration: underline; }
+    .msg.assistant hr { border: none; border-top: 1px solid var(--bd); margin: .6em 0; }
+    .msg.assistant img { max-width: 100%; border-radius: 6px; }
+    .msg.assistant code { font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: 13px; }
+    .msg.assistant :not(pre) > code { background: var(--bk3); padding: 1px 5px; border-radius: 4px; }
+    .msg.assistant pre {
+      background: var(--code-bk); padding: 12px; border-radius: 6px; overflow-x: auto;
+      margin: .5em 0; border: 1px solid var(--bd); position: relative;
+    }
+    .msg.assistant pre code { background: none; padding: 0; font-size: 13px; line-height: 1.5; }
+    .msg.assistant .code-lang {
+      position: absolute; top: 4px; right: 8px; font-size: 11px; color: var(--fc3);
+      pointer-events: none; text-transform: uppercase;
+    }
+    .msg .ref {
+      font-size: 12px; color: var(--fc); border-left: 2px solid var(--ac);
+      padding: 2px 0 2px 10px; margin: 3px 0;
+      font-family: 'Cascadia Code','Fira Code','Consolas','Courier New',monospace;
+      line-height: 1.6; background: rgba(255,255,255,.04);
+    }
+    .msg .ref.tool { border-left-color: #f0b; }
+    .msg .ref.cmd { border-left-color: #0c8; }
+    .msg .ref.info { border-left-color: #4af; }
+    .msg .ref.edit { border-left-color: #f80; }
+    .msg .ref.act { border-left-color: #fd0; }
+    .msg .ref.reasoning { border-left-color: #a78bfa; font-style: italic; }
+    .msg .tool-out {
+      font-size: 12px; color: var(--fc2); white-space: pre-wrap; word-break: break-all;
+      font-family: 'Cascadia Code','Fira Code','Consolas','Courier New',monospace;
+      background: rgba(255,255,255,.03); border: 1px solid var(--bd); border-radius: 6px;
+      padding: 6px 10px; margin: 4px 0; line-height: 1.5; max-height: 260px; overflow-y: auto;
+    }
+    .cursor { display: inline-block; width: 7px; height: 16px; background: var(--ac); animation: blink .7s infinite; vertical-align: text-bottom; margin-left: 2px; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    .reasoning { margin-bottom: 8px; }
+    .reasoning summary {
+      font-size: 12px; color: var(--fc2); cursor: pointer; user-select: none;
+      padding: 2px 0; list-style: none; display: flex; align-items: center; gap: 4px;
+    }
+    .reasoning[open] summary { padding-bottom: 4px; }
+    .reasoning summary::before { content: '> '; color: var(--fc3); font-family: monospace; }
+    .reasoning[open] summary::before { content: 'v '; }
+    .reasoning-body {
+      font-size: 12px; color: var(--fc2); background: var(--bk3);
+      padding: 8px 10px; border-radius: 6px; margin-top: 4px; line-height: 1.5;
+      white-space: pre-wrap; font-family: 'Cascadia Code','Fira Code','Consolas',monospace;
+      max-height: 300px; overflow-y: auto;
+    }
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 99;
+      opacity: 0; pointer-events: none; transition: opacity .25s;
+    }
+    .overlay.show { opacity: 1; pointer-events: auto; }
+    .session-panel {
+      position: fixed; left: -320px; top: 0; bottom: 0; width: 300px;
+      background: var(--bk2); border-right: 1px solid var(--bd);
+      transition: left .25s; z-index: 100; display: flex; flex-direction: column;
+    }
+    .session-panel.open { left: 0; }
+    .session-panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; border-bottom: 1px solid var(--bd); flex-shrink: 0;
+    }
+    .session-panel-header span { font-weight: bold; color: var(--ac); font-size: 15px; }
+    .session-panel-header button {
+      background: none; border: none; color: var(--fc2); cursor: pointer;
+      font-size: 18px; padding: 2px 6px; border-radius: 4px;
+    }
+    .session-panel-header button:hover { background: var(--bk3); color: var(--fc); }
+    .session-list { flex: 1; overflow-y: auto; padding: 8px; }
+    .session-item {
+      padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 4px;
+      border: 1px solid transparent; transition: all .15s; position: relative;
+    }
+    .session-item:hover { background: var(--bk3); border-color: var(--bd); }
+    .session-item.active { background: var(--bk3); border-color: var(--ac); }
+    .session-item .s-time { font-size: 11px; color: var(--fc3); }
+    .session-item .s-prompt { font-size: 13px; color: var(--fc); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .session-item .s-preview { font-size: 12px; color: var(--fc2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .session-item .s-del {
+      position: absolute; top: 8px; right: 8px; font-size: 11px; color: var(--fc3);
+      cursor: pointer; opacity: 0; padding: 2px 6px; border-radius: 4px; transition: all .15s;
+    }
+    .session-item:hover .s-del { opacity: 1; }
+    .session-item .s-del:hover { background: var(--del); color: #fff; }
+    .session-empty {
+      text-align: center; color: var(--fc3); padding: 40px 20px; font-size: 13px;
+    }
+    .section-label {
+      font-size: 11px; color: var(--fc3); padding: 4px 12px 2px; margin-top: 4px;
+    }
+    .input-bar {
+      display: flex; gap: 8px; padding: 12px 16px;
+      background: var(--bk2); border-top: 1px solid var(--bd); flex-shrink: 0;
+    }
+    .input-bar textarea {
+      flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--bd);
+      background: var(--bk3); color: var(--fc); font-family: inherit; font-size: 14px;
+      resize: none; outline: none; min-height: 42px; max-height: 160px;
+    }
+    .input-bar textarea::placeholder { color: var(--fc3); }
+    .input-bar textarea:focus { border-color: var(--ac); }
+    .input-bar button {
+      padding: 0 18px; border: none; border-radius: 8px;
+      background: var(--ac); color: #000; font-weight: bold; font-size: 14px;
+      cursor: pointer; flex-shrink: 0;
+    }
+    .input-bar button:disabled { opacity: .4; cursor: not-allowed; }
+    .cmd-wrap { position: relative; flex-shrink: 0; }
+    .cmd-dropdown {
+      position: absolute; left: 16px; right: 16px; bottom: calc(100% + 4px);
+      background: var(--bk2); border: 1px solid var(--bd); border-radius: 10px;
+      box-shadow: 0 6px 24px rgba(0,0,0,.35); max-height: 220px; overflow-y: auto; z-index: 50;
+    }
+    .cmd-item {
+      display: flex; align-items: baseline; gap: 8px; padding: 8px 12px; cursor: pointer;
+    }
+    .cmd-item + .cmd-item { border-top: 1px solid var(--bd); }
+    .cmd-item.active, .cmd-item:hover { background: var(--bk3); }
+    .cmd-item .name { color: var(--ac); font-weight: bold; font-family: monospace; flex-shrink: 0; }
+    .cmd-item .desc { color: var(--fc2); font-size: 12px; word-break: break-all; }
+    .install-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bk); display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+    }
+    .install-overlay .title { font-size: 18px; color: var(--fc); }
+    .install-overlay .sub { font-size: 12px; color: var(--fc2); max-width: 80%; word-break: break-all; }
+    .install-overlay .spin {
+      width: 32px; height: 32px; border: 3px solid var(--bd);
+      border-top-color: var(--ac); border-radius: 50%;
+      animation: installSpin .8s linear infinite;
+    }
+    .install-overlay .err { color: var(--del); font-size: 14px; max-width: 80%; word-break: break-all; }
+    .install-overlay button {
+      padding: 8px 20px; border: 1px solid var(--bd); border-radius: 6px;
+      background: var(--bk3); color: var(--fc); font-size: 13px; cursor: pointer;
+    }
+    .install-overlay button:hover { background: var(--bk2); }
+    @keyframes installSpin { to { transform: rotate(360deg) } }
+    .notify {
+      position: fixed; bottom: 68px; left: 50%; transform: translateX(-50%);
+      padding: 6px 14px; border-radius: 6px; font-size: 12px; z-index: 9998;
+      background: var(--del); color: #fff; opacity: 0; transition: opacity .25s;
+      pointer-events: none; white-space: nowrap;
+    }
+    .notify.show { opacity: 1; }
+    .todo-panel {
+      flex-shrink: 0; max-height: 140px; overflow-y: auto;
+      background: var(--bk2); border-top: 1px solid var(--bd);
+      padding: 8px 16px; font-size: 12px; color: var(--fc2);
+    }
+    .todo-panel .todo-head { font-size: 11px; color: var(--fc3); margin-bottom: 4px; }
+    .todo-item { padding: 2px 0; }
+    .todo-item .td { color: var(--fc3); margin-right: 6px; }
+    .todo-item .do { color: var(--ac); margin-right: 6px; }
+    .todo-item .done { text-decoration: line-through; color: var(--fc3); }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div class="install-overlay" v-if="installOverlay">
+    <div class="spin" v-if="!installErr"></div>
+    <div class="title" v-if="!installErr">Installing opencode...</div>
+    <div class="sub" v-if="!installErr">{{ installProgress }}</div>
+    <div class="err" v-if="installErr">{{ installErr }}</div>
+    <button v-if="installErr" @click="location.reload()">Retry</button>
+  </div>
+
+  <div class="notify" :class="{show: notifyShow}">{{ notifyMsg }}</div>
+
+  <div class="overlay" :class="{show: sessionPanelOpen}" @click="sessionPanelOpen=false"></div>
+
+  <div class="session-panel" :class="{open: sessionPanelOpen}">
+    <div class="session-panel-header">
+      <span>Session History</span>
+      <button @click="sessionPanelOpen=false">x</button>
+    </div>
+    <div class="session-list">
+      <template v-if="pinnedSessions.length">
+        <div class="section-label">PINNED</div>
+        <div v-for="s in pinnedSessions" :key="'p'+s.id" class="session-item"
+             :class="{active: s.id===sessionId}" :style="{opacity: deleting[s.id] ? .4 : 1}" @click="selectSession(s.id)">
+          <span class="s-del" @click.stop="deleteLocalSession(s.id)" title="Delete">x</span>
+          <div class="s-time">{{ fmtTime(s.timestamp) }}</div>
+          <div class="s-prompt">{{ (s.prompt||'').substring(0,50) }}</div>
+          <div class="s-preview">{{ (s.preview||'').substring(0,60) }}</div>
+        </div>
+      </template>
+      <template v-if="sessions.length">
+        <div class="section-label">Opencode</div>
+        <div v-for="s in sessions" :key="'o'+s.id" class="session-item"
+             :class="{active: s.id===sessionId}" :style="{opacity: deleting[s.id] ? .4 : 1}" @click="selectSession(s.id)">
+          <span class="s-del" @click.stop="deleteOCSession(s.id)" title="Delete">x</span>
+          <div class="s-time">{{ fmtTime(s.updated||s.created) }}</div>
+          <div class="s-prompt">{{ (s.title||'').substring(0,50) }}</div>
+          <div class="s-preview" style="font-size:11px;color:var(--fc3)">{{ s.id }}</div>
+        </div>
+      </template>
+      <div v-if="!pinnedSessions.length && !sessions.length" class="session-empty">No sessions yet.<br>Send a message to start one.</div>
+    </div>
+  </div>
+
+  <div class="header">
+    <h1 @click="sessionPanelOpen=true" title="Open sessions">OpenCode</h1>
+    <span class="dot" :class="{run: busy}"></span>
+    <span class="load" v-if="loading">&#8226; &#8226; &#8226;</span>
+    <span class="ver">{{ ocVersion }}</span>
+    <span class="dropdown-trigger" @click.stop="toggleDropdown('session')" title="Click to select session">
+      <b>{{ sessionLabel }}</b> <span class="arr">&#9660;</span>
+      <div class="dropdown" :class="{show: dropdown==='session'}" @click.stop>
+        <template v-if="sessionDropdownList.length">
+          <div v-for="s in sessionDropdownList" :key="s.id" class="d-item" :class="{active: s.id===sessionId}" @click="selectSession(s.id)">
+            <div class="d-title">{{ sessionTitle(s).substring(0,50) }}</div>
+            <div class="d-sub">{{ s.id.slice(0,16) }}...</div>
+          </div>
+          <div class="d-more" @click="viewAll">View all {{ totalSessions }} sessions &rarr;</div>
+        </template>
+        <div v-else class="d-empty">No sessions yet</div>
+      </div>
+    </span>
+    <span class="dropdown-trigger" @click.stop="toggleDropdown('model')" title="Click to select model">
+      <span>{{ currentModel || 'auto' }}</span> <span class="arr">&#9660;</span>
+      <div class="dropdown" id="modelDropdown" :class="{show: dropdown==='model'}" @click.stop>
+        <div class="d-item" :class="{active: !currentModel}" @click="selectModel('')">
+          <div class="d-title">auto</div><div class="d-sub">default model</div>
+        </div>
+        <div v-for="m in cleanModels" :key="m" class="d-item" :class="{active: m===currentModel}" @click="selectModel(m)">
+          <div class="d-title">{{ m }}</div>
+        </div>
+      </div>
+    </span>
+    <div class="spacer"></div>
+    <button @click="clearChat()">Clear</button>
+  </div>
+
+  <div class="messages" ref="messagesEl">
+    <div class="welcome" v-if="!messages.length"><b>OpenCode AI Chat</b><br>Streaming via SSE<br>Click title to view sessions</div>
+    <div v-for="(m, mi) in messages" :key="mi" :class="['msg', m.role]">
+      <template v-if="m.role === 'user'">{{ m.content }}</template>
+      <template v-else>
+        <div v-for="(p, pi) in m.parts" :key="pi">
+          <div v-if="p.t === 'ref'" :class="['ref', p.cls || refClass(p.c)]">{{ p.c }}</div>
+          <pre v-else-if="p.t === 'out'" class="tool-out">{{ p.c }}</pre>
+          <div v-else v-html="renderMd(p.c)"></div>
+        </div>
+        <span class="cursor" v-if="m.streaming"></span>
+        <div class="meta" v-if="m.meta">{{ m.meta }}</div>
+      </template>
+    </div>
+  </div>
+
+  <div class="todo-panel" v-if="todos.length">
+    <div class="todo-head">TODO</div>
+    <div v-for="(t, ti) in todos" :key="ti" class="todo-item">
+      <span class="td">{{ t.status==='completed' ? '✓' : t.status==='in_progress' ? '◐' : '○' }}</span>
+      <span :class="{done: t.status==='completed'}">{{ t.content }}</span>
+    </div>
+  </div>
+
+  <div class="cmd-wrap">
+    <div class="cmd-dropdown" v-if="cmdOpen && cmdFiltered.length">
+      <div class="cmd-item" v-for="(c, ci) in cmdFiltered" :key="c.name" :class="{active: ci === cmdIdx}" @mousedown.prevent="pickCmd(c)">
+        <span class="name">/{{ c.name }}</span>
+        <span class="desc">{{ c.description }}</span>
+      </div>
+    </div>
+    <div class="input-bar">
+      <textarea ref="inputEl" rows="1" placeholder="Type a message... (Ctrl+Enter to send)" v-model="inputText" @input="onInput" @keydown="onKey"></textarea>
+      <button v-if="busy" @click="stop()">Stop</button>
+      <button @click="send()" :disabled="busy">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  var _inited = false
+  var installId = Date.now() + '-' + Math.random().toString(36).slice(2, 8)
+  var notifyTimer = null
+
+  var app = Vue.createApp({
+    data() {
+      return {
+        busy: false, sessionId: '', sessions: [], models: [], currentModel: '', pinnedSessions: [],
+        deleting: {}, messages: [], inputText: '', todos: [], runId: '',
+        commands: [], cmdOpen: false, cmdIdx: -1,
+        histList: [], histIdx: -1, histDraft: '',
+        sessionPanelOpen: false, dropdown: '',
+        notifyMsg: '', notifyShow: false, loading: false,
+        ocVersion: '', installOverlay: true, installErr: '', installProgress: 'This may take a minute'
+      }
+    },
+    computed: {
+      sessionLabel() {
+        var s = this.sessions.find(function(x) { return x.id === this.sessionId }, this) || this.pinnedSessions.find(function(x) { return x.id === this.sessionId }, this)
+        if (s) return (this.sessionTitle(s) || '').substring(0, 25)
+        return this.sessionId ? this.sessionId.slice(0, 10) + '...' : 'No session'
+      },
+      sessionDropdownList() {
+        return this.pinnedSessions.length ? this.pinnedSessions.slice(0, 5) : this.sessions.slice(0, 10)
+      },
+      totalSessions() {
+        return this.pinnedSessions.length + this.sessions.length
+      },
+      cleanModels() {
+        var self = this
+        var out = []
+        this.models.forEach(function(m) { var c = m.replace(/\r/g, ''); if (out.indexOf(c) < 0) out.push(c) })
+        return out
+      },
+      cmdFiltered() {
+        if (!this.cmdOpen) return []
+        var q = this.inputText.replace(/^\s*\//, '').toLowerCase()
+        var out = this.commands.filter(function(c) {
+          return !q || c.name.toLowerCase().indexOf(q) === 0 || c.description.toLowerCase().indexOf(q) >= 0
+        })
+        return out.slice(0, 8)
+      }
+    },
+    methods: {
+      esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') },
+      fmtTime(ts) { if (!ts) return ''; try { return new Date(ts).toLocaleString() } catch(e) { return '' } },
+      sessionTitle(s) { return s.title || s.prompt || s.id },
+      renderMd(t) {
+        if (!t) return ''
+        var html = marked.parse(t, { gfm: true, breaks: false, headerIds: false, mangle: false })
+        html = html.replace(/<pre><code class="language-(\w+)">/g, '<pre><span class="code-lang">$1</span><code>')
+        html = html.replace(/<pre><code class="">/g, '<pre><code>')
+        html = html.replace(/<a href=/g, '<a target="_blank" href=')
+        return html
+      },
+      refClass(c) {
+        var rc = 'ref'
+        if (/^>\s*build/.test(c)) rc += ' info'
+        else if (/^\$\s/.test(c)) rc += ' cmd'
+        else if (/^←/.test(c)) rc += ' edit'
+        else if (/^[◈]/.test(c)) rc += ' tool'
+        else rc += ' act'
+        return rc
+      },
+      toggleDropdown(which) {
+        this.dropdown = this.dropdown === which ? '' : which
+      },
+      viewAll() {
+        this.dropdown = ''
+        this.sessionPanelOpen = true
+        this.loadSessions()
+      },
+      showNotify(msg) {
+        this.notifyMsg = msg
+        this.notifyShow = true
+        clearTimeout(notifyTimer)
+        notifyTimer = setTimeout(() => { this.notifyShow = false }, 6000)
+      },
+      loadSessions() {
+        var self = this
+        return Promise.all([
+          this.fetchFend('sessions', {}, 10000).catch(function(e) { self.showNotify('sessions: ' + e.message); return { pinned: [] } }),
+          this.fetchFend('models', {}, 15000).catch(function(e) { self.showNotify('models: ' + e.message); return { models: [] } })
+        ]).then(function(results) {
+          self.models = (results[1] && results[1].models) || []
+          self.pinnedSessions = (results[0] && results[0].pinned) || []
+          return self.fetchFend('opencode_sessions', {}, 8000).catch(function(e) { self.showNotify('opencode sessions: ' + e.message); return { sessions: [] } })
+        }).then(function(oc) {
+          if (oc && oc.sessions) self.sessions = oc.sessions
+        })
+      },
+      fetchFend(key, data, timeout) {
+        return fetch('', {
+          method: 'post',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({key: key, data: data, timeout: timeout || 60000})
+        }).then(function(r) { return r.json() })
+      },
+      selectModel(m) {
+        this.currentModel = (m || '').replace(/\r/g, '')
+        localStorage.setItem('aichat_last_model', this.currentModel)
+        this.dropdown = ''
+      },
+      selectSession(id) {
+        this.sessionId = id
+        localStorage.setItem('aichat_last_session', id)
+        this.dropdown = ''
+        this.loadSessions()
+      },
+      deleteLocalSession(id) {
+        if (this.deleting[id]) return
+        var self = this
+        this.deleting[id] = true
+        this.fetchFend('delete_session', { id: id }, 10000).then(function() {
+          if (self.sessionId === id) self.sessionId = ''
+          self.loadSessions()
+          self.showNotify('Session deleted')
+        }).catch(function(e) {
+          self.showNotify('Delete failed: ' + e.message)
+        }).then(function() { delete self.deleting[id] })
+      },
+      deleteOCSession(id) {
+        if (this.deleting[id]) return
+        var self = this
+        this.deleting[id] = true
+        this.fetchFend('opencode_delete_session', { id: id }, 10000).then(function(data) {
+          if (data.ok) {
+            if (self.sessionId === id) self.sessionId = ''
+            self.loadSessions()
+            self.showNotify('Session deleted')
+          } else {
+            self.showNotify('Delete failed: ' + (data.error || 'unknown'))
+          }
+        }).catch(function(e) {
+          self.showNotify('Delete failed: ' + e.message)
+        }).then(function() { delete self.deleting[id] })
+      },
+      autosize() {
+        var el = this.$refs.inputEl
+        if (!el) return
+        el.style.height = 'auto'
+        el.style.height = Math.min(el.scrollHeight, 160) + 'px'
+      },
+      onInput() {
+        this.autosize()
+        var q = this.inputText.replace(/^\s*/, '')
+        if (q.charAt(0) === '/') {
+          this.cmdOpen = true
+          this.cmdIdx = 0
+        } else {
+          this.cmdOpen = false
+        }
+      },
+      pickCmd(c) {
+        this.inputText = '/' + c.name + ' '
+        this.cmdOpen = false
+        this.cmdIdx = -1
+        this.autosize()
+        var el = this.$refs.inputEl
+        if (el) el.focus()
+      },
+      loadCommands() {
+        var self = this
+        this.fetchFend('commands', {}, 8000).then(function(data) {
+          if (data && data.ok && Array.isArray(data.commands)) self.commands = data.commands
+        }).catch(function() {})
+      },
+      loadHistory() {
+        try {
+          var arr = JSON.parse(localStorage.getItem('aichat_history') || '[]')
+          if (Array.isArray(arr)) this.histList = arr
+        } catch(e) {}
+        this.histIdx = -1
+        this.histDraft = ''
+      },
+      saveHistory(text) {
+        var t = String(text || '').trim()
+        if (!t) return
+        var arr = this.histList.filter(function(x) { return x !== t })
+        arr.push(t)
+        if (arr.length > 50) arr = arr.slice(arr.length - 50)
+        this.histList = arr
+        this.histIdx = -1
+        this.histDraft = ''
+        try { localStorage.setItem('aichat_history', JSON.stringify(arr)) } catch(e) {}
+      },
+      histNav(dir) {
+        var self = this
+        var list = this.histList
+        if (!list.length) return
+        var el = this.$refs.inputEl
+        if (this.histIdx === -1) this.histDraft = this.inputText
+        if (dir < 0) {
+          this.histIdx = this.histIdx === -1 ? list.length - 1 : this.histIdx - 1
+        } else {
+          this.histIdx = this.histIdx === -1 ? -1 : this.histIdx + 1
+          if (this.histIdx >= list.length) this.histIdx = -1
+        }
+        this.inputText = this.histIdx >= 0 ? list[this.histIdx] : this.histDraft
+        this.cmdOpen = false
+        this.$nextTick(function() {
+          self.autosize()
+          if (el) {
+            el.focus()
+            el.setSelectionRange(el.value.length, el.value.length)
+          }
+        })
+      },
+      onKey(e) {
+        if (this.cmdOpen && this.cmdFiltered.length) {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault()
+            this.cmdIdx = (this.cmdIdx + 1) % this.cmdFiltered.length
+            return
+          }
+          if (e.key === 'ArrowUp') {
+            e.preventDefault()
+            this.cmdIdx = (this.cmdIdx - 1 + this.cmdFiltered.length) % this.cmdFiltered.length
+            return
+          }
+          if (e.key === 'Tab') {
+            e.preventDefault()
+            this.pickCmd(this.cmdFiltered[this.cmdIdx >= 0 ? this.cmdIdx : 0])
+            return
+          }
+          if (e.key === 'Enter' && !(e.ctrlKey || e.metaKey)) {
+            e.preventDefault()
+            this.pickCmd(this.cmdFiltered[this.cmdIdx >= 0 ? this.cmdIdx : 0])
+            return
+          }
+          if (e.key === 'Escape') {
+            e.preventDefault()
+            this.cmdOpen = false
+            this.cmdIdx = -1
+            return
+          }
+        }
+        if (e.key === 'ArrowUp' && !this.cmdOpen) {
+          e.preventDefault()
+          this.histNav(-1)
+          return
+        }
+        if (e.key === 'ArrowDown' && !this.cmdOpen) {
+          e.preventDefault()
+          this.histNav(1)
+          return
+        }
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); this.send() }
+      },
+      scrollBottom() {
+        var self = this
+        this.$nextTick(function() {
+          var el = self.$refs.messagesEl
+          if (el) el.scrollTop = el.scrollHeight
+        })
+      },
+      send() {
+        if (this.busy) return
+        var self = this
+        var prompt = this.inputText.trim()
+        if (!prompt) return
+        if (prompt.length > 1200) {
+          prompt = prompt.slice(0, 1200)
+          this.showNotify('Message exceeds 1200 chars, truncated')
+        }
+        this.cmdOpen = false
+        this.cmdIdx = -1
+        if (/^\/new\s*$/.test(prompt)) {
+          this.inputText = ''
+          this.$nextTick(function() { self.autosize() })
+          this.clearChat()
+          return
+        }
+        this.saveHistory(prompt)
+        this.inputText = ''
+        this.$nextTick(function() { self.autosize() })
+        this.busy = true
+        this.messages.push({ role: 'user', content: prompt })
+        var el = Vue.reactive({ role: 'assistant', parts: [], streaming: true })
+        this.messages.push(el)
+        this.scrollBottom()
+        var startTime = Date.now()
+        var runId = Date.now() + '-' + Math.random().toString(36).slice(2, 8)
+        this.runId = runId
+        this.todos = []
+
+        var es = new EventSource('/sse/elecV2P/' + runId)
+
+        es.onmessage = function(e) {
+          try {
+            var data = JSON.parse(e.data)
+            if (data.type === 'init') return
+            if (data.type === 'ref') {
+              el.parts.push({ t: 'ref', c: data.content, cls: data.cls || '' })
+            }
+            if (data.type === 'out') {
+              var lastOut = el.parts[el.parts.length - 1]
+              if (lastOut && lastOut.t === 'out') lastOut.c += data.content
+              else el.parts.push({ t: 'out', c: data.content })
+            }
+            if (data.type === 'text') {
+              var last = el.parts[el.parts.length - 1]
+              if (last && last.t === 'text') last.c += data.content
+              else el.parts.push({ t: 'text', c: data.content })
+            }
+            if (data.type === 'todo') {
+              self.todos = data.data || []
+            }
+            if (data.type === 'done') {
+              if (data.content) el.parts.push({ t: 'text', c: data.content })
+              el.streaming = false
+              es.close()
+              var meta = Math.round((Date.now() - startTime) / 1000) + 's'
+              if (data.tokens) meta += ' | ⚙ ' + data.tokens.total + ' tokens'
+              if (data.model) meta += ' | ' + data.model
+              if (data.timeout) meta += ' | timed out'
+              el.meta = meta
+              self.busy = false
+              self.runId = ''
+              self.todos = []
+              if (!self.sessionId) {
+                self.loadSessions().then(function() {
+                  if (self.sessions.length > 0) self.selectSession(self.sessions[0].id)
+                })
+              } else {
+                self.loadSessions()
+              }
+              self.scrollBottom()
+              return
+            }
+            if (data.type === 'error') {
+              el.role = 'error'; el.parts = []; el.content = 'Error: ' + data.content; el.streaming = false
+              es.close()
+              self.busy = false
+              self.runId = ''
+              self.todos = []
+              self.scrollBottom()
+              return
+            }
+            self.scrollBottom()
+          } catch(e) {}
+        }
+        es.onerror = function() {}
+
+        this.fetchFend('start', { prompt: prompt, runId: runId, session: this.sessionId, model: this.currentModel }, 120000).then(function(data) {
+          if (!data.ok) {
+            el.role = 'error'; el.parts = []; el.content = 'Error: ' + (data.error || 'failed to start'); el.streaming = false
+            self.busy = false
+            self.runId = ''
+            self.todos = []
+            es.close()
+            self.scrollBottom()
+          }
+        }).catch(function(e) {
+          if (el.parts.length) {
+            el.streaming = false
+            el.meta = 'Connection closed'
+          } else {
+            el.role = 'error'; el.parts = []; el.content = 'Error: ' + e.message
+          }
+          self.busy = false
+          self.runId = ''
+          self.todos = []
+          es.close()
+          self.scrollBottom()
+        })
+      },
+      stop() {
+        var self = this
+        var runId = this.runId
+        var sessionId = this.sessionId
+        this.fetchFend('stop', { runId: runId, session: sessionId }, 15000).then(function(data) {
+          if (!data.ok && !data.error) {
+            self.showNotify('stop failed' + (data.code ? ' (' + data.code + ')' : ''))
+          }
+          self.busy = false
+        }).catch(function(e) {
+          self.showNotify('stop error: ' + e.message)
+          self.busy = false
+        })
+      },
+      clearChat() {
+        this.messages = []
+        this.sessionId = ''
+      },
+      initApp() {
+        if (_inited) return
+        _inited = true
+        this.installOverlay = false
+        this.loading = true
+        var self = this
+        this.loadCommands()
+        this.loadHistory()
+        this.loadSessions().then(function() {
+          self.loading = false
+          var savedSession = localStorage.getItem('aichat_last_session')
+          if (savedSession && savedSession !== self.sessionId && savedSession !== '') {
+            for (var i = 0; i < self.sessions.length; i++) {
+              if (self.sessions[i].id === savedSession) { self.selectSession(savedSession); break }
+            }
+          }
+          var savedModel = localStorage.getItem('aichat_last_model')
+          if (savedModel) self.currentModel = savedModel.replace(/\r/g, '')
+        })
+      }
+    },
+    mounted() {
+      var self = this
+      document.addEventListener('click', function() { self.dropdown = '' })
+
+      var installEs = new EventSource('/sse/elecV2P/' + installId)
+      installEs.onmessage = function(e) {
+        try {
+          var d = JSON.parse(e.data)
+          if (d.type === 'progress') self.installProgress = d.content
+          if (d.type === 'done') {
+            installEs.close()
+            if (d.version) self.ocVersion = d.version
+            self.initApp()
+          }
+          if (d.type === 'error') {
+            installEs.close()
+            self.installErr = d.content
+          }
+        } catch(e) {}
+      }
+      this.fetchFend('ensure_opencode', { installId: installId }, 120000).then(function(data) {
+        if (data && data.ok && !data.installing) {
+          installEs.close()
+          if (data.version) self.ocVersion = data.version
+          self.initApp()
+        }
+      }).catch(function() {})
+    }
+  })
+
+  app.mount('#app')
+</script>
+
+<script favend>
+const { spawn, execSync } = require('child_process')
+
+var OC_HOST = 'http://localhost:14096'
+var OC_BIN = 'opencode'
+
+function stripAnsi(s) { return String(s).replace(/\u001b\[[0-9;]*[a-zA-Z]/g, '').replace(/\r/g, '') }
+function isAlive(pid) { try { process.kill(Number(pid), 0); return true } catch(e) { return false } }
+
+function serverReady() {
+  try {
+    var code = execSync('curl.exe -s -o nul -w "%{http_code}" ' + OC_HOST + '/ --connect-timeout 2 2>nul', { encoding: 'utf-8', timeout: 5000, windowsHide: true, shell: true })
+    console.log('[serverReady] http code:', code.trim())
+    if (code && code.trim() === '200') return true
+  } catch(e) {}
+  return false
+}
+
+function ensureServer() {
+  try {
+    var pid = $store.get('opencode_server_pid')
+    if (pid && isAlive(pid) && serverReady()) return true
+  } catch(e) {}
+  try {
+    var shell = process.env.COMSPEC || process.env.SHELL || (process.platform === 'win32' ? 'cmd.exe' : '/bin/sh')
+    var shellArgs = process.platform === 'win32' ? ['/d', '/s', '/c', OC_BIN + ' serve --port 14096'] : ['-c', OC_BIN + ' serve --port 14096']
+    var env = Object.assign({}, process.env, { NODE_OPTIONS: '--no-warnings' })
+    var proc = spawn(shell, shellArgs, { detached: true, stdio: 'ignore', windowsHide: true, env: env })
+    proc.unref()
+    $store.set('opencode_server_pid', String(proc.pid))
+    var deadline = Date.now() + 15000
+    while (Date.now() < deadline) {
+      if (serverReady()) return true
+      execSync('timeout /t 1 /nobreak >nul 2>&1', { timeout: 2000, windowsHide: true, shell: true })
+    }
+    return false
+  } catch(e) {
+    return false
+  }
+}
+
+$fend('start', (data) => {
+  if (!data || !data.prompt) return { error: 'prompt is required' }
+  var runId = data.runId || Date.now() + '-' + Math.random().toString(36).slice(2, 8)
+  if (!ensureServer()) return { error: 'failed to start opencode server' }
+  var prompt = data.prompt
+  var httpMod = require('http')
+
+  function api(method, path, body) {
+    return new Promise(function(resolve, reject) {
+      var payload = body ? JSON.stringify(body) : ''
+      var opts = {
+        host: '127.0.0.1', port: 14096, path: path, method: method,
+        headers: body ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } : {}
+      }
+      var req = httpMod.request(opts, function(res) {
+        var buf = ''
+        res.on('data', function(c) { buf += c })
+        res.on('end', function() { resolve({ status: res.statusCode, body: buf }) })
+      })
+      req.on('error', reject)
+      if (body) req.write(payload)
+      req.end()
+    })
+  }
+
+  ;(async function() {
+    var sessionId = data.session || ''
+    try {
+      if (!sessionId) {
+        var created = await api('POST', '/session', { title: '' })
+        if (created.status !== 200) throw new Error('create session failed: ' + created.body.slice(0, 120))
+        sessionId = JSON.parse(created.body).id
+      }
+      try { $store.set('aichat_run_' + runId, sessionId) } catch(e) {}
+
+      var streamEnded = false
+      var model = null
+      var seenTools = {}
+      var lastToolOut = {}
+      var tokens = null
+      var watchdog = null
+      var aliveTimer = null
+
+      var es = httpMod.get({
+        host: '127.0.0.1', port: 14096, path: '/event',
+        headers: { 'Accept': 'text/event-stream' }
+      }, function(res) {
+        var buf = ''
+        res.setEncoding('utf8')
+        res.on('data', function(chunk) {
+          try {
+            buf += chunk
+            var idx
+            while ((idx = buf.indexOf('\n\n')) >= 0) {
+              var frame = buf.slice(0, idx)
+              buf = buf.slice(idx + 2)
+              var match = frame.match(/^data:\s*(.+)$/m)
+              if (!match) continue
+              var ev = JSON.parse(match[1].trim())
+              handleEvent(ev)
+            }
+          } catch(e) {}
+        })
+      })
+      function sendRef(line, cls) {
+        $ws.sse(runId, JSON.stringify({ type: 'ref', content: line, cls: cls || '' }))
+      }
+
+      function finish(payload) {
+        if (streamEnded) return
+        streamEnded = true
+        if (watchdog) clearTimeout(watchdog)
+        if (aliveTimer) clearInterval(aliveTimer)
+        try { es.destroy() } catch(e) {}
+        try { $store.delete('aichat_run_' + runId) } catch(e) {}
+        $ws.sse(runId, JSON.stringify(Object.assign({ type: 'done' }, payload || {})))
+      }
+
+      function fail(msg) {
+        if (streamEnded) return
+        streamEnded = true
+        if (watchdog) clearTimeout(watchdog)
+        if (aliveTimer) clearInterval(aliveTimer)
+        try { es.destroy() } catch(e) {}
+        try { $store.delete('aichat_run_' + runId) } catch(e) {}
+        $ws.sse(runId, JSON.stringify({ type: 'error', content: msg }))
+      }
+
+      es.on('error', function(e) {
+        fail('SSE error: ' + e.message)
+      })
+
+      function handleEvent(ev) {
+        var p = ev.properties || {}
+        if (ev.type === 'message.part.delta') {
+          if (p.field === 'text' && p.delta) {
+            $ws.sse(runId, JSON.stringify({ type: 'text', content: p.delta }))
+          } else if (p.field === 'reasoning' && p.delta) {
+            sendRef('✱ reasoning…', 'reasoning')
+          }
+          return
+        }
+        if (ev.type === 'message.part.updated') {
+          var part = p.part || {}
+          var sid2 = part.sessionID || p.sessionID || ev.sessionID
+          if (sid2 && sid2 !== sessionId) return
+          if (part.type === 'step-start') {
+            sendRef('▶ step')
+            return
+          }
+          if (part.type === 'reasoning') {
+            sendRef('✱ reasoning', 'reasoning')
+            return
+          }
+          if (part.type === 'file') {
+            sendRef('▸ file ' + ((part.file && part.file.path) || ''), 'info')
+            return
+          }
+          if (part.type === 'tool') {
+            var st = part.state || {}
+            var inp = st.input || {}
+            var arg = inp.command || inp.filePath || inp.path || inp.url || inp.pattern || inp.query || ''
+            var callId = part.callID || part.id || (part.tool || 'tool')
+            var out = st.output || (st.metadata && st.metadata.output) || ''
+            if (st.status === 'pending' || st.status === 'running') {
+              if (!seenTools[callId] && arg) {
+                seenTools[callId] = true
+                sendRef('◈ ' + (part.tool || 'tool') + ' · ' + arg, 'tool')
+              } else if (!seenTools[callId] && st.status === 'running') {
+                seenTools[callId] = true
+                sendRef('◈ ' + (part.tool || 'tool'), 'tool')
+              }
+              if (out && out !== lastToolOut[callId]) {
+                lastToolOut[callId] = out
+                $ws.sse(runId, JSON.stringify({ type: 'out', content: out }))
+              }
+            } else if (st.status === 'completed') {
+              if (!seenTools[callId]) {
+                seenTools[callId] = true
+                sendRef('◈ ' + (part.tool || 'tool') + (arg ? ' · ' + arg : ''), 'tool')
+              }
+              sendRef('✓ ' + (part.tool || 'tool') + ' done', 'tool')
+              if (out && out !== lastToolOut[callId]) {
+                lastToolOut[callId] = out
+                $ws.sse(runId, JSON.stringify({ type: 'out', content: out }))
+              }
+            } else if (st.status === 'error') {
+              sendRef('✗ ' + (part.tool || 'tool') + ' failed', 'tool')
+              if (out) $ws.sse(runId, JSON.stringify({ type: 'out', content: out }))
+            }
+            return
+          }
+        }
+        if (ev.type === 'message.updated') {
+          var info = p.info || {}
+          if (info.role === 'assistant' && info.error) {
+            fail((info.error.name ? info.error.name + ': ' : '') + (info.error.message || 'opencode error'))
+          }
+          if (info.model && info.model.modelID) model = info.model.providerID + '/' + info.model.modelID
+          return
+        }
+        if (ev.type === 'session.status') {
+          var status = p.status
+          if (typeof status === 'object' && status) status = status.type
+          if (status === 'idle') {
+            finish({ content: '', model: model, tokens: tokens })
+          } else if (status === 'retry') {
+            sendRef('↻ retrying…', 'info')
+          }
+          return
+        }
+        if (ev.type === 'session.idle') {
+          finish({ content: '', model: model, tokens: tokens })
+          return
+        }
+        if (ev.type === 'session.error') {
+          fail((p.error && p.error.message) || 'session error')
+          return
+        }
+        if (ev.type === 'session.compacted') {
+          sendRef('↻ context compacted', 'info')
+          return
+        }
+        if (ev.type === 'todo.updated') {
+          $ws.sse(runId, JSON.stringify({ type: 'todo', data: p.todos || [] }))
+          return
+        }
+        if (ev.type === 'session.next.tool.success') {
+          var op = p.outputPaths
+          if (op && op.length) sendRef('↧ wrote ' + op.join(', '), 'tool')
+          return
+        }
+        if (ev.type === 'session.next.step.ended') {
+          if (p.tokens) tokens = p.tokens
+          return
+        }
+      }
+
+      if (/^\//.test(prompt)) {
+        watchdog = setTimeout(function() {
+          finish({ content: '', model: model, tokens: tokens, timeout: true })
+        }, 600000)
+        var cmdLine = prompt.trim().slice(1)
+        var cmdSpace = cmdLine.indexOf(' ')
+        var cmdName = (cmdSpace >= 0 ? cmdLine.slice(0, cmdSpace) : cmdLine).toLowerCase()
+        var cmdArgs = cmdSpace >= 0 ? cmdLine.slice(cmdSpace + 1).trim() : ''
+        try {
+          if (cmdName === 'compact' || cmdName === 'summarize') {
+            var sumBody = { providerID: 'opencode', modelID: 'deepseek-v4-flash-free' }
+            if (data.model) {
+              var mm = data.model.replace(/\r/g, '')
+              var ms = mm.indexOf('/')
+              if (ms > 0) sumBody = { providerID: mm.slice(0, ms), modelID: mm.slice(ms + 1) }
+            }
+            var sum = await api('POST', '/session/' + sessionId + '/summarize', sumBody)
+            if (sum.status !== 200) {
+              fail('compact failed: ' + sum.body.slice(0, 120))
+            } else {
+              sendRef('✂ context compacted', 'info')
+              finish({ content: '', model: model, tokens: tokens })
+            }
+          } else if (cmdName === 'undo' || cmdName === 'redo') {
+            var msgs = await api('GET', '/session/' + sessionId + '/message?limit=2')
+            var arr = []
+            try { arr = JSON.parse(msgs.body) } catch(e) {}
+            var target = null
+            for (var mi = arr.length - 1; mi >= 0; mi--) {
+              var minf = arr[mi].info || {}
+              if (minf.role === 'user') { target = minf.id; break }
+            }
+            if (!target) {
+              fail('no message to ' + cmdName)
+            } else {
+              var rev = await api('POST', '/session/' + sessionId + '/' + (cmdName === 'undo' ? 'revert' : 'unrevert'), { messageID: target })
+              if (rev.status !== 200) {
+                fail(cmdName + ' failed: ' + rev.body.slice(0, 120))
+              } else {
+                sendRef(cmdName + ' ' + target.slice(0, 8), 'info')
+                finish({ content: '', model: model, tokens: tokens })
+              }
+            }
+          } else {
+            api('POST', '/session/' + sessionId + '/command', { command: cmdName, arguments: cmdArgs, agent: 'build' }).then(function(r) {
+              if (streamEnded) return
+              if (r.status >= 400) fail('/' + cmdName + ' failed: ' + r.body.slice(0, 120))
+            }).catch(function(e) {
+              if (!streamEnded) fail('/' + cmdName + ' error: ' + e.message)
+            })
+          }
+        } catch(e) {
+          fail(e.message || String(e))
+        }
+        return
+      }
+
+      var body = { parts: [{ type: 'text', text: prompt }] }
+      if (data.model) {
+        var m = data.model.replace(/\r/g, '')
+        var slash = m.indexOf('/')
+        if (slash > 0) body.model = { providerID: m.slice(0, slash), modelID: m.slice(slash + 1) }
+      }
+      var sent = await api('POST', '/session/' + sessionId + '/prompt_async', body)
+      if (sent.status === 404) {
+        fail('session not found: ' + sessionId)
+        return
+      }
+      watchdog = setTimeout(function() {
+        finish({ content: '', model: model, tokens: tokens, timeout: true })
+      }, 600000)
+      aliveTimer = setInterval(function() {
+        try {
+          if (typeof $ws.sseExists !== 'function' || $ws.sseExists(runId)) return
+          clearInterval(aliveTimer)
+          aliveTimer = null
+          var ab = httpMod.request({
+            host: '127.0.0.1', port: 14096,
+            path: '/session/' + encodeURIComponent(sessionId) + '/abort',
+            method: 'POST'
+          }, function(r) {
+            r.resume()
+            r.on('end', function() { fail('client disconnected') })
+          })
+          ab.on('error', function() { fail('client disconnected') })
+          ab.end()
+        } catch(e) {}
+      }, 15000)
+    } catch(e) {
+      fail(e.message || String(e))
+    }
+  })()
+  return { ok: true, runId: runId }
+})
+
+$fend('commands', (data) => {
+  var out = [
+    { name: 'compact', description: 'compact the current conversation (via summarize)' },
+    { name: 'new', description: 'start a new session' },
+    { name: 'undo', description: 'undo last message' },
+    { name: 'redo', description: 'redo last undone message' }
+  ]
+  try {
+    var raw = execSync('curl.exe -s ' + OC_HOST + '/command --connect-timeout 3 2>nul', { encoding: 'utf-8', timeout: 8000, windowsHide: true, shell: true })
+    var list = []
+    try { list = JSON.parse(raw.trim()) } catch(e) {}
+    if (Array.isArray(list)) {
+      for (var i = list.length - 1; i >= 0; i--) {
+        out.unshift({ name: list[i].name || '', description: list[i].description || '' })
+      }
+    }
+  } catch(e) {}
+  return { ok: true, commands: out }
+})
+
+$fend('stop', (data) => {
+  if (!data) return { ok: false }
+  var runId = data.runId
+  var sessionId = data.session || ''
+  try {
+    if (!sessionId && runId) sessionId = $store.get('aichat_run_' + runId) || ''
+    if (!sessionId) return { ok: false, error: 'no active session' }
+    var httpMod = require('http')
+    return new Promise(function(resolve, reject) {
+      var req = httpMod.request({
+        host: '127.0.0.1', port: 14096,
+        path: '/session/' + encodeURIComponent(sessionId) + '/abort',
+        method: 'POST'
+      }, function(res) {
+        res.resume()
+        res.on('end', function() { resolve({ ok: res.statusCode === 200, code: res.statusCode }) })
+      })
+      req.on('error', function(e) { reject(e) })
+      req.end()
+    })
+  } catch(e) {
+    return { ok: false, error: e.message }
+  }
+})
+
+$fend('ensure_opencode', (data) => {
+  var runId = data && data.installId
+  try {
+    var version = execSync(OC_BIN + ' --version 2>nul', { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
+    console.log('[ensure_opencode] version:', version.trim())
+    if (version && version.trim()) {
+      if (runId) $ws.sse(runId, JSON.stringify({ type: 'done', version: version.trim() }))
+      return { ok: true, installing: false, version: version.trim() }
+    }
+  } catch(e) {}
+  if (!runId) return { error: 'no installId' }
+  try {
+    var proc = spawn(process.platform === 'win32' ? process.env.COMSPEC : 'sh',
+      process.platform === 'win32' ? ['/d', '/s', '/c', 'npm install -g opencode-ai@latest 2>&1'] : ['-c', 'npm install -g opencode-ai@latest 2>&1'],
+      { timeout: 120000, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
+    function sendProgress(text) {
+      var lines = stripAnsi(text.toString()).split('\n').filter(Boolean)
+      for (var i = 0; i < lines.length; i++) {
+        console.log('[npm install]', lines[i].trim())
+        $ws.sse(runId, JSON.stringify({ type: 'progress', content: lines[i].trim() }))
+      }
+    }
+    proc.stdout.on('data', sendProgress)
+    proc.stderr.on('data', sendProgress)
+    proc.on('close', function(code) {
+      try {
+        if (code === 0) {
+          var ver = execSync(OC_BIN + ' --version 2>nul', { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
+          console.log('[npm install] done, version:', (ver || 'unknown').trim())
+          $ws.sse(runId, JSON.stringify({ type: 'done', version: (ver || 'unknown').trim() }))
+        } else {
+          $ws.sse(runId, JSON.stringify({ type: 'error', content: 'npm install failed (code ' + code + ')' }))
+        }
+      } catch(e) {
+        $ws.sse(runId, JSON.stringify({ type: 'error', content: e.message }))
+      }
+    })
+    proc.on('error', function(e) {
+      $ws.sse(runId, JSON.stringify({ type: 'error', content: e.message }))
+    })
+    return { ok: true, installing: true }
+  } catch(e) {
+    $ws.sse(runId, JSON.stringify({ type: 'error', content: e.message }))
+    return { ok: true, installing: true }
+  }
+})
+
+$fend('models', () => {
+  var now = Date.now()
+  var cached, cachedTime
+  try { cached = JSON.parse($store.get('aichat_models_cache') || 'null') } catch(e) {}
+  try { cachedTime = Number($store.get('aichat_models_time') || 0) } catch(e) {}
+  if (cached && now - cachedTime < 60000) return { models: cached, cached: true }
+  if (cached) {
+    try {
+      var raw = execSync(OC_BIN + ' models 2>nul', { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
+      console.log('[models cached-refresh] raw:', raw.trim())
+      if (raw && raw.trim()) {
+        var list = raw.trim().split('\n').filter(Boolean).map(function(s) { return s.trim() })
+        $store.set('aichat_models_cache', JSON.stringify(list))
+        $store.set('aichat_models_time', String(Date.now()))
+        return { models: list }
+      }
+    } catch(e) {}
+    return { models: cached }
+  }
+  try {
+    var raw = execSync(OC_BIN + ' models 2>nul', { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
+    console.log('[models] raw:', raw.trim())
+    if (!raw || !raw.trim()) return { models: [] }
+    var list = raw.trim().split('\n').filter(Boolean).map(function(s) { return s.trim() })
+    $store.set('aichat_models_cache', JSON.stringify(list))
+    $store.set('aichat_models_time', String(now))
+    return { models: list }
+  } catch(e) {
+    return { models: cached || [] }
+  }
+})
+
+$fend('sessions', () => {
+  try {
+    var raw = $store.get('aichat_sessions') || '[]'
+    var local = JSON.parse(raw)
+    var raw2 = $store.get('aichat_pinned_sessions') || '[]'
+    var pinned = JSON.parse(raw2)
+    return { sessions: local, pinned: pinned }
+  } catch(e) {
+    return { sessions: [], pinned: [] }
+  }
+})
+
+$fend('delete_session', (data) => {
+  if (!data || !data.id) return { ok: false }
+  try {
+    var raw = $store.get('aichat_sessions') || '[]'
+    var list = JSON.parse(raw)
+    list = list.filter(function(s) { return s.id !== data.id })
+    $store.set('aichat_sessions', JSON.stringify(list))
+    return { ok: true }
+  } catch(e) {
+    return { ok: false, error: e.message }
+  }
+})
+
+$fend('opencode_sessions', () => {
+  var now = Date.now()
+  var cached, cachedTime
+  try { cached = JSON.parse($store.get('aichat_oc_sessions_cache') || 'null') } catch(e) {}
+  try { cachedTime = Number($store.get('aichat_oc_sessions_time') || 0) } catch(e) {}
+
+  if (cached && now - cachedTime < 15000) return { sessions: cached, cached: true }
+  if (cached) {
+    try {
+      var raw = execSync(OC_BIN + ' session list --format json -n 30 2>nul', { encoding: 'utf-8', timeout: 8000, windowsHide: true, shell: true })
+      console.log('[opencode_sessions cached-refresh] raw:', raw.trim())
+      if (raw && raw.trim()) {
+        var list = JSON.parse(raw.trim())
+        $store.set('aichat_oc_sessions_cache', raw.trim())
+        $store.set('aichat_oc_sessions_time', String(Date.now()))
+        return { sessions: list }
+      }
+    } catch(e) {}
+    return { sessions: cached }
+  }
+  try {
+    var raw = execSync(OC_BIN + ' session list --format json -n 30 2>nul', { encoding: 'utf-8', timeout: 8000, windowsHide: true, shell: true })
+    console.log('[opencode_sessions] raw:', raw.trim())
+    if (!raw || !raw.trim()) return { sessions: [] }
+    var sessions = JSON.parse(raw.trim())
+    $store.set('aichat_oc_sessions_cache', raw.trim())
+    $store.set('aichat_oc_sessions_time', String(now))
+    return { sessions: sessions }
+  } catch(e) {
+    return { sessions: cached || [] }
+  }
+})
+
+$fend('opencode_delete_session', (data) => {
+  if (!data || !data.id) return { ok: false }
+  try {
+    execSync(OC_BIN + ' session delete ' + data.id + ' 2>nul', { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
+    return { ok: true }
+  } catch(e) {
+    return { ok: false, error: e.message }
+  }
+})
+</script>
+
+</body>
+</html>
+
