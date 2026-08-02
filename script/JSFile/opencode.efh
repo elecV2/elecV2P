@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>OpenCode By elecV2</title>
+  <title>OpenCode.efh By elecV2</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
   <style>
@@ -332,7 +332,7 @@
       <span class="ctx-bar" :class="{ warn: ctxPct >= 80 && ctxPct < 95, danger: ctxPct >= 95 }"><i :style="ctxStyle"></i></span>
       <span class="ctx-num">{{ ctxLabel }} · {{ ctxPct }}%</span>
     </span>
-    <button @click="clearChat()">Clear</button>
+    <button @click="compactChat()">compact</button>
   </div>
 
   <div class="messages" ref="messagesEl">
@@ -375,11 +375,11 @@
 </div>
 
 <script>
-  var _inited = false
-  var installId = Date.now() + '-' + Math.random().toString(36).slice(2, 8)
-  var notifyTimer = null
+  let _inited = false
+  const installId = Date.now() + '-' + Math.random().toString(36).slice(2, 8)
+  let notifyTimer = null
 
-  var app = Vue.createApp({
+  const app = Vue.createApp({
     data() {
       return {
         busy: false, sessionId: '', sessions: [], models: [], currentModel: '', pinnedSessions: [],
@@ -394,7 +394,7 @@
     },
     computed: {
       sessionLabel() {
-        var s = this.sessions.find(function(x) { return x.id === this.sessionId }, this) || this.pinnedSessions.find(function(x) { return x.id === this.sessionId }, this)
+        const s = this.sessions.find(function(x) { return x.id === this.sessionId }, this) || this.pinnedSessions.find(function(x) { return x.id === this.sessionId }, this)
         if (s) return (this.sessionTitle(s) || '').substring(0, 25)
         return this.sessionId ? this.sessionId.slice(0, 10) + '...' : 'No session'
       },
@@ -405,15 +405,15 @@
         return this.pinnedSessions.length + this.sessions.length
       },
       cleanModels() {
-        var self = this
-        var out = []
-        this.models.forEach(function(m) { var c = m.replace(/\r/g, ''); if (out.indexOf(c) < 0) out.push(c) })
+        const self = this
+        const out = []
+        this.models.forEach((m) => { const c = m.replace(/\r/g, ''); if (out.indexOf(c) < 0) out.push(c) })
         return out
       },
       cmdFiltered() {
         if (!this.cmdOpen) return []
-        var q = this.inputText.replace(/^\s*\//, '').toLowerCase()
-        var out = this.commands.filter(function(c) {
+        const q = this.inputText.replace(/^\s*\//, '').toLowerCase()
+        const out = this.commands.filter((c) => {
           return !q || c.name.toLowerCase().indexOf(q) === 0 || c.description.toLowerCase().indexOf(q) >= 0
         })
         return out.slice(0, 8)
@@ -437,14 +437,14 @@
       sessionTitle(s) { return s.title || s.prompt || s.id },
       renderMd(t) {
         if (!t) return ''
-        var html = marked.parse(t, { gfm: true, breaks: false, headerIds: false, mangle: false })
+        let html = marked.parse(t, { gfm: true, breaks: false, headerIds: false, mangle: false })
         html = html.replace(/<pre><code class="language-(\w+)">/g, '<pre><span class="code-lang">$1</span><code>')
         html = html.replace(/<pre><code class="">/g, '<pre><code>')
         html = html.replace(/<a href=/g, '<a target="_blank" href=')
         return html
       },
       refClass(c) {
-        var rc = 'ref'
+        let rc = 'ref'
         if (/^>\s*build/.test(c)) rc += ' info'
         else if (/^\$\s/.test(c)) rc += ' cmd'
         else if (/^←/.test(c)) rc += ' edit'
@@ -467,15 +467,15 @@
         notifyTimer = setTimeout(() => { this.notifyShow = false }, 6000)
       },
       loadSessions() {
-        var self = this
+        const self = this
         return Promise.all([
-          this.fetchFend('sessions', {}, 10000).catch(function(e) { self.showNotify('sessions: ' + e.message); return { pinned: [] } }),
-          this.fetchFend('models', {}, 15000).catch(function(e) { self.showNotify('models: ' + e.message); return { models: [] } })
-        ]).then(function(results) {
+          this.fetchFend('sessions', {}, 10000).catch((e) => { self.showNotify('sessions: ' + e.message); return { pinned: [] } }),
+          this.fetchFend('models', {}, 15000).catch((e) => { self.showNotify('models: ' + e.message); return { models: [] } })
+        ]).then((results) => {
           self.models = (results[1] && results[1].models) || []
           self.pinnedSessions = (results[0] && results[0].pinned) || []
-          return self.fetchFend('opencode_sessions', {}, 8000).catch(function(e) { self.showNotify('opencode sessions: ' + e.message); return { sessions: [] } })
-        }).then(function(oc) {
+          return self.fetchFend('opencode_sessions', {}, 8000).catch((e) => { self.showNotify('opencode sessions: ' + e.message); return { sessions: [] } })
+        }).then((oc) => {
           if (oc && oc.sessions) self.sessions = oc.sessions
         })
       },
@@ -484,7 +484,7 @@
           method: 'post',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({key: key, data: data, timeout: timeout || 60000})
-        }).then(function(r) { return r.json() })
+        }).then((r) => { return r.json() })
       },
       selectModel(m) {
         this.currentModel = (m || '').replace(/\r/g, '')
@@ -500,21 +500,21 @@
       },
       deleteLocalSession(id) {
         if (this.deleting[id]) return
-        var self = this
+        const self = this
         this.deleting[id] = true
-        this.fetchFend('delete_session', { id: id }, 10000).then(function() {
+        this.fetchFend('delete_session', { id: id }, 10000).then(() => {
           if (self.sessionId === id) self.sessionId = ''
           self.loadSessions()
           self.showNotify('Session deleted')
-        }).catch(function(e) {
+        }).catch((e) => {
           self.showNotify('Delete failed: ' + e.message)
-        }).then(function() { delete self.deleting[id] })
+        }).then(() => { delete self.deleting[id] })
       },
       deleteOCSession(id) {
         if (this.deleting[id]) return
-        var self = this
+        const self = this
         this.deleting[id] = true
-        this.fetchFend('opencode_delete_session', { id: id }, 10000).then(function(data) {
+        this.fetchFend('opencode_delete_session', { id: id }, 10000).then((data) => {
           if (data.ok) {
             if (self.sessionId === id) self.sessionId = ''
             self.loadSessions()
@@ -522,19 +522,19 @@
           } else {
             self.showNotify('Delete failed: ' + (data.error || 'unknown'))
           }
-        }).catch(function(e) {
+        }).catch((e) => {
           self.showNotify('Delete failed: ' + e.message)
-        }).then(function() { delete self.deleting[id] })
+        }).then(() => { delete self.deleting[id] })
       },
       autosize() {
-        var el = this.$refs.inputEl
+        const el = this.$refs.inputEl
         if (!el) return
         el.style.height = 'auto'
         el.style.height = Math.min(el.scrollHeight, 160) + 'px'
       },
       onInput() {
         this.autosize()
-        var q = this.inputText.replace(/^\s*/, '')
+        const q = this.inputText.replace(/^\s*/, '')
         if (q.charAt(0) === '/') {
           this.cmdOpen = true
           this.cmdIdx = 0
@@ -547,27 +547,27 @@
         this.cmdOpen = false
         this.cmdIdx = -1
         this.autosize()
-        var el = this.$refs.inputEl
+        const el = this.$refs.inputEl
         if (el) el.focus()
       },
       loadCommands() {
-        var self = this
-        this.fetchFend('commands', {}, 8000).then(function(data) {
+        const self = this
+        this.fetchFend('commands', {}, 8000).then((data) => {
           if (data && data.ok && Array.isArray(data.commands)) self.commands = data.commands
-        }).catch(function() {})
+        }).catch(() => {})
       },
       loadHistory() {
         try {
-          var arr = JSON.parse(localStorage.getItem('aichat_history') || '[]')
+          let arr = JSON.parse(localStorage.getItem('aichat_history') || '[]')
           if (Array.isArray(arr)) this.histList = arr
         } catch(e) {}
         this.histIdx = -1
         this.histDraft = ''
       },
       saveHistory(text) {
-        var t = String(text || '').trim()
+        const t = String(text || '').trim()
         if (!t) return
-        var arr = this.histList.filter(function(x) { return x !== t })
+        let arr = this.histList.filter((x) => { return x !== t })
         arr.push(t)
         if (arr.length > 50) arr = arr.slice(arr.length - 50)
         this.histList = arr
@@ -576,10 +576,10 @@
         try { localStorage.setItem('aichat_history', JSON.stringify(arr)) } catch(e) {}
       },
       histNav(dir) {
-        var self = this
-        var list = this.histList
+        const self = this
+        const list = this.histList
         if (!list.length) return
-        var el = this.$refs.inputEl
+        const el = this.$refs.inputEl
         if (this.histIdx === -1) this.histDraft = this.inputText
         if (dir < 0) {
           this.histIdx = this.histIdx === -1 ? list.length - 1 : this.histIdx - 1
@@ -589,7 +589,7 @@
         }
         this.inputText = this.histIdx >= 0 ? list[this.histIdx] : this.histDraft
         this.cmdOpen = false
-        this.$nextTick(function() {
+        this.$nextTick(() => {
           self.autosize()
           if (el) {
             el.focus()
@@ -648,29 +648,29 @@
         }
       },
       insertNewline() {
-        var el = this.$refs.inputEl
+        const el = this.$refs.inputEl
         if (!el) return
-        var start = el.selectionStart
-        var end = el.selectionEnd
+        const start = el.selectionStart
+        const end = el.selectionEnd
         this.inputText = this.inputText.slice(0, start) + '\n' + this.inputText.slice(end)
         this.autosize()
-        var self = this
-        this.$nextTick(function() {
+        const self = this
+        this.$nextTick(() => {
           el.focus()
           el.setSelectionRange(start + 1, start + 1)
         })
       },
       scrollBottom() {
-        var self = this
-        this.$nextTick(function() {
-          var el = self.$refs.messagesEl
+        const self = this
+        this.$nextTick(() => {
+          const el = self.$refs.messagesEl
           if (el) el.scrollTop = el.scrollHeight
         })
       },
       send() {
         if (this.busy) return
-        var self = this
-        var prompt = this.inputText.trim()
+        const self = this
+        let prompt = this.inputText.trim()
         if (!prompt) return
         if (prompt.length > 1200) {
           prompt = prompt.slice(0, 1200)
@@ -680,40 +680,40 @@
         this.cmdIdx = -1
         if (/^\/new\s*$/.test(prompt)) {
           this.inputText = ''
-          this.$nextTick(function() { self.autosize() })
+          this.$nextTick(() => { self.autosize() })
           this.clearChat()
           return
         }
         this.saveHistory(prompt)
         this.inputText = ''
-        this.$nextTick(function() { self.autosize() })
+        this.$nextTick(() => { self.autosize() })
         this.busy = true
         this.messages.push({ role: 'user', content: prompt })
-        var el = Vue.reactive({ role: 'assistant', parts: [], streaming: true })
+        const el = Vue.reactive({ role: 'assistant', parts: [], streaming: true })
         this.messages.push(el)
         this.scrollBottom()
-        var startTime = Date.now()
-        var runId = Date.now() + '-' + Math.random().toString(36).slice(2, 8)
+        const startTime = Date.now()
+        const runId = Date.now() + '-' + Math.random().toString(36).slice(2, 8)
         this.runId = runId
         this.todos = []
         if (this.currentModel) this.ctxModel = this.currentModel
 
-        var es = new EventSource('/sse/elecV2P/' + runId)
+        const es = new EventSource('/sse/elecV2P/' + runId)
 
-        es.onmessage = function(e) {
+        es.onmessage = (e) => {
           try {
-            var data = JSON.parse(e.data)
+            const data = JSON.parse(e.data)
             if (data.type === 'init') return
             if (data.type === 'ref') {
               el.parts.push({ t: 'ref', c: data.content, cls: data.cls || '' })
             }
             if (data.type === 'out') {
-              var lastOut = el.parts[el.parts.length - 1]
+              const lastOut = el.parts[el.parts.length - 1]
               if (lastOut && lastOut.t === 'out') lastOut.c += data.content
               else el.parts.push({ t: 'out', c: data.content })
             }
             if (data.type === 'text') {
-              var last = el.parts[el.parts.length - 1]
+              const last = el.parts[el.parts.length - 1]
               if (last && last.t === 'text') last.c += data.content
               else el.parts.push({ t: 'text', c: data.content })
             }
@@ -734,7 +734,7 @@
               if (data.content) el.parts.push({ t: 'text', c: data.content })
               el.streaming = false
               es.close()
-              var meta = Math.round((Date.now() - startTime) / 1000) + 's'
+              let meta = Math.round((Date.now() - startTime) / 1000) + 's'
               if (data.tokens) meta += ' | ⚙ ' + data.tokens.total + ' tokens'
               if (data.steps) meta += ' | ' + data.steps + ' steps'
               if (data.model) meta += ' | ' + data.model
@@ -748,7 +748,7 @@
               self.runId = ''
               self.todos = []
               if (!self.sessionId) {
-                self.loadSessions().then(function() {
+                self.loadSessions().then(() => {
                   if (self.sessions.length > 0) self.selectSession(self.sessions[0].id)
                 })
               } else {
@@ -770,9 +770,9 @@
             self.scrollBottom()
           } catch(e) {}
         }
-        es.onerror = function() {}
+        es.onerror = () => {}
 
-        this.fetchFend('start', { prompt: prompt, runId: runId, session: this.sessionId, model: this.currentModel }, 120000).then(function(data) {
+        this.fetchFend('start', { prompt: prompt, runId: runId, session: this.sessionId, model: this.currentModel }, 120000).then((data) => {
           if (!data.ok) {
             el.role = 'error'; el.streaming = false
             el.parts = [{ t: 'text', c: 'Error: ' + (data.error || 'failed to start') }]
@@ -781,8 +781,10 @@
             self.todos = []
             es.close()
             self.scrollBottom()
+          } else if (data.sessionId) {
+            self.sessionId = data.sessionId
           }
-        }).catch(function(e) {
+        }).catch((e) => {
           if (el.parts.length) {
             el.streaming = false
             el.meta = 'Connection closed'
@@ -798,15 +800,15 @@
         })
       },
       stop() {
-        var self = this
-        var runId = this.runId
-        var sessionId = this.sessionId
-        this.fetchFend('stop', { runId: runId, session: sessionId }, 15000).then(function(data) {
+        const self = this
+        const runId = this.runId
+        const sessionId = this.sessionId
+        this.fetchFend('stop', { runId: runId, session: sessionId }, 15000).then((data) => {
           if (!data.ok && !data.error) {
             self.showNotify('stop failed' + (data.code ? ' (' + data.code + ')' : ''))
           }
           self.busy = false
-        }).catch(function(e) {
+        }).catch((e) => {
           self.showNotify('stop error: ' + e.message)
           self.busy = false
         })
@@ -815,52 +817,61 @@
         this.messages = []
         this.sessionId = ''
       },
+      compactChat() {
+        const self = this
+        this.messages = []
+        this.todos = []
+        this.inputText = '/compact'
+        this.$nextTick(() => {
+          self.send()
+        })
+      },
       initApp() {
         if (_inited) return
         _inited = true
         this.installOverlay = false
         this.loading = true
-        var self = this
+        const self = this
         this.loadCommands()
         this.loadHistory()
-        this.loadSessions().then(function() {
+        this.loadSessions().then(() => {
           self.loading = false
-          var savedSession = localStorage.getItem('aichat_last_session')
+          const savedSession = localStorage.getItem('aichat_last_session')
           if (savedSession && savedSession !== self.sessionId && savedSession !== '') {
-            for (var i = 0; i < self.sessions.length; i++) {
+            for (let i = 0; i < self.sessions.length; i++) {
               if (self.sessions[i].id === savedSession) { self.selectSession(savedSession); break }
             }
           }
-          var savedModel = localStorage.getItem('aichat_last_model')
+          const savedModel = localStorage.getItem('aichat_last_model')
           if (savedModel) self.currentModel = savedModel.replace(/\r/g, '')
           self.refreshCtx()
         })
       },
       refreshCtx() {
-        var self = this
-        this.fetchFend('ctxinfo', { model: this.currentModel }, 10000).then(function(data) {
+        const self = this
+        this.fetchFend('ctxinfo', { model: this.currentModel }, 10000).then((data) => {
           if (data && data.limit) {
             self.ctxUsed = 0
             self.ctxLimit = data.limit
             self.ctxPct = 0
             if (data.model) self.ctxModel = data.model
           } else {
-            var saved = localStorage.getItem('aichat_ctx_limit')
+            const saved = localStorage.getItem('aichat_ctx_limit')
             if (saved) self.ctxLimit = Number(saved)
-            var savedModel = localStorage.getItem('aichat_ctx_model')
+            const savedModel = localStorage.getItem('aichat_ctx_model')
             if (savedModel && !self.ctxModel) self.ctxModel = savedModel
           }
-        }).catch(function() {})
+        }).catch(() => {})
       },
     },
     mounted() {
-      var self = this
-      document.addEventListener('click', function() { self.dropdown = '' })
+      const self = this
+      document.addEventListener('click', () => { self.dropdown = '' })
 
-      var installEs = new EventSource('/sse/elecV2P/' + installId)
-      installEs.onmessage = function(e) {
+      const installEs = new EventSource('/sse/elecV2P/' + installId)
+      installEs.onmessage = (e) => {
         try {
-          var d = JSON.parse(e.data)
+          const d = JSON.parse(e.data)
           if (d.type === 'progress') self.installProgress = d.content
           if (d.type === 'done') {
             installEs.close()
@@ -873,13 +884,13 @@
           }
         } catch(e) {}
       }
-      this.fetchFend('ensure_opencode', { installId: installId }, 120000).then(function(data) {
+      this.fetchFend('ensure_opencode', { installId: installId }, 120000).then((data) => {
         if (data && data.ok && !data.installing) {
           installEs.close()
           if (data.version) self.ocVersion = data.version
           self.initApp()
         }
-      }).catch(function() {})
+      }).catch(() => {})
     }
   })
 
@@ -889,37 +900,53 @@
 <script favend>
 const { spawn, execSync } = require('child_process')
 
-var OC_HOST = 'http://localhost:14096'
-var OC_BIN = 'opencode'
+const OC_HOST = 'http://localhost:14096'
+const OC_BIN = 'opencode'
 
-function stripAnsi(s) { return String(s).replace(/\u001b\[[0-9;]*[a-zA-Z]/g, '').replace(/\r/g, '') }
-function isAlive(pid) { try { process.kill(Number(pid), 0); return true } catch(e) { return false } }
+const stripAnsi = (s) => { return String(s).replace(/\u001b\[[0-9;]*[a-zA-Z]/g, '').replace(/\r/g, '') }
+const isAlive = (pid) => { try { process.kill(Number(pid), 0); return true } catch(e) { return false } }
 
-function serverReady() {
+const IS_WIN = process.platform === 'win32'
+const DEVNULL = IS_WIN ? 'nul' : '/dev/null'
+const curlCmd = (extra) => {
+  return (IS_WIN ? 'curl.exe' : 'curl') + ' -s ' + (extra || '') + ' --connect-timeout 3 2>' + DEVNULL
+}
+const redirCmd = (cmd) => { return cmd + ' 2>' + DEVNULL }
+const sleepCmd = (sec) => { return IS_WIN ? 'timeout /t ' + sec + ' /nobreak >nul 2>&1' : 'sleep ' + sec }
+
+const serverReady = () => {
   try {
-    var code = execSync('curl.exe -s -o nul -w "%{http_code}" ' + OC_HOST + '/ --connect-timeout 2 2>nul', { encoding: 'utf-8', timeout: 5000, windowsHide: true, shell: true })
+    const code = execSync(curlCmd('-o ' + DEVNULL + ' -w "%{http_code}" ' + OC_HOST + '/'), { encoding: 'utf-8', timeout: 5000, windowsHide: true, shell: true })
     console.log('[serverReady] http code:', code.trim())
     if (code && code.trim() === '200') return true
   } catch(e) {}
   return false
 }
 
-function ensureServer() {
+const ensureServer = () => {
   try {
-    var pid = $store.get('opencode_server_pid')
+    const pid = $store.get('opencode_server_pid')
     if (pid && isAlive(pid) && serverReady()) return true
   } catch(e) {}
+  if (serverReady()) {
+    try {
+      const found = execSync(IS_WIN ? 'netstat -ano | findstr :14096' : 'lsof -t -iTCP:14096', { encoding: 'utf-8', timeout: 5000, windowsHide: true, shell: true })
+      const fpid = String(found).trim().split(/\s+/).pop()
+      if (fpid && fpid !== pid) $store.set('opencode_server_pid', fpid)
+    } catch(e) {}
+    return true
+  }
   try {
-    var shell = process.env.COMSPEC || process.env.SHELL || (process.platform === 'win32' ? 'cmd.exe' : '/bin/sh')
-    var shellArgs = process.platform === 'win32' ? ['/d', '/s', '/c', OC_BIN + ' serve --port 14096'] : ['-c', OC_BIN + ' serve --port 14096']
-    var env = Object.assign({}, process.env, { NODE_OPTIONS: '--no-warnings' })
-    var proc = spawn(shell, shellArgs, { detached: true, stdio: 'ignore', windowsHide: true, env: env })
+    const shell = process.env.COMSPEC || process.env.SHELL || (IS_WIN ? 'cmd.exe' : '/bin/sh')
+    const shellArgs = IS_WIN ? ['/d', '/s', '/c', OC_BIN + ' serve --port 14096'] : ['-c', OC_BIN + ' serve --port 14096']
+    const env = Object.assign({}, process.env, { NODE_OPTIONS: '--no-warnings' })
+    const proc = spawn(shell, shellArgs, { detached: true, stdio: 'ignore', windowsHide: true, env: env })
     proc.unref()
     $store.set('opencode_server_pid', String(proc.pid))
-    var deadline = Date.now() + 15000
+    const deadline = Date.now() + 15000
     while (Date.now() < deadline) {
       if (serverReady()) return true
-      execSync('timeout /t 1 /nobreak >nul 2>&1', { timeout: 2000, windowsHide: true, shell: true })
+      execSync(sleepCmd(1), { timeout: 2000, windowsHide: true, shell: true })
     }
     return false
   } catch(e) {
@@ -927,36 +954,36 @@ function ensureServer() {
   }
 }
 
-function parseModel(modelStr) {
-  var pid = 'opencode', mid = ''
+const parseModel = (modelStr) => {
+  let pid = 'opencode', mid = ''
   if (modelStr) {
-    var sl = modelStr.indexOf('/')
+    const sl = modelStr.indexOf('/')
     if (sl > 0) { pid = modelStr.slice(0, sl); mid = modelStr.slice(sl + 1) }
     else mid = modelStr
   }
   return { pid: pid, mid: mid }
 }
 
-function getCtxLimit(modelStr) {
-  return new Promise(function(resolve) {
-    var pm = parseModel(modelStr)
+const getCtxLimit = (modelStr) => {
+  return new Promise((resolve) => {
+    const pm = parseModel(modelStr)
     if (!pm.mid) return resolve(0)
-    var cacheKey = 'aichat_ctx_limit_' + pm.pid + '_' + pm.mid
+    const cacheKey = 'aichat_ctx_limit_' + pm.pid + '_' + pm.mid
     try {
-      var cached = Number($store.get(cacheKey))
+      const cached = Number($store.get(cacheKey))
       if (cached > 0) return resolve(cached)
     } catch(e) {}
-    var httpMod = require('http')
-    var req = httpMod.get({ host: '127.0.0.1', port: 14096, path: '/provider' }, function(res) {
-      var buf = ''
-      res.on('data', function(c) { buf += c })
-      res.on('end', function() {
+    const httpMod = require('http')
+    const req = httpMod.get({ host: '127.0.0.1', port: 14096, path: '/provider' }, (res) => {
+      let buf = ''
+      res.on('data', (c) => { buf += c })
+      res.on('end', () => {
         try {
-          var all = JSON.parse(buf).all || []
-          for (var i = 0; i < all.length; i++) {
-            var prov = all[i]
+          const all = JSON.parse(buf).all || []
+          for (let i = 0; i < all.length; i++) {
+            const prov = all[i]
             if (prov.id === pm.pid && prov.models && prov.models[pm.mid] && prov.models[pm.mid].limit && prov.models[pm.mid].limit.context) {
-              var limit = prov.models[pm.mid].limit.context
+              const limit = prov.models[pm.mid].limit.context
               try { $store.set(cacheKey, String(limit)) } catch(e2) {}
               return resolve(limit)
             }
@@ -965,37 +992,37 @@ function getCtxLimit(modelStr) {
         resolve(0)
       })
     })
-    req.on('error', function() { resolve(0) })
-    req.setTimeout(8000, function() { req.destroy(); resolve(0) })
+    req.on('error', () => { resolve(0) })
+    req.setTimeout(8000, () => { req.destroy(); resolve(0) })
   })
 }
 
 $fend('ctxinfo', (data) => {
-  var modelStr = data && data.model ? data.model : ''
-  var pm = parseModel(modelStr)
-  return getCtxLimit(modelStr).then(function(limit) {
+  const modelStr = data && data.model ? data.model : ''
+  const pm = parseModel(modelStr)
+  return getCtxLimit(modelStr).then((limit) => {
     return { model: pm.mid || '', limit: limit }
   })
 })
 
 $fend('start', (data) => {
   if (!data || !data.prompt) return { error: 'prompt is required' }
-  var runId = data.runId || Date.now() + '-' + Math.random().toString(36).slice(2, 8)
+  const runId = data.runId || Date.now() + '-' + Math.random().toString(36).slice(2, 8)
   if (!ensureServer()) return { error: 'failed to start opencode server' }
-  var prompt = data.prompt
-  var httpMod = require('http')
+  const prompt = data.prompt
+  const httpMod = require('http')
 
-  function api(method, path, body) {
-    return new Promise(function(resolve, reject) {
-      var payload = body ? JSON.stringify(body) : ''
-      var opts = {
+  const api = (method, path, body) => {
+    return new Promise((resolve, reject) => {
+      const payload = body ? JSON.stringify(body) : ''
+      const opts = {
         host: '127.0.0.1', port: 14096, path: path, method: method,
         headers: body ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } : {}
       }
-      var req = httpMod.request(opts, function(res) {
-        var buf = ''
-        res.on('data', function(c) { buf += c })
-        res.on('end', function() { resolve({ status: res.statusCode, body: buf }) })
+      const req = httpMod.request(opts, (res) => {
+        let buf = ''
+        res.on('data', (c) => { buf += c })
+        res.on('end', () => { resolve({ status: res.statusCode, body: buf }) })
       })
       req.on('error', reject)
       if (body) req.write(payload)
@@ -1003,87 +1030,91 @@ $fend('start', (data) => {
     })
   }
 
-  ;(async function() {
-    var sessionId = data.session || ''
+  const streamRun = (sessionId) => {
+    ;(async () => {
     try {
-      if (!sessionId) {
-        var created = await api('POST', '/session', { title: '' })
-        if (created.status !== 200) throw new Error('create session failed: ' + created.body.slice(0, 120))
-        sessionId = JSON.parse(created.body).id
-      }
-      try { $store.set('aichat_run_' + runId, sessionId) } catch(e) {}
-      var ctxLimit = await getCtxLimit(data.model)
+      let ctxLimit = await getCtxLimit(data.model)
 
-      var streamEnded = false
-      var model = null
-      var modelShown = false
-      var stepCount = 0
-      var seenTools = {}
-      var lastToolOut = {}
-      var tokens = null
-      var watchdog = null
-      var aliveTimer = null
+      let streamEnded = false
+      let model = null
+      let modelShown = false
+      let stepCount = 0
+      const seenTools = {}
+      const lastToolOut = {}
+      let tokens = null
+      let watchdog = null
+      let aliveTimer = null
 
-      function emitCtx(used) {
-        if (!used) return
+      const pushCtx = (used, limit) => {
         $ws.sse(runId, JSON.stringify({
-          type: 'ctx', used: used, limit: ctxLimit,
-          pct: ctxLimit ? Math.round(used / ctxLimit * 1000) / 10 : 0,
+          type: 'ctx', used: used || 0, limit: limit || 0,
+          pct: limit ? Math.round((used || 0) / limit * 1000) / 10 : 0,
           model: model
         }))
       }
 
-      var es = httpMod.get({
+      const emitCtx = (used) => {
+        if (!used) return
+        if (ctxLimit) return pushCtx(used, ctxLimit)
+        if (model) {
+          getCtxLimit(model).then((limit) => {
+            if (limit) ctxLimit = limit
+            pushCtx(used, ctxLimit)
+          })
+          return
+        }
+        pushCtx(used, 0)
+      }
+
+      const es = httpMod.get({
         host: '127.0.0.1', port: 14096, path: '/event',
         headers: { 'Accept': 'text/event-stream' }
-      }, function(res) {
-        var buf = ''
+      }, (res) => {
+        let buf = ''
         res.setEncoding('utf8')
-        res.on('data', function(chunk) {
+        res.on('data', (chunk) => {
           try {
             buf += chunk
-            var idx
+            let idx
             while ((idx = buf.indexOf('\n\n')) >= 0) {
-              var frame = buf.slice(0, idx)
+              const frame = buf.slice(0, idx)
               buf = buf.slice(idx + 2)
-              var match = frame.match(/^data:\s*(.+)$/m)
+              const match = frame.match(/^data:\s*(.+)$/m)
               if (!match) continue
-              var ev = JSON.parse(match[1].trim())
+              const ev = JSON.parse(match[1].trim())
               handleEvent(ev)
             }
           } catch(e) {}
         })
       })
-      function sendRef(line, cls) {
+      const sendRef = (line, cls) => {
         $ws.sse(runId, JSON.stringify({ type: 'ref', content: line, cls: cls || '' }))
       }
 
-      function finish(payload) {
+      const finish = (payload) => {
         if (streamEnded) return
         streamEnded = true
         if (watchdog) clearTimeout(watchdog)
         if (aliveTimer) clearInterval(aliveTimer)
         try { es.destroy() } catch(e) {}
-        try { $store.delete('aichat_run_' + runId) } catch(e) {}
         $ws.sse(runId, JSON.stringify(Object.assign({ type: 'done', steps: stepCount }, payload || {})))
       }
 
-      function fail(msg) {
+      const fail = (msg) => {
         if (streamEnded) return
         streamEnded = true
         if (watchdog) clearTimeout(watchdog)
         if (aliveTimer) clearInterval(aliveTimer)
         try { es.destroy() } catch(e) {}
-        try { $store.delete('aichat_run_' + runId) } catch(e) {}
         $ws.sse(runId, JSON.stringify({ type: 'error', content: msg }))
       }
 
-      es.on('error', function(e) {
+      es.on('error', (e) => {
         fail('SSE error: ' + e.message)
       })
 
-      function handleEvent(ev) {
-        var p = ev.properties || {}
+      const handleEvent = (ev) => {
+        const p = ev.properties || {}
         if (ev.type === 'message.part.delta') {
           if (p.field === 'text' && p.delta) {
             $ws.sse(runId, JSON.stringify({ type: 'text', content: p.delta }))
@@ -1093,8 +1124,8 @@ $fend('start', (data) => {
           return
         }
         if (ev.type === 'message.part.updated') {
-          var part = p.part || {}
-          var sid2 = part.sessionID || p.sessionID || ev.sessionID
+          const part = p.part || {}
+          const sid2 = part.sessionID || p.sessionID || ev.sessionID
           if (sid2 && sid2 !== sessionId) return
           if (part.type === 'step-start') {
             stepCount++
@@ -1113,11 +1144,11 @@ $fend('start', (data) => {
             return
           }
           if (part.type === 'tool') {
-            var st = part.state || {}
-            var inp = st.input || {}
-            var arg = inp.command || inp.filePath || inp.path || inp.url || inp.pattern || inp.query || ''
-            var callId = part.callID || part.id || (part.tool || 'tool')
-            var out = st.output || (st.metadata && st.metadata.output) || ''
+            const st = part.state || {}
+            const inp = st.input || {}
+            const arg = inp.command || inp.filePath || inp.path || inp.url || inp.pattern || inp.query || ''
+            const callId = part.callID || part.id || (part.tool || 'tool')
+            const out = st.output || (st.metadata && st.metadata.output) || ''
             if (st.status === 'pending' || st.status === 'running') {
               if (!seenTools[callId] && arg) {
                 seenTools[callId] = true
@@ -1148,7 +1179,7 @@ $fend('start', (data) => {
           }
         }
         if (ev.type === 'message.updated') {
-          var info = p.info || {}
+          const info = p.info || {}
           if (info.role === 'assistant' && info.error) {
             fail((info.error.name ? info.error.name + ': ' : '') + (info.error.message || 'opencode error'))
           }
@@ -1157,12 +1188,18 @@ $fend('start', (data) => {
             if (!modelShown) {
               modelShown = true
               sendRef('> build · ' + model, 'info')
+              if (!ctxLimit) {
+                getCtxLimit(model).then((limit) => {
+                  if (limit) ctxLimit = limit
+                  pushCtx(0, ctxLimit)
+                })
+              }
             }
           }
           return
         }
         if (ev.type === 'session.status') {
-          var status = p.status
+          let status = p.status
           if (typeof status === 'object' && status) status = status.type
           if (status === 'idle') {
             finish({ content: '', model: model, tokens: tokens })
@@ -1176,10 +1213,10 @@ $fend('start', (data) => {
           return
         }
         if (ev.type === 'session.error') {
-          var errObj = p.error || {}
-          var errMsg = errObj.message || (errObj.name ? errObj.name : '') || 'session error'
-          var errCode = errObj.code ? ' (' + errObj.code + ')' : ''
-          var errDetail = errObj.detail || errObj.stack || ''
+          const errObj = p.error || {}
+          const errMsg = errObj.message || (errObj.name ? errObj.name : '') || 'session error'
+          const errCode = errObj.code ? ' (' + errObj.code + ')' : ''
+          let errDetail = errObj.detail || errObj.stack || ''
           if (errDetail) errDetail = String(errDetail).split('\n')[0]
           fail((errMsg + errCode + (errDetail ? ': ' + errDetail : '')).trim())
           return
@@ -1193,7 +1230,7 @@ $fend('start', (data) => {
           return
         }
         if (ev.type === 'session.next.tool.success') {
-          var op = p.outputPaths
+          const op = p.outputPaths
           if (op && op.length) sendRef('↧ wrote ' + op.join(', '), 'tool')
           return
         }
@@ -1207,22 +1244,22 @@ $fend('start', (data) => {
       }
 
       if (/^\//.test(prompt)) {
-        watchdog = setTimeout(function() {
+        watchdog = setTimeout(() => {
           finish({ content: '', model: model, tokens: tokens, timeout: true })
         }, 600000)
-        var cmdLine = prompt.trim().slice(1)
-        var cmdSpace = cmdLine.indexOf(' ')
-        var cmdName = (cmdSpace >= 0 ? cmdLine.slice(0, cmdSpace) : cmdLine).toLowerCase()
-        var cmdArgs = cmdSpace >= 0 ? cmdLine.slice(cmdSpace + 1).trim() : ''
+        const cmdLine = prompt.trim().slice(1)
+        const cmdSpace = cmdLine.indexOf(' ')
+        const cmdName = (cmdSpace >= 0 ? cmdLine.slice(0, cmdSpace) : cmdLine).toLowerCase()
+        const cmdArgs = cmdSpace >= 0 ? cmdLine.slice(cmdSpace + 1).trim() : ''
         try {
           if (cmdName === 'compact' || cmdName === 'summarize') {
-            var sumBody = { providerID: 'opencode', modelID: 'deepseek-v4-flash-free' }
+            let sumBody = { providerID: 'opencode', modelID: 'deepseek-v4-flash-free' }
             if (data.model) {
-              var mm = data.model.replace(/\r/g, '')
-              var ms = mm.indexOf('/')
+              const mm = data.model.replace(/\r/g, '')
+              const ms = mm.indexOf('/')
               if (ms > 0) sumBody = { providerID: mm.slice(0, ms), modelID: mm.slice(ms + 1) }
             }
-            var sum = await api('POST', '/session/' + sessionId + '/summarize', sumBody)
+            const sum = await api('POST', '/session/' + sessionId + '/summarize', sumBody)
             if (sum.status !== 200) {
               fail('compact failed: ' + sum.body.slice(0, 120))
             } else {
@@ -1230,18 +1267,18 @@ $fend('start', (data) => {
               finish({ content: '', model: model, tokens: tokens })
             }
           } else if (cmdName === 'undo' || cmdName === 'redo') {
-            var msgs = await api('GET', '/session/' + sessionId + '/message?limit=2')
-            var arr = []
+            const msgs = await api('GET', '/session/' + sessionId + '/message?limit=2')
+            let arr = []
             try { arr = JSON.parse(msgs.body) } catch(e) {}
-            var target = null
-            for (var mi = arr.length - 1; mi >= 0; mi--) {
-              var minf = arr[mi].info || {}
+            let target = null
+            for (let mi = arr.length - 1; mi >= 0; mi--) {
+              const minf = arr[mi].info || {}
               if (minf.role === 'user') { target = minf.id; break }
             }
             if (!target) {
               fail('no message to ' + cmdName)
             } else {
-              var rev = await api('POST', '/session/' + sessionId + '/' + (cmdName === 'undo' ? 'revert' : 'unrevert'), { messageID: target })
+              const rev = await api('POST', '/session/' + sessionId + '/' + (cmdName === 'undo' ? 'revert' : 'unrevert'), { messageID: target })
               if (rev.status !== 200) {
                 fail(cmdName + ' failed: ' + rev.body.slice(0, 120))
               } else {
@@ -1250,10 +1287,10 @@ $fend('start', (data) => {
               }
             }
           } else {
-            api('POST', '/session/' + sessionId + '/command', { command: cmdName, arguments: cmdArgs, agent: 'build' }).then(function(r) {
+            api('POST', '/session/' + sessionId + '/command', { command: cmdName, arguments: cmdArgs, agent: 'build' }).then((r) => {
               if (streamEnded) return
               if (r.status >= 400) fail('/' + cmdName + ' failed: ' + r.body.slice(0, 120))
-            }).catch(function(e) {
+            }).catch((e) => {
               if (!streamEnded) fail('/' + cmdName + ' error: ' + e.message)
             })
           }
@@ -1263,57 +1300,72 @@ $fend('start', (data) => {
         return
       }
 
-      var body = { parts: [{ type: 'text', text: prompt }] }
+      const body = { parts: [{ type: 'text', text: prompt }] }
       if (data.model) {
-        var m = data.model.replace(/\r/g, '')
-        var slash = m.indexOf('/')
+        const m = data.model.replace(/\r/g, '')
+        const slash = m.indexOf('/')
         if (slash > 0) body.model = { providerID: m.slice(0, slash), modelID: m.slice(slash + 1) }
       }
-      var sent = await api('POST', '/session/' + sessionId + '/prompt_async', body)
+      const sent = await api('POST', '/session/' + sessionId + '/prompt_async', body)
       if (sent.status === 404) {
         fail('session not found: ' + sessionId)
         return
       }
-      watchdog = setTimeout(function() {
+      watchdog = setTimeout(() => {
         finish({ content: '', model: model, tokens: tokens, timeout: true })
       }, 600000)
-      aliveTimer = setInterval(function() {
+      aliveTimer = setInterval(() => {
         try {
           if (typeof $ws.sseExists !== 'function' || $ws.sseExists(runId)) return
           clearInterval(aliveTimer)
           aliveTimer = null
-          var ab = httpMod.request({
+          const ab = httpMod.request({
             host: '127.0.0.1', port: 14096,
             path: '/session/' + encodeURIComponent(sessionId) + '/abort',
             method: 'POST'
-          }, function(r) {
+          }, (r) => {
             r.resume()
-            r.on('end', function() { fail('client disconnected') })
+            r.on('end', () => { fail('client disconnected') })
           })
-          ab.on('error', function() { fail('client disconnected') })
+          ab.on('error', () => { fail('client disconnected') })
           ab.end()
         } catch(e) {}
       }, 15000)
     } catch(e) {
       fail(e.message || String(e))
     }
+    })()
+  }
+
+  return (async () => {
+    let sessionId = data.session || ''
+    try {
+      if (!sessionId) {
+        const created = await api('POST', '/session', { title: '' })
+        if (created.status !== 200) throw new Error('create session failed: ' + created.body.slice(0, 120))
+        sessionId = JSON.parse(created.body).id
+      }
+      streamRun(sessionId)
+      return { ok: true, runId: runId, sessionId: sessionId }
+    } catch(e) {
+      return { ok: false, error: e.message || String(e) }
+    }
   })()
-  return { ok: true, runId: runId }
 })
 
 $fend('commands', (data) => {
-  var out = [
+  const out = [
     { name: 'compact', description: 'compact the current conversation (via summarize)' },
     { name: 'new', description: 'start a new session' },
     { name: 'undo', description: 'undo last message' },
     { name: 'redo', description: 'redo last undone message' }
   ]
   try {
-    var raw = execSync('curl.exe -s ' + OC_HOST + '/command --connect-timeout 3 2>nul', { encoding: 'utf-8', timeout: 8000, windowsHide: true, shell: true })
-    var list = []
+    const raw = execSync(curlCmd(OC_HOST + '/command'), { encoding: 'utf-8', timeout: 8000, windowsHide: true, shell: true })
+    let list = []
     try { list = JSON.parse(raw.trim()) } catch(e) {}
     if (Array.isArray(list)) {
-      for (var i = list.length - 1; i >= 0; i--) {
+      for (let i = list.length - 1; i >= 0; i--) {
         out.unshift({ name: list[i].name || '', description: list[i].description || '' })
       }
     }
@@ -1323,22 +1375,21 @@ $fend('commands', (data) => {
 
 $fend('stop', (data) => {
   if (!data) return { ok: false }
-  var runId = data.runId
-  var sessionId = data.session || ''
+  const runId = data.runId
+  const sessionId = data.session || ''
   try {
-    if (!sessionId && runId) sessionId = $store.get('aichat_run_' + runId) || ''
     if (!sessionId) return { ok: false, error: 'no active session' }
-    var httpMod = require('http')
-    return new Promise(function(resolve, reject) {
-      var req = httpMod.request({
+    const httpMod = require('http')
+    return new Promise((resolve, reject) => {
+      const req = httpMod.request({
         host: '127.0.0.1', port: 14096,
         path: '/session/' + encodeURIComponent(sessionId) + '/abort',
         method: 'POST'
-      }, function(res) {
+      }, (res) => {
         res.resume()
-        res.on('end', function() { resolve({ ok: res.statusCode === 200, code: res.statusCode }) })
+        res.on('end', () => { resolve({ ok: res.statusCode === 200, code: res.statusCode }) })
       })
-      req.on('error', function(e) { reject(e) })
+      req.on('error', (e) => { reject(e) })
       req.end()
     })
   } catch(e) {
@@ -1347,9 +1398,9 @@ $fend('stop', (data) => {
 })
 
 $fend('ensure_opencode', (data) => {
-  var runId = data && data.installId
+  const runId = data && data.installId
   try {
-    var version = execSync(OC_BIN + ' --version 2>nul', { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
+    const version = execSync(redirCmd(OC_BIN + ' --version'), { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
     console.log('[ensure_opencode] version:', version.trim())
     if (version && version.trim()) {
       if (runId) $ws.sse(runId, JSON.stringify({ type: 'done', version: version.trim() }))
@@ -1358,22 +1409,22 @@ $fend('ensure_opencode', (data) => {
   } catch(e) {}
   if (!runId) return { error: 'no installId' }
   try {
-    var proc = spawn(process.platform === 'win32' ? process.env.COMSPEC : 'sh',
+    const proc = spawn(process.platform === 'win32' ? process.env.COMSPEC : 'sh',
       process.platform === 'win32' ? ['/d', '/s', '/c', 'npm install -g opencode-ai@latest 2>&1'] : ['-c', 'npm install -g opencode-ai@latest 2>&1'],
       { timeout: 120000, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
-    function sendProgress(text) {
-      var lines = stripAnsi(text.toString()).split('\n').filter(Boolean)
-      for (var i = 0; i < lines.length; i++) {
+    const sendProgress = (text) => {
+      const lines = stripAnsi(text.toString()).split('\n').filter(Boolean)
+      for (let i = 0; i < lines.length; i++) {
         console.log('[npm install]', lines[i].trim())
         $ws.sse(runId, JSON.stringify({ type: 'progress', content: lines[i].trim() }))
       }
     }
     proc.stdout.on('data', sendProgress)
     proc.stderr.on('data', sendProgress)
-    proc.on('close', function(code) {
+    proc.on('close', (code) => {
       try {
         if (code === 0) {
-          var ver = execSync(OC_BIN + ' --version 2>nul', { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
+          const ver = execSync(redirCmd(OC_BIN + ' --version'), { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
           console.log('[npm install] done, version:', (ver || 'unknown').trim())
           $ws.sse(runId, JSON.stringify({ type: 'done', version: (ver || 'unknown').trim() }))
         } else {
@@ -1383,7 +1434,7 @@ $fend('ensure_opencode', (data) => {
         $ws.sse(runId, JSON.stringify({ type: 'error', content: e.message }))
       }
     })
-    proc.on('error', function(e) {
+    proc.on('error', (e) => {
       $ws.sse(runId, JSON.stringify({ type: 'error', content: e.message }))
     })
     return { ok: true, installing: true }
@@ -1394,17 +1445,17 @@ $fend('ensure_opencode', (data) => {
 })
 
 $fend('models', () => {
-  var now = Date.now()
-  var cached, cachedTime
+  const now = Date.now()
+  let cached, cachedTime
   try { cached = JSON.parse($store.get('aichat_models_cache') || 'null') } catch(e) {}
   try { cachedTime = Number($store.get('aichat_models_time') || 0) } catch(e) {}
   if (cached && now - cachedTime < 60000) return { models: cached, cached: true }
   if (cached) {
     try {
-      var raw = execSync(OC_BIN + ' models 2>nul', { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
+      const raw = execSync(redirCmd(OC_BIN + ' models'), { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
       console.log('[models cached-refresh] raw:', raw.trim())
       if (raw && raw.trim()) {
-        var list = raw.trim().split('\n').filter(Boolean).map(function(s) { return s.trim() })
+        const list = raw.trim().split('\n').filter(Boolean).map((s) => { return s.trim() })
         $store.set('aichat_models_cache', JSON.stringify(list))
         $store.set('aichat_models_time', String(Date.now()))
         return { models: list }
@@ -1413,10 +1464,10 @@ $fend('models', () => {
     return { models: cached }
   }
   try {
-    var raw = execSync(OC_BIN + ' models 2>nul', { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
+    const raw = execSync(redirCmd(OC_BIN + ' models'), { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
     console.log('[models] raw:', raw.trim())
     if (!raw || !raw.trim()) return { models: [] }
-    var list = raw.trim().split('\n').filter(Boolean).map(function(s) { return s.trim() })
+    const list = raw.trim().split('\n').filter(Boolean).map((s) => { return s.trim() })
     $store.set('aichat_models_cache', JSON.stringify(list))
     $store.set('aichat_models_time', String(now))
     return { models: list }
@@ -1427,10 +1478,10 @@ $fend('models', () => {
 
 $fend('sessions', () => {
   try {
-    var raw = $store.get('aichat_sessions') || '[]'
-    var local = JSON.parse(raw)
-    var raw2 = $store.get('aichat_pinned_sessions') || '[]'
-    var pinned = JSON.parse(raw2)
+    const raw = $store.get('aichat_sessions') || '[]'
+    const local = JSON.parse(raw)
+    const raw2 = $store.get('aichat_pinned_sessions') || '[]'
+    const pinned = JSON.parse(raw2)
     return { sessions: local, pinned: pinned }
   } catch(e) {
     return { sessions: [], pinned: [] }
@@ -1440,9 +1491,9 @@ $fend('sessions', () => {
 $fend('delete_session', (data) => {
   if (!data || !data.id) return { ok: false }
   try {
-    var raw = $store.get('aichat_sessions') || '[]'
-    var list = JSON.parse(raw)
-    list = list.filter(function(s) { return s.id !== data.id })
+    const raw = $store.get('aichat_sessions') || '[]'
+    let list = JSON.parse(raw)
+    list = list.filter((s) => { return s.id !== data.id })
     $store.set('aichat_sessions', JSON.stringify(list))
     return { ok: true }
   } catch(e) {
@@ -1451,18 +1502,18 @@ $fend('delete_session', (data) => {
 })
 
 $fend('opencode_sessions', () => {
-  var now = Date.now()
-  var cached, cachedTime
+  const now = Date.now()
+  let cached, cachedTime
   try { cached = JSON.parse($store.get('aichat_oc_sessions_cache') || 'null') } catch(e) {}
   try { cachedTime = Number($store.get('aichat_oc_sessions_time') || 0) } catch(e) {}
 
   if (cached && now - cachedTime < 15000) return { sessions: cached, cached: true }
   if (cached) {
     try {
-      var raw = execSync(OC_BIN + ' session list --format json -n 30 2>nul', { encoding: 'utf-8', timeout: 8000, windowsHide: true, shell: true })
+      const raw = execSync(redirCmd(OC_BIN + ' session list --format json -n 30'), { encoding: 'utf-8', timeout: 8000, windowsHide: true, shell: true })
       console.log('[opencode_sessions cached-refresh] raw:', raw.trim())
       if (raw && raw.trim()) {
-        var list = JSON.parse(raw.trim())
+        const list = JSON.parse(raw.trim())
         $store.set('aichat_oc_sessions_cache', raw.trim())
         $store.set('aichat_oc_sessions_time', String(Date.now()))
         return { sessions: list }
@@ -1471,10 +1522,10 @@ $fend('opencode_sessions', () => {
     return { sessions: cached }
   }
   try {
-    var raw = execSync(OC_BIN + ' session list --format json -n 30 2>nul', { encoding: 'utf-8', timeout: 8000, windowsHide: true, shell: true })
+    const raw = execSync(redirCmd(OC_BIN + ' session list --format json -n 30'), { encoding: 'utf-8', timeout: 8000, windowsHide: true, shell: true })
     console.log('[opencode_sessions] raw:', raw.trim())
     if (!raw || !raw.trim()) return { sessions: [] }
-    var sessions = JSON.parse(raw.trim())
+    const sessions = JSON.parse(raw.trim())
     $store.set('aichat_oc_sessions_cache', raw.trim())
     $store.set('aichat_oc_sessions_time', String(now))
     return { sessions: sessions }
@@ -1486,7 +1537,7 @@ $fend('opencode_sessions', () => {
 $fend('opencode_delete_session', (data) => {
   if (!data || !data.id) return { ok: false }
   try {
-    execSync(OC_BIN + ' session delete ' + data.id + ' 2>nul', { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
+    execSync(redirCmd(OC_BIN + ' session delete ' + data.id), { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
     return { ok: true }
   } catch(e) {
     return { ok: false, error: e.message }
