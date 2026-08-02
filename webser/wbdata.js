@@ -3,7 +3,7 @@ const { CONFIG, CONFIG_Port } = require('../config')
 const { logger, list, Jsfile, sType, stream, checkupdate, eAxios } = require('../utils')
 const clog = new logger({ head: 'wbdata' })
 
-const { CONFIG_RULE, setRewriteRule } = require('../script')
+const { CONFIG_RULE, setRewriteRule, buildRuleLists, getMitmRegex } = require('../script')
 const { crtInfo, taskMa, sysInfo } = require('../func')
 
 module.exports = app => {
@@ -126,6 +126,7 @@ module.exports = app => {
         let fdata = req.body.eplists
         if (fdata && fdata.length) {
           let renlist = fdata.filter(r=>r.enable !== false)
+          let { reqlists, reslists } = buildRuleLists(fdata)
           if (list.put('default.list', {
             rules: {
               note: req.body.note || 'elecV2P RULES 规则列表',
@@ -140,15 +141,8 @@ module.exports = app => {
               message: 'success saved modify list ' + renlist.length + '/' + fdata.length
             })
             CONFIG_RULE.ruleenable = req.body.ruleenable !== false
-            CONFIG_RULE.reqlists = []
-            CONFIG_RULE.reslists = []
-            renlist.forEach(r=>{
-              if (r.stage === 'req') {
-                CONFIG_RULE.reqlists.push(r)
-              } else {
-                CONFIG_RULE.reslists.push(r)
-              }
-            })
+            CONFIG_RULE.reqlists = reqlists
+            CONFIG_RULE.reslists = reslists
           } else {
             res.json({
               rescode: -1,
@@ -235,6 +229,7 @@ module.exports = app => {
             CONFIG_RULE.mitmtype = 'list'
           }}
           CONFIG_RULE.mitmhost = enhost
+          CONFIG_RULE.mitmregex = getMitmRegex(enhost)
           clog.info('clear mitmhost match results cache')
           CONFIG_RULE.cache.host.clear()
         } else {
@@ -253,6 +248,8 @@ module.exports = app => {
               message: 'success add mitmhost ' + faddhost.length
             })
             CONFIG_RULE.mitmhost.push(...faddhost)
+            CONFIG_RULE.mitmregex = getMitmRegex(CONFIG_RULE.mitmhost)
+            CONFIG_RULE.cache.host.clear()
           } else {
             res.json({
               rescode: -1,

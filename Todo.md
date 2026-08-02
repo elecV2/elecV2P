@@ -6,7 +6,6 @@
 - [ ] EAPP 订阅/分类
 - [ ] RULE mock 修改方式
 - [ ] RULE repeat 网络请求
-- [ ] require 自定义可运行/禁用模块
 </pre>
 </div>
 <div style="background-color: #003153;margin-top: 12px;border-radius: 8px;">

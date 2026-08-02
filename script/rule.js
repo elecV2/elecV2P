@@ -29,22 +29,70 @@ const bCircle = {
   }
 }
 
+function compileMatch(match) {
+  try {
+    return new RegExp(match)
+  } catch (e) {
+    clog.error('invalid match regex:', match, e.message)
+    return null
+  }
+}
+
 function setRewriteRule(list = [], rewritereq = [], rewriteres = []) {
   list.forEach(r=>{
     if (!(r.enable !== false && r.match && r.target)) {
       return
     }
+    const re = compileMatch(r.match)
+    if (!re) {
+      return
+    }
+    const item = { match: r.match, target: r.target, re }
     if (r.stage === 'req') {
-      rewritereq.push({ match: r.match, target: r.target })
+      rewritereq.push(item)
     } else if (r.stage === 'res') {
-      rewriteres.push({ match: r.match, target: r.target })
+      rewriteres.push(item)
     } else if (/^reject(-200|-dict|-json|-array|-img)?$/.test(r.target)) {
-      rewritereq.push({ match: r.match, target: r.target })
+      rewritereq.push(item)
     } else {
-      rewriteres.push({ match: r.match, target: r.target })
+      rewriteres.push(item)
     }
   })
   return [ rewritereq, rewriteres ]
+}
+
+function buildRuleLists(list) {
+  let reqlists = [], reslists = []
+  if (list?.length) {
+    list.filter(r=>r.enable !== false).forEach(r=>{
+      const re = compileMatch(r.match)
+      if (!re) {
+        return
+      }
+      const item = Object.assign({}, r, { re })
+      if (r.stage === 'req') {
+        reqlists.push(item)
+      } else {
+        reslists.push(item)
+      }
+    })
+  }
+  return { reqlists, reslists }
+}
+
+function buildMitmRegex(host) {
+  try {
+    return new RegExp(host.replace(/\./g, '\\.').replace(/\*/g, '.*'))
+  } catch (e) {
+    clog.error('invalid mitmhost:', host, e.message)
+    return null
+  }
+}
+
+function getMitmRegex(mitmhost) {
+  return mitmhost.filter(h=>h.indexOf('*') !== -1)
+    .map(h=>({ host: h, re: buildMitmRegex(h) }))
+    .filter(h=>h.re)
 }
 
 const CONFIG_RULE = (()=>{
@@ -73,19 +121,10 @@ const CONFIG_RULE = (()=>{
   }
 
   function getRulesList(){
-    let reqlists = [], reslists = []
     let robj = list.get('default.list')
     let ruleenable = robj?.rules?.enable !== false
     let ruleenbody = robj?.rules?.enbody === true
-    if (ruleenable && robj?.rules?.list?.length) {
-      robj.rules.list.filter(r=>r.enable !== false).forEach(r=>{
-        if (r.stage === 'req') {
-          reqlists.push(r)
-        } else {
-          reslists.push(r)
-        }
-      })
-    }
+    let { reqlists, reslists } = buildRuleLists(ruleenable ? robj?.rules?.list : [])
     return { ruleenable, ruleenbody, reqlists, reslists }
   }
 
@@ -110,6 +149,7 @@ const CONFIG_RULE = (()=>{
       ...getRulesList(),
       ...getRewriteList(),
       ...getMitmhost(),
+      mitmregex: [],
       ...getUserAgent()
     }
 
@@ -117,6 +157,7 @@ const CONFIG_RULE = (()=>{
     clog.notify('MITM enabled for all host')
     config.mitmtype = 'all'
   }
+  config.mitmregex = getMitmRegex(config.mitmhost)
 
   clog.notify(`default rules: ${ config.ruleenable ? (config.reqlists.length + config.reslists.length) : 'disabled' }`)
   clog.notify(`rewrite rules: ${ config.rewriteenable ? (config.rewritereq.length + config.rewriteres.length) : 'disabled' }`)
@@ -181,19 +222,36 @@ const localResponse = {
 }
 
 function getMatchRule($request, $response, lists) {
+  if (!lists.length) {
+    return false
+  }
   let matchobj = {
     url: $request.url,
     host: $request.requestOptions.hostname,
     reqmethod: $request.requestOptions.method,
-    reqbody: (CONFIG_RULE.ruleenbody && !bBufType($request.requestOptions.headers["Content-Type"])) ? $request.requestData.toString() : "",
     useragent: $request.requestOptions.headers["User-Agent"],
     resstatus: $response ? $response.statusCode : "",
     restype: $response ? $response.header["Content-Type"] : "",
-    resbody: (CONFIG_RULE.ruleenbody && $response && !bBufType($response.header["Content-Type"])) ? $response.body.toString() : ""
   }
+  let reqbody, resbody
   for (let mr of lists) {
-    // 逐行正则匹配，待优化
-    if ((new RegExp(mr.match)).test(matchobj[mr.mtype])) {
+    // 预编译正则匹配，避免每次请求重新构造 RegExp
+    let mval
+    if (mr.mtype === 'reqbody') {
+      // 惰性构造请求体，避免每次请求都 toString()
+      if (reqbody === undefined) {
+        reqbody = (CONFIG_RULE.ruleenbody && !bBufType($request.requestOptions.headers["Content-Type"])) ? $request.requestData.toString() : ""
+      }
+      mval = reqbody
+    } else if (mr.mtype === 'resbody') {
+      if (resbody === undefined) {
+        resbody = (CONFIG_RULE.ruleenbody && $response && !bBufType($response.header["Content-Type"])) ? $response.body.toString() : ""
+      }
+      mval = resbody
+    } else {
+      mval = matchobj[mr.mtype]
+    }
+    if (mr.re.test(mval)) {
       clog.info('match rule:', mr.mtype, mr.match, mr.ctype, mr.target, mr.stage)
       return mr
     }
@@ -388,7 +446,7 @@ function ruleResponse(scriptRes, response) {
 
 module.exports = {
   summary: 'elecV2P - customize personal network',
-  CONFIG_RULE, getJsResponse, setRewriteRule,
+  CONFIG_RULE, getJsResponse, setRewriteRule, buildRuleLists, getMitmRegex,
   *beforeSendRequest(requestDetail) {
     if (requestDetail.protocol === 'http' && requestDetail._req.url.startsWith('/')) {
       // 禁止直接访问 no direct access to proxy
@@ -411,7 +469,7 @@ module.exports = {
       }
     } else {
       for (let r of CONFIG_RULE.rewritereq) {
-        if ((new RegExp(r.match)).test(requestDetail.url)) {
+        if (r.re.test(requestDetail.url)) {
           CONFIG_RULE.cache.rewritereq.set(requestDetail.url, [r.match, r.target])
           return getRewriteRes(r.target, { rmatch: r.match, type: 'request', request: requestDetail })
         }
@@ -553,7 +611,7 @@ module.exports = {
       }
     } else {
       for (let r of CONFIG_RULE.rewriteres) {
-        if ((new RegExp(r.match)).test(requestDetail.url)) {
+        if (r.re.test(requestDetail.url)) {
           CONFIG_RULE.cache.rewriteres.set(requestDetail.url, [r.match, r.target])
           return getRewriteRes(r.target, { rmatch: r.match, request: requestDetail, response: $response })
         }
@@ -668,10 +726,10 @@ module.exports = {
       CONFIG_RULE.cache.host.set(requestDetail.host, true)
       return true
     }
-    // 首次正则逐行匹配
-    for (let h of CONFIG_RULE.mitmhost) {
-      if (/\*/.test(h) && new RegExp(h.replace(/\./g, '\\.').replace(/\*/g, '.*')).test(host)) {
-        clog.debug('MITM enable for', requestDetail.host, 'from regexp mitmhost', h)
+    // 首次正则逐行匹配（正则已预编译）
+    for (let h of CONFIG_RULE.mitmregex) {
+      if (h.re.test(host)) {
+        clog.debug('MITM enable for', requestDetail.host, 'from regexp mitmhost', h.host)
         CONFIG_RULE.cache.host.set(requestDetail.host, true)
         return true
       }
