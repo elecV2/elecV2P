@@ -5,11 +5,19 @@ if (!process.env.TZ) {
 }
 const tzoffset = (new Date()).getTimezoneOffset() * 60000
 
+const nowCache = { sec: -1, base: '' }
+
 module.exports = {
   now(time = null, ms = true, slicebegin = CONFIG.glogslicebegin ?? 0){
     time = time ? (Number(time) || Date.parse(time)) : Date.now()
-    return new Date(time - tzoffset).toISOString().slice(slicebegin, ms ? -1 : -5).replace('T', ' ')
-    // return new Date().toLocaleString('zh', { hour12: false })
+    const t = time - tzoffset
+    const sec = Math.floor(t / 1000)
+    if (nowCache.sec !== sec) {
+      nowCache.sec = sec
+      nowCache.base = new Date(sec * 1000).toISOString().slice(0, 19).replace('T', ' ')
+    }
+    const res = ms ? nowCache.base + '.' + String(t % 1000).padStart(3, '0') : nowCache.base
+    return res.slice(slicebegin)
   },
   hDays(time = Date.now()){
     let hours = (Date.now() - time)/1000/60/60

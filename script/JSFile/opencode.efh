@@ -126,6 +126,7 @@
       background: rgba(255,255,255,.03); border: 1px solid var(--bd); border-radius: 6px;
       padding: 6px 10px; margin: 4px 0; line-height: 1.5; max-height: 260px; overflow-y: auto;
     }
+    .msg .stream-text { white-space: pre-wrap; word-break: break-word; line-height: 1.7; }
     .cursor { display: inline-block; width: 7px; height: 16px; background: var(--ac); animation: blink .7s infinite; vertical-align: text-bottom; margin-left: 2px; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
     .reasoning { margin-bottom: 8px; }
@@ -343,7 +344,8 @@
         <div v-for="(p, pi) in m.parts" :key="pi">
           <div v-if="p.t === 'ref'" :class="['ref', p.cls || refClass(p.c)]">{{ p.c }}</div>
           <pre v-else-if="p.t === 'out'" class="tool-out">{{ p.c }}</pre>
-          <div v-else v-html="renderMd(p.c)"></div>
+          <div v-else-if="p.t === 'text' && m.streaming" class="stream-text">{{ p.c }}</div>
+          <div v-else v-html="mdHtml(p)"></div>
         </div>
         <span class="cursor" v-if="m.streaming"></span>
         <div class="meta" v-if="m.meta">{{ m.meta }}</div>
@@ -378,6 +380,7 @@
   let _inited = false
   const installId = Date.now() + '-' + Math.random().toString(36).slice(2, 8)
   let notifyTimer = null
+  const mdCache = new WeakMap()
 
   const app = Vue.createApp({
     data() {
@@ -441,6 +444,13 @@
         html = html.replace(/<pre><code class="language-(\w+)">/g, '<pre><span class="code-lang">$1</span><code>')
         html = html.replace(/<pre><code class="">/g, '<pre><code>')
         html = html.replace(/<a href=/g, '<a target="_blank" href=')
+        return html
+      },
+      mdHtml(p) {
+        if (!p || p.t !== 'text') return ''
+        if (mdCache.has(p)) return mdCache.get(p)
+        const html = this.renderMd(p.c)
+        mdCache.set(p, html)
         return html
       },
       refClass(c) {
@@ -699,23 +709,38 @@
         if (this.currentModel) this.ctxModel = this.currentModel
 
         const es = new EventSource('/sse/elecV2P/' + runId)
+        let textBuf = ''
+        let textFlush = null
+        const flushText = () => {
+          if (textFlush) { clearTimeout(textFlush); textFlush = null }
+          if (!textBuf) return
+          const last = el.parts[el.parts.length - 1]
+          if (last && last.t === 'text') {
+            last.c += textBuf
+            mdCache.delete(last)
+          } else {
+            el.parts.push({ t: 'text', c: textBuf })
+          }
+          textBuf = ''
+        }
 
         es.onmessage = (e) => {
           try {
             const data = JSON.parse(e.data)
             if (data.type === 'init') return
             if (data.type === 'ref') {
+              flushText()
               el.parts.push({ t: 'ref', c: data.content, cls: data.cls || '' })
             }
             if (data.type === 'out') {
+              flushText()
               const lastOut = el.parts[el.parts.length - 1]
               if (lastOut && lastOut.t === 'out') lastOut.c += data.content
               else el.parts.push({ t: 'out', c: data.content })
             }
             if (data.type === 'text') {
-              const last = el.parts[el.parts.length - 1]
-              if (last && last.t === 'text') last.c += data.content
-              else el.parts.push({ t: 'text', c: data.content })
+              textBuf += data.content
+              if (!textFlush) textFlush = setTimeout(flushText, 50)
             }
             if (data.type === 'todo') {
               self.todos = data.data || []
@@ -731,19 +756,22 @@
               } catch(e) {}
             }
             if (data.type === 'done') {
+              flushText()
               if (data.content) el.parts.push({ t: 'text', c: data.content })
               el.streaming = false
               es.close()
-              let meta = Math.round((Date.now() - startTime) / 1000) + 's'
-              if (data.tokens) meta += ' | ⚙ ' + data.tokens.total + ' tokens'
-              if (data.steps) meta += ' | ' + data.steps + ' steps'
-              if (data.model) meta += ' | ' + data.model
-              if (data.timeout) meta += ' | timed out'
-              el.meta = meta
-              if (data.model) self.ctxModel = data.model
-              try {
-                if (data.model) localStorage.setItem('aichat_ctx_model', data.model)
-              } catch(e) {}
+              if (!el.stopped) {
+                let meta = Math.round((Date.now() - startTime) / 1000) + 's'
+                if (data.tokens) meta += ' | ⚙ ' + data.tokens.total + ' tokens'
+                if (data.steps) meta += ' | ' + data.steps + ' steps'
+                if (data.model) meta += ' | ' + data.model
+                if (data.timeout) meta += ' | timed out'
+                el.meta = meta
+                if (data.model) self.ctxModel = data.model
+                try {
+                  if (data.model) localStorage.setItem('aichat_ctx_model', data.model)
+                } catch(e) {}
+              }
               self.busy = false
               self.runId = ''
               self.todos = []
@@ -758,8 +786,25 @@
               return
             }
             if (data.type === 'error') {
-              el.role = 'error'; el.streaming = false
-              el.parts = [{ t: 'text', c: 'Error: ' + data.content }]
+              flushText()
+              el.streaming = false
+              if (el.stopped) {
+                if (data.content && data.content !== 'client disconnected') {
+                  el.meta = (el.meta ? el.meta + ' | ' : '') + '⚠ ' + data.content
+                }
+                es.close()
+                self.busy = false
+                self.runId = ''
+                self.todos = []
+                self.scrollBottom()
+                return
+              }
+              if (el.parts.length) {
+                el.meta = (el.meta ? el.meta + ' | ' : '') + '⚠ ' + data.content
+              } else {
+                el.role = 'error'
+                el.parts = [{ t: 'text', c: 'Error: ' + data.content }]
+              }
               es.close()
               self.busy = false
               self.runId = ''
@@ -785,6 +830,7 @@
             self.sessionId = data.sessionId
           }
         }).catch((e) => {
+          flushText()
           if (el.parts.length) {
             el.streaming = false
             el.meta = 'Connection closed'
@@ -803,6 +849,12 @@
         const self = this
         const runId = this.runId
         const sessionId = this.sessionId
+        const last = this.messages[this.messages.length - 1]
+        if (last && last.role === 'assistant' && last.streaming) {
+          last.streaming = false
+          last.stopped = true
+          last.meta = (last.meta ? last.meta + ' | ' : '') + '⏹ stopped'
+        }
         this.fetchFend('stop', { runId: runId, session: sessionId }, 15000).then((data) => {
           if (!data.ok && !data.error) {
             self.showNotify('stop failed' + (data.code ? ' (' + data.code + ')' : ''))
@@ -889,6 +941,9 @@
           installEs.close()
           if (data.version) self.ocVersion = data.version
           self.initApp()
+        } else if (data && !data.ok && data.error) {
+          installEs.close()
+          self.installErr = data.error
         }
       }).catch(() => {})
     }
@@ -907,7 +962,9 @@ const stripAnsi = (s) => { return String(s).replace(/\u001b\[[0-9;]*[a-zA-Z]/g, 
 const isAlive = (pid) => { try { process.kill(Number(pid), 0); return true } catch(e) { return false } }
 
 const IS_WIN = process.platform === 'win32'
+const IS_PAAS = !!process.env.PAAS
 const DEVNULL = IS_WIN ? 'nul' : '/dev/null'
+let serverProc = null
 const curlCmd = (extra) => {
   return (IS_WIN ? 'curl.exe' : 'curl') + ' -s ' + (extra || '') + ' --connect-timeout 3 2>' + DEVNULL
 }
@@ -940,8 +997,14 @@ const ensureServer = () => {
     const shell = process.env.COMSPEC || process.env.SHELL || (IS_WIN ? 'cmd.exe' : '/bin/sh')
     const shellArgs = IS_WIN ? ['/d', '/s', '/c', OC_BIN + ' serve --port 14096'] : ['-c', OC_BIN + ' serve --port 14096']
     const env = Object.assign({}, process.env, { NODE_OPTIONS: '--no-warnings' })
-    const proc = spawn(shell, shellArgs, { detached: true, stdio: 'ignore', windowsHide: true, env: env })
-    proc.unref()
+    const proc = spawn(shell, shellArgs, { detached: !IS_PAAS, stdio: 'ignore', windowsHide: true, env: env })
+    serverProc = proc
+    proc.on('exit', (code, signal) => {
+      console.log('[opencode] server exited', code, signal)
+      if (serverProc === proc) serverProc = null
+      try { $store.set('opencode_server_pid', '') } catch(e) {}
+    })
+    if (IS_PAAS) proc.unref()
     $store.set('opencode_server_pid', String(proc.pid))
     const deadline = Date.now() + 15000
     while (Date.now() < deadline) {
@@ -953,6 +1016,17 @@ const ensureServer = () => {
     return false
   }
 }
+
+const shutdownServer = () => {
+  if (serverProc && !serverProc.killed) {
+    try { serverProc.kill('SIGTERM') } catch(e) {}
+  }
+}
+try {
+  process.on('SIGTERM', shutdownServer)
+  process.on('SIGINT', shutdownServer)
+  process.on('exit', shutdownServer)
+} catch(e) {}
 
 const parseModel = (modelStr) => {
   let pid = 'opencode', mid = ''
@@ -1409,6 +1483,14 @@ $fend('ensure_opencode', (data) => {
   } catch(e) {}
   if (!runId) return { error: 'no installId' }
   try {
+    const freeMem = require('os').freemem()
+    const freeMB = Math.round(freeMem / 1024 / 1024)
+    if (freeMem < 1024 * 1024 * 1024) {
+      const msg = '当前可用内存 ' + freeMB + 'M，内存过小，opencode 无法使用'
+      console.log('[ensure_opencode] memory too low:', freeMB + 'M')
+      $ws.sse(runId, JSON.stringify({ type: 'error', content: msg }))
+      return { ok: false, error: msg }
+    }
     const proc = spawn(process.platform === 'win32' ? process.env.COMSPEC : 'sh',
       process.platform === 'win32' ? ['/d', '/s', '/c', 'npm install -g opencode-ai@latest 2>&1'] : ['-c', 'npm install -g opencode-ai@latest 2>&1'],
       { timeout: 120000, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
