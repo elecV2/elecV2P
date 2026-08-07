@@ -344,8 +344,12 @@
         <div v-for="(p, pi) in m.parts" :key="pi">
           <div v-if="p.t === 'ref'" :class="['ref', p.cls || refClass(p.c)]">{{ p.c }}</div>
           <pre v-else-if="p.t === 'out'" class="tool-out">{{ p.c }}</pre>
-          <div v-else-if="p.t === 'text' && m.streaming" class="stream-text">{{ p.c }}</div>
-          <div v-else v-html="mdHtml(p)"></div>
+          <template v-else-if="p.t === 'text'">
+            <div v-for="(v, vi) in mdViews(p, m.streaming)" :key="vi" class="stream-par">
+              <pre v-if="v.plain" class="stream-text">{{ v.text }}</pre>
+              <div v-else v-html="v.html"></div>
+            </div>
+          </template>
         </div>
         <span class="cursor" v-if="m.streaming"></span>
         <div class="meta" v-if="m.meta">{{ m.meta }}</div>
@@ -380,7 +384,9 @@
   let _inited = false
   const installId = Date.now() + '-' + Math.random().toString(36).slice(2, 8)
   let notifyTimer = null
-  const mdCache = new WeakMap()
+  const blockCache = new Map()
+  const BLOCK_CACHE_MAX = 400
+  const STREAM_PARSE_MAX = 4000
 
   const app = Vue.createApp({
     data() {
@@ -446,12 +452,77 @@
         html = html.replace(/<a href=/g, '<a target="_blank" href=')
         return html
       },
-      mdHtml(p) {
-        if (!p || p.t !== 'text') return ''
-        if (mdCache.has(p)) return mdCache.get(p)
-        const html = this.renderMd(p.c)
-        mdCache.set(p, html)
+      mdBlocks(t) {
+        if (!t) return []
+        const lines = String(t).replace(/\r\n/g, '\n').split('\n')
+        const blocks = []
+        let cur = []
+        let inFence = false
+        let fenceChar = ''
+        const flush = () => {
+          if (cur.length && cur.join('\n').trim() !== '') blocks.push(cur.join('\n'))
+          cur = []
+        }
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i]
+          if (!inFence) {
+            const fm = /^\s*(`{3,}|~{3,})\s*[a-zA-Z0-9_-]*\s*$/.exec(line)
+            if (fm) {
+              flush()
+              cur = [line]
+              inFence = true
+              fenceChar = fm[1]
+              continue
+            }
+          } else if (line.replace(/\s+$/, '').indexOf(fenceChar) >= 0) {
+            cur.push(line)
+            inFence = false
+            flush()
+            continue
+          }
+          cur.push(line)
+          if (!inFence && line.trim() === '') flush()
+        }
+        flush()
+        return blocks
+      },
+      isOpenFence(blk) {
+        const lines = String(blk).split('\n')
+        let fenceChar = ''
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i]
+          if (!fenceChar) {
+            const fm = /^\s*(`{3,}|~{3,})\s*[a-zA-Z0-9_-]*\s*$/.exec(line)
+            if (fm) fenceChar = fm[1]
+          } else if (line.replace(/\s+$/, '').indexOf(fenceChar) >= 0) {
+            fenceChar = ''
+          }
+        }
+        return !!fenceChar
+      },
+      cachedMd(blk) {
+        if (blockCache.has(blk)) return blockCache.get(blk)
+        const html = this.renderMd(blk)
+        blockCache.set(blk, html)
+        if (blockCache.size > BLOCK_CACHE_MAX) {
+          const firstKey = blockCache.keys().next().value
+          if (firstKey) blockCache.delete(firstKey)
+        }
         return html
+      },
+      mdViews(p, streaming) {
+        if (!p || p.t !== 'text') return []
+        const blocks = this.mdBlocks(p.c)
+        const views = []
+        for (let i = 0; i < blocks.length; i++) {
+          const blk = blocks[i]
+          let plain = false
+          if (streaming && i === blocks.length - 1 && (this.isOpenFence(blk) || blk.length > STREAM_PARSE_MAX)) {
+            plain = true
+          }
+          views.push({ text: blk, html: plain ? null : this.cachedMd(blk), plain: plain })
+        }
+        return views
       },
       refClass(c) {
         let rc = 'ref'
@@ -507,6 +578,7 @@
         localStorage.setItem('aichat_last_session', id)
         this.dropdown = ''
         this.loadSessions()
+        this.syncCtx(id)
       },
       deleteLocalSession(id) {
         if (this.deleting[id]) return
@@ -717,7 +789,6 @@
           const last = el.parts[el.parts.length - 1]
           if (last && last.t === 'text') {
             last.c += textBuf
-            mdCache.delete(last)
           } else {
             el.parts.push({ t: 'text', c: textBuf })
           }
@@ -874,6 +945,9 @@
       clearChat() {
         this.messages = []
         this.sessionId = ''
+        this.ctxUsed = 0
+        this.ctxPct = 0
+        try { localStorage.removeItem('aichat_last_session') } catch(e) {}
       },
       compactChat() {
         const self = this
@@ -909,9 +983,7 @@
         const self = this
         this.fetchFend('ctxinfo', { model: this.currentModel }, 10000).then((data) => {
           if (data && data.limit) {
-            self.ctxUsed = 0
             self.ctxLimit = data.limit
-            self.ctxPct = 0
             if (data.model) self.ctxModel = data.model
           } else {
             const saved = localStorage.getItem('aichat_ctx_limit')
@@ -919,6 +991,19 @@
             const savedModel = localStorage.getItem('aichat_ctx_model')
             if (savedModel && !self.ctxModel) self.ctxModel = savedModel
           }
+          if (self.sessionId) self.syncCtx(self.sessionId)
+        }).catch(() => {})
+      },
+      syncCtx(sessionId) {
+        if (!sessionId) return
+        const self = this
+        this.fetchFend('session_ctx', { id: sessionId, model: this.currentModel || this.ctxModel }, 12000).then((data) => {
+          if (!data) return
+          if (data.limit) self.ctxLimit = data.limit
+          if (!self.ctxLimit) return
+          self.ctxUsed = data.used || 0
+          self.ctxPct = Math.round((self.ctxUsed || 0) / self.ctxLimit * 1000) / 10
+          try { localStorage.setItem('aichat_ctx_limit', String(self.ctxLimit)) } catch(e) {}
         }).catch(() => {})
       },
     },
@@ -1087,6 +1172,48 @@ $fend('ctxinfo', (data) => {
   const pm = parseModel(modelStr)
   return getCtxLimit(modelStr).then((limit) => {
     return { model: pm.mid || '', limit: limit }
+  })
+})
+
+const getSessionUsage = (sessionId) => {
+  return new Promise((resolve) => {
+    if (!sessionId) return resolve(0)
+    const httpMod = require('http')
+    let used = 0
+    let offset = 0
+    const LIMIT = 100
+    const MAXPAGE = 20
+    const fetchPage = () => {
+      const req = httpMod.get({ host: '127.0.0.1', port: 14096, path: '/session/' + encodeURIComponent(sessionId) + '/message?limit=' + LIMIT + '&offset=' + offset }, (res) => {
+        let buf = ''
+        res.on('data', (c) => { buf += c })
+        res.on('end', () => {
+          let msgs
+          try { msgs = JSON.parse(buf) } catch(e) { return resolve(used) }
+          if (!Array.isArray(msgs) || !msgs.length) return resolve(used)
+          for (let i = 0; i < msgs.length; i++) {
+            const t = msgs[i].info && msgs[i].info.tokens ? msgs[i].info.tokens.total : 0
+            if (t > used) used = t
+          }
+          if (msgs.length < LIMIT || offset >= MAXPAGE * LIMIT) return resolve(used)
+          offset += msgs.length
+          fetchPage()
+        })
+      })
+      req.on('error', () => resolve(used))
+      req.setTimeout(10000, () => { req.destroy(); resolve(used) })
+    }
+    fetchPage()
+  })
+}
+
+$fend('session_ctx', (data) => {
+  const id = data && data.id
+  const modelStr = (data && data.model || '').replace(/\r/g, '')
+  return getSessionUsage(id).then((used) => {
+    return getCtxLimit(modelStr).then((limit) => {
+      return { used: used, limit: limit }
+    })
   })
 })
 
