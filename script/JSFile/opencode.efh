@@ -252,6 +252,10 @@
     .todo-item .td { color: var(--fc3); margin-right: 6px; }
     .todo-item .do { color: var(--ac); margin-right: 6px; }
     .todo-item .done { text-decoration: line-through; color: var(--fc3); }
+    .stream-par.err-text { color: var(--del); }
+    .stream-par.err-text pre, .stream-par.err-text code { color: var(--del); }
+    .msg .meta.ok { color: var(--ok); }
+    .msg .meta.err { color: var(--del); }
   </style>
 </head>
 <body>
@@ -345,14 +349,14 @@
           <div v-if="p.t === 'ref'" :class="['ref', p.cls || refClass(p.c)]">{{ p.c }}</div>
           <pre v-else-if="p.t === 'out'" class="tool-out">{{ p.c }}</pre>
           <template v-else-if="p.t === 'text'">
-            <div v-for="(v, vi) in mdViews(p, m.streaming)" :key="vi" class="stream-par">
+            <div v-for="(v, vi) in mdViews(p, m.streaming)" :key="vi" class="stream-par" :class="p.cls || ''">
               <pre v-if="v.plain" class="stream-text">{{ v.text }}</pre>
               <div v-else v-html="v.html"></div>
             </div>
           </template>
         </div>
         <span class="cursor" v-if="m.streaming"></span>
-        <div class="meta" v-if="m.meta">{{ m.meta }}</div>
+        <div class="meta" :class="m.errored ? 'err' : 'ok'" v-if="m.meta">{{ m.meta }}</div>
       </template>
     </div>
   </div>
@@ -549,6 +553,7 @@
       },
       loadSessions() {
         const self = this
+        this.loading = true
         return Promise.all([
           this.fetchFend('sessions', {}, 10000).catch((e) => { self.showNotify('sessions: ' + e.message); return { pinned: [] } }),
           this.fetchFend('models', {}, 15000).catch((e) => { self.showNotify('models: ' + e.message); return { models: [] } })
@@ -558,7 +563,7 @@
           return self.fetchFend('opencode_sessions', {}, 8000).catch((e) => { self.showNotify('opencode sessions: ' + e.message); return { sessions: [] } })
         }).then((oc) => {
           if (oc && oc.sessions) self.sessions = oc.sessions
-        })
+        }).finally(() => { self.loading = false })
       },
       fetchFend(key, data, timeout) {
         return fetch('', {
@@ -798,7 +803,14 @@
         es.onmessage = (e) => {
           try {
             const data = JSON.parse(e.data)
-            if (data.type === 'init') return
+            if (data.type === 'init') {
+              if (data.content && el.initShown !== data.content) {
+                flushText()
+                el.parts.push({ t: 'ref', c: data.content, cls: 'info' })
+                el.initShown = data.content
+              }
+              return
+            }
             if (data.type === 'ref') {
               flushText()
               el.parts.push({ t: 'ref', c: data.content, cls: data.cls || '' })
@@ -842,7 +854,12 @@
                 if (data.tokens) meta += ' | ⚙ ' + data.tokens.total + ' tokens'
                 if (data.steps) meta += ' | ' + data.steps + ' steps'
                 if (data.model) meta += ' | ' + data.model
-                if (data.timeout) meta += ' | timed out'
+                if (data.timeout) {
+                  meta += ' | ⚠ timed out'
+                  el.errored = true
+                } else {
+                  meta = '✓ ' + meta
+                }
                 el.meta = meta
                 if (data.model) self.ctxModel = data.model
                 try {
@@ -865,6 +882,7 @@
             if (data.type === 'error') {
               flushText()
               el.streaming = false
+              el.errored = true
               if (el.stopped) {
                 if (data.content && data.content !== 'client disconnected') {
                   el.meta = (el.meta ? el.meta + ' | ' : '') + '⚠ ' + data.content
@@ -879,8 +897,7 @@
               if (el.parts.length) {
                 el.meta = (el.meta ? el.meta + ' | ' : '') + '⚠ ' + data.content
               } else {
-                el.role = 'error'
-                el.parts = [{ t: 'text', c: 'Error: ' + data.content }]
+                el.parts = [{ t: 'text', c: 'Error: ' + data.content, cls: 'err-text' }]
               }
               es.close()
               self.busy = false
@@ -896,8 +913,8 @@
 
         this.fetchFend('start', { prompt: prompt, runId: runId, session: this.sessionId, model: this.currentModel }, 120000).then((data) => {
           if (!data.ok) {
-            el.role = 'error'; el.streaming = false
-            el.parts = [{ t: 'text', c: 'Error: ' + (data.error || 'failed to start') }]
+            el.errored = true; el.streaming = false
+            el.parts = [{ t: 'text', c: 'Error: ' + (data.error || 'failed to start'), cls: 'err-text' }]
             self.busy = false
             self.runId = ''
             self.todos = []
@@ -912,8 +929,8 @@
             el.streaming = false
             el.meta = 'Connection closed'
           } else {
-            el.role = 'error'; el.streaming = false
-            el.parts = [{ t: 'text', c: 'Error: ' + e.message }]
+            el.errored = true; el.streaming = false
+            el.parts = [{ t: 'text', c: 'Error: ' + e.message, cls: 'err-text' }]
           }
           self.busy = false
           self.runId = ''
@@ -930,6 +947,7 @@
         if (last && last.role === 'assistant' && last.streaming) {
           last.streaming = false
           last.stopped = true
+          last.errored = true
           last.meta = (last.meta ? last.meta + ' | ' : '') + '⏹ stopped'
         }
         this.fetchFend('stop', { runId: runId, session: sessionId }, 15000).then((data) => {
@@ -1044,7 +1062,7 @@
 </script>
 
 <script favend>
-const { spawn, execSync } = require('child_process')
+const { spawn, exec } = require('child_process')
 
 const OC_HOST = 'http://localhost:14096'
 const OC_BIN = 'opencode'
@@ -1056,29 +1074,58 @@ const IS_WIN = process.platform === 'win32'
 const IS_PAAS = !!process.env.PAAS
 const DEVNULL = IS_WIN ? 'nul' : '/dev/null'
 let serverProc = null
-const curlCmd = (extra) => {
-  return (IS_WIN ? 'curl.exe' : 'curl') + ' -s ' + (extra || '') + ' --connect-timeout 3 2>' + DEVNULL
-}
 const redirCmd = (cmd) => { return cmd + ' 2>' + DEVNULL }
-const sleepCmd = (sec) => { return IS_WIN ? 'timeout /t ' + sec + ' /nobreak >nul 2>&1' : 'sleep ' + sec }
+const sleep = (ms) => { return new Promise((resolve) => { setTimeout(resolve, ms) }) }
+
+const execAsync = (cmd, timeout) => {
+  return new Promise((resolve, reject) => {
+    exec(cmd, { timeout: timeout || 15000, windowsHide: true, encoding: 'utf-8', maxBuffer: 5 * 1024 * 1024 }, (error, stdout, stderr) => {
+      if (error) reject(error)
+      else resolve({ stdout: stdout || '', stderr: stderr || '' })
+    })
+  })
+}
+
+const httpGet = (path, port, timeout) => {
+  return new Promise((resolve) => {
+    const httpMod = require('http')
+    const req = httpMod.get({ host: '127.0.0.1', port: port || 14096, path: path }, (res) => {
+      let buf = ''
+      res.on('data', (c) => { buf += c })
+      res.on('end', () => { resolve({ status: res.statusCode, body: buf }) })
+    })
+    req.on('error', () => { resolve({ status: 0, body: '' }) })
+    req.setTimeout(timeout || 8000, () => { req.destroy(); resolve({ status: 0, body: '' }) })
+  })
+}
 
 const serverReady = () => {
-  try {
-    const code = execSync(curlCmd('-o ' + DEVNULL + ' -w "%{http_code}" ' + OC_HOST + '/'), { encoding: 'utf-8', timeout: 5000, windowsHide: true, shell: true })
-    console.log('[serverReady] http code:', code.trim())
-    if (code && code.trim() === '200') return true
-  } catch(e) {}
-  return false
+  return httpGet('/', 14096, 3000).then((r) => { return r.status === 200 })
 }
 
-const ensureServer = () => {
+const emitOut = (lastStore, callId, out, sendFn) => {
+  if (!out) return
+  const last = lastStore[callId] || ''
+  let delta
+  if (out.indexOf(last) === 0) {
+    delta = out.slice(last.length)
+  } else {
+    delta = last ? '\n' + out : out
+  }
+  if (delta) sendFn(delta)
+  lastStore[callId] = out
+}
+
+const ensureServer = async () => {
+  let pid = ''
   try {
-    const pid = $store.get('opencode_server_pid')
-    if (pid && isAlive(pid) && serverReady()) return true
+    pid = $store.get('opencode_server_pid')
+    if (pid && isAlive(pid) && (await serverReady())) return true
   } catch(e) {}
-  if (serverReady()) {
+  if (await serverReady()) {
     try {
-      const found = execSync(IS_WIN ? 'netstat -ano | findstr :14096' : 'lsof -t -iTCP:14096', { encoding: 'utf-8', timeout: 5000, windowsHide: true, shell: true })
+      const r = await execAsync(IS_WIN ? 'netstat -ano | findstr :14096' : 'lsof -t -iTCP:14096', 5000)
+      const found = r.stdout
       const fpid = String(found).trim().split(/\s+/).pop()
       if (fpid && fpid !== pid) $store.set('opencode_server_pid', fpid)
     } catch(e) {}
@@ -1099,8 +1146,8 @@ const ensureServer = () => {
     $store.set('opencode_server_pid', String(proc.pid))
     const deadline = Date.now() + 15000
     while (Date.now() < deadline) {
-      if (serverReady()) return true
-      execSync(sleepCmd(1), { timeout: 2000, windowsHide: true, shell: true })
+      if (await serverReady()) return true
+      await sleep(1000)
     }
     return false
   } catch(e) {
@@ -1312,11 +1359,10 @@ const runCliMode = (data, runId) => {
           seenTools[callId] = true
           sendRef('◈ ' + (part.tool || 'tool'), 'tool')
         }
-        runningTools[callId] = { tool: part.tool || 'tool', arg: arg, lastUpdate: Date.now() }
-        if (out && out !== lastToolOut[callId]) {
-          lastToolOut[callId] = out
-          send('out', { content: out })
-        }
+        if (!runningTools[callId]) runningTools[callId] = { tool: part.tool || 'tool', arg: arg, started: Date.now() }
+        if (out) runningTools[callId].lastOutput = out
+        runningTools[callId].lastUpdate = Date.now()
+        if (out) emitOut(lastToolOut, callId, out, (d) => { send('out', { content: d }) })
       } else if (st.status === 'completed') {
         delete runningTools[callId]
         if (!seenTools[callId]) {
@@ -1324,14 +1370,11 @@ const runCliMode = (data, runId) => {
           sendRef('◈ ' + (part.tool || 'tool') + (arg ? ' · ' + arg : ''), 'tool')
         }
         sendRef('✓ ' + (part.tool || 'tool') + ' done', 'tool')
-        if (out && out !== lastToolOut[callId]) {
-          lastToolOut[callId] = out
-          send('out', { content: out })
-        }
+        if (out) emitOut(lastToolOut, callId, out, (d) => { send('out', { content: d }) })
       } else if (st.status === 'error') {
         delete runningTools[callId]
         sendRef('✗ ' + (part.tool || 'tool') + ' failed', 'tool')
-        if (out) send('out', { content: out })
+        if (out) emitOut(lastToolOut, callId, out, (d) => { send('out', { content: d }) })
       }
       return
     }
@@ -1361,7 +1404,7 @@ const runCliMode = (data, runId) => {
       if (!line.trim()) continue
       let ev
       try { ev = JSON.parse(line.trim()) } catch(e) { continue }
-      handleEvent(ev)
+      try { handleEvent(ev) } catch(e) {}
     }
   })
   proc.stderr.on('data', (chunk) => {
@@ -1373,10 +1416,12 @@ const runCliMode = (data, runId) => {
     if (streamEnded) { clearInterval(toolHeartbeat); return }
     const now = Date.now()
     for (const id in runningTools) {
-      if (now - runningTools[id].lastUpdate > 10000) {
-        sendRef('◈ ' + runningTools[id].tool + ' running (' + Math.floor((now - runningTools[id].lastUpdate) / 1000) + 's)', 'tool')
-        runningTools[id].lastUpdate = now
+      const tool = runningTools[id]
+      if (now - tool.lastUpdate > 10000) {
+        sendRef('◈ ' + tool.tool + ' running (' + Math.floor((now - tool.started) / 1000) + 's)', 'tool')
+        tool.lastUpdate = now
       }
+      if (tool.lastOutput) emitOut(lastToolOut, id, tool.lastOutput, (d) => { send('out', { content: d }) })
     }
   }, 15000)
 
@@ -1404,10 +1449,11 @@ const runCliMode = (data, runId) => {
   return { ok: true, runId: runId }
 }
 
-$fend('start', (data) => {
+$fend('start', async (data) => {
   if (!data || !data.prompt) return { error: 'prompt is required' }
   const runId = data.runId || Date.now() + '-' + Math.random().toString(36).slice(2, 8)
-  if (!ensureServer()) return runCliMode(data, runId)
+  $ws.sse(runId, JSON.stringify({ type: 'init', content: 'starting opencode server...' }))
+  if (!(await ensureServer())) return runCliMode(data, runId)
   const prompt = data.prompt
   const httpMod = require('http')
 
@@ -1474,19 +1520,24 @@ $fend('start', (data) => {
         let buf = ''
         res.setEncoding('utf8')
         res.on('data', (chunk) => {
-          try {
-            buf += chunk
-            let idx
-            while ((idx = buf.indexOf('\n\n')) >= 0) {
-              const frame = buf.slice(0, idx)
-              buf = buf.slice(idx + 2)
-              const match = frame.match(/^data:\s*(.+)$/m)
-              if (!match) continue
-              const ev = JSON.parse(match[1].trim())
-              handleEvent(ev)
-            }
-          } catch(e) {}
+          buf += chunk
+          let idx
+          while ((idx = buf.indexOf('\n\n')) >= 0) {
+            const frame = buf.slice(0, idx)
+            buf = buf.slice(idx + 2)
+            const match = frame.match(/^data:\s*(.+)$/m)
+            if (!match) continue
+            let ev
+            try { ev = JSON.parse(match[1].trim()) } catch(e) { continue }
+            try { handleEvent(ev) } catch(e) {}
+          }
         })
+        const streamClosed = () => {
+          if (streamEnded) return
+          finish({ content: '', model: model, tokens: tokens })
+        }
+        res.on('end', streamClosed)
+        res.on('close', streamClosed)
       })
       toolHeartbeat = setInterval(() => {
         if (streamEnded) {
@@ -1497,10 +1548,11 @@ $fend('start', (data) => {
         for (const id in runningTools) {
           const tool = runningTools[id]
           if (now - tool.lastUpdate > 10000) {
-            const elapsed = Math.floor((now - tool.lastUpdate) / 1000)
+            const elapsed = Math.floor((now - tool.started) / 1000)
             sendRef('◈ ' + tool.tool + ' running (' + elapsed + 's)', 'tool')
             tool.lastUpdate = now
           }
+          if (tool.lastOutput) emitOut(lastToolOut, id, tool.lastOutput, (d) => { $ws.sse(runId, JSON.stringify({ type: 'out', content: d })) })
         }
       }, 15000)
       const sendRef = (line, cls) => {
@@ -1575,11 +1627,10 @@ $fend('start', (data) => {
                 seenTools[callId] = true
                 sendRef('◈ ' + (part.tool || 'tool'), 'tool')
               }
-              runningTools[callId] = { tool: part.tool || 'tool', arg: arg, status: st.status, lastOutput: out, lastUpdate: Date.now() }
-              if (out && out !== lastToolOut[callId]) {
-                lastToolOut[callId] = out
-                $ws.sse(runId, JSON.stringify({ type: 'out', content: out }))
-              }
+              if (!runningTools[callId]) runningTools[callId] = { tool: part.tool || 'tool', arg: arg, status: st.status, started: Date.now() }
+              if (out) runningTools[callId].lastOutput = out
+              runningTools[callId].lastUpdate = Date.now()
+              if (out) emitOut(lastToolOut, callId, out, (d) => { $ws.sse(runId, JSON.stringify({ type: 'out', content: d })) })
             } else if (st.status === 'completed') {
               delete runningTools[callId]
               if (!seenTools[callId]) {
@@ -1587,14 +1638,11 @@ $fend('start', (data) => {
                 sendRef('◈ ' + (part.tool || 'tool') + (arg ? ' · ' + arg : ''), 'tool')
               }
               sendRef('✓ ' + (part.tool || 'tool') + ' done', 'tool')
-              if (out && out !== lastToolOut[callId]) {
-                lastToolOut[callId] = out
-                $ws.sse(runId, JSON.stringify({ type: 'out', content: out }))
-              }
+              if (out) emitOut(lastToolOut, callId, out, (d) => { $ws.sse(runId, JSON.stringify({ type: 'out', content: d })) })
             } else if (st.status === 'error') {
               delete runningTools[callId]
               sendRef('✗ ' + (part.tool || 'tool') + ' failed', 'tool')
-              if (out) $ws.sse(runId, JSON.stringify({ type: 'out', content: out }))
+              if (out) emitOut(lastToolOut, callId, out, (d) => { $ws.sse(runId, JSON.stringify({ type: 'out', content: d })) })
             }
             return
           }
@@ -1761,10 +1809,18 @@ $fend('start', (data) => {
   return (async () => {
     let sessionId = data.session || ''
     try {
+      const title = String(prompt || '').replace(/\s+/g, ' ').trim().slice(0, 60)
       if (!sessionId) {
-        const created = await api('POST', '/session', { title: '' })
+        const created = await api('POST', '/session', { title: title })
         if (created.status !== 200) throw new Error('create session failed: ' + created.body.slice(0, 120))
         sessionId = JSON.parse(created.body).id
+      } else if (title) {
+        try {
+          const got = await api('GET', '/session/' + sessionId)
+          let cur = ''
+          try { cur = (JSON.parse(got.body) || {}).title || '' } catch(e) {}
+          if (!cur) api('PATCH', '/session/' + sessionId, { title: title })
+        } catch(e) {}
       }
       streamRun(sessionId)
       return { ok: true, runId: runId, sessionId: sessionId }
@@ -1774,7 +1830,7 @@ $fend('start', (data) => {
   })()
 })
 
-$fend('commands', (data) => {
+$fend('commands', async (data) => {
   const out = [
     { name: 'compact', description: 'compact the current conversation (via summarize)' },
     { name: 'new', description: 'start a new session' },
@@ -1782,9 +1838,9 @@ $fend('commands', (data) => {
     { name: 'redo', description: 'redo last undone message' }
   ]
   try {
-    const raw = execSync(curlCmd(OC_HOST + '/command'), { encoding: 'utf-8', timeout: 8000, windowsHide: true, shell: true })
+    const r = await httpGet('/command')
     let list = []
-    try { list = JSON.parse(raw.trim()) } catch(e) {}
+    try { list = JSON.parse(r.body) } catch(e) {}
     if (Array.isArray(list)) {
       for (let i = list.length - 1; i >= 0; i--) {
         out.unshift({ name: list[i].name || '', description: list[i].description || '' })
@@ -1794,14 +1850,14 @@ $fend('commands', (data) => {
   return { ok: true, commands: out }
 })
 
-$fend('stop', (data) => {
+$fend('stop', async (data) => {
   if (!data) return { ok: false }
   const runId = data.runId
   const sessionId = data.session || ''
   const rp = runProcs[runId]
   if (rp) {
     try {
-      if (IS_WIN) execSync('taskkill /PID ' + rp.pid + ' /T /F', { windowsHide: true, timeout: 5000 })
+      if (IS_WIN) await execAsync('taskkill /PID ' + rp.pid + ' /T /F', 5000)
       else rp.kill('SIGTERM')
     } catch(e) {
       try { rp.kill() } catch(e2) {}
@@ -1829,14 +1885,15 @@ $fend('stop', (data) => {
   }
 })
 
-$fend('ensure_opencode', (data) => {
+$fend('ensure_opencode', async (data) => {
   const runId = data && data.installId
   try {
-    const version = execSync(redirCmd(OC_BIN + ' --version'), { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
-    console.log('[ensure_opencode] version:', version.trim())
-    if (version && version.trim()) {
-      if (runId) $ws.sse(runId, JSON.stringify({ type: 'done', version: version.trim() }))
-      return { ok: true, installing: false, version: version.trim() }
+    const v = await execAsync(redirCmd(OC_BIN + ' --version'), 10000)
+    const version = v.stdout.trim()
+    console.log('[ensure_opencode] version:', version)
+    if (version) {
+      if (runId) $ws.sse(runId, JSON.stringify({ type: 'done', version: version }))
+      return { ok: true, installing: false, version: version }
     }
   } catch(e) {}
   if (!runId) return { error: 'no installId' }
@@ -1861,12 +1918,13 @@ $fend('ensure_opencode', (data) => {
     }
     proc.stdout.on('data', sendProgress)
     proc.stderr.on('data', sendProgress)
-    proc.on('close', (code) => {
+    proc.on('close', async (code) => {
       try {
         if (code === 0) {
-          const ver = execSync(redirCmd(OC_BIN + ' --version'), { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
-          console.log('[npm install] done, version:', (ver || 'unknown').trim())
-          $ws.sse(runId, JSON.stringify({ type: 'done', version: (ver || 'unknown').trim() }))
+          const ver = await execAsync(redirCmd(OC_BIN + ' --version'), 10000)
+          const version = ver.stdout.trim() || 'unknown'
+          console.log('[npm install] done, version:', version)
+          $ws.sse(runId, JSON.stringify({ type: 'done', version: version }))
         } else {
           $ws.sse(runId, JSON.stringify({ type: 'error', content: 'npm install failed (code ' + code + ')' }))
         }
@@ -1884,7 +1942,7 @@ $fend('ensure_opencode', (data) => {
   }
 })
 
-$fend('models', () => {
+$fend('models', async () => {
   const now = Date.now()
   let cached, cachedTime
   try { cached = JSON.parse($store.get('aichat_models_cache') || 'null') } catch(e) {}
@@ -1892,7 +1950,8 @@ $fend('models', () => {
   if (cached && now - cachedTime < 60000) return { models: cached, cached: true }
   if (cached) {
     try {
-      const raw = execSync(redirCmd(OC_BIN + ' models'), { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
+      const r = await execAsync(redirCmd(OC_BIN + ' models'), 10000)
+      const raw = r.stdout
       console.log('[models cached-refresh] raw:', raw.trim())
       if (raw && raw.trim()) {
         const list = raw.trim().split('\n').filter(Boolean).map((s) => { return s.trim() })
@@ -1904,7 +1963,8 @@ $fend('models', () => {
     return { models: cached }
   }
   try {
-    const raw = execSync(redirCmd(OC_BIN + ' models'), { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
+    const r = await execAsync(redirCmd(OC_BIN + ' models'), 10000)
+    const raw = r.stdout
     console.log('[models] raw:', raw.trim())
     if (!raw || !raw.trim()) return { models: [] }
     const list = raw.trim().split('\n').filter(Boolean).map((s) => { return s.trim() })
@@ -1941,7 +2001,7 @@ $fend('delete_session', (data) => {
   }
 })
 
-$fend('opencode_sessions', () => {
+$fend('opencode_sessions', async () => {
   const now = Date.now()
   let cached, cachedTime
   try { cached = JSON.parse($store.get('aichat_oc_sessions_cache') || 'null') } catch(e) {}
@@ -1950,7 +2010,8 @@ $fend('opencode_sessions', () => {
   if (cached && now - cachedTime < 15000) return { sessions: cached, cached: true }
   if (cached) {
     try {
-      const raw = execSync(redirCmd(OC_BIN + ' session list --format json -n 30'), { encoding: 'utf-8', timeout: 8000, windowsHide: true, shell: true })
+      const r = await execAsync(redirCmd(OC_BIN + ' session list --format json -n 30'), 8000)
+      const raw = r.stdout
       console.log('[opencode_sessions cached-refresh] raw:', raw.trim())
       if (raw && raw.trim()) {
         const list = JSON.parse(raw.trim())
@@ -1962,7 +2023,8 @@ $fend('opencode_sessions', () => {
     return { sessions: cached }
   }
   try {
-    const raw = execSync(redirCmd(OC_BIN + ' session list --format json -n 30'), { encoding: 'utf-8', timeout: 8000, windowsHide: true, shell: true })
+    const r = await execAsync(redirCmd(OC_BIN + ' session list --format json -n 30'), 8000)
+    const raw = r.stdout
     console.log('[opencode_sessions] raw:', raw.trim())
     if (!raw || !raw.trim()) return { sessions: [] }
     const sessions = JSON.parse(raw.trim())
@@ -1974,10 +2036,10 @@ $fend('opencode_sessions', () => {
   }
 })
 
-$fend('opencode_delete_session', (data) => {
+$fend('opencode_delete_session', async (data) => {
   if (!data || !data.id) return { ok: false }
   try {
-    execSync(redirCmd(OC_BIN + ' session delete ' + data.id), { encoding: 'utf-8', timeout: 10000, windowsHide: true, shell: true })
+    await execAsync(redirCmd(OC_BIN + ' session delete ' + data.id), 10000)
     return { ok: true }
   } catch(e) {
     return { ok: false, error: e.message }
