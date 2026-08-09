@@ -256,6 +256,42 @@
     .stream-par.err-text pre, .stream-par.err-text code { color: var(--del); }
     .msg .meta.ok { color: var(--ok); }
     .msg .meta.err { color: var(--del); }
+    .question-panel {
+      flex-shrink: 0; background: var(--bk2); border-top: 1px solid var(--bd);
+      padding: 10px 16px; max-height: 45%; overflow-y: auto;
+    }
+    .question-panel .q-item { margin-bottom: 12px; }
+    .question-panel .q-header { font-size: 11px; color: var(--ac); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px; }
+    .question-panel .q-text { font-size: 14px; color: var(--fc); margin: 2px 0 8px; }
+    .q-opt {
+      display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+      border: 1px solid var(--bd); border-radius: 8px; cursor: pointer;
+      margin-bottom: 6px; background: var(--bk3); transition: all .15s;
+    }
+    .q-opt:hover { border-color: var(--ac); }
+    .q-opt.sel { border-color: var(--ac); background: rgba(88,166,255,.12); }
+    .q-opt .q-check {
+      width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--fc3);
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 11px; color: #000;
+    }
+    .q-opt.sel .q-check { background: var(--ac); border-color: var(--ac); }
+    .q-opt .q-label { font-weight: bold; color: var(--fc); }
+    .q-opt .q-desc { color: var(--fc2); font-size: 12px; }
+    .q-custom { display: flex; gap: 8px; margin: 6px 0; }
+    .q-custom input {
+      flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--bd);
+      background: var(--bk3); color: var(--fc); font-size: 13px; outline: none;
+    }
+    .q-custom input:focus { border-color: var(--ac); }
+    .q-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .q-actions button {
+      padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px;
+    }
+    .q-submit { background: var(--ac); color: #000; font-weight: bold; border: 1px solid var(--ac); }
+    .q-submit:disabled { opacity: .5; cursor: not-allowed; }
+    .q-reject { background: var(--bk3); color: var(--fc2); border: 1px solid var(--bd); }
+    .q-reject:hover { color: var(--fc); border-color: var(--fc3); }
   </style>
 </head>
 <body>
@@ -369,6 +405,26 @@
     </div>
   </div>
 
+  <div class="question-panel" v-if="question">
+    <div v-for="(q, qi) in question.questions" :key="qi" class="q-item">
+      <div class="q-header">{{ q.header || 'Question' }}</div>
+      <div class="q-text">{{ q.question }}</div>
+      <div v-for="(opt, oi) in q.options" :key="oi" class="q-opt"
+           :class="{sel: qSel[qi] && qSel[qi].indexOf(opt.label) >= 0}" @click="qToggle(qi, opt.label)">
+        <span class="q-check">{{ qSel[qi] && qSel[qi].indexOf(opt.label) >= 0 ? '✓' : '' }}</span>
+        <span class="q-label">{{ opt.label }}</span>
+        <span class="q-desc">{{ opt.description }}</span>
+      </div>
+      <div class="q-custom" v-if="q.custom !== false">
+        <input type="text" v-model="qCustom[qi]" placeholder="Type a custom answer..." @keydown.enter.prevent="qSubmit">
+      </div>
+    </div>
+    <div class="q-actions">
+      <button class="q-submit" @click="qSubmit" :disabled="qSubmitting">Submit</button>
+      <button class="q-reject" @click="qReject">Dismiss</button>
+    </div>
+  </div>
+
   <div class="cmd-wrap">
     <div class="cmd-dropdown" v-if="cmdOpen && cmdFiltered.length">
       <div class="cmd-item" v-for="(c, ci) in cmdFiltered" :key="c.name" :class="{active: ci === cmdIdx}" @mousedown.prevent="pickCmd(c)">
@@ -402,7 +458,8 @@
         sessionPanelOpen: false, dropdown: '',
         notifyMsg: '', notifyShow: false, loading: false,
         ocVersion: '', installOverlay: true, installErr: '', installProgress: 'This may take a minute',
-        ctxUsed: 0, ctxLimit: 0, ctxPct: 0, ctxModel: ''
+        ctxUsed: 0, ctxLimit: 0, ctxPct: 0, ctxModel: '',
+        question: null, qSel: [], qCustom: [], qSubmitting: false
       }
     },
     computed: {
@@ -844,10 +901,34 @@
                 if (self.sessionId) localStorage.setItem('aichat_last_session', self.sessionId)
               } catch(e) {}
             }
+            if (data.type === 'question') {
+              self.question = data.data || null
+              self.qSel = []
+              self.qCustom = []
+              if (self.question && self.question.questions) {
+                for (let i = 0; i < self.question.questions.length; i++) {
+                  self.qSel.push([])
+                  self.qCustom.push('')
+                }
+              }
+              self.scrollBottom()
+              return
+            }
+            if (data.type === 'question_done') {
+              if (self.question && data.data && self.question.requestID === data.data.requestID) {
+                self.question = null
+                self.qSel = []
+                self.qCustom = []
+              }
+              return
+            }
             if (data.type === 'done') {
               flushText()
               if (data.content) el.parts.push({ t: 'text', c: data.content })
               el.streaming = false
+              self.question = null
+              self.qSel = []
+              self.qCustom = []
               es.close()
               if (!el.stopped) {
                 let meta = Math.round((Date.now() - startTime) / 1000) + 's'
@@ -883,6 +964,9 @@
               flushText()
               el.streaming = false
               el.errored = true
+              self.question = null
+              self.qSel = []
+              self.qCustom = []
               if (el.stopped) {
                 if (data.content && data.content !== 'client disconnected') {
                   el.meta = (el.meta ? el.meta + ' | ' : '') + '⚠ ' + data.content
@@ -922,6 +1006,9 @@
             self.scrollBottom()
           } else if (data.sessionId) {
             self.sessionId = data.sessionId
+            try {
+              if (self.sessionId) localStorage.setItem('aichat_last_session', self.sessionId)
+            } catch(e) {}
           }
         }).catch((e) => {
           flushText()
@@ -960,9 +1047,64 @@
           self.busy = false
         })
       },
+      qToggle(qi, label) {
+        if (!this.question || this.qSubmitting) return
+        const q = this.question.questions[qi]
+        const cur = (this.qSel[qi] || []).slice()
+        const idx = cur.indexOf(label)
+        if (idx >= 0) cur.splice(idx, 1)
+        else cur.push(label)
+        this.qSel[qi] = q.multiple ? cur : cur.slice(-1)
+        this.qSel = this.qSel.slice()
+      },
+      qSubmit() {
+        const self = this
+        if (!this.question || this.qSubmitting) return
+        const answers = this.question.questions.map((q, qi) => {
+          const arr = (this.qSel[qi] || []).slice()
+          const custom = (this.qCustom[qi] || '').trim()
+          if (custom && q.custom !== false && arr.indexOf(custom) < 0) arr.push(custom)
+          return arr
+        })
+        this.qSubmitting = true
+        this.fetchFend('question_reply', { requestID: this.question.requestID, sessionID: this.question.sessionID, answers: answers }, 15000).then((data) => {
+          self.qSubmitting = false
+          if (data && data.ok) {
+            self.question = null
+            self.qSel = []
+            self.qCustom = []
+          } else {
+            self.showNotify('Reply failed: ' + ((data && data.error) || 'unknown'))
+          }
+        }).catch((e) => {
+          self.qSubmitting = false
+          self.showNotify('Reply failed: ' + e.message)
+        })
+      },
+      qReject() {
+        const self = this
+        if (!this.question || this.qSubmitting) return
+        this.qSubmitting = true
+        this.fetchFend('question_reject', { requestID: this.question.requestID }, 15000).then((data) => {
+          self.qSubmitting = false
+          if (data && data.ok) {
+            self.question = null
+            self.qSel = []
+            self.qCustom = []
+          } else {
+            self.showNotify('Reject failed: ' + ((data && data.error) || 'unknown'))
+          }
+        }).catch((e) => {
+          self.qSubmitting = false
+          self.showNotify('Reject failed: ' + e.message)
+        })
+      },
       clearChat() {
         this.messages = []
         this.sessionId = ''
+        this.question = null
+        this.qSel = []
+        this.qCustom = []
         this.ctxUsed = 0
         this.ctxPct = 0
         try { localStorage.removeItem('aichat_last_session') } catch(e) {}
@@ -1351,6 +1493,13 @@ const runCliMode = (data, runId) => {
       const arg = inp.command || inp.filePath || inp.path || inp.url || inp.pattern || inp.query || ''
       const callId = part.callID || part.id || (part.tool || 'tool')
       const out = st.output || (st.metadata && st.metadata.output) || ''
+      if (part.tool === 'question') {
+        if (!seenTools[callId] && (st.status === 'pending' || st.status === 'running')) {
+          seenTools[callId] = true
+          sendRef('◈ question asked', 'tool')
+        }
+        return
+      }
       if (st.status === 'pending' || st.status === 'running') {
         if (!seenTools[callId] && arg) {
           seenTools[callId] = true
@@ -1585,6 +1734,17 @@ $fend('start', async (data) => {
 
       const handleEvent = (ev) => {
         const p = ev.properties || {}
+        if (ev.type === 'question.asked') {
+          const qsid = p.sessionID
+          if (qsid && sessionId && qsid !== sessionId) return
+          $ws.sse(runId, JSON.stringify({ type: 'question', data: { requestID: p.id, sessionID: p.sessionID, questions: p.questions || [], tool: p.tool || null } }))
+          return
+        }
+        if (ev.type === 'question.replied' || ev.type === 'question.rejected') {
+          if (p.sessionID && sessionId && p.sessionID !== sessionId) return
+          $ws.sse(runId, JSON.stringify({ type: 'question_done', data: { requestID: p.requestID } }))
+          return
+        }
         if (ev.type === 'message.part.delta') {
           if (p.field === 'text' && p.delta) {
             $ws.sse(runId, JSON.stringify({ type: 'text', content: p.delta }))
@@ -1619,6 +1779,13 @@ $fend('start', async (data) => {
             const arg = inp.command || inp.filePath || inp.path || inp.url || inp.pattern || inp.query || ''
             const callId = part.callID || part.id || (part.tool || 'tool')
             const out = st.output || (st.metadata && st.metadata.output) || ''
+            if (part.tool === 'question') {
+              if (!seenTools[callId] && (st.status === 'pending' || st.status === 'running')) {
+                seenTools[callId] = true
+                sendRef('◈ question asked', 'tool')
+              }
+              return
+            }
             if (st.status === 'pending' || st.status === 'running') {
               if (!seenTools[callId] && arg) {
                 seenTools[callId] = true
@@ -2040,6 +2207,47 @@ $fend('opencode_delete_session', async (data) => {
   if (!data || !data.id) return { ok: false }
   try {
     await execAsync(redirCmd(OC_BIN + ' session delete ' + data.id), 10000)
+    return { ok: true }
+  } catch(e) {
+    return { ok: false, error: e.message }
+  }
+})
+
+const ocPost = (path, body) => {
+  return new Promise((resolve, reject) => {
+    const httpMod = require('http')
+    const payload = body ? JSON.stringify(body) : ''
+    const req = httpMod.request({
+      host: '127.0.0.1', port: 14096, path: path, method: 'POST',
+      headers: body ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) } : {}
+    }, (res) => {
+      let buf = ''
+      res.on('data', (c) => { buf += c })
+      res.on('end', () => { resolve({ status: res.statusCode, body: buf }) })
+    })
+    req.on('error', reject)
+    req.setTimeout(8000, () => { req.destroy(); reject(new Error('timeout')) })
+    if (body) req.write(payload)
+    req.end()
+  })
+}
+
+$fend('question_reply', async (data) => {
+  if (!data || !data.requestID || !Array.isArray(data.answers)) return { ok: false, error: 'invalid params' }
+  try {
+    const r = await ocPost('/question/' + encodeURIComponent(data.requestID) + '/reply', { answers: data.answers })
+    if (r.status !== 200) return { ok: false, error: r.body.slice(0, 200) }
+    return { ok: true }
+  } catch(e) {
+    return { ok: false, error: e.message }
+  }
+})
+
+$fend('question_reject', async (data) => {
+  if (!data || !data.requestID) return { ok: false, error: 'invalid params' }
+  try {
+    const r = await ocPost('/question/' + encodeURIComponent(data.requestID) + '/reject')
+    if (r.status !== 200) return { ok: false, error: r.body.slice(0, 200) }
     return { ok: true }
   } catch(e) {
     return { ok: false, error: e.message }
