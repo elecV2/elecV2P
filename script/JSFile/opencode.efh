@@ -459,7 +459,8 @@
         notifyMsg: '', notifyShow: false, loading: false,
         ocVersion: '', installOverlay: true, installErr: '', installProgress: 'This may take a minute',
         ctxUsed: 0, ctxLimit: 0, ctxPct: 0, ctxModel: '',
-        question: null, qSel: [], qCustom: [], qSubmitting: false
+        question: null, qSel: [], qCustom: [], qSubmitting: false,
+        sseMain: null, mainReady: false, sseHandlers: {}
       }
     },
     computed: {
@@ -842,7 +843,6 @@
         this.todos = []
         if (this.currentModel) this.ctxModel = this.currentModel
 
-        const es = new EventSource('/sse/elecV2P/' + runId)
         let textBuf = ''
         let textFlush = null
         const flushText = () => {
@@ -857,9 +857,8 @@
           textBuf = ''
         }
 
-        es.onmessage = (e) => {
+        const onMsg = (data) => {
           try {
-            const data = JSON.parse(e.data)
             if (data.type === 'init') {
               if (data.content && el.initShown !== data.content) {
                 flushText()
@@ -929,7 +928,7 @@
               self.question = null
               self.qSel = []
               self.qCustom = []
-              es.close()
+              delete self.sseHandlers[runId]
               if (!el.stopped) {
                 let meta = Math.round((Date.now() - startTime) / 1000) + 's'
                 if (data.tokens) meta += ' | ⚙ ' + data.tokens.total + ' tokens'
@@ -971,7 +970,7 @@
                 if (data.content && data.content !== 'client disconnected') {
                   el.meta = (el.meta ? el.meta + ' | ' : '') + '⚠ ' + data.content
                 }
-                es.close()
+                delete self.sseHandlers[runId]
                 self.busy = false
                 self.runId = ''
                 self.todos = []
@@ -983,7 +982,7 @@
               } else {
                 el.parts = [{ t: 'text', c: 'Error: ' + data.content, cls: 'err-text' }]
               }
-              es.close()
+              delete self.sseHandlers[runId]
               self.busy = false
               self.runId = ''
               self.todos = []
@@ -993,7 +992,7 @@
             self.scrollBottom()
           } catch(e) {}
         }
-        es.onerror = () => {}
+        self.sseHandlers[runId] = onMsg
 
         this.fetchFend('start', { prompt: prompt, runId: runId, session: this.sessionId, model: this.currentModel }, 120000).then((data) => {
           if (!data.ok) {
@@ -1002,7 +1001,7 @@
             self.busy = false
             self.runId = ''
             self.todos = []
-            es.close()
+            delete self.sseHandlers[runId]
             self.scrollBottom()
           } else if (data.sessionId) {
             self.sessionId = data.sessionId
@@ -1022,7 +1021,7 @@
           self.busy = false
           self.runId = ''
           self.todos = []
-          es.close()
+          delete self.sseHandlers[runId]
           self.scrollBottom()
         })
       },
@@ -1171,6 +1170,23 @@
       const self = this
       document.addEventListener('click', () => { self.dropdown = '' })
 
+      const mainEs = new EventSource('/sse/elecV2P/opencode-main')
+      self.sseMain = mainEs
+      mainEs.onmessage = (e) => {
+        try {
+          const d = JSON.parse(e.data)
+          if (d.runId && self.sseHandlers[d.runId]) {
+            self.sseHandlers[d.runId](d)
+            return
+          }
+          if (d.type === 'init') {
+            self.mainReady = true
+            return
+          }
+        } catch(e) {}
+      }
+      mainEs.onerror = () => {}
+
       const installEs = new EventSource('/sse/elecV2P/' + installId)
       installEs.onmessage = (e) => {
         try {
@@ -1211,6 +1227,19 @@ const OC_BIN = 'opencode'
 
 const stripAnsi = (s) => { return String(s).replace(/\u001b\[[0-9;]*[a-zA-Z]/g, '').replace(/\r/g, '') }
 const isAlive = (pid) => { try { process.kill(Number(pid), 0); return true } catch(e) { return false } }
+
+const toolArg = (inp) => {
+  const i = inp || {}
+  let arg = i.command || i.filePath || i.path || i.url || i.pattern || i.query || ''
+  if (i.filePath) {
+    const off = Number(i.offset)
+    const lim = Number(i.limit)
+    if (!isNaN(off) && !isNaN(lim) && lim > 0) arg += ' · L' + off + '-' + (off + lim - 1)
+    else if (!isNaN(lim) && lim > 0) arg += ' · ' + lim + ' lines'
+    else if (!isNaN(off) && off > 0) arg += ' · from L' + off
+  }
+  return arg
+}
 
 const IS_WIN = process.platform === 'win32'
 const IS_PAAS = !!process.env.PAAS
@@ -1406,6 +1435,10 @@ $fend('session_ctx', (data) => {
   })
 })
 
+const sseChat = (runId, obj) => {
+  $ws.sse('opencode-main', JSON.stringify(Object.assign({ runId: runId }, obj)))
+}
+
 const runCliMode = (data, runId) => {
   const prompt = data.prompt
   const sessionId = data.session || ''
@@ -1425,12 +1458,28 @@ const runCliMode = (data, runId) => {
   const seenTools = {}
   const lastToolOut = {}
   const runningTools = {}
+  const reasoningSeen = {}
+  const reasoningKey = (id) => { return id || '_' }
+  const reasonStart = (id) => {
+    const k = reasoningKey(id)
+    if (reasoningSeen[k] !== 'start' && reasoningSeen[k] !== 'done') {
+      reasoningSeen[k] = 'start'
+      sendRef('✱ reasoning', 'reasoning')
+    }
+  }
+  const reasonDone = (id) => {
+    const k = reasoningKey(id)
+    if (reasoningSeen[k] !== 'done') {
+      reasoningSeen[k] = 'done'
+      sendRef('✓ reasoning done', 'reasoning')
+    }
+  }
   let watchdog = null
   let aliveTimer = null
   let toolHeartbeat = null
 
   const send = (type, payload) => {
-    $ws.sse(runId, JSON.stringify(Object.assign({ type: type }, payload || {})))
+    sseChat(runId, Object.assign({ type: type }, payload || {}))
   }
   const sendRef = (line, cls) => {
     send('ref', { content: line, cls: cls || '' })
@@ -1485,12 +1534,12 @@ const runCliMode = (data, runId) => {
       if (part.text) send('text', { content: part.text })
       return
     }
-    if (t === 'reasoning') { sendRef('✱ reasoning', 'reasoning'); return }
+    if (t === 'reasoning') { if (part.time && part.time.end) reasonDone(part.id); else reasonStart(part.id); return }
     if (t === 'file') { sendRef('▸ file ' + ((part.file && part.file.path) || ''), 'info'); return }
     if (t === 'tool_use') {
       const st = part.state || {}
       const inp = st.input || {}
-      const arg = inp.command || inp.filePath || inp.path || inp.url || inp.pattern || inp.query || ''
+      const arg = toolArg(inp)
       const callId = part.callID || part.id || (part.tool || 'tool')
       const out = st.output || (st.metadata && st.metadata.output) || ''
       if (part.tool === 'question') {
@@ -1587,7 +1636,7 @@ const runCliMode = (data, runId) => {
   }, 600000)
   aliveTimer = setInterval(() => {
     try {
-      if (typeof $ws.sseExists !== 'function' || $ws.sseExists(runId)) return
+      if (typeof $ws.sseExists !== 'function' || $ws.sseExists('opencode-main')) return
       clearInterval(aliveTimer)
       aliveTimer = null
       try { proc.kill() } catch(e) {}
@@ -1601,7 +1650,7 @@ const runCliMode = (data, runId) => {
 $fend('start', async (data) => {
   if (!data || !data.prompt) return { error: 'prompt is required' }
   const runId = data.runId || Date.now() + '-' + Math.random().toString(36).slice(2, 8)
-  $ws.sse(runId, JSON.stringify({ type: 'init', content: 'starting opencode server...' }))
+  sseChat(runId, { type: 'init', content: 'starting opencode server...' })
   if (!(await ensureServer())) return runCliMode(data, runId)
   const prompt = data.prompt
   const httpMod = require('http')
@@ -1636,17 +1685,33 @@ $fend('start', async (data) => {
       const seenTools = {}
       const lastToolOut = {}
       const runningTools = {}
+      const reasoningSeen = {}
+      const reasoningKey = (id) => { return id || '_' }
+      const reasonStart = (id) => {
+        const k = reasoningKey(id)
+        if (reasoningSeen[k] !== 'start' && reasoningSeen[k] !== 'done') {
+          reasoningSeen[k] = 'start'
+          sendRef('✱ reasoning', 'reasoning')
+        }
+      }
+      const reasonDone = (id) => {
+        const k = reasoningKey(id)
+        if (reasoningSeen[k] !== 'done') {
+          reasoningSeen[k] = 'done'
+          sendRef('✓ reasoning done', 'reasoning')
+        }
+      }
       let tokens = null
       let watchdog = null
       let aliveTimer = null
       let toolHeartbeat = null
 
       const pushCtx = (used, limit) => {
-        $ws.sse(runId, JSON.stringify({
+        sseChat(runId, {
           type: 'ctx', used: used || 0, limit: limit || 0,
           pct: limit ? Math.round((used || 0) / limit * 1000) / 10 : 0,
           model: model
-        }))
+        })
       }
 
       const emitCtx = (used) => {
@@ -1701,11 +1766,11 @@ $fend('start', async (data) => {
             sendRef('◈ ' + tool.tool + ' running (' + elapsed + 's)', 'tool')
             tool.lastUpdate = now
           }
-          if (tool.lastOutput) emitOut(lastToolOut, id, tool.lastOutput, (d) => { $ws.sse(runId, JSON.stringify({ type: 'out', content: d })) })
+          if (tool.lastOutput) emitOut(lastToolOut, id, tool.lastOutput, (d) => { sseChat(runId, { type: 'out', content: d }) })
         }
       }, 15000)
       const sendRef = (line, cls) => {
-        $ws.sse(runId, JSON.stringify({ type: 'ref', content: line, cls: cls || '' }))
+        sseChat(runId, { type: 'ref', content: line, cls: cls || '' })
       }
 
       const finish = (payload) => {
@@ -1715,7 +1780,7 @@ $fend('start', async (data) => {
         if (aliveTimer) clearInterval(aliveTimer)
         if (toolHeartbeat) clearInterval(toolHeartbeat)
         try { es.destroy() } catch(e) {}
-        $ws.sse(runId, JSON.stringify(Object.assign({ type: 'done', steps: stepCount }, payload || {})))
+        sseChat(runId, Object.assign({ type: 'done', steps: stepCount }, payload || {}))
       }
 
       const fail = (msg) => {
@@ -1725,7 +1790,7 @@ $fend('start', async (data) => {
         if (aliveTimer) clearInterval(aliveTimer)
         if (toolHeartbeat) clearInterval(toolHeartbeat)
         try { es.destroy() } catch(e) {}
-        $ws.sse(runId, JSON.stringify({ type: 'error', content: msg }))
+        sseChat(runId, { type: 'error', content: msg })
       }
 
       es.on('error', (e) => {
@@ -1737,19 +1802,19 @@ $fend('start', async (data) => {
         if (ev.type === 'question.asked') {
           const qsid = p.sessionID
           if (qsid && sessionId && qsid !== sessionId) return
-          $ws.sse(runId, JSON.stringify({ type: 'question', data: { requestID: p.id, sessionID: p.sessionID, questions: p.questions || [], tool: p.tool || null } }))
+          sseChat(runId, { type: 'question', data: { requestID: p.id, sessionID: p.sessionID, questions: p.questions || [], tool: p.tool || null } })
           return
         }
         if (ev.type === 'question.replied' || ev.type === 'question.rejected') {
           if (p.sessionID && sessionId && p.sessionID !== sessionId) return
-          $ws.sse(runId, JSON.stringify({ type: 'question_done', data: { requestID: p.requestID } }))
+          sseChat(runId, { type: 'question_done', data: { requestID: p.requestID } })
           return
         }
         if (ev.type === 'message.part.delta') {
           if (p.field === 'text' && p.delta) {
-            $ws.sse(runId, JSON.stringify({ type: 'text', content: p.delta }))
+            sseChat(runId, { type: 'text', content: p.delta })
           } else if (p.field === 'reasoning' && p.delta) {
-            sendRef('✱ reasoning…', 'reasoning')
+            reasonStart(p.partID)
           }
           return
         }
@@ -1766,7 +1831,8 @@ $fend('start', async (data) => {
             return
           }
           if (part.type === 'reasoning') {
-            sendRef('✱ reasoning', 'reasoning')
+            if (part.time && part.time.end) reasonDone(part.id)
+            else reasonStart(part.id)
             return
           }
           if (part.type === 'file') {
@@ -1776,7 +1842,7 @@ $fend('start', async (data) => {
           if (part.type === 'tool') {
             const st = part.state || {}
             const inp = st.input || {}
-            const arg = inp.command || inp.filePath || inp.path || inp.url || inp.pattern || inp.query || ''
+            const arg = toolArg(inp)
             const callId = part.callID || part.id || (part.tool || 'tool')
             const out = st.output || (st.metadata && st.metadata.output) || ''
             if (part.tool === 'question') {
@@ -1797,7 +1863,7 @@ $fend('start', async (data) => {
               if (!runningTools[callId]) runningTools[callId] = { tool: part.tool || 'tool', arg: arg, status: st.status, started: Date.now() }
               if (out) runningTools[callId].lastOutput = out
               runningTools[callId].lastUpdate = Date.now()
-              if (out) emitOut(lastToolOut, callId, out, (d) => { $ws.sse(runId, JSON.stringify({ type: 'out', content: d })) })
+              if (out) emitOut(lastToolOut, callId, out, (d) => { sseChat(runId, { type: 'out', content: d }) })
             } else if (st.status === 'completed') {
               delete runningTools[callId]
               if (!seenTools[callId]) {
@@ -1805,11 +1871,11 @@ $fend('start', async (data) => {
                 sendRef('◈ ' + (part.tool || 'tool') + (arg ? ' · ' + arg : ''), 'tool')
               }
               sendRef('✓ ' + (part.tool || 'tool') + ' done', 'tool')
-              if (out) emitOut(lastToolOut, callId, out, (d) => { $ws.sse(runId, JSON.stringify({ type: 'out', content: d })) })
+              if (out) emitOut(lastToolOut, callId, out, (d) => { sseChat(runId, { type: 'out', content: d }) })
             } else if (st.status === 'error') {
               delete runningTools[callId]
               sendRef('✗ ' + (part.tool || 'tool') + ' failed', 'tool')
-              if (out) emitOut(lastToolOut, callId, out, (d) => { $ws.sse(runId, JSON.stringify({ type: 'out', content: d })) })
+              if (out) emitOut(lastToolOut, callId, out, (d) => { sseChat(runId, { type: 'out', content: d }) })
             }
             return
           }
@@ -1862,7 +1928,7 @@ $fend('start', async (data) => {
           return
         }
         if (ev.type === 'todo.updated') {
-          $ws.sse(runId, JSON.stringify({ type: 'todo', data: p.todos || [] }))
+          sseChat(runId, { type: 'todo', data: p.todos || [] })
           return
         }
         if (ev.type === 'session.next.tool.success') {
@@ -1952,7 +2018,7 @@ $fend('start', async (data) => {
       }, 600000)
       aliveTimer = setInterval(() => {
         try {
-          if (typeof $ws.sseExists !== 'function' || $ws.sseExists(runId)) return
+          if (typeof $ws.sseExists !== 'function' || $ws.sseExists('opencode-main')) return
           clearInterval(aliveTimer)
           aliveTimer = null
           const ab = httpMod.request({
