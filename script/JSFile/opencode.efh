@@ -886,8 +886,9 @@
             }
             if (data.type === 'ctx') {
               self.ctxUsed = data.used || 0
-              self.ctxLimit = data.limit || 0
-              self.ctxPct = data.pct || 0
+              if (data.limit > 0) self.ctxLimit = data.limit
+              if (data.pct !== undefined && data.pct !== null) self.ctxPct = data.pct
+              else if (self.ctxLimit) self.ctxPct = Math.round((self.ctxUsed || 0) / self.ctxLimit * 1000) / 10
               if (data.model) self.ctxModel = data.model
               try {
                 if (self.ctxLimit) localStorage.setItem('aichat_ctx_limit', String(self.ctxLimit))
@@ -1127,14 +1128,14 @@
         this.loadHistory()
         this.loadSessions().then(() => {
           self.loading = false
+          const savedModel = localStorage.getItem('aichat_last_model')
+          if (savedModel) self.currentModel = savedModel.replace(/\r/g, '')
           const savedSession = localStorage.getItem('aichat_last_session')
           if (savedSession && savedSession !== self.sessionId && savedSession !== '') {
             for (let i = 0; i < self.sessions.length; i++) {
               if (self.sessions[i].id === savedSession) { self.selectSession(savedSession); break }
             }
           }
-          const savedModel = localStorage.getItem('aichat_last_model')
-          if (savedModel) self.currentModel = savedModel.replace(/\r/g, '')
           self.refreshCtx()
         })
       },
@@ -1238,6 +1239,11 @@ const toolArg = (inp) => {
     else if (!isNaN(lim) && lim > 0) arg += ' · ' + lim + ' lines'
     else if (!isNaN(off) && off > 0) arg += ' · from L' + off
   }
+  if (typeof i.old_string === 'string' || typeof i.new_string === 'string') {
+    const oldLines = typeof i.old_string === 'string' && i.old_string ? i.old_string.split('\n').length : 0
+    const newLines = typeof i.new_string === 'string' && i.new_string ? i.new_string.split('\n').length : 0
+    arg += ' · -' + oldLines + '/+' + newLines
+  }
   return arg
 }
 
@@ -1270,8 +1276,20 @@ const httpGet = (path, port, timeout) => {
   })
 }
 
-const serverReady = () => {
-  return httpGet('/', 14096, 3000).then((r) => { return r.status === 200 })
+let serverReadyAt = 0
+let serverReadyOk = false
+const serverReady = (force) => {
+  const now = Date.now()
+  if (!force && now - serverReadyAt < 5000) return Promise.resolve(serverReadyOk)
+  return httpGet('/', 14096, 3000).then((r) => {
+    serverReadyOk = r.status === 200
+    serverReadyAt = Date.now()
+    return serverReadyOk
+  }).catch(() => {
+    serverReadyOk = false
+    serverReadyAt = Date.now()
+    return false
+  })
 }
 
 const emitOut = (lastStore, callId, out, sendFn) => {
@@ -1317,7 +1335,7 @@ const ensureServer = async () => {
     $store.set('opencode_server_pid', String(proc.pid))
     const deadline = Date.now() + 15000
     while (Date.now() < deadline) {
-      if (await serverReady()) return true
+      if (await serverReady(true)) return true
       await sleep(1000)
     }
     return false
@@ -1352,14 +1370,17 @@ const parseModel = (modelStr) => {
   return { pid: pid, mid: mid }
 }
 
+const ctxLimitMem = {}
 const getCtxLimit = (modelStr) => {
   return new Promise((resolve) => {
     const pm = parseModel(modelStr)
     if (!pm.mid) return resolve(0)
+    const memKey = pm.pid + '/' + pm.mid
+    if (ctxLimitMem[memKey] > 0) return resolve(ctxLimitMem[memKey])
     const cacheKey = 'aichat_ctx_limit_' + pm.pid + '_' + pm.mid
     try {
       const cached = Number($store.get(cacheKey))
-      if (cached > 0) return resolve(cached)
+      if (cached > 0) { ctxLimitMem[memKey] = cached; return resolve(cached) }
     } catch(e) {}
     const httpMod = require('http')
     const req = httpMod.get({ host: '127.0.0.1', port: 14096, path: '/provider' }, (res) => {
@@ -1372,6 +1393,7 @@ const getCtxLimit = (modelStr) => {
             const prov = all[i]
             if (prov.id === pm.pid && prov.models && prov.models[pm.mid] && prov.models[pm.mid].limit && prov.models[pm.mid].limit.context) {
               const limit = prov.models[pm.mid].limit.context
+              ctxLimitMem[memKey] = limit
               try { $store.set(cacheKey, String(limit)) } catch(e2) {}
               return resolve(limit)
             }
@@ -1398,6 +1420,7 @@ const getSessionUsage = (sessionId) => {
     if (!sessionId) return resolve(0)
     const httpMod = require('http')
     let used = 0
+    let usedTime = -1
     let offset = 0
     const LIMIT = 100
     const MAXPAGE = 20
@@ -1411,7 +1434,8 @@ const getSessionUsage = (sessionId) => {
           if (!Array.isArray(msgs) || !msgs.length) return resolve(used)
           for (let i = 0; i < msgs.length; i++) {
             const t = msgs[i].info && msgs[i].info.tokens ? msgs[i].info.tokens.total : 0
-            if (t > used) used = t
+            const tm = msgs[i].time || msgs[i].created_at || 0
+            if (tm >= usedTime && t > 0) { usedTime = tm; used = t }
           }
           if (msgs.length < LIMIT || offset >= MAXPAGE * LIMIT) return resolve(used)
           offset += msgs.length
@@ -1487,7 +1511,7 @@ const runCliMode = (data, runId) => {
   const pushCtx = (used, limit) => {
     send('ctx', {
       used: used || 0, limit: limit || 0,
-      pct: limit ? Math.round((used || 0) / limit * 1000) / 10 : 0,
+      pct: limit ? Math.round((used || 0) / limit * 1000) / 10 : null,
       model: model
     })
   }
@@ -1650,7 +1674,6 @@ const runCliMode = (data, runId) => {
 $fend('start', async (data) => {
   if (!data || !data.prompt) return { error: 'prompt is required' }
   const runId = data.runId || Date.now() + '-' + Math.random().toString(36).slice(2, 8)
-  sseChat(runId, { type: 'init', content: 'starting opencode server...' })
   if (!(await ensureServer())) return runCliMode(data, runId)
   const prompt = data.prompt
   const httpMod = require('http')
@@ -1676,7 +1699,8 @@ $fend('start', async (data) => {
   const streamRun = (sessionId) => {
     ;(async () => {
     try {
-      let ctxLimit = await getCtxLimit(data.model)
+      let ctxLimit = 0
+      getCtxLimit(data.model).then((l) => { if (l) ctxLimit = l }).catch(() => {})
 
       let streamEnded = false
       let model = null
@@ -1709,7 +1733,7 @@ $fend('start', async (data) => {
       const pushCtx = (used, limit) => {
         sseChat(runId, {
           type: 'ctx', used: used || 0, limit: limit || 0,
-          pct: limit ? Math.round((used || 0) / limit * 1000) / 10 : 0,
+          pct: limit ? Math.round((used || 0) / limit * 1000) / 10 : null,
           model: model
         })
       }
@@ -2048,12 +2072,11 @@ $fend('start', async (data) => {
         if (created.status !== 200) throw new Error('create session failed: ' + created.body.slice(0, 120))
         sessionId = JSON.parse(created.body).id
       } else if (title) {
-        try {
-          const got = await api('GET', '/session/' + sessionId)
+        api('GET', '/session/' + sessionId).then((got) => {
           let cur = ''
           try { cur = (JSON.parse(got.body) || {}).title || '' } catch(e) {}
           if (!cur) api('PATCH', '/session/' + sessionId, { title: title })
-        } catch(e) {}
+        }).catch(() => {})
       }
       streamRun(sessionId)
       return { ok: true, runId: runId, sessionId: sessionId }
