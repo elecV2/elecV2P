@@ -120,6 +120,8 @@
     .msg .ref.edit { border-left-color: #f80; }
     .msg .ref.act { border-left-color: #fd0; }
     .msg .ref.reasoning { border-left-color: #a78bfa; font-style: italic; }
+    .msg .ref.question { border-left-color: #fa0; white-space: pre-wrap; }
+    .msg .ref.answer { border-left-color: #0c8; white-space: pre-wrap; }
     .msg .tool-out {
       font-size: 12px; color: var(--fc2); white-space: pre-wrap; word-break: break-all;
       font-family: 'Cascadia Code','Fira Code','Consolas','Courier New',monospace;
@@ -459,7 +461,7 @@
         notifyMsg: '', notifyShow: false, loading: false,
         ocVersion: '', installOverlay: true, installErr: '', installProgress: 'This may take a minute',
         ctxUsed: 0, ctxLimit: 0, ctxPct: 0, ctxModel: '',
-        question: null, qSel: [], qCustom: [], qSubmitting: false,
+        question: null, qSel: [], qCustom: [], qSubmitting: false, qEl: null,
         sseMain: null, mainReady: false, sseHandlers: {}
       }
     },
@@ -911,11 +913,23 @@
                   self.qCustom.push('')
                 }
               }
+              flushText()
+              self.qEl = el
+              const qs = (self.question && self.question.questions) || []
+              for (let i = 0; i < qs.length; i++) {
+                const q = qs[i]
+                let line = '❓ ' + (q.header || 'Question') + ': ' + q.question
+                if (Array.isArray(q.options)) {
+                  line += '\n' + q.options.map((o) => '   · ' + o.label).join('\n')
+                }
+                el.parts.push({ t: 'ref', c: line, cls: 'question' })
+              }
               self.scrollBottom()
               return
             }
             if (data.type === 'question_done') {
               if (self.question && data.data && self.question.requestID === data.data.requestID) {
+                self.qEl = null
                 self.question = null
                 self.qSel = []
                 self.qCustom = []
@@ -926,6 +940,7 @@
               flushText()
               if (data.content) el.parts.push({ t: 'text', c: data.content })
               el.streaming = false
+              self.qEl = null
               self.question = null
               self.qSel = []
               self.qCustom = []
@@ -1067,9 +1082,20 @@
           return arr
         })
         this.qSubmitting = true
+        const qData = this.question
         this.fetchFend('question_reply', { requestID: this.question.requestID, sessionID: this.question.sessionID, answers: answers }, 15000).then((data) => {
           self.qSubmitting = false
           if (data && data.ok) {
+            if (self.qEl && qData && Array.isArray(qData.questions)) {
+              const lines = qData.questions.map((q, qi) => {
+                const arr = (self.qSel[qi] || []).slice()
+                const custom = (self.qCustom[qi] || '').trim()
+                if (custom && q.custom !== false && arr.indexOf(custom) < 0) arr.push(custom)
+                return '✔ ' + (q.header || 'Answer') + ': ' + (arr.length ? arr.join(', ') : '(no selection)')
+              })
+              self.qEl.parts.push({ t: 'ref', c: lines.join('\n'), cls: 'answer' })
+            }
+            self.qEl = null
             self.question = null
             self.qSel = []
             self.qCustom = []
@@ -1088,6 +1114,8 @@
         this.fetchFend('question_reject', { requestID: this.question.requestID }, 15000).then((data) => {
           self.qSubmitting = false
           if (data && data.ok) {
+            if (self.qEl) self.qEl.parts.push({ t: 'ref', c: '✖ question dismissed', cls: 'answer' })
+            self.qEl = null
             self.question = null
             self.qSel = []
             self.qCustom = []
@@ -1102,6 +1130,7 @@
       clearChat() {
         this.messages = []
         this.sessionId = ''
+        this.qEl = null
         this.question = null
         this.qSel = []
         this.qCustom = []
