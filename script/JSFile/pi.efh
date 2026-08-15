@@ -330,6 +330,7 @@
       background: var(--del); color: #fff; opacity: 0; transition: opacity .25s;
       pointer-events: none; white-space: nowrap;
     }
+    .notify.success { background: var(--ok); }
     .notify.show { opacity: 1; }
     .todo-panel {
       flex-shrink: 0; max-height: 140px; overflow-y: auto;
@@ -453,7 +454,7 @@
     </div>
   </div>
 
-  <div class="notify" :class="{show: notifyShow}">{{ notifyMsg }}</div>
+  <div class="notify" :class="[{show: notifyShow}, notifyType === 'success' ? 'success' : 'error']">{{ notifyMsg }}</div>
 
   <div class="overlay" :class="{show: sessionPanelOpen}" @click="sessionPanelOpen=false"></div>
 
@@ -611,7 +612,7 @@
         commands: [], cmdOpen: false, cmdIdx: -1,
         histList: [], histIdx: -1, histDraft: '',
         sessionPanelOpen: false, dropdown: '',
-        notifyMsg: '', notifyShow: false, loading: false,
+        notifyMsg: '', notifyShow: false, notifyType: 'error', loading: false,
         piVersion: '', installOverlay: true, installErr: '', installProgress: 'This may take a minute',
         ctxUsed: 0, ctxLimit: 0, ctxPct: 0, ctxModel: '',
         question: null, qSel: [], qCustom: [], qSubmitting: false, qEl: null,
@@ -763,8 +764,9 @@
         this.sessionPanelOpen = true
         this.loadSessions()
       },
-      showNotify(msg) {
+      showNotify(msg, type) {
         this.notifyMsg = msg
+        this.notifyType = type === 'success' ? 'success' : 'error'
         this.notifyShow = true
         clearTimeout(notifyTimer)
         notifyTimer = setTimeout(() => { this.notifyShow = false }, 6000)
@@ -779,7 +781,7 @@
           self.wsBusy = false
           if (data && data.ok) {
             self.workspace = data.cwd
-            self.showNotify('workspace set: ' + data.cwd)
+            self.showNotify('workspace set: ' + data.cwd, 'success')
             self.sessionId = ''
             self.clearChat()
             self.loadSessions()
@@ -855,7 +857,7 @@
         this.fetchFend('delete_session', { id: id }, 10000).then(() => {
           if (self.sessionId === id) self.sessionId = ''
           self.loadSessions()
-          self.showNotify('Session deleted')
+          self.showNotify('Session deleted', 'success')
         }).catch((e) => {
           self.showNotify('Delete failed: ' + e.message)
         }).then(() => { delete self.deleting[id] })
@@ -868,7 +870,7 @@
           if (data.ok) {
             if (self.sessionId === id) self.sessionId = ''
             self.loadSessions()
-            self.showNotify('Session deleted')
+            self.showNotify('Session deleted', 'success')
           } else {
             self.showNotify('Delete failed: ' + (data.error || 'unknown'))
           }
@@ -908,7 +910,7 @@
       },
       loadProviders() {
         const self = this
-        return this.fetchFend('providers', {}, 10000).then((data) => {
+        return this.fetchFend('providers', { model: this.currentModel }, 10000).then((data) => {
           if (data && Array.isArray(data.providers)) self.providerList = data.providers
           self.omniCurrent = !!(data && data.omniCurrent)
           self.omniStatus = data && data.omniStatus ? data.omniStatus : 'offline'
@@ -939,7 +941,7 @@
         this.fetchFend(fendName, payload, 10000).then((data) => {
           self.providerBusy = false
           if (data && data.ok) {
-            self.showNotify('Provider ' + name + (key ? ' saved' : ' selected'))
+            self.showNotify('Provider ' + name + (key ? ' saved' : ' selected'), 'success')
             self.providerOverlay = false
             self.loadSessions().then(() => {
               const defModel = data && data.model ? data.model : ''
@@ -963,10 +965,14 @@
         this.fetchFend('provider_save', { name: 'omniroute', apiKey: '' }, 10000).then((data) => {
           self.providerBusy = false
           if (data && data.ok) {
-            self.showNotify('OmniRoute enabled')
+            self.showNotify('OmniRoute enabled', 'success')
             self.omniCurrent = true
             self.providerOverlay = false
-            self.loadSessions().then(() => { self.selectModel('') })
+            self.loadSessions().then(() => {
+              const defModel = data && data.model ? data.model : ''
+              if (defModel) self.switchDefaultModel(defModel)
+              else self.selectModel('')
+            })
           } else {
             self.showNotify('Failed: ' + ((data && data.error) || 'unknown'))
           }
@@ -999,7 +1005,7 @@
         }, 10000).then((data) => {
           self.customBusy = false
           if (data && data.ok) {
-            self.showNotify('Custom provider ' + name + ' saved')
+            self.showNotify('Custom provider ' + name + ' saved', 'success')
             self.customOpen = false
             self.providerOverlay = false
             self.loadSessions().then(() => {
@@ -1476,8 +1482,9 @@
             }
           }
           self.refreshCtx()
-          self.loadProviders().then(() => {
-            self.showProviderPicker()
+          self.loadProviders().then((pd) => {
+            const hasProvider = !!(pd && pd.providers && pd.providers.some((p) => p.current || p.hasKey))
+            if (!hasProvider && !savedModel) self.showProviderPicker()
           })
         })
       },
@@ -1746,24 +1753,30 @@ const PROVIDER_PRESETS = [
   ] }
 ]
 
-$fend('providers', () => {
+$fend('providers', (data) => {
   const mj = readModelsJson() || { providers: {} }
   const st = readSettingsJson()
   const def = String(st.defaultProvider || '')
+  const pm = parseModel(String((data && data.model) || '').trim())
+  let eff = def
+  if (pm.provider) {
+    if ((mj.providers || {})[pm.provider]) eff = pm.provider
+    else if (pm.provider === 'oc' && (mj.providers || {}).omniroute) eff = 'omniroute'
+  }
   const list = []
   for (const p of PROVIDER_PRESETS) {
     const existing = (mj.providers || {})[p.name] || {}
     const hasKey = !!(existing.apiKey && String(existing.apiKey) !== '' && !/^\$/.test(String(existing.apiKey)))
-    list.push({ name: p.name, baseUrl: p.baseUrl, api: p.api, hasKey: hasKey, current: def === p.name, custom: false })
+    list.push({ name: p.name, baseUrl: p.baseUrl, api: p.api, hasKey: hasKey, current: eff === p.name, custom: false })
   }
   for (const key in (mj.providers || {})) {
     if (key === 'omniroute') continue
     if (PROVIDER_PRESETS.find((p) => p.name === key)) continue
     const existing = mj.providers[key] || {}
     const hasKey = !!(existing.apiKey && String(existing.apiKey) !== '' && !/^\$/.test(String(existing.apiKey)))
-    list.push({ name: key, baseUrl: existing.baseUrl || '', api: existing.api || 'openai-completions', hasKey: hasKey, current: def === key, custom: true })
+    list.push({ name: key, baseUrl: existing.baseUrl || '', api: existing.api || 'openai-completions', hasKey: hasKey, current: eff === key, custom: true })
   }
-  let omniCurrent = def === 'omniroute'
+  let omniCurrent = eff === 'omniroute'
   let omniStatus = 'disabled'
   if (omniCurrent) omniStatus = (mj.providers || {}).omniroute ? 'enabled · default provider' : 'pending config'
   else if ((mj.providers || {}).omniroute) omniStatus = 'installed · not default'
