@@ -77,6 +77,15 @@
     .messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
     .welcome { color: var(--fc2); text-align: center; margin: auto; font-size: 15px; line-height: 2; }
     .welcome b { color: var(--ac); }
+    .msg-loading {
+      color: var(--fc2); text-align: center; margin: auto; font-size: 14px;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .msg-loading .spin {
+      width: 26px; height: 26px; border: 3px solid var(--bd);
+      border-top-color: var(--ac); border-radius: 50%;
+      animation: installSpin .8s linear infinite;
+    }
     .msg { max-width: 85%; padding: 10px 14px; border-radius: 10px; line-height: 1.7; word-break: break-word; font-size: 14px; }
     .msg.user { align-self: flex-end; background: var(--ac); color: #000; border-bottom-right-radius: 2px; }
     .msg.assistant { align-self: flex-start; background: var(--bk2); border: 1px solid var(--bd); border-bottom-left-radius: 2px; }
@@ -379,6 +388,8 @@
   </div>
 
   <div class="messages" ref="messagesEl">
+    <div class="msg-loading" v-if="switching"><span class="spin"></span> Loading session...</div>
+    <template v-else>
     <div class="welcome" v-if="!messages.length"><b>OpenCode AI Chat</b><br>Streaming via SSE<br>Click title to view sessions</div>
     <div v-for="(m, mi) in messages" :key="mi" :class="['msg', m.role]">
       <template v-if="m.role === 'user'">{{ m.content }}</template>
@@ -397,6 +408,7 @@
         <div class="meta" :class="m.errored ? 'err' : 'ok'" v-if="m.meta">{{ m.meta }}</div>
       </template>
     </div>
+    </template>
   </div>
 
   <div class="todo-panel" v-if="todos.length">
@@ -462,7 +474,7 @@
         ocVersion: '', installOverlay: true, installErr: '', installProgress: 'This may take a minute',
         ctxUsed: 0, ctxLimit: 0, ctxPct: 0, ctxModel: '',
         question: null, qSel: [], qCustom: [], qSubmitting: false, qEl: null,
-        sseMain: null, mainReady: false, sseHandlers: {}
+        sseMain: null, mainReady: false, sseHandlers: {}, switching: false
       }
     },
     computed: {
@@ -634,16 +646,30 @@
       },
       selectModel(m) {
         this.currentModel = (m || '').replace(/\r/g, '')
-        localStorage.setItem('aichat_last_model', this.currentModel)
+        localStorage.setItem('aichat_oc_last_model', this.currentModel)
         this.dropdown = ''
         this.refreshCtx()
       },
       selectSession(id) {
+        const prev = this.sessionId
         this.sessionId = id
-        localStorage.setItem('aichat_last_session', id)
+        localStorage.setItem('aichat_oc_last_session', id)
         this.dropdown = ''
         this.loadSessions()
         this.syncCtx(id)
+        if (!(this.busy && id === prev)) this.loadSessionMessages(id)
+      },
+      loadSessionMessages(id) {
+        const self = this
+        this.messages = []
+        this.switching = true
+        return this.fetchFend('session_messages', { id: id }, 15000).then((data) => {
+          self.switching = false
+          if (data && Array.isArray(data.messages)) {
+            self.messages = data.messages
+            self.scrollBottom()
+          }
+        }).catch(() => { self.switching = false })
       },
       deleteLocalSession(id) {
         if (this.deleting[id]) return
@@ -705,7 +731,7 @@
       },
       loadHistory() {
         try {
-          let arr = JSON.parse(localStorage.getItem('aichat_history') || '[]')
+          let arr = JSON.parse(localStorage.getItem('aichat_oc_history') || '[]')
           if (Array.isArray(arr)) this.histList = arr
         } catch(e) {}
         this.histIdx = -1
@@ -720,7 +746,7 @@
         this.histList = arr
         this.histIdx = -1
         this.histDraft = ''
-        try { localStorage.setItem('aichat_history', JSON.stringify(arr)) } catch(e) {}
+        try { localStorage.setItem('aichat_oc_history', JSON.stringify(arr)) } catch(e) {}
       },
       histNav(dir) {
         const self = this
@@ -893,14 +919,14 @@
               else if (self.ctxLimit) self.ctxPct = Math.round((self.ctxUsed || 0) / self.ctxLimit * 1000) / 10
               if (data.model) self.ctxModel = data.model
               try {
-                if (self.ctxLimit) localStorage.setItem('aichat_ctx_limit', String(self.ctxLimit))
-                if (self.ctxModel) localStorage.setItem('aichat_ctx_model', self.ctxModel)
+                if (self.ctxLimit) localStorage.setItem('aichat_oc_ctx_limit', String(self.ctxLimit))
+                if (self.ctxModel) localStorage.setItem('aichat_oc_ctx_model', self.ctxModel)
               } catch(e) {}
             }
             if (data.type === 'session') {
               self.sessionId = data.id || ''
               try {
-                if (self.sessionId) localStorage.setItem('aichat_last_session', self.sessionId)
+                if (self.sessionId) localStorage.setItem('aichat_oc_last_session', self.sessionId)
               } catch(e) {}
             }
             if (data.type === 'question') {
@@ -959,7 +985,7 @@
                 el.meta = meta
                 if (data.model) self.ctxModel = data.model
                 try {
-                  if (data.model) localStorage.setItem('aichat_ctx_model', data.model)
+                  if (data.model) localStorage.setItem('aichat_oc_ctx_model', data.model)
                 } catch(e) {}
               }
               self.busy = false
@@ -1022,7 +1048,7 @@
           } else if (data.sessionId) {
             self.sessionId = data.sessionId
             try {
-              if (self.sessionId) localStorage.setItem('aichat_last_session', self.sessionId)
+              if (self.sessionId) localStorage.setItem('aichat_oc_last_session', self.sessionId)
             } catch(e) {}
           }
         }).catch((e) => {
@@ -1136,7 +1162,7 @@
         this.qCustom = []
         this.ctxUsed = 0
         this.ctxPct = 0
-        try { localStorage.removeItem('aichat_last_session') } catch(e) {}
+        try { localStorage.removeItem('aichat_oc_last_session') } catch(e) {}
       },
       compactChat() {
         const self = this
@@ -1157,9 +1183,9 @@
         this.loadHistory()
         this.loadSessions().then(() => {
           self.loading = false
-          const savedModel = localStorage.getItem('aichat_last_model')
+          const savedModel = localStorage.getItem('aichat_oc_last_model')
           if (savedModel) self.currentModel = savedModel.replace(/\r/g, '')
-          const savedSession = localStorage.getItem('aichat_last_session')
+          const savedSession = localStorage.getItem('aichat_oc_last_session')
           if (savedSession && savedSession !== self.sessionId && savedSession !== '') {
             for (let i = 0; i < self.sessions.length; i++) {
               if (self.sessions[i].id === savedSession) { self.selectSession(savedSession); break }
@@ -1175,9 +1201,9 @@
             self.ctxLimit = data.limit
             if (data.model) self.ctxModel = data.model
           } else {
-            const saved = localStorage.getItem('aichat_ctx_limit')
+            const saved = localStorage.getItem('aichat_oc_ctx_limit')
             if (saved) self.ctxLimit = Number(saved)
-            const savedModel = localStorage.getItem('aichat_ctx_model')
+            const savedModel = localStorage.getItem('aichat_oc_ctx_model')
             if (savedModel && !self.ctxModel) self.ctxModel = savedModel
           }
           if (self.sessionId) self.syncCtx(self.sessionId)
@@ -1192,7 +1218,7 @@
           if (!self.ctxLimit) return
           self.ctxUsed = data.used || 0
           self.ctxPct = Math.round((self.ctxUsed || 0) / self.ctxLimit * 1000) / 10
-          try { localStorage.setItem('aichat_ctx_limit', String(self.ctxLimit)) } catch(e) {}
+          try { localStorage.setItem('aichat_oc_ctx_limit', String(self.ctxLimit)) } catch(e) {}
         }).catch(() => {})
       },
     },
@@ -1257,6 +1283,19 @@ const OC_BIN = 'opencode'
 
 const stripAnsi = (s) => { return String(s).replace(/\u001b\[[0-9;]*[a-zA-Z]/g, '').replace(/\r/g, '') }
 const isAlive = (pid) => { try { process.kill(Number(pid), 0); return true } catch(e) { return false } }
+
+const SECRET_MASK = '***'
+const SECRET_RE = /((?:api[_-]?key|access_token|auth[_-]?token|api_token|client_secret|session_id|sessionid|secret|password|passwd|token))(["']?)(\s*)([:=])(\s*)(?:"([^"]*)"|'([^']*)'|([^\s,;{}]+))/gi
+const maskSecrets = (s) => {
+  if (!s) return s
+  return String(s)
+    .replace(SECRET_RE, (m, key, qk, ws1, sep, ws2, dq, sq, plain) => {
+      return key + qk + ws1 + sep + ws2 + (dq !== undefined ? '"' + SECRET_MASK + '"' : sq !== undefined ? "'" + SECRET_MASK + "'" : SECRET_MASK)
+    })
+    .replace(/(Bearer\s+)[A-Za-z0-9._~+\/=:-]+/gi, '$1' + SECRET_MASK)
+    .replace(/\b(?:sk-[A-Za-z0-9_-]{6,}|sign[a-z0-9_.-]{8,}|eyJ[A-Za-z0-9_-]{10,})\b/gi, SECRET_MASK)
+    .replace(/([a-z][a-z0-9+.-]*:\/\/)[^\/\s:@]*:([^@\s]+)@/gi, '$1' + SECRET_MASK + ':' + SECRET_MASK + '@')
+}
 
 const toolArg = (inp) => {
   const i = inp || {}
@@ -1323,15 +1362,19 @@ const serverReady = (force) => {
 
 const emitOut = (lastStore, callId, out, sendFn) => {
   if (!out) return
-  const last = lastStore[callId] || ''
-  let delta
-  if (out.indexOf(last) === 0) {
-    delta = out.slice(last.length)
+  const prev = lastStore[callId]
+  if (prev && prev.raw === out) return
+  const masked = maskSecrets(out)
+  let delta = ''
+  if (prev && prev.masked && masked.indexOf(prev.masked) === 0) {
+    delta = masked.slice(prev.masked.length)
+  } else if (prev) {
+    delta = '\n' + masked
   } else {
-    delta = last ? '\n' + out : out
+    delta = masked
   }
   if (delta) sendFn(delta)
-  lastStore[callId] = out
+  lastStore[callId] = { raw: out, masked: masked }
 }
 
 const ensureServer = async () => {
@@ -1488,7 +1531,123 @@ $fend('session_ctx', (data) => {
   })
 })
 
+const fetchSessionMessages = (sessionId) => {
+  return new Promise((resolve) => {
+    if (!sessionId) return resolve([])
+    const httpMod = require('http')
+    const req = httpMod.get({ host: '127.0.0.1', port: 14096, path: '/session/' + encodeURIComponent(sessionId) + '/message?limit=500' }, (res) => {
+      let buf = ''
+      res.on('data', (c) => { buf += c })
+      res.on('end', () => {
+        let msgs
+        try { msgs = JSON.parse(buf) } catch(e) { return resolve([]) }
+        if (!Array.isArray(msgs)) return resolve([])
+        resolve(msgs)
+      })
+    })
+    req.on('error', () => resolve([]))
+    req.setTimeout(10000, () => { req.destroy(); resolve([]) })
+  })
+}
+
+const msgTime = (m) => {
+  const info = m && m.info || {}
+  const t = info.time || {}
+  return Number(t.created) || Number(m && (m.created_at || m.time)) || 0
+}
+
+const convSessionMessages = (msgs) => {
+  const out = []
+  let cur = null
+  let curTokens = 0
+  let curModel = ''
+  let curErrored = false
+  const finalize = () => {
+    if (!cur) return
+    let meta = curErrored ? '⚠ ' : '✓ '
+    const bits = []
+    if (curModel) bits.push(curModel)
+    if (curTokens) bits.push('⚙ ' + curTokens + ' tokens')
+    meta += bits.join(' | ')
+    cur.meta = meta.trim() || '✓'
+    cur.errored = curErrored
+    cur.streaming = false
+    cur = null
+    curTokens = 0
+    curModel = ''
+    curErrored = false
+  }
+  for (let i = 0; i < msgs.length; i++) {
+    const info = msgs[i].info || {}
+    const role = info.role || 'assistant'
+    const srcParts = msgs[i].parts || []
+    if (role === 'user') {
+      finalize()
+      let text = ''
+      for (let j = 0; j < srcParts.length; j++) {
+        if (srcParts[j].type === 'text') text += (srcParts[j].text || '')
+      }
+      if (text.trim()) out.push({ role: 'user', content: text })
+      continue
+    }
+    const parts = []
+    for (let j = 0; j < srcParts.length; j++) {
+      const p = srcParts[j]
+      if (p.type === 'text' && p.text) {
+        parts.push({ t: 'text', c: p.text })
+      } else if (p.type === 'file') {
+        parts.push({ t: 'ref', c: '▸ file ' + ((p.file && p.file.path) || ''), cls: 'info' })
+      } else if (p.type === 'tool') {
+        const st = p.state || {}
+        const inp = st.input || {}
+        const arg = toolArg(inp)
+        const out2 = st.output || (st.metadata && st.metadata.output) || ''
+        const toolName = p.tool || 'tool'
+        const status = st.status || ''
+        if (status === 'error') {
+          parts.push({ t: 'ref', c: '✗ ' + toolName + (arg ? ' · ' + maskSecrets(arg) : ''), cls: 'tool' })
+        } else if (status === 'completed') {
+          parts.push({ t: 'ref', c: '◈ ' + toolName + (arg ? ' · ' + maskSecrets(arg) : ''), cls: 'tool' })
+        }
+        if (out2) parts.push({ t: 'out', c: maskSecrets(out2) })
+      }
+    }
+    if (info.error) {
+      parts.push({ t: 'text', c: 'Error: ' + ((info.error.message || info.error.name) || 'opencode error'), cls: 'err-text' })
+    }
+    if (!parts.length) continue
+    if (!cur) {
+      cur = { role: 'assistant', parts: [] }
+      out.push(cur)
+    }
+    for (let k = 0; k < parts.length; k++) cur.parts.push(parts[k])
+    if (info.error) curErrored = true
+    if (info.tokens && info.tokens.total) curTokens = info.tokens.total
+    if (info.modelID) curModel = (info.providerID || 'opencode') + '/' + info.modelID
+  }
+  finalize()
+  return out
+}
+
+$fend('session_messages', (data) => {
+  const id = data && data.id
+  return ensureServer().then((ready) => {
+    if (!ready) return { messages: [] }
+    return fetchSessionMessages(id).then((msgs) => {
+      msgs.sort((a, b) => msgTime(a) - msgTime(b))
+      return { messages: convSessionMessages(msgs) }
+    })
+  }).catch(() => {
+    return { messages: [] }
+  })
+})
+
+const runWatchdogs = {}
 const sseChat = (runId, obj) => {
+  if (obj && obj.type !== 'done' && obj.type !== 'error') {
+    const rw = runWatchdogs[runId]
+    if (rw && typeof rw.kick === 'function') rw.kick()
+  }
   $ws.sse('opencode-main', JSON.stringify(Object.assign({ runId: runId }, obj)))
 }
 
@@ -1530,8 +1689,15 @@ const runCliMode = (data, runId) => {
   let watchdog = null
   let aliveTimer = null
   let toolHeartbeat = null
+  const kickWatchdog = () => {
+    if (watchdog) clearTimeout(watchdog)
+    watchdog = setTimeout(() => {
+      finish({ content: '', model: model, tokens: tokens, timeout: true })
+    }, 600000)
+  }
 
   const send = (type, payload) => {
+    if (type !== 'done' && type !== 'error') kickWatchdog()
     sseChat(runId, Object.assign({ type: type }, payload || {}))
   }
   const sendRef = (line, cls) => {
@@ -1605,7 +1771,7 @@ const runCliMode = (data, runId) => {
       if (st.status === 'pending' || st.status === 'running') {
         if (!seenTools[callId] && arg) {
           seenTools[callId] = true
-          sendRef('◈ ' + (part.tool || 'tool') + ' · ' + arg, 'tool')
+          sendRef('◈ ' + (part.tool || 'tool') + ' · ' + maskSecrets(arg), 'tool')
         } else if (!seenTools[callId] && st.status === 'running') {
           seenTools[callId] = true
           sendRef('◈ ' + (part.tool || 'tool'), 'tool')
@@ -1618,7 +1784,7 @@ const runCliMode = (data, runId) => {
         delete runningTools[callId]
         if (!seenTools[callId]) {
           seenTools[callId] = true
-          sendRef('◈ ' + (part.tool || 'tool') + (arg ? ' · ' + arg : ''), 'tool')
+          sendRef('◈ ' + (part.tool || 'tool') + (arg ? ' · ' + maskSecrets(arg) : ''), 'tool')
         }
         sendRef('✓ ' + (part.tool || 'tool') + ' done', 'tool')
         if (out) emitOut(lastToolOut, callId, out, (d) => { send('out', { content: d }) })
@@ -1641,7 +1807,7 @@ const runCliMode = (data, runId) => {
     }
   }
 
-  const proc = spawn(OC_BIN, args, { env: Object.assign({}, process.env, { NODE_OPTIONS: '--no-warnings' }), windowsHide: true })
+  const proc = spawn(OC_BIN, args, { env: Object.assign({}, process.env, { NODE_OPTIONS: '--no-warnings' }), windowsHide: true, shell: IS_WIN, stdio: ['ignore', 'pipe', 'pipe'] })
   runProcs[runId] = proc
 
   let buf = ''
@@ -1684,9 +1850,7 @@ const runCliMode = (data, runId) => {
     else finish({ content: '', model: model, tokens: tokens })
   })
 
-  watchdog = setTimeout(() => {
-    finish({ content: '', model: model, tokens: tokens, timeout: true })
-  }, 600000)
+  kickWatchdog()
   aliveTimer = setInterval(() => {
     try {
       if (typeof $ws.sseExists !== 'function' || $ws.sseExists('opencode-main')) return
@@ -1756,6 +1920,14 @@ $fend('start', async (data) => {
       }
       let tokens = null
       let watchdog = null
+      runWatchdogs[runId] = {
+        kick: () => {
+          if (watchdog) clearTimeout(watchdog)
+          watchdog = setTimeout(() => {
+            finish({ content: '', model: model, tokens: tokens, timeout: true })
+          }, 600000)
+        }
+      }
       let aliveTimer = null
       let toolHeartbeat = null
 
@@ -1819,9 +1991,9 @@ $fend('start', async (data) => {
             sendRef('◈ ' + tool.tool + ' running (' + elapsed + 's)', 'tool')
             tool.lastUpdate = now
           }
-          if (tool.lastOutput) emitOut(lastToolOut, id, tool.lastOutput, (d) => { sseChat(runId, { type: 'out', content: d }) })
-        }
-      }, 15000)
+if (tool.lastOutput) emitOut(lastToolOut, id, tool.lastOutput, (d) => { sseChat(runId, { type: 'out', content: d }) })
+    }
+  }, 15000)
       const sendRef = (line, cls) => {
         sseChat(runId, { type: 'ref', content: line, cls: cls || '' })
       }
@@ -1829,6 +2001,7 @@ $fend('start', async (data) => {
       const finish = (payload) => {
         if (streamEnded) return
         streamEnded = true
+        delete runWatchdogs[runId]
         if (watchdog) clearTimeout(watchdog)
         if (aliveTimer) clearInterval(aliveTimer)
         if (toolHeartbeat) clearInterval(toolHeartbeat)
@@ -1839,6 +2012,7 @@ $fend('start', async (data) => {
       const fail = (msg) => {
         if (streamEnded) return
         streamEnded = true
+        delete runWatchdogs[runId]
         if (watchdog) clearTimeout(watchdog)
         if (aliveTimer) clearInterval(aliveTimer)
         if (toolHeartbeat) clearInterval(toolHeartbeat)
@@ -1908,7 +2082,7 @@ $fend('start', async (data) => {
             if (st.status === 'pending' || st.status === 'running') {
               if (!seenTools[callId] && arg) {
                 seenTools[callId] = true
-                sendRef('◈ ' + (part.tool || 'tool') + ' · ' + arg, 'tool')
+                sendRef('◈ ' + (part.tool || 'tool') + ' · ' + maskSecrets(arg), 'tool')
               } else if (!seenTools[callId] && st.status === 'running') {
                 seenTools[callId] = true
                 sendRef('◈ ' + (part.tool || 'tool'), 'tool')
@@ -1921,7 +2095,7 @@ $fend('start', async (data) => {
               delete runningTools[callId]
               if (!seenTools[callId]) {
                 seenTools[callId] = true
-                sendRef('◈ ' + (part.tool || 'tool') + (arg ? ' · ' + arg : ''), 'tool')
+                sendRef('◈ ' + (part.tool || 'tool') + (arg ? ' · ' + maskSecrets(arg) : ''), 'tool')
               }
               sendRef('✓ ' + (part.tool || 'tool') + ' done', 'tool')
               if (out) emitOut(lastToolOut, callId, out, (d) => { sseChat(runId, { type: 'out', content: d }) })
@@ -1999,9 +2173,7 @@ $fend('start', async (data) => {
       }
 
       if (/^\//.test(prompt)) {
-        watchdog = setTimeout(() => {
-          finish({ content: '', model: model, tokens: tokens, timeout: true })
-        }, 600000)
+        runWatchdogs[runId].kick()
         const cmdLine = prompt.trim().slice(1)
         const cmdSpace = cmdLine.indexOf(' ')
         const cmdName = (cmdSpace >= 0 ? cmdLine.slice(0, cmdSpace) : cmdLine).toLowerCase()
@@ -2066,9 +2238,7 @@ $fend('start', async (data) => {
         fail('session not found: ' + sessionId)
         return
       }
-      watchdog = setTimeout(() => {
-        finish({ content: '', model: model, tokens: tokens, timeout: true })
-      }, 600000)
+      runWatchdogs[runId].kick()
       aliveTimer = setInterval(() => {
         try {
           if (typeof $ws.sseExists !== 'function' || $ws.sseExists('opencode-main')) return
