@@ -1,0 +1,2553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Pi.efh By elecV2</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    :root {
+      --bk: #0d1117; --bk2: #161b22; --bk3: #1c2128;
+      --fc: #e6edf3; --fc2: #7d8590; --fc3: #484f58;
+      --ac: #58a6ff; --ok: #3fb950; --del: #f85149;
+      --bd: #30363d; --code-bk: #0d1117;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font: 14px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bk); color: var(--fc); height: 100vh;
+      display: flex; flex-direction: column;
+    }
+    #app { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .header {
+      display: flex; align-items: center; gap: 10px; padding: 10px 16px; position: relative;
+      background: var(--bk2); border-bottom: 1px solid var(--bd); flex-shrink: 0;
+    }
+    .header h1 { font-size: 16px; color: var(--ac); white-space: nowrap; cursor: pointer; }
+    .header h1:hover { opacity: .8; }
+    .header .spacer { flex: 1; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); display: inline-block; }
+    .dot.run { background: var(--ac); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .header button {
+      padding: 4px 10px; border-radius: 6px; border: 1px solid var(--bd);
+      background: var(--bk3); color: var(--fc2); font-size: 12px; cursor: pointer;
+    }
+    .header button:hover { color: var(--fc); border-color: var(--fc3); }
+    .header .dropdown-trigger { font-size: 12px; color: var(--fc2); cursor: pointer; position: relative; white-space: nowrap; }
+    .header .dropdown-trigger b { color: var(--ok); }
+    .header .dropdown-trigger:hover b { text-decoration: underline; }
+    .header .dropdown-trigger .arr { font-size: 8px; margin-left: 2px; }
+    .header .dropdown-trigger + .dropdown-trigger { margin-left: 24px; }
+    .header .ver { font-size: 10px; color: var(--fc3); margin-left: 4px; white-space: nowrap; }
+    .ctx {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-right: 12px; font-size: 11px; color: var(--fc2); white-space: nowrap;
+      cursor: default; border: 1px solid var(--bd); border-radius: 8px; padding: 2px 8px;
+      background: var(--bk3);
+    }
+    .ctx-bar { width: 56px; height: 5px; border-radius: 3px; background: var(--bd); overflow: hidden; }
+    .ctx-bar i { display: block; height: 100%; background: var(--ac); border-radius: 3px; }
+    .ctx-bar.warn i { background: #e3b341; }
+    .ctx-bar.danger i { background: var(--del); }
+    .ctx-num { font-family: 'Cascadia Code', Consolas, monospace; }
+    .header .load { position: absolute; left: 50%; transform: translateX(-50%); font-size: 22px; color: var(--ac); letter-spacing: 4px; animation: loadPulse 1.2s ease-in-out infinite; }
+    @keyframes loadPulse { 0%,100% { opacity: .25; } 50% { opacity: 1; } }
+    #modelDropdown { left: auto; right: 0; }
+    .dropdown {
+      position: absolute; top: 100%; left: 0; margin-top: 4px;
+      background: var(--bk2); border: 1px solid var(--bd); border-radius: 8px;
+      min-width: 260px; max-height: 350px; overflow-y: auto; z-index: 200;
+      box-shadow: 0 8px 24px rgba(0,0,0,.4); display: none;
+    }
+    .dropdown.show { display: block; }
+    .dropdown .d-item {
+      padding: 7px 12px; cursor: pointer; border-bottom: 1px solid var(--bd);
+      transition: background .15s;
+    }
+    .dropdown .d-item:last-child { border-bottom: none; }
+    .dropdown .d-item:hover { background: var(--bk3); }
+    .dropdown .d-item.active { background: var(--bk3); border-left: 3px solid var(--ac); }
+    .dropdown .d-item .d-title { font-size: 13px; color: var(--fc); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dropdown .d-item .d-sub { font-size: 10px; color: var(--fc3); }
+    .dropdown .d-empty { padding: 20px; text-align: center; color: var(--fc3); font-size: 12px; }
+    .dropdown .d-more { padding: 8px 12px; text-align: center; font-size: 12px; color: var(--ac); cursor: pointer; border-top: 1px solid var(--bd); }
+    .dropdown .d-more:hover { background: var(--bk3); }
+    .messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .welcome { color: var(--fc2); text-align: center; margin: auto; font-size: 15px; line-height: 2; }
+    .welcome b { color: var(--ac); }
+    .msg-loading {
+      color: var(--fc2); text-align: center; margin: auto; font-size: 14px;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    .msg-loading .spin {
+      width: 26px; height: 26px; border: 3px solid var(--bd);
+      border-top-color: var(--ac); border-radius: 50%;
+      animation: installSpin .8s linear infinite;
+    }
+    .msg { max-width: 85%; padding: 10px 14px; border-radius: 10px; line-height: 1.7; word-break: break-word; font-size: 14px; }
+    .msg.user { align-self: flex-end; background: var(--ac); color: #000; border-bottom-right-radius: 2px; }
+    .msg.assistant { align-self: flex-start; background: var(--bk2); border: 1px solid var(--bd); border-bottom-left-radius: 2px; }
+    .msg.error { align-self: flex-start; background: #2d1215; border: 1px solid #5b2a2e; color: var(--del); }
+    .msg .meta { font-size: 11px; color: var(--fc3); margin-top: 8px; border-top: 1px solid var(--bd); padding-top: 6px; }
+    .msg.user .meta { color: rgba(0,0,0,.4); }
+    .msg.assistant p { margin: .4em 0; }
+    .msg.assistant p:first-child { margin-top: 0; }
+    .msg.assistant p:last-child { margin-bottom: 0; }
+    .msg.assistant ul, .msg.assistant ol { padding-left: 1.5em; margin: .4em 0; }
+    .msg.assistant blockquote { border-left: 3px solid var(--bd); padding-left: 10px; color: var(--fc2); margin: .5em 0; }
+    .msg.assistant h1, .msg.assistant h2, .msg.assistant h3, .msg.assistant h4 { margin: .6em 0 .3em; line-height: 1.3; }
+    .msg.assistant h1 { font-size: 1.3em; } .msg.assistant h2 { font-size: 1.15em; } .msg.assistant h3 { font-size: 1.05em; }
+    .msg.assistant table { border-collapse: collapse; margin: .5em 0; width: 100%; }
+    .msg.assistant th, .msg.assistant td { border: 1px solid var(--bd); padding: 4px 8px; font-size: 13px; }
+    .msg.assistant th { background: var(--bk3); }
+    .msg.assistant a { color: var(--ac); text-decoration: none; }
+    .msg.assistant a:hover { text-decoration: underline; }
+    .msg.assistant hr { border: none; border-top: 1px solid var(--bd); margin: .6em 0; }
+    .msg.assistant img { max-width: 100%; border-radius: 6px; }
+    .msg.assistant code { font-family: 'Cascadia Code','Fira Code','Consolas',monospace; font-size: 13px; }
+    .msg.assistant :not(pre) > code { background: var(--bk3); padding: 1px 5px; border-radius: 4px; }
+    .msg.assistant pre {
+      background: var(--code-bk); padding: 12px; border-radius: 6px; overflow-x: auto;
+      margin: .5em 0; border: 1px solid var(--bd); position: relative;
+    }
+    .msg.assistant pre code { background: none; padding: 0; font-size: 13px; line-height: 1.5; }
+    .msg.assistant .code-lang {
+      position: absolute; top: 4px; right: 8px; font-size: 11px; color: var(--fc3);
+      pointer-events: none; text-transform: uppercase;
+    }
+    .msg .ref {
+      font-size: 12px; color: var(--fc); border-left: 2px solid var(--ac);
+      padding: 2px 0 2px 10px; margin: 3px 0;
+      font-family: 'Cascadia Code','Fira Code','Consolas','Courier New',monospace;
+      line-height: 1.6; background: rgba(255,255,255,.04);
+    }
+    .msg .ref.tool { border-left-color: #f0b; }
+    .msg .ref.cmd { border-left-color: #0c8; }
+    .msg .ref.info { border-left-color: #4af; }
+    .msg .ref.edit { border-left-color: #f80; }
+    .msg .ref.act { border-left-color: #fd0; }
+    .msg .ref.reasoning { border-left-color: #a78bfa; font-style: italic; }
+    .msg .ref.question { border-left-color: #fa0; white-space: pre-wrap; }
+    .msg .ref.answer { border-left-color: #0c8; white-space: pre-wrap; }
+    .msg .tool-out {
+      font-size: 12px; color: var(--fc2); white-space: pre-wrap; word-break: break-all;
+      font-family: 'Cascadia Code','Fira Code','Consolas','Courier New',monospace;
+      background: rgba(255,255,255,.03); border: 1px solid var(--bd); border-radius: 6px;
+      padding: 6px 10px; margin: 4px 0; line-height: 1.5; max-height: 260px; overflow-y: auto;
+    }
+    .msg .stream-text { white-space: pre-wrap; word-break: break-word; line-height: 1.7; }
+    .cursor { display: inline-block; width: 7px; height: 16px; background: var(--ac); animation: blink .7s infinite; vertical-align: text-bottom; margin-left: 2px; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    .reasoning { margin-bottom: 8px; }
+    .reasoning summary {
+      font-size: 12px; color: var(--fc2); cursor: pointer; user-select: none;
+      padding: 2px 0; list-style: none; display: flex; align-items: center; gap: 4px;
+    }
+    .reasoning[open] summary { padding-bottom: 4px; }
+    .reasoning summary::before { content: '> '; color: var(--fc3); font-family: monospace; }
+    .reasoning[open] summary::before { content: 'v '; }
+    .reasoning-body {
+      font-size: 12px; color: var(--fc2); background: var(--bk3);
+      padding: 8px 10px; border-radius: 6px; margin-top: 4px; line-height: 1.5;
+      white-space: pre-wrap; font-family: 'Cascadia Code','Fira Code','Consolas',monospace;
+      max-height: 300px; overflow-y: auto;
+    }
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 99;
+      opacity: 0; pointer-events: none; transition: opacity .25s;
+    }
+    .overlay.show { opacity: 1; pointer-events: auto; }
+    .session-panel {
+      position: fixed; left: -320px; top: 0; bottom: 0; width: 300px;
+      background: var(--bk2); border-right: 1px solid var(--bd);
+      transition: left .25s; z-index: 100; display: flex; flex-direction: column;
+    }
+    .session-panel.open { left: 0; }
+    .session-panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; border-bottom: 1px solid var(--bd); flex-shrink: 0;
+    }
+    .session-panel-header span { font-weight: bold; color: var(--ac); font-size: 15px; }
+    .session-panel-header button {
+      background: none; border: none; color: var(--fc2); cursor: pointer;
+      font-size: 18px; padding: 2px 6px; border-radius: 4px;
+    }
+    .session-panel-header button:hover { background: var(--bk3); color: var(--fc); }
+    .ws-row { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--bd); flex-shrink: 0; }
+    .ws-row input {
+      flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--bd);
+      background: var(--bk3); color: var(--fc); font-size: 12px; outline: none; font-family: inherit;
+    }
+    .ws-row input:focus { border-color: var(--ac); }
+    .ws-row button {
+      padding: 4px 12px; border-radius: 6px; border: 1px solid var(--bd);
+      background: var(--bk3); color: var(--fc2); font-size: 12px; cursor: pointer; flex-shrink: 0;
+    }
+    .ws-row button:hover { color: var(--fc); border-color: var(--fc3); }
+    .ws-row button:disabled { opacity: .4; cursor: not-allowed; }
+    .session-list { flex: 1; overflow-y: auto; padding: 8px; }
+    .session-item {
+      padding: 10px 12px; border-radius: 8px; cursor: pointer; margin-bottom: 4px;
+      border: 1px solid transparent; transition: all .15s; position: relative;
+    }
+    .session-item:hover { background: var(--bk3); border-color: var(--bd); }
+    .session-item.active { background: var(--bk3); border-color: var(--ac); }
+    .session-item .s-time { font-size: 11px; color: var(--fc3); }
+    .session-item .s-prompt { font-size: 13px; color: var(--fc); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .session-item .s-preview { font-size: 12px; color: var(--fc2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .session-item .s-del {
+      position: absolute; top: 8px; right: 8px; font-size: 11px; color: var(--fc3);
+      cursor: pointer; opacity: 0; padding: 2px 6px; border-radius: 4px; transition: all .15s;
+    }
+    .session-item:hover .s-del { opacity: 1; }
+    .session-item .s-del:hover { background: var(--del); color: #fff; }
+    .session-empty {
+      text-align: center; color: var(--fc3); padding: 40px 20px; font-size: 13px;
+    }
+    .section-label {
+      font-size: 11px; color: var(--fc3); padding: 4px 12px 2px; margin-top: 4px;
+    }
+    .input-bar {
+      display: flex; gap: 8px; padding: 12px 16px;
+      background: var(--bk2); border-top: 1px solid var(--bd); flex-shrink: 0;
+    }
+    .input-bar textarea {
+      flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--bd);
+      background: var(--bk3); color: var(--fc); font-family: inherit; font-size: 14px;
+      resize: none; outline: none; min-height: 42px; max-height: 160px;
+    }
+    .input-bar textarea::placeholder { color: var(--fc3); }
+    .input-bar textarea:focus { border-color: var(--ac); }
+    .input-bar button {
+      padding: 0 18px; border: none; border-radius: 8px;
+      background: var(--ac); color: #000; font-weight: bold; font-size: 14px;
+      cursor: pointer; flex-shrink: 0;
+    }
+    .input-bar button:disabled { opacity: .4; cursor: not-allowed; }
+    .cmd-wrap { position: relative; flex-shrink: 0; }
+    .cmd-dropdown {
+      position: absolute; left: 16px; right: 16px; bottom: calc(100% + 4px);
+      background: var(--bk2); border: 1px solid var(--bd); border-radius: 10px;
+      box-shadow: 0 6px 24px rgba(0,0,0,.35); max-height: 220px; overflow-y: auto; z-index: 50;
+    }
+    .cmd-item {
+      display: flex; align-items: baseline; gap: 8px; padding: 8px 12px; cursor: pointer;
+    }
+    .cmd-item + .cmd-item { border-top: 1px solid var(--bd); }
+    .cmd-item.active, .cmd-item:hover { background: var(--bk3); }
+    .cmd-item .name { color: var(--ac); font-weight: bold; font-family: monospace; flex-shrink: 0; }
+    .cmd-item .desc { color: var(--fc2); font-size: 12px; word-break: break-all; }
+    .install-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bk); display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+    }
+    .install-overlay .title { font-size: 18px; color: var(--fc); }
+    .install-overlay .sub { font-size: 12px; color: var(--fc2); max-width: 80%; word-break: break-all; }
+    .install-overlay .spin {
+      width: 32px; height: 32px; border: 3px solid var(--bd);
+      border-top-color: var(--ac); border-radius: 50%;
+      animation: installSpin .8s linear infinite;
+    }
+    .install-overlay .err { color: var(--del); font-size: 14px; max-width: 80%; word-break: break-all; }
+    .install-overlay button {
+      padding: 8px 20px; border: 1px solid var(--bd); border-radius: 6px;
+      background: var(--bk3); color: var(--fc); font-size: 13px; cursor: pointer;
+    }
+    .install-overlay button:hover { background: var(--bk2); }
+    @keyframes installSpin { to { transform: rotate(360deg) } }
+    .provider-overlay {
+      position: fixed; inset: 0; z-index: 9997;
+      background: var(--bk); display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px; padding: 20px;
+    }
+    .provider-panel {
+      width: min(560px, 94vw); max-height: 86vh; overflow-y: auto;
+      background: var(--bk2); border: 1px solid var(--bd); border-radius: 12px;
+      padding: 22px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .provider-panel .pp-title { font-size: 17px; color: var(--fc); font-weight: bold; }
+    .provider-panel .pp-sub { font-size: 12px; color: var(--fc2); margin-bottom: 6px; }
+    .provider-card {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      border: 1px solid var(--bd); border-radius: 10px; background: var(--bk3);
+      transition: border-color .15s;
+    }
+    .provider-card:hover { border-color: var(--fc3); }
+    .provider-card.active { border-color: var(--ac); background: rgba(88,166,255,.08); }
+    .provider-card .pc-info { flex: 1; min-width: 0; }
+    .provider-card .pc-name { font-size: 14px; color: var(--fc); font-weight: bold; }
+    .provider-card .pc-desc { font-size: 11px; color: var(--fc2); word-break: break-all; }
+    .provider-card .pc-key {
+      flex: 1; max-width: 190px; padding: 6px 9px; border-radius: 6px;
+      border: 1px solid var(--bd); background: var(--bk); color: var(--fc);
+      font-size: 12px; outline: none;
+    }
+    .provider-card .pc-key:focus { border-color: var(--ac); }
+    .provider-card .pc-btn {
+      padding: 6px 14px; border: 1px solid var(--ac); border-radius: 6px;
+      background: transparent; color: var(--ac); font-size: 12px; cursor: pointer; white-space: nowrap;
+    }
+    .provider-card .pc-btn:hover { background: rgba(88,166,255,.12); }
+    .provider-card .pc-btn.used { border-color: var(--ok); color: var(--ok); }
+    .provider-card .pc-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .provider-card .pc-omni-status { font-size: 11px; color: var(--fc2); white-space: nowrap; }
+    .provider-add {
+      margin-top: 6px; padding: 10px 12px; border: 1px dashed var(--bd); border-radius: 10px;
+      background: transparent; color: var(--ac); font-size: 13px; cursor: pointer;
+    }
+    .provider-add:hover { border-color: var(--ac); background: rgba(88,166,255,.08); }
+    .custom-overlay {
+      position: fixed; inset: 0; z-index: 9997;
+      background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center;
+    }
+    .custom-panel {
+      width: min(520px, 94vw); max-height: 86vh; overflow-y: auto;
+      background: var(--bk2); border: 1px solid var(--bd); border-radius: 12px;
+      padding: 22px; display: flex; flex-direction: column; gap: 12px;
+    }
+    .custom-panel .cp-title { font-size: 16px; color: var(--fc); font-weight: bold; }
+    .custom-panel .cp-sub { font-size: 12px; color: var(--fc2); }
+    .cp-field { display: flex; flex-direction: column; gap: 5px; }
+    .cp-field label { font-size: 12px; color: var(--fc2); }
+    .cp-field input, .cp-field select {
+      padding: 8px 10px; border-radius: 6px; border: 1px solid var(--bd);
+      background: var(--bk3); color: var(--fc); font-size: 13px; outline: none;
+    }
+    .cp-field input:focus, .cp-field select:focus { border-color: var(--ac); }
+    .cp-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+    .cp-actions button {
+      padding: 8px 18px; border-radius: 6px; cursor: pointer; font-size: 13px;
+    }
+    .cp-save { background: var(--ac); color: #000; font-weight: bold; border: 1px solid var(--ac); }
+    .cp-save:disabled { opacity: .5; cursor: not-allowed; }
+    .cp-cancel { background: var(--bk3); color: var(--fc2); border: 1px solid var(--bd); }
+    .notify {
+      position: fixed; bottom: 68px; left: 50%; transform: translateX(-50%);
+      padding: 6px 14px; border-radius: 6px; font-size: 12px; z-index: 9998;
+      background: var(--del); color: #fff; opacity: 0; transition: opacity .25s;
+      pointer-events: none; white-space: nowrap;
+    }
+    .notify.show { opacity: 1; }
+    .todo-panel {
+      flex-shrink: 0; max-height: 140px; overflow-y: auto;
+      background: var(--bk2); border-top: 1px solid var(--bd);
+      padding: 8px 16px; font-size: 12px; color: var(--fc2);
+    }
+    .todo-panel .todo-head { font-size: 11px; color: var(--fc3); margin-bottom: 4px; }
+    .todo-item { padding: 2px 0; }
+    .todo-item .td { color: var(--fc3); margin-right: 6px; }
+    .todo-item .do { color: var(--ac); margin-right: 6px; }
+    .todo-item .done { text-decoration: line-through; color: var(--fc3); }
+    .stream-par.err-text { color: var(--del); }
+    .stream-par.err-text pre, .stream-par.err-text code { color: var(--del); }
+    .msg .meta.ok { color: var(--ok); }
+    .msg .meta.err { color: var(--del); }
+    .question-panel {
+      flex-shrink: 0; background: var(--bk2); border-top: 1px solid var(--bd);
+      padding: 10px 16px; max-height: 45%; overflow-y: auto;
+    }
+    .question-panel .q-item { margin-bottom: 12px; }
+    .question-panel .q-header { font-size: 11px; color: var(--ac); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px; }
+    .question-panel .q-text { font-size: 14px; color: var(--fc); margin: 2px 0 8px; }
+    .q-opt {
+      display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+      border: 1px solid var(--bd); border-radius: 8px; cursor: pointer;
+      margin-bottom: 6px; background: var(--bk3); transition: all .15s;
+    }
+    .q-opt:hover { border-color: var(--ac); }
+    .q-opt.sel { border-color: var(--ac); background: rgba(88,166,255,.12); }
+    .q-opt .q-check {
+      width: 16px; height: 16px; border-radius: 4px; border: 1px solid var(--fc3);
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 11px; color: #000;
+    }
+    .q-opt.sel .q-check { background: var(--ac); border-color: var(--ac); }
+    .q-opt .q-label { font-weight: bold; color: var(--fc); }
+    .q-opt .q-desc { color: var(--fc2); font-size: 12px; }
+    .q-custom { display: flex; gap: 8px; margin: 6px 0; }
+    .q-custom input {
+      flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--bd);
+      background: var(--bk3); color: var(--fc); font-size: 13px; outline: none;
+    }
+    .q-custom input:focus { border-color: var(--ac); }
+    .q-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .q-actions button {
+      padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px;
+    }
+    .q-submit { background: var(--ac); color: #000; font-weight: bold; border: 1px solid var(--ac); }
+    .q-submit:disabled { opacity: .5; cursor: not-allowed; }
+    .q-reject { background: var(--bk3); color: var(--fc2); border: 1px solid var(--bd); }
+    .q-reject:hover { color: var(--fc); border-color: var(--fc3); }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div class="install-overlay" v-if="installOverlay">
+    <div class="spin" v-if="!installErr"></div>
+    <div class="title" v-if="!installErr">Installing pi...</div>
+    <div class="sub" v-if="!installErr">{{ installProgress }}</div>
+    <div class="err" v-if="installErr">{{ installErr }}</div>
+    <button v-if="installErr" @click="location.reload()">Retry</button>
+  </div>
+
+  <div class="provider-overlay" v-if="!installOverlay && providerOverlay">
+    <div class="provider-panel">
+      <div class="pp-title">Choose model provider</div>
+      <div class="pp-sub">Enter an API key for the provider, or start use OmniRoute. Selection is saved for next time.</div>
+      <div class="provider-card" v-for="p in providerList" :key="p.name" :class="{active: p.current}">
+        <div class="pc-info">
+          <div class="pc-name">{{ p.name }}</div>
+          <div class="pc-desc">{{ p.baseUrl }}</div>
+        </div>
+        <input class="pc-key" v-model="providerKeys[p.name]" :placeholder="p.hasKey ? 'key saved · re-enter to change' : 'API key'" type="password">
+        <button class="pc-btn" :class="{used: p.current}" :disabled="providerBusy" @click="useProvider(p.name)">{{ p.current ? 'current' : 'use' }}</button>
+      </div>
+      <div class="provider-card" :class="{active: omniCurrent}">
+        <div class="pc-info">
+          <div class="pc-name">OmniRoute</div>
+          <div class="pc-desc">{{ omniStatus }}</div>
+        </div>
+        <button class="pc-btn" :class="{used: omniCurrent}" :disabled="providerBusy" @click="useOmniRoute">{{ omniCurrent ? 'current' : 'enable' }}</button>
+      </div>
+      <button class="provider-add" @click="openCustomProvider" :disabled="providerBusy">＋ custom provider</button>
+    </div>
+  </div>
+
+  <div class="custom-overlay" v-if="customOpen">
+    <div class="custom-panel">
+      <div class="cp-title">Add custom provider</div>
+      <div class="cp-sub">For OpenAI-compatible endpoints (gateway proxies, etc.). Fields follow pi models.json config.</div>
+      <div class="cp-field">
+        <label>Name (provider id)</label>
+        <input v-model="customForm.name" placeholder="e.g. myprovider" spellcheck="false">
+      </div>
+      <div class="cp-field">
+        <label>Base URL</label>
+        <input v-model="customForm.baseUrl" placeholder="e.g. https://api.openai.com/v1" spellcheck="false">
+      </div>
+      <div class="cp-field">
+        <label>API key</label>
+        <input v-model="customForm.apiKey" placeholder="sk-..." type="password">
+      </div>
+      <div class="cp-field">
+        <label>API type</label>
+        <select v-model="customForm.api">
+          <option value="openai-completions">openai-completions (most compatible)</option>
+          <option value="openai-responses">openai-responses</option>
+          <option value="anthropic-messages">anthropic-messages</option>
+          <option value="google-generative-ai">google-generative-ai</option>
+        </select>
+      </div>
+      <div class="cp-field">
+        <label>Model ids (comma separated)</label>
+        <input v-model="customForm.models" placeholder="e.g. gpt-4o-mini, gpt-4o" spellcheck="false">
+      </div>
+      <div class="cp-actions">
+        <button class="cp-cancel" @click="closeCustomProvider">cancel</button>
+        <button class="cp-save" :disabled="customBusy" @click="saveCustomProvider">save & use</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="notify" :class="{show: notifyShow}">{{ notifyMsg }}</div>
+
+  <div class="overlay" :class="{show: sessionPanelOpen}" @click="sessionPanelOpen=false"></div>
+
+  <div class="session-panel" :class="{open: sessionPanelOpen}">
+    <div class="session-panel-header">
+      <span>Session History</span>
+      <button @click="sessionPanelOpen=false">x</button>
+    </div>
+    <div class="ws-row">
+      <input v-model="workspace" placeholder="pi workspace (project dir) — agent reads/writes files here" @keydown.enter.prevent="setWorkspace" spellcheck="false">
+      <button @click="setWorkspace" :disabled="wsBusy">set</button>
+    </div>
+    <div class="session-list">
+      <template v-if="pinnedSessions.length">
+        <div class="section-label">PINNED</div>
+        <div v-for="s in pinnedSessions" :key="'p'+s.id" class="session-item"
+             :class="{active: s.id===sessionId}" :style="{opacity: deleting[s.id] ? .4 : 1}" @click="selectSession(s.id)">
+          <span class="s-del" @click.stop="deleteLocalSession(s.id)" title="Delete">x</span>
+          <div class="s-time">{{ fmtTime(s.timestamp) }}</div>
+          <div class="s-prompt">{{ (s.prompt||'').substring(0,50) }}</div>
+          <div class="s-preview">{{ (s.preview||'').substring(0,60) }}</div>
+        </div>
+      </template>
+      <template v-if="sessions.length">
+        <div class="section-label">Pi</div>
+        <div v-for="s in sessions" :key="'o'+s.id" class="session-item"
+             :class="{active: s.id===sessionId}" :style="{opacity: deleting[s.id] ? .4 : 1}" @click="selectSession(s.id)">
+          <span class="s-del" @click.stop="deleteOCSession(s.id)" title="Delete">x</span>
+          <div class="s-time">{{ fmtTime(s.updated||s.created) }}</div>
+          <div class="s-prompt">{{ (s.title||'').substring(0,50) }}</div>
+          <div class="s-preview" style="font-size:11px;color:var(--fc3)">{{ s.id }}</div>
+        </div>
+      </template>
+      <div v-if="!pinnedSessions.length && !sessions.length" class="session-empty">No sessions yet.<br>Send a message to start one.</div>
+    </div>
+  </div>
+
+  <div class="header">
+    <h1 @click="sessionPanelOpen=true" title="Open sessions">Pi</h1>
+    <span class="dot" :class="{run: busy}"></span>
+    <span class="load" v-if="loading">&#8226; &#8226; &#8226;</span>
+    <span class="ver">{{ piVersion }}</span>
+    <button @click="showProviderPicker" title="Switch model provider">provider</button>
+    <span class="dropdown-trigger" @click.stop="toggleDropdown('session')" title="Click to select session">
+      <b>{{ sessionLabel }}</b> <span class="arr">&#9660;</span>
+      <div class="dropdown" :class="{show: dropdown==='session'}" @click.stop>
+        <template v-if="sessionDropdownList.length">
+          <div v-for="s in sessionDropdownList" :key="s.id" class="d-item" :class="{active: s.id===sessionId}" @click="selectSession(s.id)">
+            <div class="d-title">{{ sessionTitle(s).substring(0,50) }}</div>
+            <div class="d-sub">{{ s.id.slice(0,16) }}...</div>
+          </div>
+          <div class="d-more" @click="viewAll">View all {{ totalSessions }} sessions &rarr;</div>
+        </template>
+        <div v-else class="d-empty">No sessions yet</div>
+      </div>
+    </span>
+    <span class="dropdown-trigger" @click.stop="toggleDropdown('model')" title="Click to select model">
+      <span>{{ currentModel || 'auto' }}</span> <span class="arr">&#9660;</span>
+      <div class="dropdown" id="modelDropdown" :class="{show: dropdown==='model'}" @click.stop>
+        <div class="d-item" :class="{active: !currentModel}" @click="selectModel('')">
+          <div class="d-title">auto</div><div class="d-sub">default model</div>
+        </div>
+        <div v-for="m in cleanModels" :key="m" class="d-item" :class="{active: m===currentModel}" @click="selectModel(m)">
+          <div class="d-title">{{ m }}</div>
+        </div>
+      </div>
+    </span>
+    <div class="spacer"></div>
+    <span class="ctx" v-if="ctxLimit" :title="ctxUsed + ' / ' + ctxLimit + ' tokens'">
+      <span class="ctx-bar" :class="{ warn: ctxPct >= 80 && ctxPct < 95, danger: ctxPct >= 95 }"><i :style="ctxStyle"></i></span>
+      <span class="ctx-num">{{ ctxLabel }} · {{ ctxPct }}%</span>
+    </span>
+  </div>
+
+  <div class="messages" ref="messagesEl">
+    <div class="msg-loading" v-if="switching"><span class="spin"></span> Loading session...</div>
+    <template v-else>
+    <div class="welcome" v-if="!messages.length"><b>Pi Coding Agent</b><br>Streaming via SSE · OmniRoute<br>Set workspace, then send a message</div>
+    <div v-for="(m, mi) in messages" :key="mi" :class="['msg', m.role]">
+      <template v-if="m.role === 'user'">{{ m.content }}</template>
+      <template v-else>
+        <div v-for="(p, pi) in m.parts" :key="pi">
+          <div v-if="p.t === 'ref'" :class="['ref', p.cls || refClass(p.c)]">{{ p.c }}</div>
+          <pre v-else-if="p.t === 'out'" class="tool-out">{{ p.c }}</pre>
+          <template v-else-if="p.t === 'text'">
+            <div v-for="(v, vi) in mdViews(p, m.streaming)" :key="vi" class="stream-par" :class="p.cls || ''">
+              <pre v-if="v.plain" class="stream-text">{{ v.text }}</pre>
+              <div v-else v-html="v.html"></div>
+            </div>
+          </template>
+        </div>
+        <span class="cursor" v-if="m.streaming"></span>
+        <div class="meta" :class="m.errored ? 'err' : 'ok'" v-if="m.meta">{{ m.meta }}</div>
+      </template>
+    </div>
+    </template>
+  </div>
+
+  <div class="todo-panel" v-if="todos.length">
+    <div class="todo-head">TODO</div>
+    <div v-for="(t, ti) in todos" :key="ti" class="todo-item">
+      <span class="td">{{ t.status==='completed' ? '✓' : t.status==='in_progress' ? '◐' : '○' }}</span>
+      <span :class="{done: t.status==='completed'}">{{ t.content }}</span>
+    </div>
+  </div>
+
+  <div class="question-panel" v-if="question">
+    <div v-for="(q, qi) in question.questions" :key="qi" class="q-item">
+      <div class="q-header">{{ q.header || 'Question' }}</div>
+      <div class="q-text">{{ q.question }}</div>
+      <div v-for="(opt, oi) in q.options" :key="oi" class="q-opt"
+           :class="{sel: qSel[qi] && qSel[qi].indexOf(opt.label) >= 0}" @click="qToggle(qi, opt.label)">
+        <span class="q-check">{{ qSel[qi] && qSel[qi].indexOf(opt.label) >= 0 ? '✓' : '' }}</span>
+        <span class="q-label">{{ opt.label }}</span>
+        <span class="q-desc">{{ opt.description }}</span>
+      </div>
+      <div class="q-custom" v-if="q.custom !== false">
+        <input type="text" v-model="qCustom[qi]" placeholder="Type a custom answer..." @keydown.enter.prevent="qSubmit">
+      </div>
+    </div>
+    <div class="q-actions">
+      <button class="q-submit" @click="qSubmit" :disabled="qSubmitting">Submit</button>
+      <button class="q-reject" @click="qReject">Dismiss</button>
+    </div>
+  </div>
+
+  <div class="cmd-wrap">
+    <div class="cmd-dropdown" v-if="cmdOpen && cmdFiltered.length">
+      <div class="cmd-item" v-for="(c, ci) in cmdFiltered" :key="c.name" :class="{active: ci === cmdIdx}" @mousedown.prevent="pickCmd(c)">
+        <span class="name">/{{ c.name }}</span>
+        <span class="desc">{{ c.description }}</span>
+      </div>
+    </div>
+    <div class="input-bar">
+      <textarea ref="inputEl" rows="1" placeholder="Type a message... (Enter to send, Ctrl+Enter for newline)" v-model="inputText" @input="onInput" @keydown="onKey"></textarea>
+      <button v-if="busy" @click="stop()">Stop</button>
+      <button @click="send()" :disabled="busy">Send</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let _inited = false
+  const installId = Date.now() + '-' + Math.random().toString(36).slice(2, 8)
+  let notifyTimer = null
+  const blockCache = new Map()
+  const BLOCK_CACHE_MAX = 400
+  const STREAM_PARSE_MAX = 4000
+
+  const app = Vue.createApp({
+    data() {
+      return {
+        busy: false, sessionId: '', sessions: [], models: [], currentModel: '', pinnedSessions: [],
+        deleting: {}, messages: [], inputText: '', todos: [], runId: '',
+        commands: [], cmdOpen: false, cmdIdx: -1,
+        histList: [], histIdx: -1, histDraft: '',
+        sessionPanelOpen: false, dropdown: '',
+        notifyMsg: '', notifyShow: false, loading: false,
+        piVersion: '', installOverlay: true, installErr: '', installProgress: 'This may take a minute',
+        ctxUsed: 0, ctxLimit: 0, ctxPct: 0, ctxModel: '',
+        question: null, qSel: [], qCustom: [], qSubmitting: false, qEl: null,
+        workspace: '', wsBusy: false,
+        sseMain: null, mainReady: false, sseHandlers: {}, switching: false,
+        providerOverlay: false, providerList: [], providerKeys: {}, providerBusy: false,
+        omniCurrent: false, omniStatus: 'checking…',
+        customOpen: false, customBusy: false,
+        customForm: { name: '', baseUrl: '', apiKey: '', api: 'openai-completions', models: '' }
+      }
+    },
+    computed: {
+      sessionLabel() {
+        const s = this.sessions.find(function(x) { return x.id === this.sessionId }, this) || this.pinnedSessions.find(function(x) { return x.id === this.sessionId }, this)
+        if (s) return (this.sessionTitle(s) || '').substring(0, 25)
+        return this.sessionId ? this.sessionId.slice(0, 10) + '...' : 'No session'
+      },
+      sessionDropdownList() {
+        return this.pinnedSessions.length ? this.pinnedSessions.slice(0, 5) : this.sessions.slice(0, 10)
+      },
+      totalSessions() {
+        return this.pinnedSessions.length + this.sessions.length
+      },
+      cleanModels() {
+        const self = this
+        const out = []
+        this.models.forEach((m) => { const c = m.replace(/\r/g, ''); if (out.indexOf(c) < 0) out.push(c) })
+        return out
+      },
+      cmdFiltered() {
+        if (!this.cmdOpen) return []
+        const q = this.inputText.replace(/^\s*\//, '').toLowerCase()
+        const out = this.commands.filter((c) => {
+          return !q || c.name.toLowerCase().indexOf(q) === 0 || c.description.toLowerCase().indexOf(q) >= 0
+        })
+        return out.slice(0, 8)
+      },
+      ctxLabel() {
+        if (!this.ctxLimit) return ''
+        return this.fmtK(this.ctxUsed) + ' / ' + this.fmtK(this.ctxLimit)
+      },
+      ctxStyle() {
+        return { width: Math.min(100, this.ctxPct) + '%' }
+      }
+    },
+    methods: {
+      esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') },
+      fmtTime(ts) { if (!ts) return ''; try { return new Date(ts).toLocaleString() } catch(e) { return '' } },
+      fmtK(n) {
+        n = Number(n) || 0
+        if (n >= 1000) return (n / 1000).toFixed(1) + 'k'
+        return String(n)
+      },
+      sessionTitle(s) { return s.title || s.prompt || s.id },
+      renderMd(t) {
+        if (!t) return ''
+        let html = marked.parse(t, { gfm: true, breaks: false, headerIds: false, mangle: false })
+        html = html.replace(/<pre><code class="language-(\w+)">/g, '<pre><span class="code-lang">$1</span><code>')
+        html = html.replace(/<pre><code class="">/g, '<pre><code>')
+        html = html.replace(/<a href=/g, '<a target="_blank" href=')
+        return html
+      },
+      mdBlocks(t) {
+        if (!t) return []
+        const lines = String(t).replace(/\r\n/g, '\n').split('\n')
+        const blocks = []
+        let cur = []
+        let inFence = false
+        let fenceChar = ''
+        const flush = () => {
+          if (cur.length && cur.join('\n').trim() !== '') blocks.push(cur.join('\n'))
+          cur = []
+        }
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i]
+          if (!inFence) {
+            const fm = /^\s*(`{3,}|~{3,})\s*[a-zA-Z0-9_-]*\s*$/.exec(line)
+            if (fm) {
+              flush()
+              cur = [line]
+              inFence = true
+              fenceChar = fm[1]
+              continue
+            }
+          } else if (line.replace(/\s+$/, '').indexOf(fenceChar) >= 0) {
+            cur.push(line)
+            inFence = false
+            flush()
+            continue
+          }
+          cur.push(line)
+          if (!inFence && line.trim() === '') flush()
+        }
+        flush()
+        return blocks
+      },
+      isOpenFence(blk) {
+        const lines = String(blk).split('\n')
+        let fenceChar = ''
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i]
+          if (!fenceChar) {
+            const fm = /^\s*(`{3,}|~{3,})\s*[a-zA-Z0-9_-]*\s*$/.exec(line)
+            if (fm) fenceChar = fm[1]
+          } else if (line.replace(/\s+$/, '').indexOf(fenceChar) >= 0) {
+            fenceChar = ''
+          }
+        }
+        return !!fenceChar
+      },
+      cachedMd(blk) {
+        if (blockCache.has(blk)) return blockCache.get(blk)
+        const html = this.renderMd(blk)
+        blockCache.set(blk, html)
+        if (blockCache.size > BLOCK_CACHE_MAX) {
+          const firstKey = blockCache.keys().next().value
+          if (firstKey) blockCache.delete(firstKey)
+        }
+        return html
+      },
+      mdViews(p, streaming) {
+        if (!p || p.t !== 'text') return []
+        const blocks = this.mdBlocks(p.c)
+        const views = []
+        for (let i = 0; i < blocks.length; i++) {
+          const blk = blocks[i]
+          let plain = false
+          if (streaming && i === blocks.length - 1 && (this.isOpenFence(blk) || blk.length > STREAM_PARSE_MAX)) {
+            plain = true
+          }
+          views.push({ text: blk, html: plain ? null : this.cachedMd(blk), plain: plain })
+        }
+        return views
+      },
+      refClass(c) {
+        let rc = 'ref'
+        if (/^>\s*build/.test(c)) rc += ' info'
+        else if (/^\$\s/.test(c)) rc += ' cmd'
+        else if (/^←/.test(c)) rc += ' edit'
+        else if (/^[◈]/.test(c)) rc += ' tool'
+        else rc += ' act'
+        return rc
+      },
+      toggleDropdown(which) {
+        this.dropdown = this.dropdown === which ? '' : which
+      },
+      viewAll() {
+        this.dropdown = ''
+        this.sessionPanelOpen = true
+        this.loadSessions()
+      },
+      showNotify(msg) {
+        this.notifyMsg = msg
+        this.notifyShow = true
+        clearTimeout(notifyTimer)
+        notifyTimer = setTimeout(() => { this.notifyShow = false }, 6000)
+      },
+      setWorkspace() {
+        if (this.wsBusy) return
+        const self = this
+        const cwd = (this.workspace || '').trim()
+        if (!cwd) return
+        this.wsBusy = true
+        this.fetchFend('workspace_set', { cwd: cwd }, 10000).then((data) => {
+          self.wsBusy = false
+          if (data && data.ok) {
+            self.workspace = data.cwd
+            self.showNotify('workspace set: ' + data.cwd)
+            self.sessionId = ''
+            self.clearChat()
+            self.loadSessions()
+          } else {
+            self.showNotify('set failed: ' + ((data && data.error) || 'unknown'))
+          }
+        }).catch((e) => {
+          self.wsBusy = false
+          self.showNotify('set workspace error: ' + e.message)
+        })
+      },
+      loadSessions() {
+        const self = this
+        this.loading = true
+        return Promise.all([
+          this.fetchFend('sessions', {}, 10000).catch((e) => { self.showNotify('sessions: ' + e.message); return { pinned: [] } }),
+          this.fetchFend('models', {}, 15000).catch((e) => { self.showNotify('models: ' + e.message); return { models: [] } })
+        ]).then((results) => {
+          self.models = (results[1] && results[1].models) || []
+          self.pinnedSessions = (results[0] && results[0].pinned) || []
+          return self.fetchFend('pi_sessions', {}, 8000).catch((e) => { self.showNotify('pi sessions: ' + e.message); return { sessions: [] } })
+        }).then((oc) => {
+          if (oc && oc.sessions) self.sessions = oc.sessions
+          return self.fetchFend('workspace', {}, 8000).catch(() => ({}))
+        }).then((ws) => {
+          if (ws && ws.cwd) self.workspace = ws.cwd
+        }).finally(() => { self.loading = false })
+      },
+      fetchFend(key, data, timeout) {
+        return fetch('', {
+          method: 'post',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({key: key, data: data, timeout: timeout || 60000})
+        }).then((r) => { return r.json() })
+      },
+      selectModel(m) {
+        this.currentModel = (m || '').replace(/\r/g, '')
+        localStorage.setItem('aichat_pi_last_model', this.currentModel)
+        this.dropdown = ''
+        this.refreshCtx()
+      },
+      switchDefaultModel(m) {
+        this.currentModel = (m || '').replace(/\r/g, '')
+        localStorage.setItem('aichat_pi_last_model', this.currentModel)
+        this.dropdown = ''
+        this.refreshCtx()
+      },
+      selectSession(id) {
+        const prev = this.sessionId
+        this.sessionId = id
+        localStorage.setItem('aichat_pi_last_session', id)
+        this.dropdown = ''
+        this.loadSessions()
+        this.syncCtx(id)
+        if (!(this.busy && id === prev)) this.loadSessionMessages(id)
+      },
+      loadSessionMessages(id) {
+        const self = this
+        this.messages = []
+        this.switching = true
+        return this.fetchFend('session_messages', { id: id }, 15000).then((data) => {
+          self.switching = false
+          if (data && Array.isArray(data.messages)) {
+            self.messages = data.messages
+            self.scrollBottom()
+          }
+        }).catch(() => { self.switching = false })
+      },
+      deleteLocalSession(id) {
+        if (this.deleting[id]) return
+        const self = this
+        this.deleting[id] = true
+        this.fetchFend('delete_session', { id: id }, 10000).then(() => {
+          if (self.sessionId === id) self.sessionId = ''
+          self.loadSessions()
+          self.showNotify('Session deleted')
+        }).catch((e) => {
+          self.showNotify('Delete failed: ' + e.message)
+        }).then(() => { delete self.deleting[id] })
+      },
+      deleteOCSession(id) {
+        if (this.deleting[id]) return
+        const self = this
+        this.deleting[id] = true
+        this.fetchFend('pi_delete_session', { id: id }, 10000).then((data) => {
+          if (data.ok) {
+            if (self.sessionId === id) self.sessionId = ''
+            self.loadSessions()
+            self.showNotify('Session deleted')
+          } else {
+            self.showNotify('Delete failed: ' + (data.error || 'unknown'))
+          }
+        }).catch((e) => {
+          self.showNotify('Delete failed: ' + e.message)
+        }).then(() => { delete self.deleting[id] })
+      },
+      autosize() {
+        const el = this.$refs.inputEl
+        if (!el) return
+        el.style.height = 'auto'
+        el.style.height = Math.min(el.scrollHeight, 160) + 'px'
+      },
+      onInput() {
+        this.autosize()
+        const q = this.inputText.replace(/^\s*/, '')
+        if (q.charAt(0) === '/') {
+          this.cmdOpen = true
+          this.cmdIdx = 0
+        } else {
+          this.cmdOpen = false
+        }
+      },
+      pickCmd(c) {
+        this.inputText = '/' + c.name + ' '
+        this.cmdOpen = false
+        this.cmdIdx = -1
+        this.autosize()
+        const el = this.$refs.inputEl
+        if (el) el.focus()
+      },
+      loadCommands() {
+        const self = this
+        this.fetchFend('commands', {}, 8000).then((data) => {
+          if (data && data.ok && Array.isArray(data.commands)) self.commands = data.commands
+        }).catch(() => {})
+      },
+      loadProviders() {
+        const self = this
+        return this.fetchFend('providers', {}, 10000).then((data) => {
+          if (data && Array.isArray(data.providers)) self.providerList = data.providers
+          self.omniCurrent = !!(data && data.omniCurrent)
+          self.omniStatus = data && data.omniStatus ? data.omniStatus : 'offline'
+          return data || {}
+        }).catch(() => ({}))
+      },
+      showProviderPicker() {
+        const self = this
+        const keysCopy = {}
+        for (const p of this.providerList) keysCopy[p.name] = ''
+        this.providerKeys = keysCopy
+        this.providerOverlay = true
+        this.loadProviders().catch(() => {})
+      },
+      useProvider(name) {
+        const self = this
+        const p = this.providerList.find((x) => x.name === name) || {}
+        const key = (this.providerKeys[name] || '').trim()
+        if (!key && !p.hasKey) { this.showNotify('Please enter an API key for ' + name); return }
+        this.providerBusy = true
+        const fendName = p.custom ? 'provider_custom_save' : 'provider_save'
+        const payload = { name: name }
+        if (key) payload.apiKey = key
+        if (p.custom) {
+          payload.baseUrl = p.baseUrl
+          payload.api = p.api
+        }
+        this.fetchFend(fendName, payload, 10000).then((data) => {
+          self.providerBusy = false
+          if (data && data.ok) {
+            self.showNotify('Provider ' + name + (key ? ' saved' : ' selected'))
+            self.providerOverlay = false
+            self.loadSessions().then(() => {
+              const defModel = data && data.model ? data.model : ''
+              if (defModel) {
+                self.switchDefaultModel(defModel)
+              } else {
+                self.selectModel('')
+              }
+            })
+          } else {
+            self.showNotify('Failed: ' + ((data && data.error) || 'unknown'))
+          }
+        }).catch((e) => {
+          self.providerBusy = false
+          self.showNotify('Failed: ' + e.message)
+        })
+      },
+      useOmniRoute() {
+        const self = this
+        this.providerBusy = true
+        this.fetchFend('provider_save', { name: 'omniroute', apiKey: '' }, 10000).then((data) => {
+          self.providerBusy = false
+          if (data && data.ok) {
+            self.showNotify('OmniRoute enabled')
+            self.omniCurrent = true
+            self.providerOverlay = false
+            self.loadSessions().then(() => { self.selectModel('') })
+          } else {
+            self.showNotify('Failed: ' + ((data && data.error) || 'unknown'))
+          }
+        }).catch((e) => {
+          self.providerBusy = false
+          self.showNotify('Failed: ' + e.message)
+        })
+      },
+      openCustomProvider() {
+        this.customForm = { name: '', baseUrl: '', apiKey: '', api: 'openai-completions', models: '' }
+        this.customOpen = true
+      },
+      closeCustomProvider() {
+        if (this.customBusy) return
+        this.customOpen = false
+      },
+      saveCustomProvider() {
+        const self = this
+        const name = (this.customForm.name || '').trim().replace(/\s+/g, '-').toLowerCase()
+        const baseUrl = (this.customForm.baseUrl || '').trim()
+        const apiKey = (this.customForm.apiKey || '').trim()
+        if (!name) { this.showNotify('Please enter a provider name'); return }
+        if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) { this.showNotify('Name must be letters/numbers/hyphens only'); return }
+        if (!baseUrl) { this.showNotify('Please enter a base URL'); return }
+        if (!apiKey) { this.showNotify('Please enter an API key'); return }
+        this.customBusy = true
+        this.fetchFend('provider_custom_save', {
+          name: name, baseUrl: baseUrl, apiKey: apiKey, api: this.customForm.api,
+          models: (this.customForm.models || '').split(',').map((s) => s.trim()).filter(Boolean)
+        }, 10000).then((data) => {
+          self.customBusy = false
+          if (data && data.ok) {
+            self.showNotify('Custom provider ' + name + ' saved')
+            self.customOpen = false
+            self.providerOverlay = false
+            self.loadSessions().then(() => {
+              const defModel = data.model ? data.model : ''
+              if (defModel) self.switchDefaultModel(defModel)
+              else self.selectModel('')
+            })
+          } else {
+            self.showNotify('Failed: ' + ((data && data.error) || 'unknown'))
+          }
+        }).catch((e) => {
+          self.customBusy = false
+          self.showNotify('Failed: ' + e.message)
+        })
+      },
+      loadHistory() {
+        try {
+          let arr = JSON.parse(localStorage.getItem('aichat_pi_history') || '[]')
+          if (Array.isArray(arr)) this.histList = arr
+        } catch(e) {}
+        this.histIdx = -1
+        this.histDraft = ''
+      },
+      saveHistory(text) {
+        const t = String(text || '').trim()
+        if (!t) return
+        let arr = this.histList.filter((x) => { return x !== t })
+        arr.push(t)
+        if (arr.length > 50) arr = arr.slice(arr.length - 50)
+        this.histList = arr
+        this.histIdx = -1
+        this.histDraft = ''
+        try { localStorage.setItem('aichat_pi_history', JSON.stringify(arr)) } catch(e) {}
+      },
+      histNav(dir) {
+        const self = this
+        const list = this.histList
+        if (!list.length) return
+        const el = this.$refs.inputEl
+        if (this.histIdx === -1) this.histDraft = this.inputText
+        if (dir < 0) {
+          this.histIdx = this.histIdx === -1 ? list.length - 1 : this.histIdx - 1
+        } else {
+          this.histIdx = this.histIdx === -1 ? -1 : this.histIdx + 1
+          if (this.histIdx >= list.length) this.histIdx = -1
+        }
+        this.inputText = this.histIdx >= 0 ? list[this.histIdx] : this.histDraft
+        this.cmdOpen = false
+        this.$nextTick(() => {
+          self.autosize()
+          if (el) {
+            el.focus()
+            el.setSelectionRange(el.value.length, el.value.length)
+          }
+        })
+      },
+      onKey(e) {
+        if (this.cmdOpen && this.cmdFiltered.length) {
+          if (e.key === 'ArrowDown') {
+            e.preventDefault()
+            this.cmdIdx = (this.cmdIdx + 1) % this.cmdFiltered.length
+            return
+          }
+          if (e.key === 'ArrowUp') {
+            e.preventDefault()
+            this.cmdIdx = (this.cmdIdx - 1 + this.cmdFiltered.length) % this.cmdFiltered.length
+            return
+          }
+          if (e.key === 'Tab') {
+            e.preventDefault()
+            this.pickCmd(this.cmdFiltered[this.cmdIdx >= 0 ? this.cmdIdx : 0])
+            return
+          }
+          if (e.key === 'Enter' && !(e.ctrlKey || e.metaKey)) {
+            e.preventDefault()
+            this.pickCmd(this.cmdFiltered[this.cmdIdx >= 0 ? this.cmdIdx : 0])
+            this.send()
+            return
+          }
+          if (e.key === 'Escape') {
+            e.preventDefault()
+            this.cmdOpen = false
+            this.cmdIdx = -1
+            return
+          }
+        }
+        if (e.key === 'ArrowUp' && !this.cmdOpen) {
+          e.preventDefault()
+          this.histNav(-1)
+          return
+        }
+        if (e.key === 'ArrowDown' && !this.cmdOpen) {
+          e.preventDefault()
+          this.histNav(1)
+          return
+        }
+        if (e.key === 'Enter') {
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault()
+            this.insertNewline()
+          } else {
+            e.preventDefault()
+            this.send()
+          }
+        }
+      },
+      insertNewline() {
+        const el = this.$refs.inputEl
+        if (!el) return
+        const start = el.selectionStart
+        const end = el.selectionEnd
+        this.inputText = this.inputText.slice(0, start) + '\n' + this.inputText.slice(end)
+        this.autosize()
+        const self = this
+        this.$nextTick(() => {
+          el.focus()
+          el.setSelectionRange(start + 1, start + 1)
+        })
+      },
+      scrollBottom() {
+        const self = this
+        this.$nextTick(() => {
+          const el = self.$refs.messagesEl
+          if (el) el.scrollTop = el.scrollHeight
+        })
+      },
+      send() {
+        if (this.busy) return
+        const self = this
+        let prompt = this.inputText.trim()
+        if (!prompt) return
+        if (prompt.length > 1200) {
+          prompt = prompt.slice(0, 1200)
+          this.showNotify('Message exceeds 1200 chars, truncated')
+        }
+        this.cmdOpen = false
+        this.cmdIdx = -1
+        if (/^\/new\s*$/.test(prompt)) {
+          this.inputText = ''
+          this.$nextTick(() => { self.autosize() })
+          this.clearChat()
+          return
+        }
+        this.saveHistory(prompt)
+        this.inputText = ''
+        this.$nextTick(() => { self.autosize() })
+        this.busy = true
+        this.messages.push({ role: 'user', content: prompt })
+        const el = Vue.reactive({ role: 'assistant', parts: [], streaming: true })
+        this.messages.push(el)
+        this.scrollBottom()
+        const startTime = Date.now()
+        const runId = Date.now() + '-' + Math.random().toString(36).slice(2, 8)
+        this.runId = runId
+        this.todos = []
+        if (this.currentModel) this.ctxModel = this.currentModel
+
+        let textBuf = ''
+        let textFlush = null
+        const flushText = () => {
+          if (textFlush) { clearTimeout(textFlush); textFlush = null }
+          if (!textBuf) return
+          const last = el.parts[el.parts.length - 1]
+          if (last && last.t === 'text') {
+            last.c += textBuf
+          } else {
+            el.parts.push({ t: 'text', c: textBuf })
+          }
+          textBuf = ''
+        }
+
+        const onMsg = (data) => {
+          try {
+            if (data.type === 'init') {
+              if (data.content && el.initShown !== data.content) {
+                flushText()
+                el.parts.push({ t: 'ref', c: data.content, cls: 'info' })
+                el.initShown = data.content
+              }
+              return
+            }
+            if (data.type === 'ref') {
+              flushText()
+              el.parts.push({ t: 'ref', c: data.content, cls: data.cls || '' })
+            }
+            if (data.type === 'out') {
+              flushText()
+              const lastOut = el.parts[el.parts.length - 1]
+              if (lastOut && lastOut.t === 'out') lastOut.c += data.content
+              else el.parts.push({ t: 'out', c: data.content })
+            }
+            if (data.type === 'text') {
+              textBuf += data.content
+              if (!textFlush) textFlush = setTimeout(flushText, 50)
+            }
+            if (data.type === 'todo') {
+              self.todos = data.data || []
+            }
+            if (data.type === 'ctx') {
+              self.ctxUsed = data.used || 0
+              if (data.limit > 0) self.ctxLimit = data.limit
+              if (data.pct !== undefined && data.pct !== null) self.ctxPct = data.pct
+              else if (self.ctxLimit) self.ctxPct = Math.round((self.ctxUsed || 0) / self.ctxLimit * 1000) / 10
+              if (data.model) self.ctxModel = data.model
+              try {
+                if (self.ctxLimit) localStorage.setItem('aichat_pi_ctx_limit', String(self.ctxLimit))
+                if (self.ctxModel) localStorage.setItem('aichat_pi_ctx_model', self.ctxModel)
+              } catch(e) {}
+            }
+            if (data.type === 'session') {
+              self.sessionId = data.id || ''
+              try {
+                if (self.sessionId) localStorage.setItem('aichat_pi_last_session', self.sessionId)
+              } catch(e) {}
+            }
+            if (data.type === 'question') {
+              self.question = data.data || null
+              self.qSel = []
+              self.qCustom = []
+              if (self.question && self.question.questions) {
+                for (let i = 0; i < self.question.questions.length; i++) {
+                  self.qSel.push([])
+                  self.qCustom.push('')
+                }
+              }
+              flushText()
+              self.qEl = el
+              const qs = (self.question && self.question.questions) || []
+              for (let i = 0; i < qs.length; i++) {
+                const q = qs[i]
+                let line = '❓ ' + (q.header || 'Question') + ': ' + q.question
+                if (Array.isArray(q.options)) {
+                  line += '\n' + q.options.map((o) => '   · ' + o.label).join('\n')
+                }
+                el.parts.push({ t: 'ref', c: line, cls: 'question' })
+              }
+              self.scrollBottom()
+              return
+            }
+            if (data.type === 'question_done') {
+              if (self.question && data.data && self.question.requestID === data.data.requestID) {
+                self.qEl = null
+                self.question = null
+                self.qSel = []
+                self.qCustom = []
+              }
+              return
+            }
+            if (data.type === 'done') {
+              flushText()
+              if (data.content) el.parts.push({ t: 'text', c: data.content })
+              el.streaming = false
+              self.qEl = null
+              self.question = null
+              self.qSel = []
+              self.qCustom = []
+              delete self.sseHandlers[runId]
+              if (!el.stopped) {
+                let meta = Math.round((Date.now() - startTime) / 1000) + 's'
+                if (data.tokens) meta += ' | ⚙ ' + data.tokens.total + ' tokens'
+                if (data.steps) meta += ' | ' + data.steps + ' steps'
+                if (data.model) meta += ' | ' + data.model
+                if (data.timeout) {
+                  meta += ' | ⚠ timed out'
+                  el.errored = true
+                } else {
+                  meta = '✓ ' + meta
+                }
+                el.meta = meta
+                if (data.model) self.ctxModel = data.model
+                try {
+                  if (data.model) localStorage.setItem('aichat_pi_ctx_model', data.model)
+                } catch(e) {}
+              }
+              self.busy = false
+              self.runId = ''
+              self.todos = []
+              if (!self.sessionId) {
+                self.loadSessions().then(() => {
+                  if (self.sessions.length > 0) self.selectSession(self.sessions[0].id)
+                })
+              } else {
+                self.loadSessions()
+              }
+              self.scrollBottom()
+              return
+            }
+            if (data.type === 'error') {
+              flushText()
+              el.streaming = false
+              el.errored = true
+              self.question = null
+              self.qSel = []
+              self.qCustom = []
+              if (el.stopped) {
+                if (data.content && data.content !== 'client disconnected') {
+                  el.meta = (el.meta ? el.meta + ' | ' : '') + '⚠ ' + data.content
+                }
+                delete self.sseHandlers[runId]
+                self.busy = false
+                self.runId = ''
+                self.todos = []
+                self.scrollBottom()
+                return
+              }
+              if (el.parts.length) {
+                el.meta = (el.meta ? el.meta + ' | ' : '') + '⚠ ' + data.content
+              } else {
+                el.parts = [{ t: 'text', c: 'Error: ' + data.content, cls: 'err-text' }]
+              }
+              delete self.sseHandlers[runId]
+              self.busy = false
+              self.runId = ''
+              self.todos = []
+              self.scrollBottom()
+              return
+            }
+            self.scrollBottom()
+          } catch(e) {}
+        }
+        self.sseHandlers[runId] = onMsg
+
+        this.fetchFend('start', { prompt: prompt, runId: runId, session: this.sessionId, model: this.currentModel }, 120000).then((data) => {
+          if (!data.ok) {
+            el.errored = true; el.streaming = false
+            el.parts = [{ t: 'text', c: 'Error: ' + (data.error || 'failed to start'), cls: 'err-text' }]
+            self.busy = false
+            self.runId = ''
+            self.todos = []
+            delete self.sseHandlers[runId]
+            self.scrollBottom()
+          } else if (data.sessionId) {
+            self.sessionId = data.sessionId
+            try {
+              if (self.sessionId) localStorage.setItem('aichat_pi_last_session', self.sessionId)
+            } catch(e) {}
+          }
+        }).catch((e) => {
+          flushText()
+          if (el.parts.length) {
+            el.streaming = false
+            el.meta = 'Connection closed'
+          } else {
+            el.errored = true; el.streaming = false
+            el.parts = [{ t: 'text', c: 'Error: ' + e.message, cls: 'err-text' }]
+          }
+          self.busy = false
+          self.runId = ''
+          self.todos = []
+          delete self.sseHandlers[runId]
+          self.scrollBottom()
+        })
+      },
+      stop() {
+        const self = this
+        const runId = this.runId
+        const sessionId = this.sessionId
+        const last = this.messages[this.messages.length - 1]
+        if (last && last.role === 'assistant' && last.streaming) {
+          last.streaming = false
+          last.stopped = true
+          last.errored = true
+          last.meta = (last.meta ? last.meta + ' | ' : '') + '⏹ stopped'
+        }
+        this.fetchFend('stop', { runId: runId, session: sessionId }, 15000).then((data) => {
+          if (!data.ok && !data.error) {
+            self.showNotify('stop failed' + (data.code ? ' (' + data.code + ')' : ''))
+          }
+          self.busy = false
+        }).catch((e) => {
+          self.showNotify('stop error: ' + e.message)
+          self.busy = false
+        })
+      },
+      qToggle(qi, label) {
+        if (!this.question || this.qSubmitting) return
+        const q = this.question.questions[qi]
+        const cur = (this.qSel[qi] || []).slice()
+        const idx = cur.indexOf(label)
+        if (idx >= 0) cur.splice(idx, 1)
+        else cur.push(label)
+        this.qSel[qi] = q.multiple ? cur : cur.slice(-1)
+        this.qSel = this.qSel.slice()
+      },
+      qSubmit() {
+        const self = this
+        if (!this.question || this.qSubmitting) return
+        const answers = this.question.questions.map((q, qi) => {
+          const arr = (this.qSel[qi] || []).slice()
+          const custom = (this.qCustom[qi] || '').trim()
+          if (custom && q.custom !== false && arr.indexOf(custom) < 0) arr.push(custom)
+          return arr
+        })
+        this.qSubmitting = true
+        const qData = this.question
+        this.fetchFend('question_reply', { requestID: this.question.requestID, sessionID: this.question.sessionID, answers: answers }, 15000).then((data) => {
+          self.qSubmitting = false
+          if (data && data.ok) {
+            if (self.qEl && qData && Array.isArray(qData.questions)) {
+              const lines = qData.questions.map((q, qi) => {
+                const arr = (self.qSel[qi] || []).slice()
+                const custom = (self.qCustom[qi] || '').trim()
+                if (custom && q.custom !== false && arr.indexOf(custom) < 0) arr.push(custom)
+                return '✔ ' + (q.header || 'Answer') + ': ' + (arr.length ? arr.join(', ') : '(no selection)')
+              })
+              self.qEl.parts.push({ t: 'ref', c: lines.join('\n'), cls: 'answer' })
+            }
+            self.qEl = null
+            self.question = null
+            self.qSel = []
+            self.qCustom = []
+          } else {
+            self.showNotify('Reply failed: ' + ((data && data.error) || 'unknown'))
+          }
+        }).catch((e) => {
+          self.qSubmitting = false
+          self.showNotify('Reply failed: ' + e.message)
+        })
+      },
+      qReject() {
+        const self = this
+        if (!this.question || this.qSubmitting) return
+        this.qSubmitting = true
+        this.fetchFend('question_reject', { requestID: this.question.requestID }, 15000).then((data) => {
+          self.qSubmitting = false
+          if (data && data.ok) {
+            if (self.qEl) self.qEl.parts.push({ t: 'ref', c: '✖ question dismissed', cls: 'answer' })
+            self.qEl = null
+            self.question = null
+            self.qSel = []
+            self.qCustom = []
+          } else {
+            self.showNotify('Reject failed: ' + ((data && data.error) || 'unknown'))
+          }
+        }).catch((e) => {
+          self.qSubmitting = false
+          self.showNotify('Reject failed: ' + e.message)
+        })
+      },
+      clearChat() {
+        this.messages = []
+        this.sessionId = ''
+        this.qEl = null
+        this.question = null
+        this.qSel = []
+        this.qCustom = []
+        this.ctxUsed = 0
+        this.ctxPct = 0
+        try { localStorage.removeItem('aichat_pi_last_session') } catch(e) {}
+      },
+      compactChat() {
+        this.clearChat()
+      },
+      initApp() {
+        if (_inited) return
+        _inited = true
+        this.installOverlay = false
+        this.loading = true
+        const self = this
+        this.loadCommands()
+        this.loadHistory()
+        this.loadSessions().then(() => {
+          self.loading = false
+          const savedModel = localStorage.getItem('aichat_pi_last_model')
+          if (savedModel && savedModel.replace(/\r/g, '') !== '') {
+            self.currentModel = savedModel.replace(/\r/g, '')
+          } else if (self.models && self.models.length) {
+            self.currentModel = self.models[0].replace(/\r/g, '')
+          }
+          const savedSession = localStorage.getItem('aichat_pi_last_session')
+          if (savedSession && savedSession !== self.sessionId && savedSession !== '') {
+            for (let i = 0; i < self.sessions.length; i++) {
+              if (self.sessions[i].id === savedSession) { self.selectSession(savedSession); break }
+            }
+          }
+          self.refreshCtx()
+          self.loadProviders().then(() => {
+            self.showProviderPicker()
+          })
+        })
+      },
+      refreshCtx() {
+        const self = this
+        this.fetchFend('ctxinfo', { model: this.currentModel }, 10000).then((data) => {
+          if (data && data.limit) {
+            self.ctxLimit = data.limit
+            if (data.model) self.ctxModel = data.model
+          } else {
+            const saved = localStorage.getItem('aichat_pi_ctx_limit')
+            if (saved) self.ctxLimit = Number(saved)
+            const savedModel = localStorage.getItem('aichat_pi_ctx_model')
+            if (savedModel && !self.ctxModel) self.ctxModel = savedModel
+          }
+          if (self.sessionId) self.syncCtx(self.sessionId)
+        }).catch(() => {})
+      },
+      syncCtx(sessionId) {
+        if (!sessionId) return
+        const self = this
+        this.fetchFend('session_ctx', { id: sessionId, model: this.currentModel || this.ctxModel }, 12000).then((data) => {
+          if (!data) return
+          if (data.limit) self.ctxLimit = data.limit
+          if (!self.ctxLimit) return
+          self.ctxUsed = data.used || 0
+          self.ctxPct = Math.round((self.ctxUsed || 0) / self.ctxLimit * 1000) / 10
+          try { localStorage.setItem('aichat_pi_ctx_limit', String(self.ctxLimit)) } catch(e) {}
+        }).catch(() => {})
+      },
+    },
+    mounted() {
+      const self = this
+      document.addEventListener('click', () => { self.dropdown = '' })
+
+      const mainEs = new EventSource('/sse/elecV2P/pi-main')
+      self.sseMain = mainEs
+      mainEs.onmessage = (e) => {
+        try {
+          const d = JSON.parse(e.data)
+          if (d.runId && self.sseHandlers[d.runId]) {
+            self.sseHandlers[d.runId](d)
+            return
+          }
+          if (d.type === 'init') {
+            self.mainReady = true
+            return
+          }
+        } catch(e) {}
+      }
+      mainEs.onerror = () => {}
+
+      const installEs = new EventSource('/sse/elecV2P/' + installId)
+      installEs.onmessage = (e) => {
+        try {
+          const d = JSON.parse(e.data)
+          if (d.type === 'progress') self.installProgress = d.content
+          if (d.type === 'done') {
+            installEs.close()
+            if (d.version) self.piVersion = d.version
+            self.initApp()
+          }
+          if (d.type === 'error') {
+            installEs.close()
+            self.installErr = d.content
+          }
+        } catch(e) {}
+      }
+      this.fetchFend('ensure_pi', { installId: installId }, 180000).then((data) => {
+        if (data && data.ok && !data.installing) {
+          installEs.close()
+          if (data.version) self.piVersion = data.version
+          self.initApp()
+        } else if (data && !data.ok && data.error) {
+          installEs.close()
+          self.installErr = data.error
+        }
+      }).catch(() => {})
+    }
+  })
+
+  app.mount('#app')
+</script>
+
+<script favend>
+const { spawn, exec } = require('child_process')
+const fs = require('fs')
+const path = require('path')
+const os = require('os')
+
+const PI_BIN = 'pi'
+const OMNI_HOST = process.env.OMNIROUTE_URL || 'http://127.0.0.1:20128'
+const WS_KEY = 'pi_workspace'
+const APP_CH = 'pi-main'
+
+const stripAnsi = (s) => { return String(s).replace(/\u001b\[[0-9;]*[a-zA-Z]/g, '').replace(/\r/g, '') }
+const sleep = (ms) => { return new Promise((resolve) => { setTimeout(resolve, ms) }) }
+
+const SECRET_MASK = '***'
+const maskSecrets = (s) => {
+  if (!s) return s
+  return String(s)
+    .replace(/(api[_-]?key|api_token|access_token|auth[_-]?token|secret|password|passwd)\s*[:=]\s*(?:"[^"]*"|'[^']*'|[^\s,;]+)/gi, '$1=' + SECRET_MASK)
+    .replace(/(Bearer\s+)[A-Za-z0-9._~+\/=:-]+/gi, '$1' + SECRET_MASK)
+    .replace(/\b(?:sk-[A-Za-z0-9_-]{6,}|sign[a-z0-9_.-]{8,}|eyJ[A-Za-z0-9_-]{10,})\b/gi, SECRET_MASK)
+}
+
+const IS_WIN = process.platform === 'win32'
+const DEVNULL = IS_WIN ? 'nul' : '/dev/null'
+const redirCmd = (cmd) => { return cmd + ' 2>' + DEVNULL }
+
+const execAsync = (cmd, timeout) => {
+  return new Promise((resolve, reject) => {
+    exec(cmd, { timeout: timeout || 15000, windowsHide: true, encoding: 'utf-8', maxBuffer: 5 * 1024 * 1024 }, (error, stdout, stderr) => {
+      if (error) reject(error)
+      else resolve({ stdout: stdout || '', stderr: stderr || '' })
+    })
+  })
+}
+
+const httpGetUrl = (url, timeout) => {
+  return new Promise((resolve) => {
+    const httpMod = require('http')
+    const u = new (require('url').URL)(url)
+    const req = httpMod.get({ hostname: u.hostname, port: u.port || 80, path: u.pathname + u.search }, (res) => {
+      let buf = ''
+      res.on('data', (c) => { buf += c })
+      res.on('end', () => { resolve({ status: res.statusCode, body: buf }) })
+    })
+    req.on('error', () => { resolve({ status: 0, body: '' }) })
+    req.setTimeout(timeout || 4000, () => { req.destroy(); resolve({ status: 0, body: '' }) })
+  })
+}
+
+const getWorkDir = () => {
+  try {
+    const w = $store.get(WS_KEY)
+    if (w) return String(w)
+  } catch(e) {}
+  try { return process.cwd() } catch(e) { return '.' }
+}
+const setWorkDir = (d) => { try { $store.set(WS_KEY, String(d)) } catch(e) {} }
+
+const agentDir = () => {
+  return process.env.PI_CODING_AGENT_DIR || path.join(os.homedir(), '.pi', 'agent')
+}
+const modelsFile = () => { return path.join(agentDir(), 'models.json') }
+const sessionDirFor = (cwd) => {
+  const safe = '--' + String(cwd).replace(/^[\/\\]/, '').replace(/[\/\\:]/g, '-') + '--'
+  return path.join(agentDir(), 'sessions', safe)
+}
+const readModelsJson = () => {
+  try { return JSON.parse(fs.readFileSync(modelsFile(), 'utf8')) } catch(e) { return null }
+}
+
+const toolArg = (inp) => {
+  const i = inp || {}
+  let arg = i.command || i.filePath || i.path || i.url || i.pattern || i.query || i.message || ''
+  if (i.filePath) {
+    const off = Number(i.offset)
+    const lim = Number(i.limit)
+    if (!isNaN(off) && !isNaN(lim) && lim > 0) arg += ' · L' + off + '-' + (off + lim - 1)
+    else if (!isNaN(lim) && lim > 0) arg += ' · ' + lim + ' lines'
+    else if (!isNaN(off) && off > 0) arg += ' · from L' + off
+  }
+  if (typeof i.old_string === 'string' || typeof i.new_string === 'string') {
+    const oldLines = typeof i.old_string === 'string' && i.old_string ? i.old_string.split('\n').length : 0
+    const newLines = typeof i.new_string === 'string' && i.new_string ? i.new_string.split('\n').length : 0
+    arg += ' · -' + oldLines + '/+' + newLines
+  }
+  return arg
+}
+
+const parseModel = (s) => {
+  s = String(s || '').replace(/\r/g, '')
+  const i = s.indexOf('/')
+  if (i > 0) return { provider: s.slice(0, i), model: s.slice(i + 1) }
+  return { provider: '', model: s }
+}
+
+const collectConfiguredModels = (mj) => {
+  const out = []
+  if (mj && mj.providers) {
+    for (const p of Object.keys(mj.providers)) {
+      const conf = mj.providers[p] || {}
+      const models = conf.models || []
+      for (const m of models) {
+        if (m && m.id) out.push(p + '/' + m.id)
+      }
+    }
+  }
+  return out
+}
+
+const SETTINGS_FILE = () => { return path.join(agentDir(), 'settings.json') }
+
+const readSettingsJson = () => {
+  try { return JSON.parse(fs.readFileSync(SETTINGS_FILE(), 'utf8')) } catch(e) { return {} }
+}
+
+const writeFileJson = (full, obj) => {
+  try { fs.chmodSync(full, 0o600) } catch(e) {}
+  fs.mkdirSync(path.dirname(full), { recursive: true })
+  fs.writeFileSync(full, JSON.stringify(obj, null, 2))
+  try { fs.chmodSync(full, 0o600) } catch(e) {}
+}
+
+const PROVIDER_PRESETS = [
+  { name: 'openai', api: 'openai-completions', baseUrl: 'https://api.openai.com/v1', models: [
+    { id: 'gpt-5.6-sol', name: 'GPT-5.6 Sol', reasoning: true, contextWindow: 1050000, maxTokens: 181888 },
+    { id: 'gpt-4.1', name: 'GPT-4.1', contextWindow: 1048576, maxTokens: 32768 },
+    { id: 'gpt-4o-mini', name: 'GPT-4o mini', contextWindow: 128000, maxTokens: 16384 }
+  ] },
+  { name: 'anthropic', api: 'anthropic-messages', baseUrl: 'https://api.anthropic.com', models: [
+    { id: 'claude-opus-4-7', name: 'Claude Opus 4.7', reasoning: true, contextWindow: 1000000, maxTokens: 128000 },
+    { id: 'claude-sonnet-4-5', name: 'Claude Sonnet 4.5', reasoning: true, contextWindow: 1000000, maxTokens: 65536 },
+    { id: 'claude-haiku-4-5', name: 'Claude Haiku 4.5', contextWindow: 1000000, maxTokens: 65536 }
+  ] },
+  { name: 'deepseek', api: 'openai-completions', baseUrl: 'https://api.deepseek.com/v1', models: [
+    { id: 'deepseek-chat', name: 'DeepSeek Chat', contextWindow: 128000, maxTokens: 8192 },
+    { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner', reasoning: true, contextWindow: 128000, maxTokens: 8192 }
+  ] },
+  { name: 'google', api: 'google-generative-ai', baseUrl: 'https://generativelanguage.googleapis.com/v1beta', models: [
+    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', reasoning: true, contextWindow: 2000000, maxTokens: 65536 },
+    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', reasoning: true, contextWindow: 1048576, maxTokens: 65536 }
+  ] },
+  { name: 'openrouter', api: 'openai-completions', baseUrl: 'https://openrouter.ai/api/v1', models: [
+    { id: 'openai/gpt-5.6-sol', name: 'GPT-5.6 Sol (OR)', reasoning: true, contextWindow: 1050000, maxTokens: 181888 },
+    { id: 'anthropic/claude-sonnet-4-5', name: 'Claude Sonnet 4.5 (OR)', reasoning: true, contextWindow: 1000000, maxTokens: 65536 },
+    { id: 'deepseek/deepseek-chat', name: 'DeepSeek Chat (OR)', contextWindow: 128000, maxTokens: 8192 }
+  ] }
+]
+
+$fend('providers', () => {
+  const mj = readModelsJson() || { providers: {} }
+  const st = readSettingsJson()
+  const def = String(st.defaultProvider || '')
+  const list = []
+  for (const p of PROVIDER_PRESETS) {
+    const existing = (mj.providers || {})[p.name] || {}
+    const hasKey = !!(existing.apiKey && String(existing.apiKey) !== '' && !/^\$/.test(String(existing.apiKey)))
+    list.push({ name: p.name, baseUrl: p.baseUrl, api: p.api, hasKey: hasKey, current: def === p.name, custom: false })
+  }
+  for (const key in (mj.providers || {})) {
+    if (key === 'omniroute') continue
+    if (PROVIDER_PRESETS.find((p) => p.name === key)) continue
+    const existing = mj.providers[key] || {}
+    const hasKey = !!(existing.apiKey && String(existing.apiKey) !== '' && !/^\$/.test(String(existing.apiKey)))
+    list.push({ name: key, baseUrl: existing.baseUrl || '', api: existing.api || 'openai-completions', hasKey: hasKey, current: def === key, custom: true })
+  }
+  let omniCurrent = def === 'omniroute'
+  let omniStatus = 'disabled'
+  if (omniCurrent) omniStatus = (mj.providers || {}).omniroute ? 'enabled · default provider' : 'pending config'
+  else if ((mj.providers || {}).omniroute) omniStatus = 'installed · not default'
+  return new Promise((resolve) => {
+    httpGetUrl(OMNI_HOST + '/', 3000).then((r) => {
+      if (r.status === 200) {
+        if (omniStatus.indexOf('enabled') < 0 && omniStatus.indexOf('pending') < 0) omniStatus = 'running'
+        else if (omniStatus.indexOf('pending') === 0) omniStatus = 'running · pending config'
+      } else {
+        if (omniStatus.indexOf('enabled') >= 0) omniStatus = 'default but not running'
+      }
+      resolve({ ok: true, providers: list, omniCurrent: omniCurrent, omniStatus: omniStatus, hasOmniConfig: !!(mj.providers || {}).omniroute })
+    }).catch(() => { resolve({ ok: true, providers: list, omniCurrent: omniCurrent, omniStatus: omniStatus, hasOmniConfig: !!(mj.providers || {}).omniroute }) })
+  })
+})
+
+$fend('provider_save', (data) => {
+  const name = data && data.name ? String(data.name).trim() : ''
+  if (!name) return { ok: false, error: 'provider name required' }
+  try {
+    const mj = readModelsJson() || { providers: {} }
+    if (!mj.providers) mj.providers = {}
+    const st = readSettingsJson()
+    if (name === 'omniroute') {
+      const old = mj.providers.omniroute || {}
+      mj.providers.omniroute = Object.assign({ baseUrl: OMNI_HOST + '/v1', api: 'openai-completions', apiKey: old.apiKey || 'omniroute', authHeader: true }, old, { compat: old.compat || { supportsDeveloperRole: false, supportsReasoningEffort: false, thinkingFormat: 'deepseek' } })
+      if (!mj.providers.omniroute.models || !mj.providers.omniroute.models.length) {
+        mj.providers.omniroute.models = []
+      }
+      st.defaultProvider = 'omniroute'
+      delete st.defaultModel
+      const omniMods = (mj.providers.omniroute && mj.providers.omniroute.models) || []
+      if (omniMods.length) st.defaultModel = omniMods[0].id
+    } else {
+      const preset = PROVIDER_PRESETS.find((p) => p.name === name)
+      if (!preset) return { ok: false, error: 'unknown provider: ' + name }
+      const apiKey = data && data.apiKey ? String(data.apiKey).trim() : ''
+      if (!apiKey) {
+        const old = (mj.providers[name] || {}).apiKey
+        if (!old) return { ok: false, error: 'API key required for ' + name }
+      }
+      const prev = mj.providers[name] || {}
+      mj.providers[name] = { baseUrl: preset.baseUrl, api: preset.api, apiKey: apiKey || prev.apiKey || null, authHeader: true, models: preset.models }
+      if (!mj.providers[name].apiKey) delete mj.providers[name].apiKey
+      st.defaultProvider = name
+      st.defaultModel = preset.models[0] ? name + '/' + preset.models[0].id : undefined
+    }
+    writeFileJson(modelsFile(), mj)
+    writeFileJson(SETTINGS_FILE(), st)
+    try { $store.set('pi_models_cache', 'null') } catch(e) {}
+    try { $store.set('pi_models_time', '0') } catch(e) {}
+    return { ok: true, model: String(st.defaultModel || '') }
+  } catch(e) {
+    return { ok: false, error: e.message }
+  }
+})
+
+$fend('provider_custom_save', (data) => {
+  const name = data && data.name ? String(data.name).trim().replace(/\s+/g, '-').toLowerCase() : ''
+  const baseUrl = data && data.baseUrl ? String(data.baseUrl).trim() : ''
+  const apiKey = data && data.apiKey ? String(data.apiKey).trim() : ''
+  const api = data && data.api ? String(data.api).trim() : 'openai-completions'
+  if (!name) return { ok: false, error: 'provider name required' }
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) return { ok: false, error: 'name must be letters/numbers/hyphens only' }
+  if (!baseUrl) return { ok: false, error: 'base URL required' }
+  if (name === 'omniroute') return { ok: false, error: 'name "omniroute" is reserved' }
+  try {
+    const mj = readModelsJson() || { providers: {} }
+    if (!mj.providers) mj.providers = {}
+    const st = readSettingsJson()
+    const prev = mj.providers[name] || {}
+    const finalKey = apiKey || prev.apiKey || null
+    const modelIds = Array.isArray(data.models) ? data.models.map((m) => String(m).trim()).filter(Boolean) : []
+    const models = modelIds.map((id) => ({ id: id, name: id, contextWindow: 128000, maxTokens: 16384 }))
+    if (!models.length) {
+      const pm = (prev.models || []).map((m) => (m && m.id) ? m.id : '')
+      for (const mid of pm) { if (mid) models.push({ id: mid, name: mid, contextWindow: 128000, maxTokens: 16384 }) }
+    }
+    if (!models.length) return { ok: false, error: 'at least one model id is required' }
+    mj.providers[name] = { baseUrl: baseUrl, api: api, apiKey: finalKey, authHeader: true, models: models }
+    if (!mj.providers[name].apiKey) delete mj.providers[name].apiKey
+    st.defaultProvider = name
+    st.defaultModel = models.length ? name + '/' + models[0].id : undefined
+    writeFileJson(modelsFile(), mj)
+    writeFileJson(SETTINGS_FILE(), st)
+    try { $store.set('pi_models_cache', 'null') } catch(e) {}
+    try { $store.set('pi_models_time', '0') } catch(e) {}
+    return { ok: true, model: String(st.defaultModel || '') }
+  } catch(e) {
+    return { ok: false, error: e.message }
+  }
+})
+
+$fend('models', async () => {
+  const now = Date.now()
+  let cached, cachedTime
+  try { cached = JSON.parse($store.get('pi_models_cache') || 'null') } catch(e) {}
+  try { cachedTime = Number($store.get('pi_models_time') || 0) } catch(e) {}
+  if (cached && now - cachedTime < 60000) return { models: cached, cached: true }
+  if (cached) {
+    try {
+      const list = collectConfiguredModels(readModelsJson())
+      if (list.length) {
+        $store.set('pi_models_cache', JSON.stringify(list))
+        $store.set('pi_models_time', String(now))
+        return { models: list }
+      }
+    } catch(e) {}
+    return { models: cached }
+  }
+  const list = collectConfiguredModels(readModelsJson())
+  if (list.length) {
+    $store.set('pi_models_cache', JSON.stringify(list))
+    $store.set('pi_models_time', String(now))
+    return { models: list }
+  }
+  try {
+    const r = await execAsync(redirCmd(PI_BIN + ' --list-models'), 15000)
+    const lines = (r.stdout || '').split('\n').filter(Boolean)
+    const models = []
+    for (const ln of lines) {
+      const m = ln.trim().split(/\s{2,}/)
+      if (m.length >= 2 && m[0] && m[1] && m[0] !== 'provider') models.push(m[0] + '/' + m[1])
+    }
+    if (models.length) {
+      $store.set('pi_models_cache', JSON.stringify(models))
+      $store.set('pi_models_time', String(now))
+      return { models: models }
+    }
+    return { models: cached || [] }
+  } catch(e) {
+    return { models: cached || [] }
+  }
+})
+
+const ctxLimitMem = {}
+const getCtxLimit = (modelStr) => {
+  return new Promise((resolve) => {
+    const pm = parseModel(modelStr)
+    if (!pm.model || !pm.provider) return resolve(0)
+    const memKey = pm.provider + '/' + pm.model
+    if (ctxLimitMem[memKey] > 0) return resolve(ctxLimitMem[memKey])
+    const cacheKey = 'pi_ctxlimit_' + pm.provider + '_' + pm.model
+    try {
+      const cached = Number($store.get(cacheKey))
+      if (cached > 0) { ctxLimitMem[memKey] = cached; return resolve(cached) }
+    } catch(e) {}
+    let limit = 0
+    try {
+      const mj = readModelsJson()
+      const conf = mj && mj.providers && mj.providers[pm.provider]
+      const mods = (conf && conf.models) || []
+      for (const m of mods) {
+        if (m && m.id === pm.model && m.contextWindow) { limit = m.contextWindow; break }
+      }
+    } catch(e) {}
+    if (limit) {
+      ctxLimitMem[memKey] = limit
+      try { $store.set(cacheKey, String(limit)) } catch(e2) {}
+    }
+    resolve(limit)
+  })
+}
+
+$fend('ctxinfo', (data) => {
+  const modelStr = data && data.model ? data.model : ''
+  return getCtxLimit(modelStr).then((limit) => {
+    return { model: parseModel(modelStr).model || '', limit: limit }
+  })
+})
+
+const findSessionFile = (id) => {
+  if (!id) return ''
+  const dir = sessionDirFor(getWorkDir())
+  let files = []
+  try { files = fs.readdirSync(dir) } catch(e) { return '' }
+  for (const f of files) {
+    if (!f.endsWith('.jsonl')) continue
+    try {
+      const first = fs.readFileSync(path.join(dir, f), 'utf8').split('\n')[0]
+      if (!first) continue
+      const h = JSON.parse(first)
+      if (h.type === 'session' && h.id === id) return path.join(dir, f)
+    } catch(e) {}
+  }
+  return ''
+}
+
+const getSessionUsage = (id) => {
+  return new Promise((resolve) => {
+    const full = findSessionFile(id)
+    if (!full) return resolve(0)
+    try {
+      const lines = fs.readFileSync(full, 'utf8').split('\n')
+      let used = 0
+      for (const ln of lines) {
+        if (!ln.trim()) continue
+        let e
+        try { e = JSON.parse(ln) } catch(err) { continue }
+        if (e.type !== 'message') continue
+        const msg = e.message || {}
+        if (msg.role === 'assistant' && msg.usage && msg.usage.totalTokens) {
+          if (msg.usage.totalTokens > used) used = msg.usage.totalTokens
+        }
+      }
+      resolve(used)
+    } catch(e) { resolve(0) }
+  })
+}
+
+$fend('session_ctx', (data) => {
+  const id = data && data.id
+  const modelStr = (data && data.model || '').replace(/\r/g, '')
+  return getSessionUsage(id).then((used) => {
+    return getCtxLimit(modelStr).then((limit) => {
+      return { used: used, limit: limit }
+    })
+  })
+})
+
+const listPiSessions = () => {
+  const wd = getWorkDir()
+  const dir = sessionDirFor(wd)
+  const out = []
+  let files = []
+  try { files = fs.readdirSync(dir).filter((f) => f.endsWith('.jsonl')) } catch(e) { return [] }
+  for (const f of files) {
+    try {
+      const st = fs.statSync(path.join(dir, f))
+      const raw = fs.readFileSync(path.join(dir, f), 'utf8')
+      const lines = raw.split('\n')
+      let header = null
+      let name = ''
+      for (const ln of lines) {
+        if (!ln.trim()) continue
+        let e
+        try { e = JSON.parse(ln) } catch(err) { continue }
+        if (!header && e.type === 'session') { header = e; continue }
+        if (e.type === 'session_info' && typeof e.name === 'string' && e.name) name = e.name
+      }
+      if (!header) continue
+      if (header.cwd && header.cwd !== wd) continue
+      out.push({
+        id: header.id,
+        title: name || header.id,
+        created: Date.parse(header.timestamp) || st.birthtimeMs || st.mtimeMs,
+        updated: (st.mtimeMs || Date.now())
+      })
+    } catch(e) {}
+  }
+  out.sort((a, b) => (b.updated || 0) - (a.updated || 0))
+  return out.slice(0, 50)
+}
+
+$fend('pi_sessions', () => { return { sessions: listPiSessions() } })
+
+$fend('pi_delete_session', (data) => {
+  if (!data || !data.id) return { ok: false }
+  const full = findSessionFile(data.id)
+  if (!full) return { ok: false, error: 'session not found' }
+  try {
+    fs.unlinkSync(full)
+    return { ok: true }
+  } catch(e) {
+    return { ok: false, error: e.message }
+  }
+})
+
+const convFromFile = (full) => {
+  const lines = fs.readFileSync(full, 'utf8').split('\n')
+  const entries = []
+  let leaf = null
+  for (const ln of lines) {
+    if (!ln.trim()) continue
+    let e
+    try { e = JSON.parse(ln) } catch(err) { continue }
+    if (e.type === 'session') continue
+    if (e.type === 'message' && e.message) { entries.push(e); leaf = e }
+    else if (e.type === 'compaction') entries.push(e)
+  }
+  if (!entries.length) return []
+  const byId = {}
+  for (const e of entries) byId[e.id] = e
+  const chain = []
+  let cur = leaf
+  let guard = 0
+  while (cur && guard++ < 10000) {
+    chain.push(cur)
+    if (!cur.parentId) break
+    cur = byId[cur.parentId] || null
+  }
+  chain.reverse()
+  const out = []
+  let curAsst = null
+  let curTokens = 0
+  let curModel = ''
+  let curErrored = false
+  const finalize = () => {
+    if (!curAsst) return
+    let meta = curErrored ? '⚠ ' : '✓ '
+    const bits = []
+    if (curModel) bits.push(curModel)
+    if (curTokens) bits.push('⚙ ' + curTokens + ' tokens')
+    meta += bits.join(' | ')
+    curAsst.meta = meta.trim() || '✓'
+    curAsst.errored = curErrored
+    curAsst.streaming = false
+    curAsst = null
+    curTokens = 0
+    curModel = ''
+    curErrored = false
+  }
+  for (const e of chain) {
+    if (e.type === 'compaction') continue
+    const msg = e.message || {}
+    const role = msg.role || 'assistant'
+    const parts = msg.content || []
+    if (role === 'user') {
+      finalize()
+      let text = ''
+      for (const p of parts) if (p && p.type === 'text') text += (p.text || '')
+      if (text.trim()) out.push({ role: 'user', content: text })
+      continue
+    }
+    if (role === 'toolResult') {
+      if (curAsst) {
+        let text = ''
+        for (const p of parts) if (p && p.type === 'text') text += (p.text || '')
+        if (text) curAsst.parts.push({ t: 'out', c: maskSecrets(text) })
+      }
+      continue
+    }
+    if (role === 'bashExecution') {
+      if (curAsst) {
+        curAsst.parts.push({ t: 'ref', c: '$ ' + maskSecrets(msg.command), cls: 'cmd' })
+        if (msg.output) curAsst.parts.push({ t: 'out', c: maskSecrets(msg.output) })
+      }
+      continue
+    }
+    const plist = []
+    for (const p of parts) {
+      if (!p) continue
+      if (p.type === 'text' && p.text) plist.push({ t: 'text', c: p.text })
+      else if (p.type === 'thinking' && p.thinking) plist.push({ t: 'ref', c: '✱ reasoning', cls: 'reasoning' })
+      else if (p.type === 'toolCall') {
+        const arg = toolArg(p.arguments || {})
+        plist.push({ t: 'ref', c: '◈ ' + (p.name || 'tool') + (arg ? ' · ' + maskSecrets(arg) : ''), cls: 'tool' })
+      }
+    }
+    if (msg.errorMessage) plist.push({ t: 'text', c: 'Error: ' + msg.errorMessage, cls: 'err-text' })
+    if (!plist.length) continue
+    if (!curAsst) { curAsst = { role: 'assistant', parts: [] }; out.push(curAsst) }
+    for (const k of plist) curAsst.parts.push(k)
+    if (msg.errorMessage) curErrored = true
+    if (msg.usage && msg.usage.totalTokens) curTokens = msg.usage.totalTokens
+    if (msg.model) curModel = (msg.provider || '') + '/' + msg.model
+  }
+  finalize()
+  return out
+}
+
+$fend('session_messages', (data) => {
+  const id = data && data.id
+  if (!id) return { messages: [] }
+  const full = findSessionFile(id)
+  if (!full) return { messages: [] }
+  try {
+    return { messages: convFromFile(full) }
+  } catch(e) {
+    return { messages: [] }
+  }
+})
+
+$fend('workspace', () => { return { ok: true, cwd: getWorkDir() } })
+
+$fend('workspace_set', (data) => {
+  const d = data && data.cwd ? String(data.cwd).trim() : ''
+  if (!d) return { ok: false, error: 'cwd required' }
+  try {
+    if (!fs.existsSync(d) || !fs.statSync(d).isDirectory()) return { ok: false, error: 'not a directory: ' + d }
+  } catch(e) {
+    return { ok: false, error: e.message }
+  }
+  setWorkDir(d)
+  return { ok: true, cwd: d }
+})
+
+$fend('commands', () => {
+  return { ok: true, commands: [
+    { name: 'new', description: 'start a new session' }
+  ] }
+})
+
+const runProcs = {}
+
+$fend('start', (data) => {
+  if (!data || !data.prompt) return { error: 'prompt is required' }
+  const runId = data.runId || Date.now() + '-' + Math.random().toString(36).slice(2, 8)
+  const cwd = getWorkDir()
+  const prompt = String(data.prompt).slice(0, 1200)
+  const sessionId = data.session || ''
+  const modelStr = (data.model || '').replace(/\r/g, '')
+
+  let curSession = sessionId || ''
+  const MAX_RETRY = 3
+  let retryLeft = MAX_RETRY
+  let retrying = false
+
+  const defModel = (() => {
+    const st = readSettingsJson()
+    let dm = String(st.defaultModel || '').trim()
+    if (!dm && st.defaultProvider) {
+      const mj = readModelsJson() || { providers: {} }
+      const conf = mj.providers && mj.providers[st.defaultProvider]
+      const mods = (conf && conf.models) || []
+      if (mods.length) dm = st.defaultProvider + '/' + mods[0].id
+    }
+    return dm
+  })()
+
+  let proc = null
+
+  let streamEnded = false
+  let sessionSent = false
+  let stepCount = 0
+  let tokens = null
+  let model = null
+  let initShown = false
+  const runningTools = {}
+  const seenTools = {}
+  const lastToolOut = {}
+  const reasoningSeen = {}
+  let watchdog = null
+  let aliveTimer = null
+  let toolHeartbeat = null
+
+  const kickWatchdog = () => {
+    if (watchdog) clearTimeout(watchdog)
+    watchdog = setTimeout(() => { finish({ timeout: true }) }, 600000)
+  }
+
+  const send = (type, payload) => {
+    if (type !== 'done' && type !== 'error') kickWatchdog()
+    $ws.sse(APP_CH, JSON.stringify(Object.assign({ runId: runId }, payload || {}, { type: type })))
+  }
+  const sendRef = (line, cls) => { send('ref', { content: line, cls: cls || '' }) }
+  const extractToolText = (pr) => {
+    if (typeof pr === 'string') return pr
+    if (!pr || typeof pr !== 'object') return ''
+    if (pr.output || pr.result) return String(pr.output || pr.result)
+    if (pr.content && Array.isArray(pr.content)) {
+      const text = pr.content.map((c) => (c && typeof c === 'object' && c.type === 'text') ? c.text : '').join('\n')
+      return text
+    }
+    if (typeof pr.text === 'string') return pr.text
+    return ''
+  }
+  const emitOut = (callId, out, fn) => {
+    if (!out) return
+    const last = lastToolOut[callId] || ''
+    let delta
+    if (String(out).indexOf(last) === 0) delta = String(out).slice(last.length)
+    else delta = last ? '\n' + out : out
+    if (delta) fn(delta)
+    lastToolOut[callId] = String(out)
+  }
+  const pushCtx = (used, limit) => {
+    send('ctx', {
+      used: used || 0, limit: limit || 0,
+      pct: limit ? Math.round((used || 0) / limit * 1000) / 10 : null,
+      model: model
+    })
+  }
+  const emitCtx = (used) => {
+    if (!used) return
+    getCtxLimit(model).then((limit) => { pushCtx(used, limit) }).catch(() => { pushCtx(used, 0) })
+  }
+  const normTokens = (usage) => {
+    if (!usage) return null
+    const total = usage.total || usage.totalTokens
+    if (!total) return null
+    return { total: total }
+  }
+  const finish = (payload) => {
+    if (streamEnded) return
+    streamEnded = true
+    if (watchdog) clearTimeout(watchdog)
+    if (aliveTimer) clearInterval(aliveTimer)
+    if (toolHeartbeat) clearInterval(toolHeartbeat)
+    try { delete runProcs[runId] } catch(e) {}
+    send('done', Object.assign({ steps: stepCount }, payload || {}, payload.tokens ? { tokens: normTokens(payload.tokens) } : {}))
+  }
+  const fail = (msg) => {
+    if (streamEnded) return
+    streamEnded = true
+    if (watchdog) clearTimeout(watchdog)
+    if (aliveTimer) clearInterval(aliveTimer)
+    if (toolHeartbeat) clearInterval(toolHeartbeat)
+    try { delete runProcs[runId] } catch(e) {}
+    send('error', { content: msg })
+  }
+
+  const onEvent = (ev) => {
+    const t = ev.type
+    if (t === 'session') {
+      if (ev.id && !sessionSent) {
+        sessionSent = true
+        curSession = ev.id
+        send('session', { id: ev.id })
+      }
+      return
+    }
+    if (t === 'agent_start') {
+      if (!initShown) {
+        initShown = true
+        send('init', { content: '> build · ...' })
+      }
+      return
+    }
+    if (t === 'turn_start') { stepCount++; return }
+    if (t === 'turn_end') { return }
+    if (t === 'message_update') {
+      if (ev.usage && ev.usage.totalTokens) {
+        tokens = ev.usage
+        emitCtx(ev.usage.totalTokens)
+      }
+      const ame = ev.assistantMessageEvent || {}
+      const at = ame.type
+      const ci = ame.contentIndex || 0
+      if (at === 'text_delta' && ame.delta) { send('text', { content: ame.delta }); return }
+      if (at === 'thinking_start' || at === 'thinking_delta') {
+        if (!reasoningSeen[ci]) { reasoningSeen[ci] = true; sendRef('✱ reasoning', 'reasoning') }
+        return
+      }
+      if (at === 'thinking_end') {
+        if (reasoningSeen[ci]) { reasoningSeen[ci] = false; sendRef('✓ reasoning done', 'reasoning') }
+        return
+      }
+      if (at === 'toolcall_end') {
+        const tc = ame.toolCall || {}
+        const arg = toolArg(tc.arguments || {})
+        const callId = tc.toolCallId || tc.id || tc.name || 'tool'
+        if (!seenTools[callId]) {
+          seenTools[callId] = true
+          sendRef('◈ ' + (tc.name || 'tool') + (arg ? ' · ' + maskSecrets(arg) : ''), 'tool')
+        }
+        return
+      }
+      return
+    }
+    if (t === 'message_end') {
+      const msg = ev.message || {}
+      if (msg.provider && msg.model) {
+        model = msg.provider + '/' + msg.model
+        send('init', { content: '> build · ' + model })
+      }
+      if (msg.usage && msg.usage.totalTokens) {
+        tokens = msg.usage
+        emitCtx(msg.usage.totalTokens)
+      }
+      if (msg.errorMessage) {
+        const etxt = String(msg.errorMessage)
+        if (isRateLimited(etxt) && retryLeft > 0 && !retrying) {
+          retryLeft--
+          const delay = retryDelayMs(retryLeft)
+          sendRef('↻ 429 rate limited, retrying in ' + Math.round(delay / 1000) + 's… (attempt ' + (MAX_RETRY - retryLeft) + '/' + MAX_RETRY + ')', 'info')
+          retrying = true
+          kickWatchdog()
+          setTimeout(() => { relaunch() }, delay)
+        } else {
+          fail(etxt.split('\n')[0])
+        }
+      }
+      return
+    }
+    if (t === 'tool_execution_start') {
+      const callId = ev.toolCallId || ev.toolName
+      const arg = toolArg(ev.args || {})
+      if (!seenTools[callId]) {
+        seenTools[callId] = true
+        sendRef('◈ ' + (ev.toolName || 'tool') + (arg ? ' · ' + maskSecrets(arg) : ''), 'tool')
+      }
+      runningTools[callId] = { tool: ev.toolName || 'tool', arg: arg, started: Date.now(), lastUpdate: Date.now(), lastOutput: '' }
+      return
+    }
+    if (t === 'tool_execution_update') {
+      const callId = ev.toolCallId || ev.toolName
+      const rt = runningTools[callId] || { lastUpdate: Date.now() }
+      rt.lastUpdate = Date.now()
+      const pr = extractToolText(ev.partialResult)
+      if (pr) {
+        rt.lastOutput = pr
+        emitOut(callId, maskSecrets(pr), (d) => { send('out', { content: d }) })
+      }
+      return
+    }
+    if (t === 'tool_execution_end') {
+      const callId = ev.toolCallId || ev.toolName
+      delete runningTools[callId]
+      sendRef((ev.isError ? '✗ ' : '✓ ') + (ev.toolName || 'tool') + (ev.isError ? ' failed' : ' done'), 'tool')
+      const out = extractToolText(ev.result)
+      if (out) emitOut(callId, maskSecrets(out), (d) => { send('out', { content: d }) })
+      return
+    }
+    if (t === 'bash_execution_update') {
+      if (ev.delta) send('out', { content: maskSecrets(ev.delta) })
+      return
+    }
+    if (t === 'compaction_start') { sendRef('↻ compacting…', 'info'); return }
+    if (t === 'compaction_end') { sendRef('✓ context compacted', 'info'); return }
+    if (t === 'auto_retry_start') { sendRef('↻ retrying…', 'info'); return }
+    if (t === 'agent_end' || t === 'agent_settled') {
+      finish({ content: '', model: model, tokens: tokens })
+      return
+    }
+  }
+
+  const isRateLimited = (etxt) => {
+    if (!etxt) return false
+    return /429|limit_burst_rate|rate.?limit/i.test(etxt)
+  }
+  const retryDelayMs = (attemptLeft) => {
+    const tried = MAX_RETRY - attemptLeft
+    return [2000, 5000, 10000][tried - 1] || 10000
+  }
+
+  const spawnProcess = () => {
+    const args = ['--mode', 'json', '--approve']
+    if (curSession) args.push('--session-id', curSession)
+    else args.push('--name', prompt.replace(/\s+/g, ' ').trim().slice(0, 40))
+    if (modelStr) args.push('--model', modelStr)
+    else if (defModel) args.push('--model', defModel)
+    else {
+      const fallback = collectConfiguredModels(readModelsJson())
+      if (fallback.length) args.push('--model', fallback[0])
+    }
+    args.push(prompt)
+
+    const env = Object.assign({}, process.env, {
+      NODE_OPTIONS: '--no-warnings',
+      PI_SKIP_VERSION_CHECK: '1',
+      NO_COLOR: '1'
+    })
+    try { if (proc) proc.kill() } catch(e) {}
+    proc = spawn(PI_BIN, args, { cwd: cwd, env: env, windowsHide: true, shell: IS_WIN, stdio: ['ignore', 'pipe', 'pipe'] })
+    runProcs[runId] = proc
+    retrying = false
+
+    let buf = ''
+    proc.stdout.setEncoding('utf8')
+    proc.stdout.on('data', (chunk) => {
+      buf += chunk
+      let nl
+      while ((nl = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, nl)
+        buf = buf.slice(nl + 1)
+        if (!line.trim()) continue
+        let ev
+        try { ev = JSON.parse(line.trim()) } catch(e) { continue }
+        try { onEvent(ev) } catch(e) {}
+      }
+    })
+    proc.stderr.on('data', (chunk) => {
+      const t2 = stripAnsi(chunk.toString()).trim()
+      if (t2 && t2.indexOf('Warning:') < 0) console.log('[pi run]', t2)
+    })
+
+    proc.on('error', (e) => { fail(e.message || String(e)) })
+    proc.on('close', (code) => {
+      try { delete runProcs[runId] } catch(e) {}
+      if (streamEnded) return
+      if (pronBreaking) return
+      if (code !== 0) fail('pi exited with code ' + code)
+      else finish({ content: '', model: model, tokens: tokens })
+    })
+
+    kickWatchdog()
+    aliveTimer = setInterval(() => {
+      try {
+        if (typeof $ws.sseExists !== 'function' || $ws.sseExists(APP_CH)) return
+        clearInterval(aliveTimer)
+        aliveTimer = null
+        try { proc.kill() } catch(e) {}
+        fail('client disconnected')
+      } catch(e) {}
+    }, 15000)
+    toolHeartbeat = setInterval(() => {
+      if (streamEnded) { clearInterval(toolHeartbeat); return }
+      const now = Date.now()
+      for (const id in runningTools) {
+        const rt = runningTools[id]
+        if (now - rt.lastUpdate > 10000) {
+          sendRef('◈ ' + rt.tool + ' running (' + Math.floor((now - rt.started) / 1000) + 's)', 'tool')
+          rt.lastUpdate = now
+        }
+        if (rt.lastOutput) emitOut(id, maskSecrets(rt.lastOutput), (d) => { send('out', { content: d }) })
+      }
+    }, 15000)
+    return proc
+  }
+
+  let pronBreaking = false
+  const relaunch = () => {
+    if (streamEnded || retryLeft <= 0) return
+    pronBreaking = true
+    try { if (proc) proc.kill() } catch(e) {}
+    try { delete runProcs[runId] } catch(e) {}
+    if (aliveTimer) { clearInterval(aliveTimer); aliveTimer = null }
+    if (toolHeartbeat) { clearInterval(toolHeartbeat); toolHeartbeat = null }
+    setTimeout(() => {
+      pronBreaking = false
+      if (streamEnded) return
+      retrying = false
+      spawnProcess()
+    }, 500)
+  }
+
+  spawnProcess()
+
+  return { ok: true, runId: runId, cwd: cwd }
+})
+
+$fend('stop', async (data) => {
+  if (!data) return { ok: false }
+  const rp = runProcs[data.runId]
+  if (rp) {
+    try {
+      if (IS_WIN) await execAsync('taskkill /PID ' + rp.pid + ' /T /F', 5000)
+      else rp.kill('SIGTERM')
+    } catch(e) {
+      try { rp.kill() } catch(e2) {}
+    }
+    try { delete runProcs[data.runId] } catch(e) {}
+    return { ok: true, mode: 'run' }
+  }
+  return { ok: false, error: 'no active run' }
+})
+
+$fend('ensure_pi', async (data) => {
+  const runId = data && data.installId
+  try {
+    const v = await execAsync(redirCmd(PI_BIN + ' --version'), 10000)
+    const version = v.stdout.trim()
+    console.log('[ensure_pi] version:', version)
+    const omni = await httpGetUrl(OMNI_HOST + '/', 4000)
+    if (runId) $ws.sse(runId, JSON.stringify({ type: 'done', version: version, omni: omni.status === 200 }))
+    return { ok: true, installing: false, version: version, omni: omni.status === 200 }
+  } catch(e) {}
+  if (!runId) return { error: 'no installId' }
+  try {
+    const freeMem = require('os').freemem()
+    const freeMB = Math.round(freeMem / 1024 / 1024)
+    if (freeMem < 1024 * 1024 * 1024) {
+      const msg = '当前可用内存 ' + freeMB + 'M，内存过小，pi 可能无法使用'
+      console.log('[ensure_pi] memory too low:', freeMB + 'M')
+      $ws.sse(runId, JSON.stringify({ type: 'error', content: msg }))
+      return { ok: false, error: msg }
+    }
+    const proc = spawn(IS_WIN ? process.env.COMSPEC : 'sh',
+      IS_WIN ? ['/d', '/s', '/c', 'npm install -g @earendil-works/pi-coding-agent@latest 2>&1'] : ['-c', 'npm install -g @earendil-works/pi-coding-agent@latest 2>&1'],
+      { timeout: 180000, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
+    const sendProgress = (text) => {
+      const lines = stripAnsi(text.toString()).split('\n').filter(Boolean)
+      for (const l of lines) {
+        console.log('[npm install]', l.trim())
+        $ws.sse(runId, JSON.stringify({ type: 'progress', content: l.trim() }))
+      }
+    }
+    proc.stdout.on('data', sendProgress)
+    proc.stderr.on('data', sendProgress)
+    proc.on('close', async (code) => {
+      try {
+        if (code === 0) {
+          const ver = await execAsync(redirCmd(PI_BIN + ' --version'), 10000)
+          const version = ver.stdout.trim() || 'unknown'
+          const omni = await httpGetUrl(OMNI_HOST + '/', 4000)
+          console.log('[npm install] done, version:', version, 'omni:', omni.status)
+          $ws.sse(runId, JSON.stringify({ type: 'done', version: version, omni: omni.status === 200 }))
+        } else {
+          $ws.sse(runId, JSON.stringify({ type: 'error', content: 'npm install failed (code ' + code + ')' }))
+        }
+      } catch(e) {
+        $ws.sse(runId, JSON.stringify({ type: 'error', content: e.message }))
+      }
+    })
+    proc.on('error', (e) => {
+      $ws.sse(runId, JSON.stringify({ type: 'error', content: e.message }))
+    })
+    return { ok: true, installing: true }
+  } catch(e) {
+    $ws.sse(runId, JSON.stringify({ type: 'error', content: e.message }))
+    return { ok: true, installing: true }
+  }
+})
+
+$fend('sessions', () => {
+  try {
+    const raw = $store.get('aichat_sessions') || '[]'
+    const local = JSON.parse(raw)
+    const raw2 = $store.get('aichat_pinned_sessions') || '[]'
+    const pinned = JSON.parse(raw2)
+    return { sessions: local, pinned: pinned }
+  } catch(e) {
+    return { sessions: [], pinned: [] }
+  }
+})
+
+$fend('delete_session', (data) => {
+  if (!data || !data.id) return { ok: false }
+  try {
+    const raw = $store.get('aichat_sessions') || '[]'
+    let list = JSON.parse(raw)
+    list = list.filter((s) => { return s.id !== data.id })
+    $store.set('aichat_sessions', JSON.stringify(list))
+    return { ok: true }
+  } catch(e) {
+    return { ok: false, error: e.message }
+  }
+})
+</script>
+</body>
+</html>

@@ -29,6 +29,14 @@ CONFIG.eapp = Object.assign({
       "type": "js",
       "target": "https://raw.ev2.workers.dev/elecV2/elecV2P/master/script/JSFile/python-install.js",
     }, {
+      "name": "OPENCODE",
+      "type": "efh",
+      "target": "https://raw.ev2.workers.dev/elecV2/elecV2P/master/script/JSFile/opencode.efh",
+    }, {
+      "name": "Pi-Agent",
+      "type": "efh",
+      "target": "https://raw.ev2.workers.dev/elecV2/elecV2P/master/script/JSFile/pi.efh",
+    }, {
       "name": "PM2 LS",
       "type": "shell",
       "target": "pm2 ls",
