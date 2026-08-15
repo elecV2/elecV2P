@@ -1598,17 +1598,52 @@ const execAsync = (cmd, timeout) => {
   })
 }
 
-const httpGetUrl = (url, timeout) => {
+const httpGetUrl = (url, timeout, hops) => {
   return new Promise((resolve) => {
-    const httpMod = require('http')
-    const u = new (require('url').URL)(url)
-    const req = httpMod.get({ hostname: u.hostname, port: u.port || 80, path: u.pathname + u.search }, (res) => {
+    let httpMod
+    try {
+      httpMod = require(/^https:/.test(String(url)) ? 'https' : 'http')
+    } catch(e) { resolve({ status: 0, body: '' }); return }
+    let u
+    try { u = new (require('url').URL)(url) } catch(e) { resolve({ status: 0, body: '' }); return }
+    const maxHops = hops || 5
+    const req = httpMod.get({ hostname: u.hostname, port: u.port || (u.protocol === 'https:' ? 443 : 80), path: u.pathname + u.search }, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location && maxHops > 0) {
+        res.resume()
+        let next = res.headers.location
+        try { next = new (require('url').URL)(next, url).href } catch(e) {}
+        httpGetUrl(next, timeout, maxHops - 1).then(resolve)
+        return
+      }
       let buf = ''
       res.on('data', (c) => { buf += c })
       res.on('end', () => { resolve({ status: res.statusCode, body: buf }) })
     })
     req.on('error', () => { resolve({ status: 0, body: '' }) })
     req.setTimeout(timeout || 4000, () => { req.destroy(); resolve({ status: 0, body: '' }) })
+  })
+}
+
+const fetchOmniModels = () => {
+  return new Promise((resolve) => {
+    httpGetUrl(OMNI_HOST + '/v1/models', 6000, 3).then((r) => {
+      let models = []
+      if (r.status === 200 && r.body) {
+        try {
+          const parsed = JSON.parse(r.body)
+          const list = (parsed && parsed.data) || []
+          models = list.filter((m) => m && m.id).map((m) => {
+            return {
+              id: String(m.id),
+              name: m.name || m.id,
+              contextWindow: m.context_length || 128000,
+              maxTokens: m.max_output_tokens || 16384
+            }
+          })
+        } catch(e) {}
+      }
+      resolve(models)
+    }).catch(() => resolve([]))
   })
 }
 
@@ -1755,13 +1790,29 @@ $fend('provider_save', (data) => {
     if (name === 'omniroute') {
       const old = mj.providers.omniroute || {}
       mj.providers.omniroute = Object.assign({ baseUrl: OMNI_HOST + '/v1', api: 'openai-completions', apiKey: old.apiKey || 'omniroute', authHeader: true }, old, { compat: old.compat || { supportsDeveloperRole: false, supportsReasoningEffort: false, thinkingFormat: 'deepseek' } })
-      if (!mj.providers.omniroute.models || !mj.providers.omniroute.models.length) {
-        mj.providers.omniroute.models = []
-      }
       st.defaultProvider = 'omniroute'
       delete st.defaultModel
-      const omniMods = (mj.providers.omniroute && mj.providers.omniroute.models) || []
-      if (omniMods.length) st.defaultModel = omniMods[0].id
+      return new Promise((resolve) => {
+        fetchOmniModels().then((models) => {
+          if (models.length) {
+            mj.providers.omniroute.models = models
+            st.defaultModel = 'omniroute/' + models[0].id
+          } else if (!(mj.providers.omniroute.models || []).length) {
+            mj.providers.omniroute.models = []
+          }
+          writeFileJson(modelsFile(), mj)
+          writeFileJson(SETTINGS_FILE(), st)
+          try { $store.set('pi_models_cache', 'null') } catch(e) {}
+          try { $store.set('pi_models_time', '0') } catch(e) {}
+          resolve({ ok: true, model: String(st.defaultModel || '') })
+        }).catch(() => {
+          writeFileJson(modelsFile(), mj)
+          writeFileJson(SETTINGS_FILE(), st)
+          try { $store.set('pi_models_cache', 'null') } catch(e) {}
+          try { $store.set('pi_models_time', '0') } catch(e) {}
+          resolve({ ok: true, model: String(st.defaultModel || '') })
+        })
+      })
     } else {
       const preset = PROVIDER_PRESETS.find((p) => p.name === name)
       if (!preset) return { ok: false, error: 'unknown provider: ' + name }
@@ -1844,6 +1895,20 @@ $fend('models', async () => {
     $store.set('pi_models_cache', JSON.stringify(list))
     $store.set('pi_models_time', String(now))
     return { models: list }
+  }
+  const mj = readModelsJson() || { providers: {} }
+  if ((mj.providers || {}).omniroute) {
+    const omniModels = await fetchOmniModels()
+    if (omniModels.length) {
+      mj.providers.omniroute.models = omniModels
+      writeFileJson(modelsFile(), mj)
+      const omniList = collectConfiguredModels(readModelsJson())
+      if (omniList.length) {
+        $store.set('pi_models_cache', JSON.stringify(omniList))
+        $store.set('pi_models_time', String(now))
+        return { models: omniList }
+      }
+    }
   }
   try {
     const r = await execAsync(redirCmd(PI_BIN + ' --list-models'), 15000)
