@@ -293,7 +293,8 @@
     }
     .provider-card:hover { border-color: var(--fc3); }
     .provider-card.active { border-color: var(--ac); background: rgba(88,166,255,.08); }
-    .provider-card .pc-info { flex: 1; min-width: 0; }
+    .provider-card .pc-info { flex: 1; min-width: 0; cursor: pointer; }
+    .provider-card .pc-info:hover .pc-name { color: var(--ac); }
     .provider-card .pc-name { font-size: 14px; color: var(--fc); font-weight: bold; }
     .provider-card .pc-desc { font-size: 11px; color: var(--fc2); word-break: break-all; }
     .provider-card .pc-key {
@@ -426,7 +427,7 @@
       <div class="pp-title">Choose model provider</div>
       <div class="pp-sub">Enter an API key for the provider, or start use OmniRoute. Selection is saved for next time.</div>
       <div class="provider-card" v-for="p in providerList" :key="p.name" :class="{active: p.current}">
-        <div class="pc-info">
+        <div class="pc-info" @click="editProvider(p)" title="Edit provider settings">
           <div class="pc-name">{{ p.name }}</div>
           <div class="pc-desc">{{ p.baseUrl }}</div>
         </div>
@@ -447,11 +448,11 @@
 
   <div class="custom-overlay" v-if="customOpen">
     <div class="custom-panel">
-      <div class="cp-title">Add custom provider</div>
+      <div class="cp-title">{{ customEditing ? 'Edit provider' : 'Add custom provider' }}</div>
       <div class="cp-sub">For OpenAI-compatible endpoints (gateway proxies, etc.). Fields follow pi models.json config.</div>
       <div class="cp-field">
         <label>Name (provider id)</label>
-        <input v-model="customForm.name" placeholder="e.g. myprovider" spellcheck="false">
+        <input v-model="customForm.name" placeholder="e.g. myprovider" spellcheck="false" :readonly="customEditing" :style="{opacity: customEditing ? .6 : 1}">
       </div>
       <div class="cp-field">
         <label>Base URL</label>
@@ -459,7 +460,7 @@
       </div>
       <div class="cp-field">
         <label>API key</label>
-        <input v-model="customForm.apiKey" placeholder="sk-..." type="password">
+        <input v-model="customForm.apiKey" :placeholder="customEditing ? 'key saved · empty to keep' : 'sk-...'" type="password">
       </div>
       <div class="cp-field">
         <label>API type</label>
@@ -650,7 +651,7 @@
         providerOverlay: false, providerList: [], providerKeys: {}, providerBusy: false,
         currentProvider: '',
         omniCurrent: false, omniStatus: 'checking…',
-        customOpen: false, customBusy: false,
+        customOpen: false, customBusy: false, customEditing: false,
         customForm: { name: '', baseUrl: '', apiKey: '', api: 'openai-completions', models: '' }
       }
     },
@@ -965,12 +966,13 @@
         const key = (this.providerKeys[name] || '').trim()
         if (!key && !p.hasKey) { this.showNotify('Please enter an API key for ' + name); return }
         this.providerBusy = true
-        const fendName = p.custom ? 'provider_custom_save' : 'provider_save'
+        const fendName = (p.custom || p.overridden) ? 'provider_custom_save' : 'provider_save'
         const payload = { name: name }
         if (key) payload.apiKey = key
-        if (p.custom) {
+        if (p.custom || p.overridden) {
           payload.baseUrl = p.baseUrl
           payload.api = p.api
+          if (p.models && p.models.length) payload.models = p.models
         }
         this.fetchFend(fendName, payload, 10000).then((data) => {
           self.providerBusy = false
@@ -1019,6 +1021,19 @@
       },
       openCustomProvider() {
         this.customForm = { name: '', baseUrl: '', apiKey: '', api: 'openai-completions', models: '' }
+        this.customEditing = false
+        this.customOpen = true
+      },
+      editProvider(p) {
+        if (!p) return
+        this.customForm = {
+          name: p.name || '',
+          baseUrl: p.baseUrl || '',
+          apiKey: '',
+          api: p.api || 'openai-completions',
+          models: (p.models || []).join(', ')
+        }
+        this.customEditing = true
         this.customOpen = true
       },
       closeCustomProvider() {
@@ -1033,7 +1048,7 @@
         if (!name) { this.showNotify('Please enter a provider name'); return }
         if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) { this.showNotify('Name must be letters/numbers/hyphens only'); return }
         if (!baseUrl) { this.showNotify('Please enter a base URL'); return }
-        if (!apiKey) { this.showNotify('Please enter an API key'); return }
+        if (!apiKey && !this.customEditing) { this.showNotify('Please enter an API key'); return }
         this.customBusy = true
         this.fetchFend('provider_custom_save', {
           name: name, baseUrl: baseUrl, apiKey: apiKey, api: this.customForm.api,
@@ -1830,14 +1845,15 @@ $fend('providers', (data) => {
     if (hidden.indexOf(p.name) >= 0) continue
     const existing = (mj.providers || {})[p.name] || {}
     const hasKey = !!(existing.apiKey && String(existing.apiKey) !== '' && !/^\$/.test(String(existing.apiKey)))
-    list.push({ name: p.name, baseUrl: p.baseUrl, api: p.api, hasKey: hasKey, current: eff === p.name, custom: false })
+    const presetModels = (existing.models && existing.models.length) ? existing.models : p.models
+    list.push({ name: p.name, baseUrl: existing.baseUrl || p.baseUrl, api: existing.api || p.api, hasKey: hasKey, current: eff === p.name, custom: false, overridden: !!(existing.models && existing.models.length), models: presetModels.map((m) => (m && m.id) || '').filter(Boolean) })
   }
   for (const key in (mj.providers || {})) {
     if (key === 'omniroute') continue
     if (PROVIDER_PRESETS.find((p) => p.name === key)) continue
     const existing = mj.providers[key] || {}
     const hasKey = !!(existing.apiKey && String(existing.apiKey) !== '' && !/^\$/.test(String(existing.apiKey)))
-    list.push({ name: key, baseUrl: existing.baseUrl || '', api: existing.api || 'openai-completions', hasKey: hasKey, current: eff === key, custom: true })
+    list.push({ name: key, baseUrl: existing.baseUrl || '', api: existing.api || 'openai-completions', hasKey: hasKey, current: eff === key, custom: true, models: (existing.models || []).map((m) => (m && m.id) || '').filter(Boolean) })
   }
   let omniCurrent = eff === 'omniroute'
   let omniStatus = 'disabled'
@@ -2411,6 +2427,7 @@ $fend('start', (data) => {
     if (aliveTimer) clearInterval(aliveTimer)
     if (toolHeartbeat) clearInterval(toolHeartbeat)
     try { delete runProcs[runId] } catch(e) {}
+    try { if (proc) { proc.kill() } } catch(e) {}
     send('error', { content: msg })
   }
 
@@ -2427,7 +2444,8 @@ $fend('start', (data) => {
     if (t === 'agent_start') {
       if (!initShown) {
         initShown = true
-        send('init', { content: '> build · ...' })
+        const req = (modelStr || defModel || '').replace(/\r/g, '')
+        send('init', { content: '> build · ' + (req || '...') })
       }
       return
     }
@@ -2524,6 +2542,7 @@ $fend('start', (data) => {
     if (t === 'compaction_end') { sendRef('✓ context compacted', 'info'); return }
     if (t === 'auto_retry_start') { sendRef('↻ retrying…', 'info'); return }
     if (t === 'agent_end' || t === 'agent_settled') {
+      if (retrying) return
       finish({ content: '', model: model, tokens: tokens })
       return
     }
@@ -2531,7 +2550,7 @@ $fend('start', (data) => {
 
   const isRetryable = (etxt) => {
     if (!etxt) return false
-    return /429|limit_burst_rate|rate.?limit|503|admission_busy|chat_admission|server_error/i.test(etxt)
+    return /410|429|1302|limit_burst_rate|rate.?limit|速率限制|请求频率|并发|concurrency|5\d\d|admission_busy|chat_admission|server_error|service_temporarily_unavailable|ResourceExhausted/i.test(etxt)
   }
   const retryDelayMs = (attemptLeft) => {
     const tried = MAX_RETRY - attemptLeft
@@ -2583,6 +2602,7 @@ $fend('start', (data) => {
     proc.on('close', (code) => {
       try { delete runProcs[runId] } catch(e) {}
       if (streamEnded) return
+      if (retrying) return
       if (pronBreaking) return
       if (code !== 0) fail('pi exited with code ' + code)
       else finish({ content: '', model: model, tokens: tokens })
