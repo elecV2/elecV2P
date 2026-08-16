@@ -130,6 +130,7 @@
     .msg .ref.act { border-left-color: #fd0; }
     .msg .ref.reasoning { border-left-color: #a78bfa; font-style: italic; }
     .msg .ref.question { border-left-color: #fa0; white-space: pre-wrap; }
+    .msg .ref.permission { border-left-color: #e94; white-space: pre-wrap; }
     .msg .ref.answer { border-left-color: #0c8; white-space: pre-wrap; }
     .msg .tool-out {
       font-size: 12px; color: var(--fc2); white-space: pre-wrap; word-break: break-all;
@@ -303,6 +304,28 @@
     .q-submit:disabled { opacity: .5; cursor: not-allowed; }
     .q-reject { background: var(--bk3); color: var(--fc2); border: 1px solid var(--bd); }
     .q-reject:hover { color: var(--fc); border-color: var(--fc3); }
+    .permission-panel {
+      flex-shrink: 0; background: var(--bk2); border-top: 1px solid var(--bd);
+      padding: 12px 16px; max-height: 45%; overflow-y: auto;
+    }
+    .permission-panel .p-header {
+      font-size: 11px; color: var(--ac); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px;
+    }
+    .permission-panel .p-action { font-size: 14px; font-weight: bold; color: var(--fc); margin: 2px 0 8px; word-break: break-all; }
+    .permission-panel .p-res {
+      display: flex; align-items: flex-start; gap: 8px; padding: 7px 10px;
+      border: 1px solid var(--bd); border-radius: 8px; margin-bottom: 5px;
+      background: var(--bk3); font-size: 12px; color: var(--fc2); word-break: break-all;
+    }
+    .permission-panel .p-res::before { content: '▸'; color: var(--ac); flex-shrink: 0; }
+    .p-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .p-actions button { padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; flex: 1; }
+    .p-actions button:disabled { opacity: .5; cursor: not-allowed; }
+    .p-once { background: var(--ac); color: #000; font-weight: bold; border: 1px solid var(--ac); }
+    .p-always { background: var(--bk3); color: var(--fc); border: 1px solid var(--fc3); }
+    .p-always:hover { border-color: var(--ac); color: var(--ac); }
+    .p-reject { background: var(--bk3); color: var(--del); border: 1px solid var(--del); }
+    .p-reject:hover { background: rgba(248,81,73,.1); }
   </style>
 </head>
 <body>
@@ -439,6 +462,17 @@
     </div>
   </div>
 
+  <div class="permission-panel" v-if="permission">
+    <div class="p-header">Permission required</div>
+    <div class="p-action">{{ permission.action }}</div>
+    <div v-for="(r, ri) in permission.resources" :key="ri" class="p-res">{{ r }}</div>
+    <div class="p-actions">
+      <button class="p-once" @click="permissionReply('once')" :disabled="permissionSubmitting">Allow once</button>
+      <button class="p-always" @click="permissionReply('always')" :disabled="permissionSubmitting">Always allow</button>
+      <button class="p-reject" @click="permissionReply('reject')" :disabled="permissionSubmitting">Reject</button>
+    </div>
+  </div>
+
   <div class="cmd-wrap">
     <div class="cmd-dropdown" v-if="cmdOpen && cmdFiltered.length">
       <div class="cmd-item" v-for="(c, ci) in cmdFiltered" :key="c.name" :class="{active: ci === cmdIdx}" @mousedown.prevent="pickCmd(c)">
@@ -474,7 +508,9 @@
         ocVersion: '', installOverlay: true, installErr: '', installProgress: 'This may take a minute',
         ctxUsed: 0, ctxLimit: 0, ctxPct: 0, ctxModel: '',
         question: null, qSel: [], qCustom: [], qSubmitting: false, qEl: null,
-        sseMain: null, mainReady: false, sseHandlers: {}, switching: false
+        permission: null, permissionSubmitting: false,
+        sseMain: null, mainReady: false, sseHandlers: {}, switching: false,
+        _lastRunSession: ''
       }
     },
     computed: {
@@ -840,7 +876,17 @@
           if (el) el.scrollTop = el.scrollHeight
         })
       },
-      send() {
+      ensureMainSse() {
+        const self = this
+        return new Promise((resolve) => {
+          if (self.mainReady) return resolve(true)
+          let done = false
+          const finish = (v) => { if (done) return; done = true; resolve(v) }
+          const check = setInterval(() => { if (self.mainReady) { clearInterval(check); finish(true) } }, 100)
+          setTimeout(() => { clearInterval(check); finish(true) }, 8000)
+        })
+      },
+      async send() {
         if (this.busy) return
         const self = this
         let prompt = this.inputText.trim()
@@ -865,6 +911,9 @@
         const el = Vue.reactive({ role: 'assistant', parts: [], streaming: true })
         this.messages.push(el)
         this.scrollBottom()
+        // wait until the SSE channel is registered before starting the run,
+        // otherwise the backend's $ws.sse stream is dropped (shows only after refresh)
+        await self.ensureMainSse()
         const startTime = Date.now()
         const runId = Date.now() + '-' + Math.random().toString(36).slice(2, 8)
         this.runId = runId
@@ -925,6 +974,7 @@
             }
             if (data.type === 'session') {
               self.sessionId = data.id || ''
+              self._lastRunSession = self.sessionId || self._lastRunSession
               try {
                 if (self.sessionId) localStorage.setItem('aichat_oc_last_session', self.sessionId)
               } catch(e) {}
@@ -962,6 +1012,29 @@
               }
               return
             }
+            if (data.type === 'permission') {
+              self.permission = data.data || null
+              flushText()
+              if (self.permission) {
+                const p = self.permission
+                let line = '🔒 permission · ' + (p.action || 'request')
+                if (Array.isArray(p.resources) && p.resources.length) {
+                  line += '\n' + p.resources.map((r) => '   · ' + r).join('\n')
+                }
+                el.parts.push({ t: 'ref', c: line, cls: 'permission' })
+              }
+              self.scrollBottom()
+              return
+            }
+            if (data.type === 'permission_done') {
+              if (self.permission && data.data && self.permission.requestID === data.data.requestID) {
+                const p = self.permission
+                const label = data.data.reply === 'always' ? 'always allow' : data.data.reply === 'reject' ? 'reject' : 'allow once'
+                el.parts.push({ t: 'ref', c: '✔ permission ' + (p.action || 'request') + ': ' + label, cls: 'answer' })
+                self.permission = null
+              }
+              return
+            }
             if (data.type === 'done') {
               flushText()
               if (data.content) el.parts.push({ t: 'text', c: data.content })
@@ -970,6 +1043,7 @@
               self.question = null
               self.qSel = []
               self.qCustom = []
+              self.permission = null
               delete self.sseHandlers[runId]
               if (!el.stopped) {
                 let meta = Math.round((Date.now() - startTime) / 1000) + 's'
@@ -991,12 +1065,15 @@
               self.busy = false
               self.runId = ''
               self.todos = []
-              if (!self.sessionId) {
+              self.loadSessions()
+              // 兜底：若 sessionId 仍为空（后端 session 事件未送达），选中本次 run 实际使用的会话，
+              // 而不要盲选 sessions[0]，否则会加载成另一个会话的历史。
+              if (!self.sessionId && self._lastRunSession) {
+                self.selectSession(self._lastRunSession)
+              } else if (!self.sessionId) {
                 self.loadSessions().then(() => {
                   if (self.sessions.length > 0) self.selectSession(self.sessions[0].id)
                 })
-              } else {
-                self.loadSessions()
               }
               self.scrollBottom()
               return
@@ -1008,6 +1085,7 @@
               self.question = null
               self.qSel = []
               self.qCustom = []
+              self.permission = null
               if (el.stopped) {
                 if (data.content && data.content !== 'client disconnected') {
                   el.meta = (el.meta ? el.meta + ' | ' : '') + '⚠ ' + data.content
@@ -1153,6 +1231,25 @@
           self.showNotify('Reject failed: ' + e.message)
         })
       },
+      permissionReply(reply) {
+        const self = this
+        if (!this.permission || this.permissionSubmitting) return
+        this.permissionSubmitting = true
+        const p = this.permission
+        this.fetchFend('permission_reply', { requestID: p.requestID, sessionID: p.sessionID, reply: reply, legacy: p.legacy }, 15000).then((data) => {
+          self.permissionSubmitting = false
+          if (data && data.ok) {
+            const label = reply === 'always' ? 'always allow' : reply === 'reject' ? 'reject' : 'allow once'
+            self.showNotify('Permission ' + label + ': ' + (p.action || 'request'))
+            self.permission = null
+          } else {
+            self.showNotify('Permission reply failed: ' + ((data && data.error) || 'unknown'))
+          }
+        }).catch((e) => {
+          self.permissionSubmitting = false
+          self.showNotify('Permission reply failed: ' + e.message)
+        })
+      },
       clearChat() {
         this.messages = []
         this.sessionId = ''
@@ -1160,6 +1257,7 @@
         this.question = null
         this.qSel = []
         this.qCustom = []
+        this.permission = null
         this.ctxUsed = 0
         this.ctxPct = 0
         try { localStorage.removeItem('aichat_oc_last_session') } catch(e) {}
@@ -1312,6 +1410,7 @@ const toolArg = (inp) => {
     const newLines = typeof i.new_string === 'string' && i.new_string ? i.new_string.split('\n').length : 0
     arg += ' · -' + oldLines + '/+' + newLines
   }
+  if (arg.length > 200) arg = arg.slice(0, 200) + ' …'
   return arg
 }
 
@@ -1375,6 +1474,24 @@ const emitOut = (lastStore, callId, out, sendFn) => {
   }
   if (delta) sendFn(delta)
   lastStore[callId] = { raw: out, masked: masked }
+}
+
+const toolOut = (out) => {
+  if (out == null) return ''
+  if (typeof out === 'string') return out
+  if (Array.isArray(out)) {
+    let buf = ''
+    for (const o of out) {
+      if (o == null) continue
+      const seg = typeof o === 'string' ? o : (o.text != null ? (typeof o.text === 'string' ? o.text : JSON.stringify(o.text)) : null)
+      if (seg == null) continue
+      if (buf) buf += '\n'
+      buf += seg
+    }
+    return buf
+  }
+  if (out.text != null) return typeof out.text === 'string' ? out.text : JSON.stringify(out.text)
+  try { return JSON.stringify(out) } catch (e) { return String(out) }
 }
 
 const ensureServer = async () => {
@@ -1670,6 +1787,7 @@ const runCliMode = (data, runId) => {
   const seenTools = {}
   const lastToolOut = {}
   const runningTools = {}
+  let toolSeq = 0
   const reasoningSeen = {}
   const reasoningKey = (id) => { return id || '_' }
   const reasonStart = (id) => {
@@ -1759,8 +1877,8 @@ const runCliMode = (data, runId) => {
       const st = part.state || {}
       const inp = st.input || {}
       const arg = toolArg(inp)
-      const callId = part.callID || part.id || (part.tool || 'tool')
-      const out = st.output || (st.metadata && st.metadata.output) || ''
+      const callId = part.callID || part.id || (part.tool || 'tool') + '#' + (++toolSeq)
+      const out = toolOut(st.output || (st.metadata && st.metadata.output))
       if (part.tool === 'question') {
         if (!seenTools[callId] && (st.status === 'pending' || st.status === 'running')) {
           seenTools[callId] = true
@@ -1891,6 +2009,10 @@ $fend('start', async (data) => {
 
   const streamRun = (sessionId) => {
     ;(async () => {
+    // 让前端立即拿到本次 run 使用的 sessionId。
+    // 否则前端 sessionId 一直为空，done 后会误判为"首次对话"而 selectSession(sessions[0])，
+    // 把刚流式生成的回复清空并加载成另一个会话的历史，表现为"看不到输出/切换会话错乱"。
+    try { sseChat(runId, { type: 'session', id: sessionId }) } catch(e) {}
     try {
       let ctxLimit = 0
       getCtxLimit(data.model).then((l) => { if (l) ctxLimit = l }).catch(() => {})
@@ -1902,6 +2024,7 @@ $fend('start', async (data) => {
       const seenTools = {}
       const lastToolOut = {}
       const runningTools = {}
+      let toolSeq = 0
       const reasoningSeen = {}
       const reasoningKey = (id) => { return id || '_' }
       const reasonStart = (id) => {
@@ -2037,6 +2160,24 @@ if (tool.lastOutput) emitOut(lastToolOut, id, tool.lastOutput, (d) => { sseChat(
           sseChat(runId, { type: 'question_done', data: { requestID: p.requestID } })
           return
         }
+        if (ev.type === 'permission.v2.asked' || ev.type === 'permission.asked') {
+          const pd = ev.data || ev.properties || {}
+          const permId = pd.id || pd.requestID
+          if (pd.sessionID && sessionId && pd.sessionID !== sessionId) return
+          if (permId) {
+            const res = pd.resources || pd.patterns || []
+            const resList = Array.isArray(res) ? res.map(String) : [String(res)]
+            sendRef('🔒 permission · ' + (pd.action || pd.permission || 'request') + (resList.length ? ' · ' + resList.join(', ') : ''), 'permission')
+            sseChat(runId, { type: 'permission', data: { requestID: permId, sessionID: pd.sessionID, action: pd.action || pd.permission || '', resources: resList, metadata: pd.metadata || null, source: pd.source || null, legacy: ev.type === 'permission.asked' } })
+          }
+          return
+        }
+        if (ev.type === 'permission.v2.replied' || ev.type === 'permission.replied') {
+          const pd = ev.data || ev.properties || {}
+          if (pd.sessionID && sessionId && pd.sessionID !== sessionId) return
+          sseChat(runId, { type: 'permission_done', data: { requestID: pd.requestID || pd.id, reply: pd.reply || '' } })
+          return
+        }
         if (ev.type === 'message.part.delta') {
           if (p.field === 'text' && p.delta) {
             sseChat(runId, { type: 'text', content: p.delta })
@@ -2070,8 +2211,8 @@ if (tool.lastOutput) emitOut(lastToolOut, id, tool.lastOutput, (d) => { sseChat(
             const st = part.state || {}
             const inp = st.input || {}
             const arg = toolArg(inp)
-            const callId = part.callID || part.id || (part.tool || 'tool')
-            const out = st.output || (st.metadata && st.metadata.output) || ''
+            const callId = part.callID || part.id || (part.tool || 'tool') + '#' + (++toolSeq)
+            const out = toolOut(st.output || (st.metadata && st.metadata.output))
             if (part.tool === 'question') {
               if (!seenTools[callId] && (st.status === 'pending' || st.status === 'running')) {
                 seenTools[callId] = true
@@ -2087,7 +2228,7 @@ if (tool.lastOutput) emitOut(lastToolOut, id, tool.lastOutput, (d) => { sseChat(
                 seenTools[callId] = true
                 sendRef('◈ ' + (part.tool || 'tool'), 'tool')
               }
-              if (!runningTools[callId]) runningTools[callId] = { tool: part.tool || 'tool', arg: arg, status: st.status, started: Date.now() }
+              if (!runningTools[callId]) runningTools[callId] = { tool: part.tool || 'tool', arg: arg, started: Date.now() }
               if (out) runningTools[callId].lastOutput = out
               runningTools[callId].lastUpdate = Date.now()
               if (out) emitOut(lastToolOut, callId, out, (d) => { sseChat(runId, { type: 'out', content: d }) })
@@ -2277,6 +2418,9 @@ if (tool.lastOutput) emitOut(lastToolOut, id, tool.lastOutput, (d) => { sseChat(
           if (!cur) api('PATCH', '/session/' + sessionId, { title: title })
         }).catch(() => {})
       }
+      // 新建/改标题后会话列表变化，立即失效缓存让下拉列表尽快显示新 title
+      try { $store.set('aichat_oc_sessions_cache', '') } catch(e) {}
+      try { $store.set('aichat_oc_sessions_time', '0') } catch(e) {}
       streamRun(sessionId)
       return { ok: true, runId: runId, sessionId: sessionId }
     } catch(e) {
@@ -2462,39 +2606,39 @@ $fend('opencode_sessions', async () => {
   try { cached = JSON.parse($store.get('aichat_oc_sessions_cache') || 'null') } catch(e) {}
   try { cachedTime = Number($store.get('aichat_oc_sessions_time') || 0) } catch(e) {}
 
+  // 用 opencode 服务器的 GET /session 获取会话列表（与聊天同一批会话），
+  // 不要用 CLI `opencode session list` —— 它的 cwd 作用域(script/Shell)和服务器目录不一致，列表对不上。
   if (cached && now - cachedTime < 15000) return { sessions: cached, cached: true }
-  if (cached) {
+  const sessions = await httpGet('/session', 14096, 8000).then((r) => {
+    if (r.status !== 200 || !r.body || !r.body.trim()) return null
     try {
-      const r = await execAsync(redirCmd(OC_BIN + ' session list --format json -n 30'), 8000)
-      const raw = r.stdout
-      console.log('[opencode_sessions cached-refresh] raw:', raw.trim())
-      if (raw && raw.trim()) {
-        const list = JSON.parse(raw.trim())
-        $store.set('aichat_oc_sessions_cache', raw.trim())
-        $store.set('aichat_oc_sessions_time', String(Date.now()))
-        return { sessions: list }
-      }
-    } catch(e) {}
-    return { sessions: cached }
-  }
-  try {
-    const r = await execAsync(redirCmd(OC_BIN + ' session list --format json -n 30'), 8000)
-    const raw = r.stdout
-    console.log('[opencode_sessions] raw:', raw.trim())
-    if (!raw || !raw.trim()) return { sessions: [] }
-    const sessions = JSON.parse(raw.trim())
-    $store.set('aichat_oc_sessions_cache', raw.trim())
-    $store.set('aichat_oc_sessions_time', String(now))
+      const list = JSON.parse(r.body)
+      if (!Array.isArray(list)) return null
+      // 兼容服务器格式：updated/created 在 s.time 里，补齐到顶层供前端 fmtTime 使用
+      list.forEach((s) => {
+        if (s.time) {
+          if (!s.updated && s.time.updated) s.updated = s.time.updated
+          if (!s.created && s.time.created) s.created = s.time.created
+        }
+      })
+      return list
+    } catch(e) { return null }
+  })
+  if (sessions) {
+    $store.set('aichat_oc_sessions_cache', JSON.stringify(sessions))
+    $store.set('aichat_oc_sessions_time', String(Date.now()))
     return { sessions: sessions }
-  } catch(e) {
-    return { sessions: cached || [] }
   }
+  if (cached) return { sessions: cached }
+  return { sessions: [] }
 })
 
 $fend('opencode_delete_session', async (data) => {
   if (!data || !data.id) return { ok: false }
   try {
     await execAsync(redirCmd(OC_BIN + ' session delete ' + data.id), 10000)
+    try { $store.set('aichat_oc_sessions_cache', '') } catch(e2) {}
+    try { $store.set('aichat_oc_sessions_time', '0') } catch(e2) {}
     return { ok: true }
   } catch(e) {
     return { ok: false, error: e.message }
@@ -2535,6 +2679,22 @@ $fend('question_reject', async (data) => {
   if (!data || !data.requestID) return { ok: false, error: 'invalid params' }
   try {
     const r = await ocPost('/question/' + encodeURIComponent(data.requestID) + '/reject')
+    if (r.status !== 200) return { ok: false, error: r.body.slice(0, 200) }
+    return { ok: true }
+  } catch(e) {
+    return { ok: false, error: e.message }
+  }
+})
+
+$fend('permission_reply', async (data) => {
+  if (!data || !data.requestID) return { ok: false, error: 'invalid params' }
+  const reply = ['once', 'always', 'reject'].indexOf(data.reply) >= 0 ? data.reply : ''
+  if (!reply) return { ok: false, error: 'invalid reply' }
+  try {
+    const path = data.legacy
+      ? '/permission/' + encodeURIComponent(data.requestID) + '/reply'
+      : '/api/session/' + encodeURIComponent(data.sessionID || '') + '/permission/' + encodeURIComponent(data.requestID) + '/reply'
+    const r = await ocPost(path, { reply: reply, message: data.message || '' })
     if (r.status !== 200) return { ok: false, error: r.body.slice(0, 200) }
     return { ok: true }
   } catch(e) {

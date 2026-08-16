@@ -1554,10 +1554,11 @@
             self.ctxLimit = data.limit
             if (data.model) self.ctxModel = data.model
           } else {
-            const saved = localStorage.getItem('aichat_pi_ctx_limit')
-            if (saved) self.ctxLimit = Number(saved)
+            // Model not in models.json (custom provider / no contextWindow) or no model selected.
+            // Do NOT silently fall back to a stale cached limit from a previous model.
             const savedModel = localStorage.getItem('aichat_pi_ctx_model')
             if (savedModel && !self.ctxModel) self.ctxModel = savedModel
+            if (!self.ctxLimit) self.ctxLimit = 0
           }
           if (self.sessionId) self.syncCtx(self.sessionId)
         }).catch(() => {})
@@ -1565,13 +1566,14 @@
       syncCtx(sessionId) {
         if (!sessionId) return
         const self = this
+        // Use the session's own model (returned by backend) so used/limit come from the same model.
         this.fetchFend('session_ctx', { id: sessionId, model: this.currentModel || this.ctxModel }, 12000).then((data) => {
           if (!data) return
           if (data.limit) self.ctxLimit = data.limit
-          if (!self.ctxLimit) return
+          if (data.model) self.ctxModel = data.model
+          if (!self.ctxLimit) { self.ctxUsed = 0; self.ctxPct = 0; return }
           self.ctxUsed = data.used || 0
           self.ctxPct = Math.round((self.ctxUsed || 0) / self.ctxLimit * 1000) / 10
-          try { localStorage.setItem('aichat_pi_ctx_limit', String(self.ctxLimit)) } catch(e) {}
         }).catch(() => {})
       },
     },
@@ -2090,31 +2092,42 @@ const findSessionFile = (id) => {
 const getSessionUsage = (id) => {
   return new Promise((resolve) => {
     const full = findSessionFile(id)
-    if (!full) return resolve(0)
+    if (!full) return resolve({ used: 0, model: '' })
     try {
       const lines = fs.readFileSync(full, 'utf8').split('\n')
       let used = 0
+      let sessionModel = ''
+      let lastAsstUsage = null
       for (const ln of lines) {
         if (!ln.trim()) continue
         let e
         try { e = JSON.parse(ln) } catch(err) { continue }
+        if (e.type === 'session' && e.model) {
+          sessionModel = e.model
+        }
         if (e.type !== 'message') continue
         const msg = e.message || {}
+        if (msg.provider && msg.model) {
+          sessionModel = (msg.provider || '') + '/' + msg.model
+        }
         if (msg.role === 'assistant' && msg.usage && msg.usage.totalTokens) {
-          if (msg.usage.totalTokens > used) used = msg.usage.totalTokens
+          lastAsstUsage = msg.usage.totalTokens
         }
       }
-      resolve(used)
-    } catch(e) { resolve(0) }
+      // Use the most recent assistant message's usage (better proxy for current context)
+      used = lastAsstUsage !== null ? lastAsstUsage : 0
+      resolve({ used: used, model: sessionModel })
+    } catch(e) { resolve({ used: 0, model: '' }) }
   })
 }
 
 $fend('session_ctx', (data) => {
   const id = data && data.id
-  const modelStr = (data && data.model || '').replace(/\r/g, '')
-  return getSessionUsage(id).then((used) => {
+  return getSessionUsage(id).then((res) => {
+    // Use the session's actual model for limit lookup, not the frontend's current model
+    const modelStr = res.model || (data && data.model || '').replace(/\r/g, '')
     return getCtxLimit(modelStr).then((limit) => {
-      return { used: used, limit: limit }
+      return { used: res.used, limit: limit, model: res.model }
     })
   })
 })
@@ -2461,10 +2474,10 @@ $fend('start', (data) => {
       }
       if (msg.errorMessage) {
         const etxt = String(msg.errorMessage)
-        if (isRateLimited(etxt) && retryLeft > 0 && !retrying) {
+        if (isRetryable(etxt) && retryLeft > 0 && !retrying) {
           retryLeft--
           const delay = retryDelayMs(retryLeft)
-          sendRef('↻ 429 rate limited, retrying in ' + Math.round(delay / 1000) + 's… (attempt ' + (MAX_RETRY - retryLeft) + '/' + MAX_RETRY + ')', 'info')
+          sendRef('↻ transient error, retrying in ' + Math.round(delay / 1000) + 's… (attempt ' + (MAX_RETRY - retryLeft) + '/' + MAX_RETRY + ')', 'info')
           retrying = true
           kickWatchdog()
           setTimeout(() => { relaunch() }, delay)
@@ -2516,9 +2529,9 @@ $fend('start', (data) => {
     }
   }
 
-  const isRateLimited = (etxt) => {
+  const isRetryable = (etxt) => {
     if (!etxt) return false
-    return /429|limit_burst_rate|rate.?limit/i.test(etxt)
+    return /429|limit_burst_rate|rate.?limit|503|admission_busy|chat_admission|server_error/i.test(etxt)
   }
   const retryDelayMs = (attemptLeft) => {
     const tried = MAX_RETRY - attemptLeft
