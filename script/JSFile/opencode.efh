@@ -235,6 +235,18 @@
     }
     .install-overlay .title { font-size: 18px; color: var(--fc); }
     .install-overlay .sub { font-size: 12px; color: var(--fc2); max-width: 80%; word-break: break-all; }
+    .install-overlay .cmd {
+      font-family: 'Cascadia Code', Consolas, monospace; font-size: 12px; color: var(--ac);
+      background: rgba(88,166,255,.08); border: 1px solid rgba(88,166,255,.35);
+      border-radius: 6px; padding: 6px 10px; max-width: 80%; width: 640px;
+      word-break: break-all; white-space: pre-wrap;
+    }
+    .install-overlay .log {
+      max-width: 80%; width: 640px; max-height: 280px; overflow-y: auto;
+      background: var(--bk2); border: 1px solid var(--bd); border-radius: 6px;
+      padding: 10px 12px; font-family: monospace; font-size: 11px; line-height: 1.5;
+      color: var(--fc2); text-align: left; white-space: pre-wrap; word-break: break-all;
+    }
     .install-overlay .spin {
       width: 32px; height: 32px; border: 3px solid var(--bd);
       border-top-color: var(--ac); border-radius: 50%;
@@ -333,8 +345,12 @@
 <div id="app">
   <div class="install-overlay" v-if="installOverlay">
     <div class="spin" v-if="!installErr"></div>
-    <div class="title" v-if="!installErr">Installing opencode...</div>
-    <div class="sub" v-if="!installErr">{{ installProgress }}</div>
+    <div class="title">{{ installErr ? 'Install opencode failed' : 'Installing opencode...' }}</div>
+    <div class="cmd" v-if="installCmd">$ {{ installCmd }}</div>
+    <div class="log" ref="installLog">
+      <div v-for="(l, li) in installLog" :key="li">{{ l }}</div>
+      <span v-if="!installLog.length" style="color:var(--fc3)">{{ installProgress }}</span>
+    </div>
     <div class="err" v-if="installErr">{{ installErr }}</div>
     <button v-if="installErr" @click="location.reload()">Retry</button>
   </div>
@@ -505,7 +521,7 @@
         histList: [], histIdx: -1, histDraft: '',
         sessionPanelOpen: false, dropdown: '',
         notifyMsg: '', notifyShow: false, loading: false,
-        ocVersion: '', installOverlay: true, installErr: '', installProgress: 'This may take a minute',
+        ocVersion: '', installOverlay: true, installErr: '', installProgress: 'This may take a minute', installLog: [], installCmd: '',
         ctxUsed: 0, ctxLimit: 0, ctxPct: 0, ctxModel: '',
         question: null, qSel: [], qCustom: [], qSubmitting: false, qEl: null,
         permission: null, permissionSubmitting: false,
@@ -1345,7 +1361,26 @@
       installEs.onmessage = (e) => {
         try {
           const d = JSON.parse(e.data)
-          if (d.type === 'progress') self.installProgress = d.content
+          if (d.type === 'cmd') {
+            self.installCmd = d.content
+            return
+          }
+          if (d.type === 'full_log') {
+            self.installLog = String(d.content).split('\n').filter(Boolean)
+            self.$nextTick(() => {
+              const el = self.$refs.installLog
+              if (el) el.scrollTop = el.scrollHeight
+            })
+            return
+          }
+          if (d.type === 'progress') {
+            self.installLog.push(String(d.content).replace(/\s+/g, ' ').trim())
+            if (self.installLog.length > 200) self.installLog.shift()
+            self.$nextTick(() => {
+              const el = self.$refs.installLog
+              if (el) el.scrollTop = el.scrollHeight
+            })
+          }
           if (d.type === 'done') {
             installEs.close()
             if (d.version) self.ocVersion = d.version
@@ -2505,14 +2540,22 @@ $fend('ensure_opencode', async (data) => {
       $ws.sse(runId, JSON.stringify({ type: 'error', content: msg }))
       return { ok: false, error: msg }
     }
+    const INSTALL_CMD = 'npm install -g opencode-ai@latest --loglevel=verbose'
+    $ws.sse(runId, JSON.stringify({ type: 'cmd', content: INSTALL_CMD }))
     const proc = spawn(process.platform === 'win32' ? process.env.COMSPEC : 'sh',
-      process.platform === 'win32' ? ['/d', '/s', '/c', 'npm install -g opencode-ai@latest 2>&1'] : ['-c', 'npm install -g opencode-ai@latest 2>&1'],
+      process.platform === 'win32' ? ['/d', '/s', '/c', INSTALL_CMD + ' 2>&1'] : ['-c', INSTALL_CMD + ' 2>&1'],
       { timeout: 120000, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
+    const fullLog = []
     const sendProgress = (text) => {
       const lines = stripAnsi(text.toString()).split('\n').filter(Boolean)
       for (let i = 0; i < lines.length; i++) {
-        console.log('[npm install]', lines[i].trim())
-        $ws.sse(runId, JSON.stringify({ type: 'progress', content: lines[i].trim() }))
+        const line = lines[i].trim()
+        console.log('[npm install]', line)
+        if (line) {
+          fullLog.push(line)
+          if (fullLog.length > 2000) fullLog.splice(0, fullLog.length - 2000)
+          $ws.sse(runId, JSON.stringify({ type: 'progress', content: line }))
+        }
       }
     }
     proc.stdout.on('data', sendProgress)
@@ -2523,15 +2566,19 @@ $fend('ensure_opencode', async (data) => {
           const ver = await execAsync(redirCmd(OC_BIN + ' --version'), 10000)
           const version = ver.stdout.trim() || 'unknown'
           console.log('[npm install] done, version:', version)
+          $ws.sse(runId, JSON.stringify({ type: 'full_log', content: fullLog.join('\n') }))
           $ws.sse(runId, JSON.stringify({ type: 'done', version: version }))
         } else {
+          $ws.sse(runId, JSON.stringify({ type: 'full_log', content: fullLog.join('\n') }))
           $ws.sse(runId, JSON.stringify({ type: 'error', content: 'npm install failed (code ' + code + ')' }))
         }
       } catch(e) {
+        $ws.sse(runId, JSON.stringify({ type: 'full_log', content: fullLog.join('\n') }))
         $ws.sse(runId, JSON.stringify({ type: 'error', content: e.message }))
       }
     })
     proc.on('error', (e) => {
+      $ws.sse(runId, JSON.stringify({ type: 'full_log', content: fullLog.join('\n') }))
       $ws.sse(runId, JSON.stringify({ type: 'error', content: e.message }))
     })
     return { ok: true, installing: true }

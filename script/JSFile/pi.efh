@@ -254,6 +254,18 @@
     }
     .install-overlay .title { font-size: 18px; color: var(--fc); }
     .install-overlay .sub { font-size: 12px; color: var(--fc2); max-width: 80%; word-break: break-all; }
+    .install-overlay .cmd {
+      font-family: 'Cascadia Code', Consolas, monospace; font-size: 12px; color: var(--ac);
+      background: rgba(88,166,255,.08); border: 1px solid rgba(88,166,255,.35);
+      border-radius: 6px; padding: 6px 10px; max-width: 80%; width: 640px;
+      word-break: break-all; white-space: pre-wrap;
+    }
+    .install-overlay .log {
+      max-width: 80%; width: 640px; max-height: 280px; overflow-y: auto;
+      background: var(--bk2); border: 1px solid var(--bd); border-radius: 6px;
+      padding: 10px 12px; font-family: monospace; font-size: 11px; line-height: 1.5;
+      color: var(--fc2); text-align: left; white-space: pre-wrap; word-break: break-all;
+    }
     .install-overlay .spin {
       width: 32px; height: 32px; border: 3px solid var(--bd);
       border-top-color: var(--ac); border-radius: 50%;
@@ -415,8 +427,12 @@
 <div id="app">
   <div class="install-overlay" v-if="installOverlay">
     <div class="spin" v-if="!installErr"></div>
-    <div class="title" v-if="!installErr">Installing pi...</div>
-    <div class="sub" v-if="!installErr">{{ installProgress }}</div>
+    <div class="title">{{ installErr ? 'Install pi failed' : 'Installing pi...' }}</div>
+    <div class="cmd" v-if="installCmd">$ {{ installCmd }}</div>
+    <div class="log" ref="installLog">
+      <div v-for="(l, li) in installLog" :key="li">{{ l }}</div>
+      <span v-if="!installLog.length" style="color:var(--fc3)">{{ installProgress }}</span>
+    </div>
     <div class="err" v-if="installErr">{{ installErr }}</div>
     <button v-if="installErr" @click="location.reload()">Retry</button>
   </div>
@@ -643,7 +659,7 @@
         histList: [], histIdx: -1, histDraft: '',
         sessionPanelOpen: false, dropdown: '',
         notifyMsg: '', notifyShow: false, notifyType: 'error', loading: false,
-        piVersion: '', installOverlay: true, installErr: '', installProgress: 'This may take a minute',
+        piVersion: '', installOverlay: true, installErr: '', installProgress: 'This may take a minute', installLog: [], installCmd: '',
         ctxUsed: 0, ctxLimit: 0, ctxPct: 0, ctxModel: '',
         question: null, qSel: [], qCustom: [], qSubmitting: false, qEl: null,
         workspace: '', wsBusy: false,
@@ -1617,7 +1633,26 @@
       installEs.onmessage = (e) => {
         try {
           const d = JSON.parse(e.data)
-          if (d.type === 'progress') self.installProgress = d.content
+          if (d.type === 'cmd') {
+            self.installCmd = d.content
+            return
+          }
+          if (d.type === 'full_log') {
+            self.installLog = String(d.content).split('\n').filter(Boolean)
+            self.$nextTick(() => {
+              const el = self.$refs.installLog
+              if (el) el.scrollTop = el.scrollHeight
+            })
+            return
+          }
+          if (d.type === 'progress') {
+            self.installLog.push(String(d.content).replace(/\s+/g, ' ').trim())
+            if (self.installLog.length > 200) self.installLog.shift()
+            self.$nextTick(() => {
+              const el = self.$refs.installLog
+              if (el) el.scrollTop = el.scrollHeight
+            })
+          }
           if (d.type === 'done') {
             installEs.close()
             if (d.version) self.piVersion = d.version
@@ -1818,9 +1853,10 @@ const PROVIDER_PRESETS = [
     { id: 'deepseek-chat', name: 'DeepSeek Chat', contextWindow: 128000, maxTokens: 8192 },
     { id: 'deepseek-reasoner', name: 'DeepSeek Reasoner', reasoning: true, contextWindow: 128000, maxTokens: 8192 }
   ] },
-  { name: 'google', api: 'google-generative-ai', baseUrl: 'https://generativelanguage.googleapis.com/v1beta', models: [
-    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro', reasoning: true, contextWindow: 2000000, maxTokens: 65536 },
-    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash', reasoning: true, contextWindow: 1048576, maxTokens: 65536 }
+  { name: 'nvidia', api: 'openai-completions', baseUrl: 'https://integrate.api.nvidia.com/v1', models: [
+    { id: 'z-ai/glm-5.2', name: 'GLM-5.2 (NIM) · agent', reasoning: true, contextWindow: 1000000, maxTokens: 128000 },
+    { id: 'deepseek-ai/deepseek-v4-pro', name: 'DeepSeek-V4-Pro (NIM) · coding', contextWindow: 1000000, maxTokens: 16384 },
+    { id: 'deepseek-ai/deepseek-v4-flash', name: 'DeepSeek-V4-Flash (NIM) · fast', contextWindow: 1000000, maxTokens: 16384 }
   ] },
   { name: 'openrouter', api: 'openai-completions', baseUrl: 'https://openrouter.ai/api/v1', models: [
     { id: 'openai/gpt-5.6-sol', name: 'GPT-5.6 Sol (OR)', reasoning: true, contextWindow: 1050000, maxTokens: 181888 },
@@ -2690,14 +2726,22 @@ $fend('ensure_pi', async (data) => {
       $ws.sse(runId, JSON.stringify({ type: 'error', content: msg }))
       return { ok: false, error: msg }
     }
+    const INSTALL_CMD = 'npm install -g @earendil-works/pi-coding-agent@latest --loglevel=verbose'
+    $ws.sse(runId, JSON.stringify({ type: 'cmd', content: INSTALL_CMD }))
     const proc = spawn(IS_WIN ? process.env.COMSPEC : 'sh',
-      IS_WIN ? ['/d', '/s', '/c', 'npm install -g @earendil-works/pi-coding-agent@latest 2>&1'] : ['-c', 'npm install -g @earendil-works/pi-coding-agent@latest 2>&1'],
+      IS_WIN ? ['/d', '/s', '/c', INSTALL_CMD + ' 2>&1'] : ['-c', INSTALL_CMD + ' 2>&1'],
       { timeout: 180000, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
+    const fullLog = []
     const sendProgress = (text) => {
       const lines = stripAnsi(text.toString()).split('\n').filter(Boolean)
       for (const l of lines) {
-        console.log('[npm install]', l.trim())
-        $ws.sse(runId, JSON.stringify({ type: 'progress', content: l.trim() }))
+        const line = l.trim()
+        console.log('[npm install]', line)
+        if (line) {
+          fullLog.push(line)
+          if (fullLog.length > 2000) fullLog.splice(0, fullLog.length - 2000)
+          $ws.sse(runId, JSON.stringify({ type: 'progress', content: line }))
+        }
       }
     }
     proc.stdout.on('data', sendProgress)
@@ -2709,15 +2753,19 @@ $fend('ensure_pi', async (data) => {
           const version = ver.stdout.trim() || 'unknown'
           const omni = await httpGetUrl(OMNI_HOST + '/', 4000)
           console.log('[npm install] done, version:', version, 'omni:', omni.status)
+          $ws.sse(runId, JSON.stringify({ type: 'full_log', content: fullLog.join('\n') }))
           $ws.sse(runId, JSON.stringify({ type: 'done', version: version, omni: omni.status === 200 }))
         } else {
+          $ws.sse(runId, JSON.stringify({ type: 'full_log', content: fullLog.join('\n') }))
           $ws.sse(runId, JSON.stringify({ type: 'error', content: 'npm install failed (code ' + code + ')' }))
         }
       } catch(e) {
+        $ws.sse(runId, JSON.stringify({ type: 'full_log', content: fullLog.join('\n') }))
         $ws.sse(runId, JSON.stringify({ type: 'error', content: e.message }))
       }
     })
     proc.on('error', (e) => {
+      $ws.sse(runId, JSON.stringify({ type: 'full_log', content: fullLog.join('\n') }))
       $ws.sse(runId, JSON.stringify({ type: 'error', content: e.message }))
     })
     return { ok: true, installing: true }
