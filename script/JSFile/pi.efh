@@ -17,7 +17,7 @@
     body {
       font: 14px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bk); color: var(--fc); height: 100vh;
-      display: flex; flex-direction: column;
+      display: flex; flex-direction: column; overflow: hidden;
     }
     #app { flex: 1; display: flex; flex-direction: column; min-height: 0; }
     .header {
@@ -82,7 +82,7 @@
     .dropdown .d-empty { padding: 20px; text-align: center; color: var(--fc3); font-size: 12px; }
     .dropdown .d-more { padding: 8px 12px; text-align: center; font-size: 12px; color: var(--ac); cursor: pointer; border-top: 1px solid var(--bd); }
     .dropdown .d-more:hover { background: var(--bk3); }
-    .messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
     .welcome { color: var(--fc2); text-align: center; margin: auto; font-size: 15px; line-height: 2; }
     .welcome b { color: var(--ac); }
     .msg-loading {
@@ -434,7 +434,7 @@
       <span v-if="!installLog.length" style="color:var(--fc3)">{{ installProgress }}</span>
     </div>
     <div class="err" v-if="installErr">{{ installErr }}</div>
-    <button v-if="installErr" @click="location.reload()">Retry</button>
+    <button v-if="installErr" @click="retryInstall" :disabled="installBusy">{{ installBusy ? 'Retrying...' : 'Retry' }}</button>
   </div>
 
   <div class="provider-overlay" v-if="!installOverlay && providerOverlay">
@@ -659,7 +659,7 @@
         histList: [], histIdx: -1, histDraft: '',
         sessionPanelOpen: false, dropdown: '',
         notifyMsg: '', notifyShow: false, notifyType: 'error', loading: false,
-        piVersion: '', installOverlay: true, installErr: '', installProgress: 'This may take a minute', installLog: [], installCmd: '',
+        piVersion: '', installOverlay: true, installErr: '', installProgress: 'This may take a minute', installLog: [], installCmd: '', installEs: null, installBusy: false,
         ctxUsed: 0, ctxLimit: 0, ctxPct: 0, ctxModel: '',
         question: null, qSel: [], qCustom: [], qSubmitting: false, qEl: null,
         workspace: '', wsBusy: false,
@@ -1219,7 +1219,11 @@
         const self = this
         this.$nextTick(() => {
           const el = self.$refs.messagesEl
-          if (el) el.scrollTop = el.scrollHeight
+          if (el) {
+            el.scrollTop = el.scrollHeight
+            const tos = el.querySelectorAll('.tool-out')
+            for (let i = 0; i < tos.length; i++) tos[i].scrollTop = tos[i].scrollHeight
+          }
         })
       },
       send() {
@@ -1274,6 +1278,7 @@
                 flushText()
                 el.parts.push({ t: 'ref', c: data.content, cls: 'info' })
                 el.initShown = data.content
+                self.scrollBottom()
               }
               return
             }
@@ -1549,6 +1554,82 @@
       compactChat() {
         this.clearChat()
       },
+      startInstall() {
+        if (this.installBusy) return
+        const self = this
+        this.installBusy = true
+        this.installErr = ''
+        this.installLog = []
+        this.installCmd = ''
+        this.installProgress = 'This may take a minute'
+        if (this.installEs) { try { this.installEs.close() } catch(e) {} }
+        const instId = Date.now() + '-' + Math.random().toString(36).slice(2, 8)
+        const installEs = new EventSource('/sse/elecV2P/' + instId)
+        this.installEs = installEs
+        installEs.onmessage = (e) => {
+          try {
+            const d = JSON.parse(e.data)
+            if (d.type === 'cmd') {
+              self.installCmd = d.content
+              return
+            }
+            if (d.type === 'full_log') {
+              self.installLog = String(d.content).split('\n').filter(Boolean)
+              self.$nextTick(() => {
+                const el = self.$refs.installLog
+                if (el) el.scrollTop = el.scrollHeight
+              })
+              return
+            }
+            if (d.type === 'progress') {
+              self.installLog.push(String(d.content).replace(/\s+/g, ' ').trim())
+              if (self.installLog.length > 200) self.installLog.shift()
+              self.$nextTick(() => {
+                const el = self.$refs.installLog
+                if (el) el.scrollTop = el.scrollHeight
+              })
+            }
+            if (d.type === 'done') {
+              installEs.close()
+              self.installEs = null
+              self.installBusy = false
+              if (d.version) self.piVersion = d.version
+              self.initApp()
+            }
+            if (d.type === 'error') {
+              installEs.close()
+              self.installEs = null
+              self.installBusy = false
+              self.installErr = d.content
+            }
+          } catch(e) {}
+        }
+        this.fetchFend('ensure_pi', { installId: instId }, 180000).then((data) => {
+          if (data && data.ok && !data.installing) {
+            installEs.close()
+            self.installEs = null
+            self.installBusy = false
+            if (data.version) self.piVersion = data.version
+            self.initApp()
+          } else if (data && !data.ok && data.error) {
+            installEs.close()
+            self.installEs = null
+            self.installBusy = false
+            self.installErr = data.error
+          } else if (data && data.ok && data.installing) {
+            self.$nextTick(() => {
+              const el = self.$refs.installLog
+              if (el) el.scrollTop = el.scrollHeight
+            })
+          }
+        }).catch((e) => {
+          self.installBusy = false
+        })
+      },
+      retryInstall() {
+        const self = this
+        self.startInstall()
+      },
       initApp() {
         if (_inited) return
         _inited = true
@@ -1572,9 +1653,8 @@
             }
           }
           self.refreshCtx()
-          self.loadProviders().then((pd) => {
-            const hasProvider = !!(pd && pd.providers && pd.providers.some((p) => p.current || p.hasKey))
-            if (!hasProvider && !savedModel) self.showProviderPicker()
+          self.loadProviders().then(() => {
+            if (!self.currentProvider) self.showProviderPicker()
           })
         })
       },
@@ -1629,51 +1709,7 @@
       }
       mainEs.onerror = () => {}
 
-      const installEs = new EventSource('/sse/elecV2P/' + installId)
-      installEs.onmessage = (e) => {
-        try {
-          const d = JSON.parse(e.data)
-          if (d.type === 'cmd') {
-            self.installCmd = d.content
-            return
-          }
-          if (d.type === 'full_log') {
-            self.installLog = String(d.content).split('\n').filter(Boolean)
-            self.$nextTick(() => {
-              const el = self.$refs.installLog
-              if (el) el.scrollTop = el.scrollHeight
-            })
-            return
-          }
-          if (d.type === 'progress') {
-            self.installLog.push(String(d.content).replace(/\s+/g, ' ').trim())
-            if (self.installLog.length > 200) self.installLog.shift()
-            self.$nextTick(() => {
-              const el = self.$refs.installLog
-              if (el) el.scrollTop = el.scrollHeight
-            })
-          }
-          if (d.type === 'done') {
-            installEs.close()
-            if (d.version) self.piVersion = d.version
-            self.initApp()
-          }
-          if (d.type === 'error') {
-            installEs.close()
-            self.installErr = d.content
-          }
-        } catch(e) {}
-      }
-      this.fetchFend('ensure_pi', { installId: installId }, 180000).then((data) => {
-        if (data && data.ok && !data.installing) {
-          installEs.close()
-          if (data.version) self.piVersion = data.version
-          self.initApp()
-        } else if (data && !data.ok && data.error) {
-          installEs.close()
-          self.installErr = data.error
-        }
-      }).catch(() => {})
+      this.startInstall()
     }
   })
 
@@ -2706,16 +2742,30 @@ $fend('stop', async (data) => {
   return { ok: false, error: 'no active run' }
 })
 
+const resolvePiVersion = (tries) => {
+  return new Promise((resolve) => {
+    const attempt = (n) => {
+      execAsync(redirCmd(PI_BIN + ' --version'), 20000).then((v) => {
+        resolve({ ok: true, version: v.stdout.trim() || 'unknown' })
+      }).catch((e) => {
+        if (n > 1) setTimeout(() => { attempt(n - 1) }, 1000)
+        else resolve({ ok: false, error: e })
+      })
+    }
+    attempt(tries || 2)
+  })
+}
+
 $fend('ensure_pi', async (data) => {
   const runId = data && data.installId
-  try {
-    const v = await execAsync(redirCmd(PI_BIN + ' --version'), 10000)
-    const version = v.stdout.trim()
+  const r = await resolvePiVersion(2)
+  if (r.ok) {
+    const version = r.version
     console.log('[ensure_pi] version:', version)
     const omni = await httpGetUrl(OMNI_HOST + '/', 4000)
     if (runId) $ws.sse(runId, JSON.stringify({ type: 'done', version: version, omni: omni.status === 200 }))
     return { ok: true, installing: false, version: version, omni: omni.status === 200 }
-  } catch(e) {}
+  }
   if (!runId) return { error: 'no installId' }
   try {
     const freeMem = require('os').freemem()
@@ -2749,10 +2799,11 @@ $fend('ensure_pi', async (data) => {
     proc.on('close', async (code) => {
       try {
         if (code === 0) {
-          const ver = await execAsync(redirCmd(PI_BIN + ' --version'), 10000)
-          const version = ver.stdout.trim() || 'unknown'
+          const vr = await resolvePiVersion(3)
+          const version = vr.ok ? vr.version : 'unknown'
           const omni = await httpGetUrl(OMNI_HOST + '/', 4000)
           console.log('[npm install] done, version:', version, 'omni:', omni.status)
+          if (!vr.ok) console.log('[npm install] version check failed:', vr.error && vr.error.message)
           $ws.sse(runId, JSON.stringify({ type: 'full_log', content: fullLog.join('\n') }))
           $ws.sse(runId, JSON.stringify({ type: 'done', version: version, omni: omni.status === 200 }))
         } else {
