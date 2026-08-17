@@ -563,7 +563,10 @@
         <div class="d-item" :class="{active: !currentModel}" @click="selectModel('')">
           <div class="d-title">auto</div><div class="d-sub">default model</div>
         </div>
-        <div v-for="m in cleanModels" :key="m" class="d-item" :class="{active: m===currentModel}" @click="selectModel(m)">
+        <div class="d-filter">
+          <input type="text" v-model="modelFilter" placeholder="Filter models..." @click.stop @input="modelFilter = $event.target.value" spellcheck="false" style="width:100%;padding:6px 10px;border:1px solid var(--bd);border-radius:6px;background:var(--bk);color:var(--fc);font-size:12px;outline:none;box-sizing:border-box;">
+        </div>
+        <div v-for="m in filteredModels" :key="m" class="d-item" :class="{active: m===currentModel}" @click="selectModel(m)">
           <div class="d-title">{{ m }}</div>
         </div>
       </div>
@@ -668,7 +671,8 @@
         currentProvider: '',
         omniCurrent: false, omniStatus: 'checking…',
         customOpen: false, customBusy: false, customEditing: false,
-        customForm: { name: '', baseUrl: '', apiKey: '', api: 'openai-completions', models: '' }
+        customForm: { name: '', baseUrl: '', apiKey: '', api: 'openai-completions', models: '' },
+        modelFilter: ''
       }
     },
     computed: {
@@ -688,6 +692,12 @@
         const out = []
         this.models.forEach((m) => { const c = m.replace(/\r/g, ''); if (out.indexOf(c) < 0) out.push(c) })
         return out
+      },
+      filteredModels() {
+        const list = this.cleanModels
+        if (!this.modelFilter) return list
+        const q = this.modelFilter.toLowerCase()
+        return list.filter((m) => m.toLowerCase().indexOf(q) >= 0)
       },
       cmdFiltered() {
         if (!this.cmdOpen) return []
