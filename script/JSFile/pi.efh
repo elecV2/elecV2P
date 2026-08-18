@@ -437,7 +437,19 @@
     <button v-if="installErr" @click="retryInstall" :disabled="installBusy">{{ installBusy ? 'Retrying...' : 'Retry' }}</button>
   </div>
 
-  <div class="provider-overlay" v-if="!installOverlay && providerOverlay">
+  <div class="install-overlay" v-if="omniOverlay">
+    <div class="spin" v-if="!omniErr"></div>
+    <div class="title">{{ omniErr ? 'OmniRoute failed' : 'Starting OmniRoute...' }}</div>
+    <div class="cmd" v-if="omniCmd">$ {{ omniCmd }}</div>
+    <div class="log" ref="omniLog">
+      <div v-for="(l, li) in omniLog" :key="li">{{ l }}</div>
+      <span v-if="!omniLog.length" style="color:var(--fc3)">{{ omniProgress }}</span>
+    </div>
+    <div class="err" v-if="omniErr">{{ omniErr }}</div>
+    <button v-if="omniErr" @click="retryOmni" :disabled="omniBusy">{{ omniBusy ? 'Retrying...' : 'Retry' }}</button>
+  </div>
+
+  <div class="provider-overlay" v-if="!installOverlay && !omniOverlay && providerOverlay">
     <div class="provider-panel">
       <button class="pp-close" @click="providerOverlay=false" title="Close">×</button>
       <div class="pp-title">Choose model provider</div>
@@ -668,8 +680,9 @@
         workspace: '', wsBusy: false,
         sseMain: null, mainReady: false, sseHandlers: {}, switching: false,
         providerOverlay: false, providerList: [], providerKeys: {}, providerBusy: false,
-        currentProvider: '',
+        currentProvider: '', provSeq: 0,
         omniCurrent: false, omniStatus: 'checking…',
+        omniOverlay: false, omniErr: '', omniProgress: 'Starting OmniRoute...', omniLog: [], omniCmd: '', omniBusy: false, omniEs: null,
         customOpen: false, customBusy: false, customEditing: false,
         customForm: { name: '', baseUrl: '', apiKey: '', api: 'openai-completions', models: '' },
         modelFilter: ''
@@ -969,7 +982,9 @@
       },
       loadProviders() {
         const self = this
+        const seq = ++this.provSeq
         return this.fetchFend('providers', { model: this.currentModel }, 10000).then((data) => {
+          if (seq !== this.provSeq) return data || {}
           if (data && Array.isArray(data.providers)) self.providerList = data.providers
           self.omniCurrent = !!(data && data.omniCurrent)
           self.omniStatus = data && data.omniStatus ? data.omniStatus : 'offline'
@@ -1024,25 +1039,106 @@
       },
       useOmniRoute() {
         const self = this
-        this.providerBusy = true
-        this.fetchFend('provider_save', { name: 'omniroute', apiKey: '' }, 10000).then((data) => {
-          self.providerBusy = false
-          if (data && data.ok) {
-            self.showNotify('OmniRoute enabled', 'success')
-            self.omniCurrent = true
-            self.currentProvider = 'omniroute'
-            self.providerOverlay = false
-            self.loadSessions().then(() => {
-              const defModel = data && data.model ? data.model : ''
-              if (defModel) self.switchDefaultModel(defModel)
-              else self.selectModel('')
+        this.omniOverlay = true
+        this.omniBusy = true
+        this.omniErr = ''
+        this.omniLog = []
+        this.omniCmd = ''
+        this.omniProgress = 'Checking OmniRoute...'
+        if (this.omniEs) { try { this.omniEs.close() } catch(e) {} }
+        const omniId = Date.now() + '-' + Math.random().toString(36).slice(2, 8)
+        const es = new EventSource('/sse/elecV2P/' + omniId)
+        this.omniEs = es
+        es.onmessage = (e) => {
+          try {
+            const d = JSON.parse(e.data)
+            if (d.type === 'cmd') {
+              self.omniCmd = d.content
+              return
+            }
+            if (d.type === 'progress') {
+              self.omniLog.push(String(d.content).replace(/\s+/g, ' ').trim())
+              if (self.omniLog.length > 200) self.omniLog.shift()
+              self.$nextTick(() => {
+                const el = self.$refs.omniLog
+                if (el) el.scrollTop = el.scrollHeight
+              })
+              return
+            }
+            if (d.type === 'full_log') {
+              self.omniLog = String(d.content).split('\n').filter(Boolean)
+              self.$nextTick(() => {
+                const el = self.$refs.omniLog
+                if (el) el.scrollTop = el.scrollHeight
+              })
+              return
+            }
+            if (d.type === 'done') {
+              es.close()
+              self.omniEs = null
+              self.omniBusy = false
+              self.omniOverlay = false
+              self.fetchFend('provider_save', { name: 'omniroute', apiKey: '' }, 10000).then((data) => {
+                if (data && data.ok) {
+                  self.showNotify('OmniRoute enabled', 'success')
+                  self.omniCurrent = true
+                  self.currentProvider = 'omniroute'
+                  self.providerOverlay = false
+                  self.loadSessions().then(() => {
+                    const defModel = data && data.model ? data.model : ''
+                    if (defModel) self.switchDefaultModel(defModel)
+                    else self.selectModel('')
+                  })
+                } else {
+                  self.showNotify('Failed to save config: ' + ((data && data.error) || 'unknown'))
+                }
+              }).catch((err) => {
+                self.showNotify('Failed: ' + err.message)
+              })
+              return
+            }
+            if (d.type === 'error') {
+              es.close()
+              self.omniEs = null
+              self.omniBusy = false
+              self.omniErr = d.content
+              return
+            }
+          } catch(e) {}
+        }
+        es.onerror = () => {}
+        this.fetchFend('ensure_omniroute', { installId: omniId }, 180000).then((data) => {
+          if (data && data.ok && data.running) {
+            es.close()
+            self.omniEs = null
+            self.omniBusy = false
+            self.omniOverlay = false
+            self.fetchFend('provider_save', { name: 'omniroute', apiKey: '' }, 10000).then((sav) => {
+              if (sav && sav.ok) {
+                self.showNotify('OmniRoute enabled', 'success')
+                self.omniCurrent = true
+                self.currentProvider = 'omniroute'
+                self.providerOverlay = false
+                self.loadSessions().then(() => {
+                  const defModel = sav && sav.model ? sav.model : ''
+                  if (defModel) self.switchDefaultModel(defModel)
+                  else self.selectModel('')
+                })
+              } else {
+                self.showNotify('Failed to save config: ' + ((sav && sav.error) || 'unknown'))
+              }
+            }).catch((err) => {
+              self.showNotify('Failed: ' + err.message)
             })
-          } else {
-            self.showNotify('Failed: ' + ((data && data.error) || 'unknown'))
+          } else if (data && !data.ok && data.error) {
+            es.close()
+            self.omniEs = null
+            self.omniBusy = false
+            self.omniErr = data.error
           }
         }).catch((e) => {
-          self.providerBusy = false
-          self.showNotify('Failed: ' + e.message)
+          self.omniBusy = false
+          self.omniErr = e.message
         })
       },
       openCustomProvider() {
@@ -1640,6 +1736,9 @@
         const self = this
         self.startInstall()
       },
+      retryOmni() {
+        this.useOmniRoute()
+      },
       initApp() {
         if (_inited) return
         _inited = true
@@ -1665,6 +1764,9 @@
           self.refreshCtx()
           self.loadProviders().then(() => {
             if (!self.currentProvider) self.showProviderPicker()
+            else if (self.omniCurrent && self.omniStatus && self.omniStatus.indexOf('not running') >= 0) {
+              self.useOmniRoute()
+            }
           })
         })
       },
@@ -2576,8 +2678,9 @@ $fend('start', (data) => {
         const etxt = String(msg.errorMessage)
         if (isRetryable(etxt) && retryLeft > 0 && !retrying) {
           retryLeft--
+          const attempt = MAX_RETRY - retryLeft
           const delay = retryDelayMs(retryLeft)
-          sendRef('↻ transient error, retrying in ' + Math.round(delay / 1000) + 's… (attempt ' + (MAX_RETRY - retryLeft) + '/' + MAX_RETRY + ')', 'info')
+          sendRef('↻ transient error, retrying in ' + Math.round(delay / 1000) + 's… (attempt ' + attempt + '/' + MAX_RETRY + ')' + (etxt && etxt !== 'transient error' ? ' · ' + etxt.split('\n')[0] : ''), 'info')
           retrying = true
           kickWatchdog()
           setTimeout(() => { relaunch() }, delay)
@@ -2717,7 +2820,7 @@ $fend('start', (data) => {
 
   let pronBreaking = false
   const relaunch = () => {
-    if (streamEnded || retryLeft <= 0) return
+    if (streamEnded) return
     pronBreaking = true
     try { if (proc) proc.kill() } catch(e) {}
     try { delete runProcs[runId] } catch(e) {}
@@ -2751,6 +2854,47 @@ $fend('stop', async (data) => {
   }
   return { ok: false, error: 'no active run' }
 })
+
+const resolveOmniVersion = (tries) => {
+  return new Promise((resolve) => {
+    const attempt = (n) => {
+      execAsync(redirCmd('omniroute --version'), 5000).then((v) => {
+        resolve({ ok: true, version: v.stdout.trim() || 'unknown' })
+      }).catch((e) => {
+        if (n > 1) setTimeout(() => { attempt(n - 1) }, 1000)
+        else resolve({ ok: false })
+      })
+    }
+    attempt(tries || 2)
+  })
+}
+
+const waitForOmniReady = (timeout) => {
+  return new Promise((resolve) => {
+    const start = Date.now()
+    const check = () => {
+      httpGetUrl(OMNI_HOST + '/', 2000).then((r) => {
+        if (r.status === 200) resolve(true)
+        else if (Date.now() - start > timeout) resolve(false)
+        else setTimeout(check, 2000)
+      }).catch(() => {
+        if (Date.now() - start > timeout) resolve(false)
+        else setTimeout(check, 2000)
+      })
+    }
+    check()
+  })
+}
+
+const startOmniProcess = () => {
+  const proc = spawn('omniroute', [], {
+    detached: true,
+    stdio: 'ignore',
+    windowsHide: true
+  })
+  proc.unref()
+  return proc
+}
 
 const resolvePiVersion = (tries) => {
   return new Promise((resolve) => {
@@ -2833,6 +2977,85 @@ $fend('ensure_pi', async (data) => {
   } catch(e) {
     $ws.sse(runId, JSON.stringify({ type: 'error', content: e.message }))
     return { ok: true, installing: true }
+  }
+})
+
+$fend('ensure_omniroute', async (data) => {
+  const runId = data && data.installId
+  const omniCheck = await httpGetUrl(OMNI_HOST + '/', 4000)
+  if (omniCheck.status === 200) {
+    console.log('[ensure_omniroute] already running')
+    if (runId) $ws.sse(runId, JSON.stringify({ type: 'done', status: 'running' }))
+    return { ok: true, running: true }
+  }
+  const installed = await resolveOmniVersion(2)
+  if (!installed.ok) {
+    if (!runId) return { ok: false, error: 'omniroute not installed and no installId' }
+    try {
+      const INSTALL_CMD = 'npm install -g omniroute --loglevel=verbose'
+      $ws.sse(runId, JSON.stringify({ type: 'cmd', content: INSTALL_CMD }))
+      const proc = spawn(IS_WIN ? process.env.COMSPEC : 'sh',
+        IS_WIN ? ['/d', '/s', '/c', INSTALL_CMD + ' 2>&1'] : ['-c', INSTALL_CMD + ' 2>&1'],
+        { timeout: 180000, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] })
+      const fullLog = []
+      const sendProgress = (text) => {
+        const lines = stripAnsi(text.toString()).split('\n').filter(Boolean)
+        for (const l of lines) {
+          const line = l.trim()
+          console.log('[omniroute install]', line)
+          if (line) {
+            fullLog.push(line)
+            if (fullLog.length > 2000) fullLog.splice(0, fullLog.length - 2000)
+            $ws.sse(runId, JSON.stringify({ type: 'progress', content: line }))
+          }
+        }
+      }
+      proc.stdout.on('data', sendProgress)
+      proc.stderr.on('data', sendProgress)
+      proc.on('close', async (code) => {
+        try {
+          if (code === 0) {
+            $ws.sse(runId, JSON.stringify({ type: 'progress', content: 'OmniRoute installed, starting...' }))
+            startOmniProcess()
+            const ready = await waitForOmniReady(30000)
+            $ws.sse(runId, JSON.stringify({ type: 'full_log', content: fullLog.join('\n') }))
+            if (ready) {
+              console.log('[ensure_omniroute] installed and started')
+              $ws.sse(runId, JSON.stringify({ type: 'done', status: 'started' }))
+            } else {
+              $ws.sse(runId, JSON.stringify({ type: 'error', content: 'OmniRoute started but not responding on ' + OMNI_HOST }))
+            }
+          } else {
+            $ws.sse(runId, JSON.stringify({ type: 'full_log', content: fullLog.join('\n') }))
+            $ws.sse(runId, JSON.stringify({ type: 'error', content: 'npm install failed (code ' + code + ')' }))
+          }
+        } catch(e) {
+          $ws.sse(runId, JSON.stringify({ type: 'full_log', content: fullLog.join('\n') }))
+          $ws.sse(runId, JSON.stringify({ type: 'error', content: e.message }))
+        }
+      })
+      proc.on('error', (e) => {
+        $ws.sse(runId, JSON.stringify({ type: 'full_log', content: fullLog.join('\n') }))
+        $ws.sse(runId, JSON.stringify({ type: 'error', content: e.message }))
+      })
+      return { ok: true, installing: true }
+    } catch(e) {
+      $ws.sse(runId, JSON.stringify({ type: 'error', content: e.message }))
+      return { ok: false, error: e.message }
+    }
+  }
+  if (!runId) return { ok: false, error: 'omniroute not running and no installId' }
+  $ws.sse(runId, JSON.stringify({ type: 'cmd', content: 'omniroute' }))
+  $ws.sse(runId, JSON.stringify({ type: 'progress', content: 'Starting OmniRoute...' }))
+  startOmniProcess()
+  const ready = await waitForOmniReady(30000)
+  if (ready) {
+    console.log('[ensure_omniroute] started')
+    $ws.sse(runId, JSON.stringify({ type: 'done', status: 'started' }))
+    return { ok: true, running: true }
+  } else {
+    $ws.sse(runId, JSON.stringify({ type: 'error', content: 'OmniRoute started but not responding on ' + OMNI_HOST }))
+    return { ok: false, error: 'OmniRoute not responding' }
   }
 })
 
