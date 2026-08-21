@@ -292,6 +292,15 @@ async function execFunc(command, options={}, cb=null) {
     wsSer.send({ type: 'minishell', data: err })
   })
 
+  // spawn 本身失败（命令不存在 ENOENT、无权限 EACCES、cwd 不存在等）
+  // 不挂会冒泡成进程级 uncaughtException 并反复写 error 日志
+  childexec.on('error', err => {
+    const estack = errStack(err)
+    execlog.error('spawn error:', estack)
+    callback(null, estack, true)
+    wsSer.send({ type: 'minishell', data: 'spawn error: ' + estack })
+  })
+
   childexec.on('exit', (code, signal) => {
     let fstr = 'command: ' + command
     if (options.timeout && signal === 'SIGTERM') {

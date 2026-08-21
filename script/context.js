@@ -216,7 +216,8 @@ class contextBase {
         }).catch(error=>{
           resp = errStack(error)
           this.console.error('$task.fetch', req.url, resp)
-          reject({ error: resp })
+          // 用 Error 包裹，避免主进程 errStack() 拿到普通对象时二次抛错
+          reject(new Error(typeof resp === 'string' ? resp : ('$task.fetch ' + (req.url||'') + ' Error')))
         }).finally(()=>{
           if(cb && sType(cb) === 'function') {
             return cb(resp)

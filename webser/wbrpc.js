@@ -228,6 +228,11 @@ module.exports = app => {
       target = new Set([res]);
       sseSer.clients.set(id, target);
     }
+    // 客户端断开瞬间写入会触发 EPIPE error 事件，必须监听，否则 uncaughtException
+    res.on('error', e=>{
+      target.delete(res);
+      clog.debug('sse connection', id, 'error:', e.message);
+    });
     res.write('data: ' + JSON.stringify({
       type: 'init', data: { id, ip: req.ip },
     }) + '\n\n');

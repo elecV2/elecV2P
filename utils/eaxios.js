@@ -255,6 +255,11 @@ function downloadfile(durl, options, cb) {
         dest = path.resolve(folder, fname);
       }
       const total = Number(response.headers['content-length']);
+      // 给下载 read stream 挂 error，避免连接中途被重置时无监听→主进程 unhandledRejection
+      response.data.on('error', err => {
+        reject('download stream error! ' + (err.message || err))
+        clog.error(durl, 'download stream error', errStack(err))
+      })
       if (sType(cb) === 'function') {
         let dsize = 0, step = 0;
         let bname = fname.length < 23 ? fname : fname.slice(0,7) + '...' + fname.slice(-12);

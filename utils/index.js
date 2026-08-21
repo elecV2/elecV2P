@@ -10,12 +10,37 @@ const { CONFIG_FEED, feedAddItem, iftttPush, barkPush, custPush, feedPush, feedX
 
 const clog = new logger({ head: 'elecV2Proc', file: 'elecV2Proc' })
 
+// 全局异常节流：相同堆栈特征在 5 秒内只记一次，避免定时任务裸 Promise 反复刷屏
+// 写满 elecV2Proc.log / errors.log
+const _errThrottle = new Map()
+const _errThrottleMs = 5000
+const _errThrottleMax = 500
+function _errThrottled(head, estk) {
+  const key = head + '::' + String(estk).slice(0, 200)
+  const now = Date.now()
+  const last = _errThrottle.get(key)
+  if (last && now - last < _errThrottleMs) {
+    return true  // 跳过
+  }
+  _errThrottle.set(key, now)
+  if (_errThrottle.size > _errThrottleMax) {
+    // 防止 Map 无限增长，设上限后清空旧项
+    _errThrottle.clear()
+    _errThrottle.set(key, now)
+  }
+  return false
+}
+
 process.on('unhandledRejection', err => {
-  clog.error('unhandledRejection at Promise', errStack(err))
+  const estk = errStack(err)
+  if (_errThrottled('unhandledRejection', estk)) return
+  clog.error('unhandledRejection at Promise', estk)
 })
 
 process.on('uncaughtException', err => {
-  clog.error('Caught exception', errStack(err))
+  const estk = errStack(err)
+  if (_errThrottled('uncaughtException', estk)) return
+  clog.error('Caught exception', estk)
 })
 
 process

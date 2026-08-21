@@ -205,10 +205,28 @@ const sseSer = {
     }
     const resset = this.clients.get(sid);
     if (data === 'end') {
-      resset.forEach(res=>res.end());
+      resset.forEach(res=>{
+        try { if (!res.destroyed && !res.writableEnded) res.end(); } catch(e) {}
+      });
       return;
     }
-    resset.forEach(res=>res.write('data: ' + sString(data) + '\n\n'));
+    const cont = 'data: ' + sString(data) + '\n\n';
+    // 客户端可能已断开（关闭页面/刷新），写入前检查并清理死连接，避免 EPIPE uncaught error
+    resset.forEach(res=>{
+      if (res.destroyed || res.writableEnded) {
+        resset.delete(res);
+        return;
+      }
+      try {
+        res.write(cont);
+      } catch(e) {
+        clog.debug('sse send to', sid, 'failed:', e.message);
+        resset.delete(res);
+      }
+    });
+    if (!resset.size) {
+      this.clients.delete(sid);
+    }
   }
 }
 
