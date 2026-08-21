@@ -268,7 +268,7 @@
   "about_opensource": "项目已开源",
   "about_credits": "贡献/参考",
   "app_name": "应用名称",
-  "app_logo": "显示图标 logo",
+  "app_logo": "显示图标 logo（留空则自动生成）",
   "app_type": "应用类型",
   "app_target": "执行目标",
   "app_run_mode": "运行方式（在打开首页时）",

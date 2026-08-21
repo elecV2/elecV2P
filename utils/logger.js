@@ -15,7 +15,9 @@ const { CONFIG } = require('../config')
 const CONFIG_LOG = {
   logspath: path.join(__dirname, '../logs'),
   alignHeadlen: 16,               // 日志头部长度
-  globalLevel: CONFIG.gloglevel || 'info'
+  globalLevel: CONFIG.gloglevel || 'info',
+  singleMaxlen: 8 * 1024,         // 单条日志最大写入字节，超出则尾部用省略号代替（0 表示不限制）
+  omitsSuffix: ' … ' + (CONFIG.lang === 'en' ? 'truncated' : '省略')  // 截断时的后缀
 }
 
 const LOG_LEVELS = {
@@ -207,7 +209,29 @@ const LOGFILE = {
     if (!filename || data === undefined || data === '') {
       return
     }
-    this.streamFile(filename).write((head ? `[${ alignHead(head) }][${ now() }] ` : '') + sString(data) + '\n')
+    let cont = (head ? `[${ alignHead(head) }][${ now() }] ` : '') + sString(data)
+    const maxlen = CONFIG_LOG.singleMaxlen
+    if (maxlen > 0) {
+      const blen = Buffer.byteLength(cont, 'utf8')
+      if (blen > maxlen) {
+        // 按字符截断，避免在多字节字符中间断开导致乱码
+        const suffix = CONFIG_LOG.omitsSuffix
+        const suffixLen = Buffer.byteLength(suffix, 'utf8')
+        const limit = maxlen - suffixLen
+        let keep = 0
+        let used = 0
+        const len = cont.length
+        for (let i = 0; i < len; i++) {
+          const c = cont.charCodeAt(i)
+          const b = c > 0x7f ? (c > 0xffff ? 4 : (c > 0x7ff ? 3 : 2)) : 1
+          if (used + b > limit) break
+          keep++
+          used += b
+        }
+        cont = cont.slice(0, keep) + suffix
+      }
+    }
+    this.streamFile(filename).write(cont + '\n')
   },
   get(filename){
     if (!filename) {
