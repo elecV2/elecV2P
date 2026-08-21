@@ -79,8 +79,15 @@ module.exports = () => {
 
   newServer(app).then(server=>{
     server.on('clientError', (err, socket) => {
-      clog.error('elecV2P clientError', err)
-      socket.end('HTTP/1.1 400 Bad Request\r\n\r\n'+err.message)
+      // ECONNRESET / EPIPE / ECONNABORTED 是客户端中途 RST/关闭的常态噪声，
+      // 不当 error 记录，避免反复刷新 errors.log / pm2 error 日志
+      const code = err && (err.code || err.errno)
+      if (code === 'ECONNRESET' || code === 'EPIPE' || code === 'ECONNABORTED' || code === -54 || code === -32 || code === -53) {
+        clog.debug('clientError (benign)', code, err && err.message)
+      } else {
+        clog.notify('elecV2P clientError', err)
+      }
+      try { socket.end('HTTP/1.1 400 Bad Request\r\n\r\n' + (err && err.message ? err.message : 'Bad Request')) } catch(e) {}
     })
 
     server.listen(CONFIG_Port.webst, ()=>{
