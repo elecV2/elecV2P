@@ -1178,8 +1178,8 @@
           last.meta = (last.meta ? last.meta + ' | ' : '') + '⏹ stopped'
         }
         this.fetchFend('stop', { runId: runId, session: sessionId }, 15000).then((data) => {
-          if (!data.ok && !data.error) {
-            self.showNotify('stop failed' + (data.code ? ' (' + data.code + ')' : ''))
+          if (!data.ok) {
+            self.showNotify('stop failed: ' + (data.error || (data.code ? 'code ' + data.code : 'unknown')))
           }
           self.busy = false
         }).catch((e) => {
@@ -1999,6 +1999,9 @@ const runCliMode = (data, runId) => {
 
   const proc = spawn(OC_BIN, args, { env: Object.assign({}, process.env, { NODE_OPTIONS: '--no-warnings' }), windowsHide: true, shell: IS_WIN, stdio: ['ignore', 'pipe', 'pipe'] })
   runProcs[runId] = proc
+  // favend 每次请求都会重新执行整个脚本，runProcs 会变成空对象。
+  // 把 proc 存进跨请求共享的 $cache，stop 时才能找到并杀掉进程。
+  try { $cache.set('oc_run_' + runId, proc) } catch(e) {}
 
   let buf = ''
   proc.stdout.setEncoding('utf8')
@@ -2035,6 +2038,7 @@ const runCliMode = (data, runId) => {
   proc.on('error', (e) => { fail(e.message || String(e)) })
   proc.on('close', (code) => {
     try { delete runProcs[runId] } catch(e) {}
+    try { $cache.delete('oc_run_' + runId) } catch(e) {}
     if (streamEnded) return
     if (code !== 0) fail('opencode exited with code ' + code)
     else finish({ content: '', model: model, tokens: tokens })
@@ -2525,7 +2529,7 @@ $fend('stop', async (data) => {
   if (!data) return { ok: false }
   const runId = data.runId
   const sessionId = data.session || ''
-  const rp = runProcs[runId]
+  const rp = runProcs[runId] || $cache.get('oc_run_' + runId)
   if (rp) {
     try {
       if (IS_WIN) await execAsync('taskkill /PID ' + rp.pid + ' /T /F', 5000)
@@ -2534,6 +2538,7 @@ $fend('stop', async (data) => {
       try { rp.kill() } catch(e2) {}
     }
     try { delete runProcs[runId] } catch(e) {}
+    try { $cache.delete('oc_run_' + runId) } catch(e) {}
     return { ok: true, mode: 'run' }
   }
   try {

@@ -598,7 +598,8 @@
       <template v-if="m.role === 'user'">{{ m.content }}</template>
       <template v-else>
         <div v-for="(p, pi) in m.parts" :key="pi">
-          <div v-if="p.t === 'ref'" :class="['ref', p.cls || refClass(p.c)]">{{ p.c }}</div>
+          <div v-if="p.t === 'ref'" :class="['ref', p.cls || refClass(p.c)]" :style="p.cls === 'reasoning' && p.body ? 'cursor: pointer;' : ''" @click="p.cls === 'reasoning' && p.body ? (p.open = p.open === undefined ? false : !p.open) : null">{{ p.c }}</div>
+          <div v-if="p.t === 'ref' && p.cls === 'reasoning' && p.body && p.open !== false" class="reasoning-body">{{ p.body }}</div>
           <pre v-else-if="p.t === 'out'" class="tool-out">{{ p.c }}</pre>
           <template v-else-if="p.t === 'text'">
             <div v-for="(v, vi) in mdViews(p, m.streaming)" :key="vi" class="stream-par" :class="p.cls || ''">
@@ -1392,6 +1393,12 @@
               flushText()
               el.parts.push({ t: 'ref', c: data.content, cls: data.cls || '' })
             }
+            if (data.type === 'reasoning') {
+              flushText()
+              const lastP = el.parts[el.parts.length - 1]
+              if (lastP && lastP.t === 'ref' && lastP.cls === 'reasoning') lastP.body = (lastP.body || '') + (data.content || '')
+              else el.parts.push({ t: 'ref', c: '✱ reasoning', cls: 'reasoning', body: data.content || '' })
+            }
             if (data.type === 'out') {
               flushText()
               const lastOut = el.parts[el.parts.length - 1]
@@ -1572,8 +1579,8 @@
           last.meta = (last.meta ? last.meta + ' | ' : '') + '⏹ stopped'
         }
         this.fetchFend('stop', { runId: runId, session: sessionId }, 15000).then((data) => {
-          if (!data.ok && !data.error) {
-            self.showNotify('stop failed' + (data.code ? ' (' + data.code + ')' : ''))
+          if (!data.ok) {
+            self.showNotify('stop failed: ' + (data.error || (data.code ? 'code ' + data.code : 'unknown')))
           }
           self.busy = false
         }).catch((e) => {
@@ -1854,6 +1861,17 @@ const maskSecrets = (s) => {
 const IS_WIN = process.platform === 'win32'
 const DEVNULL = IS_WIN ? 'nul' : '/dev/null'
 const redirCmd = (cmd) => { return cmd + ' 2>' + DEVNULL }
+
+const killTree = (child) => {
+  if (!child || !child.pid) return
+  try {
+    if (IS_WIN) execAsync('taskkill /PID ' + child.pid + ' /T /F', 5000).catch(() => {})
+    else {
+      try { process.kill(-child.pid, 'SIGTERM') } catch(e) {}
+      setTimeout(() => { try { process.kill(-child.pid, 'SIGKILL') } catch(e) {} }, 1500)
+    }
+  } catch(e) {}
+}
 
 const execAsync = (cmd, timeout) => {
   return new Promise((resolve, reject) => {
@@ -2455,7 +2473,7 @@ const convFromFile = (full) => {
     for (const p of parts) {
       if (!p) continue
       if (p.type === 'text' && p.text) plist.push({ t: 'text', c: p.text })
-      else if (p.type === 'thinking' && p.thinking) plist.push({ t: 'ref', c: '✱ reasoning', cls: 'reasoning' })
+      else if (p.type === 'thinking' && p.thinking) plist.push({ t: 'ref', c: '✱ reasoning', cls: 'reasoning', body: p.thinking })
       else if (p.type === 'toolCall') {
         const arg = toolArg(p.arguments || {})
         plist.push({ t: 'ref', c: '◈ ' + (p.name || 'tool') + (arg ? ' · ' + maskSecrets(arg) : ''), cls: 'tool' })
@@ -2601,7 +2619,9 @@ $fend('start', (data) => {
     if (watchdog) clearTimeout(watchdog)
     if (aliveTimer) clearInterval(aliveTimer)
     if (toolHeartbeat) clearInterval(toolHeartbeat)
-    try { delete runProcs[runId] } catch(e) {}
+    try { delete runProcs[runId] } catch(e) {} try { $cache.delete('pi_run_' + runId) } catch(e) {}
+    // watchdog 超时结束时 pi 可能仍在运行，需要杀掉，否则会继续写 session
+    if (payload && payload.timeout) killTree(proc)
     send('done', Object.assign({ steps: stepCount }, payload || {}, payload.tokens ? { tokens: normTokens(payload.tokens) } : {}))
   }
   const fail = (msg) => {
@@ -2610,8 +2630,8 @@ $fend('start', (data) => {
     if (watchdog) clearTimeout(watchdog)
     if (aliveTimer) clearInterval(aliveTimer)
     if (toolHeartbeat) clearInterval(toolHeartbeat)
-    try { delete runProcs[runId] } catch(e) {}
-    try { if (proc) { proc.kill() } } catch(e) {}
+    try { delete runProcs[runId] } catch(e) {} try { $cache.delete('pi_run_' + runId) } catch(e) {}
+    killTree(proc)
     send('error', { content: msg })
   }
 
@@ -2643,9 +2663,15 @@ $fend('start', (data) => {
       const ame = ev.assistantMessageEvent || {}
       const at = ame.type
       const ci = ame.contentIndex || 0
-      if (at === 'text_delta' && ame.delta) { send('text', { content: ame.delta }); return }
+      if (at === 'text_delta') {
+        const pending = Object.keys(reasoningSeen).filter(k => reasoningSeen[k])
+        for (const k of pending) { reasoningSeen[k] = false; sendRef('✓ reasoning done', 'reasoning') }
+        if (ame.delta) send('text', { content: ame.delta })
+        return
+      }
       if (at === 'thinking_start' || at === 'thinking_delta') {
         if (!reasoningSeen[ci]) { reasoningSeen[ci] = true; sendRef('✱ reasoning', 'reasoning') }
+        if (at === 'thinking_delta' && ame.delta) send('reasoning', { content: ame.delta })
         return
       }
       if (at === 'thinking_end') {
@@ -2759,9 +2785,12 @@ $fend('start', (data) => {
       PI_SKIP_VERSION_CHECK: '1',
       NO_COLOR: '1'
     })
-    try { if (proc) proc.kill() } catch(e) {}
-    proc = spawn(PI_BIN, args, { cwd: cwd, env: env, windowsHide: true, shell: IS_WIN, stdio: ['ignore', 'pipe', 'pipe'] })
+    killTree(proc)
+    proc = spawn(PI_BIN, args, { cwd: cwd, env: env, windowsHide: true, shell: IS_WIN, detached: !IS_WIN, stdio: ['ignore', 'pipe', 'pipe'] })
     runProcs[runId] = proc
+    // favend 每次请求都会重新执行整个脚本，runProcs 会变成空对象。
+    // 把 proc 存进跨请求共享的 $cache，stop 时才能找到并杀掉进程。
+    try { $cache.set('pi_run_' + runId, proc) } catch(e) {}
     retrying = false
 
     let buf = ''
@@ -2785,7 +2814,7 @@ $fend('start', (data) => {
 
     proc.on('error', (e) => { fail(e.message || String(e)) })
     proc.on('close', (code) => {
-      try { delete runProcs[runId] } catch(e) {}
+      try { delete runProcs[runId] } catch(e) {} try { $cache.delete('pi_run_' + runId) } catch(e) {}
       if (streamEnded) return
       if (retrying) return
       if (pronBreaking) return
@@ -2799,7 +2828,7 @@ $fend('start', (data) => {
         if (typeof $ws.sseExists !== 'function' || $ws.sseExists(APP_CH)) return
         clearInterval(aliveTimer)
         aliveTimer = null
-        try { proc.kill() } catch(e) {}
+        killTree(proc)
         fail('client disconnected')
       } catch(e) {}
     }, 15000)
@@ -2822,8 +2851,8 @@ $fend('start', (data) => {
   const relaunch = () => {
     if (streamEnded) return
     pronBreaking = true
-    try { if (proc) proc.kill() } catch(e) {}
-    try { delete runProcs[runId] } catch(e) {}
+    killTree(proc)
+    try { delete runProcs[runId] } catch(e) {} try { $cache.delete('pi_run_' + runId) } catch(e) {}
     if (aliveTimer) { clearInterval(aliveTimer); aliveTimer = null }
     if (toolHeartbeat) { clearInterval(toolHeartbeat); toolHeartbeat = null }
     setTimeout(() => {
@@ -2841,15 +2870,11 @@ $fend('start', (data) => {
 
 $fend('stop', async (data) => {
   if (!data) return { ok: false }
-  const rp = runProcs[data.runId]
+  const rp = runProcs[data.runId] || $cache.get('pi_run_' + data.runId)
   if (rp) {
-    try {
-      if (IS_WIN) await execAsync('taskkill /PID ' + rp.pid + ' /T /F', 5000)
-      else rp.kill('SIGTERM')
-    } catch(e) {
-      try { rp.kill() } catch(e2) {}
-    }
+    killTree(rp)
     try { delete runProcs[data.runId] } catch(e) {}
+    try { $cache.delete('pi_run_' + data.runId) } catch(e) {}
     return { ok: true, mode: 'run' }
   }
   return { ok: false, error: 'no active run' }
