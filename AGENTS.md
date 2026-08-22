@@ -61,6 +61,8 @@ index.js          → app.js → webmodule.js (Express app, serves web/dist, aut
 `.efh` = self-contained HTML+JS apps — a simple HTML syntax extension that bundles frontend + backend in one file. Run via `/run/?target=name.efh` or via favend in EFSS.
 
 **Structure:**
+- **约定**：创建新的 .efh 应用时，前端优先使用 Vue 3。
+
 ```html
 <div>regular HTML content</div>
 <script>

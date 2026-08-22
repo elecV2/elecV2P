@@ -1,5 +1,9 @@
 <a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.8.4)
 
+v3.8.5  2026-08-22
+  • 首页增加默认Pi-Aent和opencode应用
+  • 日志写入逻辑及通用错误处理优化
+
 v3.8.4  2026-07-12
   • 前端vue2升级到vue3-AI辅助
   • 前端打包webpack切换到vite-AI辅助
