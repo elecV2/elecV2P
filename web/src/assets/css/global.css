@@ -1116,6 +1116,10 @@ noscript {
   border-radius: 0;
 }
 
+.ediv--maximized .ediv_title--close {
+  border-top-right-radius: 0;
+}
+
 .ediv--maximized .ediv_content {
   border-radius: 0;
 }
