@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <title>Pi.efh By elecV2</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
@@ -330,7 +330,7 @@
     .ws-row { display: flex; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--bd); flex-shrink: 0; }
     .ws-row input {
       flex: 1; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--bd);
-      background: var(--bk3); color: var(--fc); font-size: 12px; outline: none; font-family: inherit;
+      background: var(--bk3); color: var(--fc); font-size: 16px; outline: none; font-family: inherit;
     }
     .ws-row input:focus { border-color: var(--ac); }
     .ws-row button {
@@ -382,9 +382,9 @@
       background: transparent; border-top: 1px solid var(--bd); flex-shrink: 0;
     }
     .input-bar textarea {
-      flex: 1; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--bd);
-      background: transparent; color: var(--fc); font-family: inherit; font-size: 14px;
-      resize: none; outline: none; min-height: 42px; max-height: 160px;
+      flex: 1; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--bd);
+      background: transparent; color: var(--fc); font-family: inherit; font-size: 16px;
+      resize: none; outline: none; min-height: 40px; max-height: 160px; line-height: 1.25; overflow-y: hidden; overflow-x: hidden;
     }
     .input-bar textarea::placeholder { color: var(--fc3); }
     .input-bar textarea:focus { border-color: var(--ac); }
@@ -474,7 +474,7 @@
     .provider-card .pc-key {
       flex: 1; max-width: 190px; padding: 6px 9px; border-radius: 6px;
       border: 1px solid var(--bd); background: var(--bk); color: var(--fc);
-      font-size: 12px; outline: none;
+      font-size: 16px; outline: none;
     }
     .provider-card .pc-key:focus { border-color: var(--ac); }
     .provider-card .pc-btn {
@@ -514,7 +514,7 @@
     .cp-field label { font-size: 12px; color: var(--fc2); }
     .cp-field input, .cp-field select {
       padding: 8px 10px; border-radius: 6px; border: 1px solid var(--bd);
-      background: var(--bk3); color: var(--fc); font-size: 13px; outline: none;
+      background: var(--bk3); color: var(--fc); font-size: 16px; outline: none;
     }
     .cp-field input:focus, .cp-field select:focus { border-color: var(--ac); }
     .cp-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
@@ -578,7 +578,7 @@
     .q-custom { display: flex; gap: 8px; margin: 6px 0; }
     .q-custom input {
       flex: 1; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--bd);
-      background: var(--bk3); color: var(--fc); font-size: 13px; outline: none;
+      background: var(--bk3); color: var(--fc); font-size: 16px; outline: none;
     }
     .q-custom input:focus { border-color: var(--ac); }
     .q-actions { display: flex; gap: 8px; margin-top: 8px; }
@@ -780,7 +780,7 @@
           <div class="d-title">auto</div><div class="d-sub">default model</div>
         </div>
         <div class="d-filter">
-          <input type="text" ref="modelFilterInput" v-model="modelFilter" placeholder="Filter models..." @click.stop @input="modelFilter = $event.target.value; modelNavIdx = 0" @keydown.up.prevent="modelNav(-1)" @keydown.down.prevent="modelNav(1)" @keydown.enter.prevent="modelNavSelect()" @keydown.esc.prevent="dropdown = ''; modelNavIdx = 0; $nextTick(() => { $refs.inputEl?.focus() })" spellcheck="false" style="width:100%;padding:6px 10px;border:1px solid var(--bd);border-radius:6px;background:transparent;color:var(--fc);font-size:12px;outline:none;box-sizing:border-box;">
+          <input type="text" ref="modelFilterInput" v-model="modelFilter" placeholder="Filter models..." @click.stop @input="modelFilter = $event.target.value; modelNavIdx = 0" @keydown.up.prevent="modelNav(-1)" @keydown.down.prevent="modelNav(1)" @keydown.enter.prevent="modelNavSelect()" @keydown.esc.prevent="dropdown = ''; modelNavIdx = 0; $nextTick(() => { $refs.inputEl?.focus() })" spellcheck="false" style="width:100%;padding:6px 10px;border:1px solid var(--bd);border-radius:6px;background:transparent;color:var(--fc);font-size:16px;outline:none;box-sizing:border-box;">
         </div>
         <div class="d-list">
           <div v-for="(m, mi) in filteredModels" :key="m" :class="['d-item', {active: m===currentModel, nav: mi===modelNavIdx}]" @click="selectModel(m)" @mouseenter="modelNavIdx = mi">

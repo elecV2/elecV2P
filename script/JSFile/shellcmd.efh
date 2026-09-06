@@ -3,22 +3,43 @@
 <head>
   <meta charset="utf-8">
   <meta name="theme-color" content="#1a1a2e">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>Shell Command</title>
   <style>
-    body { background: #1a1a2e; color: #eee; font-family: monospace; padding: 1em; overflow-x: hidden; }
-    html { overflow-x: hidden; }
-    .cmd-bar { display: flex; gap: 0.5em; align-items: center; margin-bottom: 0.5em; }
-    .cmd-input { flex: 1; padding: 0.4em; font-size: 15px; border-radius: 4px; border: 1px solid #444; background: #16213e; color: #0f0; font-family: monospace; min-width: 0; }
-    .output { width: 100%; min-height: 40vh; padding: 0.5em; background: #0a0a0a; border-radius: 4px; white-space: pre-wrap; word-break: break-all; overflow-wrap: break-word; font-size: 14px; box-sizing: border-box; }
+    body { background: rgba(20,20,30,0.65); color: #ececec; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, monospace; padding: 0.35em 0.75em; overflow-x: hidden; overflow-y: hidden; min-height: 100vh; display: flex; flex-direction: column; backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%); }
+    html { overflow-x: hidden; overflow-y: hidden; background: linear-gradient(135deg, #1a1a2e 0%, #0f0f14 100%); }
+    .cmd-bar { display: flex; gap: 0.5em; align-items: stretch; margin-bottom: 0.4em; flex-shrink: 0; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
+    .cmd-input { flex: 1; padding: 0.5em 0.7em; font-size: 16px; border-radius: 10px; border: 1px solid #333; background: rgba(255,255,255,0.05); color: #00e676; font-family: inherit; min-width: 0; outline: none; transition: border-color .15s, box-shadow .15s; line-height: 1.3; }
+    .cmd-input:focus { border-color: #00e676; box-shadow: 0 0 0 3px rgba(0,230,118,0.15); background: rgba(255,255,255,0.08); }
+    .output { width: 100%; flex: 0 1 auto; height: auto; min-height: 120px; max-height: calc(100vh - 110px); overflow-y: auto; padding: 0.6em 0.75em; margin-top: 0.15em; background: rgba(255,255,255,0.06); border-radius: 12px; border: 1px solid rgba(255,255,255,0.08); white-space: pre-wrap; word-break: break-all; overflow-wrap: break-word; font-size: 14px; box-sizing: border-box; color: #ddd; font-family: inherit; line-height: 1.5; box-shadow: inset 0 1px 0 rgba(255,255,255,0.05); }
     .block.error { color: #ff5252; font-weight: bold; }
-    .btn { padding: 0.4em 1.2em; cursor: pointer; background: #0f3460; color: #eee; border: none; border-radius: 4px; white-space: nowrap; font-size: 14px; }
-    .btn:hover { background: #16537e; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn { padding: 0.55em 1.2em; cursor: pointer; background: linear-gradient(135deg, #5b8cf7, #3a6fd9); color: #fff; border: none; border-radius: 10px; white-space: nowrap; font-size: 14px; font-family: inherit; font-weight: 500; box-shadow: 0 4px 14px rgba(91,140,247,0.25); transition: transform .05s, background .15s, box-shadow .15s; display: inline-flex; align-items: center; justify-content: center; line-height: 1; letter-spacing: 0.01em; }
+    .btn:hover { background: linear-gradient(135deg, #6fa3fa, #4a83e6); box-shadow: 0 6px 20px rgba(91,140,247,0.35); transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+    #cwd { max-width: 100px; min-width: 60px; font-size: 16px; padding: 0.5em 0.6em; border-radius: 10px; border: 1px solid #333; background: rgba(255,255,255,0.05); color: #00e676; font-family: inherit; outline: none; transition: border-color .15s, box-shadow .15s; }
+    @media (max-width: 480px) {
+      body { padding: 0.35em 0.5em; }
+      .cmd-bar { flex-wrap: wrap; gap: 0.35em; align-items: stretch; margin-bottom: 0.35em; }
+      #cwd { max-width: 55px; min-width: 45px; font-size: 16px; padding: 0.45em 0.4em; border-radius: 8px; }
+      .cmd-input { font-size: 16px; padding: 0.45em 0.5em; border-radius: 8px; }
+      .btn { font-size: 13px; padding: 0.45em 0.8em; border-radius: 8px; }
+    }
+    @media (max-width: 380px) {
+      .cmd-bar { flex-wrap: wrap; gap: 0.25em; align-items: stretch; margin-bottom: 0.3em; }
+      #cwd { max-width: 45px; min-width: 40px; font-size: 16px; padding: 0.4em 0.3em; border-radius: 8px; }
+      .cmd-input { font-size: 16px; padding: 0.4em 0.4em; border-radius: 8px; }
+      .btn { font-size: 12px; padding: 0.4em 0.6em; border-radius: 8px; }
+    }
   </style>
 </head>
 <body>
   <div class="cmd-bar">
+    <input class="cmd-input" id="cwd" title="当前命令执行目录" placeholder="当前目录（默认 script/Shell）" value="" style="max-width:100px;min-width:60px;">
     <input class="cmd-input" id="cmd" placeholder="输入命令，例如: ls" value="ls" autofocus>
     <button class="btn" id="runBtn" onclick="run()">执行</button>
     <button class="btn" onclick="clearOut()">清空</button>
@@ -85,6 +106,13 @@
       input.setSelectionRange(len, len)
     }
 
+    const cwdInput = document.getElementById('cwd')
+    // 加载保存的 cwd
+    try {
+      const saved = localStorage.getItem('shellcmd_cwd')
+      if (saved !== null) cwdInput.value = saved
+    } catch (e) {}
+
     loadHistory()
 
     // 页面加载时建立固定 SSE 通道
@@ -140,10 +168,14 @@
       // 执行后重置历史浏览指针
       histIndex = -1
       draftBeforeHist = ''
+      // 保存 cwd
+      try {
+        localStorage.setItem('shellcmd_cwd', cwdInput.value.trim())
+      } catch (e) {}
 
       // 发送命令到后端，后端通过固定 sid 的 SSE 通道流式推送输出
       currentCmdId = Date.now()
-      $fend('run', { cmd, sid: sseSid, id: currentCmdId }).then(res => res.text()).then(data => {
+      $fend('run', { cmd, sid: sseSid, id: currentCmdId, cwd: cwdInput.value.trim() }).then(res => res.text()).then(data => {
         // $fend 本身返回占位，实际输出通过 SSE
         if (data && data.trim() && data.trim() !== 'no output') {
           console.log('$fend result:', data)
@@ -276,12 +308,13 @@
   }
 
   $fend('run', async data => {
-    // data 格式: { cmd, sid, id }
-    const { cmd, sid, id } = data
+    // data 格式: { cmd, sid, id, cwd }
+    const { cmd, sid, id, cwd } = data
     let output = ''
     return new Promise((resolve) => {
       $exec(cmd, {
         from: 'eapp-shell',
+        cwd: cwd || undefined,
         timeout: 30000,
         cb(data, error, finished) {
           if (error) {
