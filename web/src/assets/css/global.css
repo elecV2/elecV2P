@@ -957,6 +957,8 @@ noscript {
 
 .ediv {
   position: absolute;
+  min-width: 200px;
+  min-height: 36px;
   max-width: 100%;
   max-height: 100%;
   display: flex;
