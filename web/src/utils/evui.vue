@@ -1,7 +1,12 @@
 ﻿<template>
   <div class="evui">
-    <VueDragResize v-for="(ediv, drid) in displayList" :key="drid" className="ediv" dragHandle=".ediv_title--name" :parent="true" :prevent-deactivation="false" :active="ediv.active" :w="ediv.width" :h="ediv.height" :x="ediv.left" :y="ediv.top" :z="ediv.z" :resizable="ediv.resizable" :draggable="ediv.draggable" :maxWidth="evMaxW" :maxHeight="evMaxH" :handles="['tl','tr','bl','br']" :lock-aspect-ratio="false" :class="{ 'ediv--minimized': ediv.minimized, 'ediv--maximized': ediv.maximized && !ediv.minimized }" @deactivated="ediv.z=1" @activated="ediv.z=2" @resizeStop="(...args) => updateVal(args, drid)" @dragStop="(...args) => updateVal(args, drid)">
-      <h3 class="ediv_title" :style="ediv.style.title" @click="ediv.maximized ? null : (ediv.z=2)">
+    <VueDragResize v-for="(ediv, drid) in displayList" :key="drid" className="ediv" dragHandle=".ediv_title--name" :parent="true" :prevent-deactivation="false" :active="ediv.active" :w="ediv.width" :h="ediv.height" :x="ediv.left" :y="ediv.top" :z="ediv.z" :resizable="ediv.resizable" :draggable="ediv.draggable" :maxWidth="evMaxW" :maxHeight="evMaxH" :handles="['tl','tr','bl','br']" :lock-aspect-ratio="false" :class="{ 'ediv--minimized': ediv.minimized, 'ediv--maximized': ediv.maximized && !ediv.minimized }" @deactivated="ediv.z=1" @activated="ediv.maximized ? ediv.z=100 : (ediv.z=2)" @resizeStop="(...args) => updateVal(args, drid)" @dragStop="(...args) => updateVal(args, drid)">
+      <h3 class="ediv_title" :style="ediv.style.title" @click="ediv.maximized ? null : (ediv.z=Math.max(ediv.z, 100))">
+        <span class="ediv_title--arrows" v-if="sortedDisplayList.length > 1" @click.stop>
+          <span class="ediv_title--arrow ediv_title--arrowprev" @click.stop="evSwitchWindow('prev')" :title="'切换到上一个窗口'"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg></span>
+          <span class="ediv_title--counter">{{ getWindowIndex(drid) }}/{{ topWindowTotal }}</span>
+          <span class="ediv_title--arrow ediv_title--arrownext" @click.stop="evSwitchWindow('next')" :title="'切换到下一个窗口'"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg></span>
+        </span>
         <span class="ediv_title--name" :title="drid">{{ ediv.title }}</span>
         <span class="ediv_title--minimize" @click="evMinimize(drid)" :title="$t('minimize')"><i class="ediv_btn_icon ediv_btn_icon--min"></i></span>
         <span v-if="ediv.maximized" class="ediv_title--maximize" @click="evRestoreMaximized(drid)" :title="$t('restore')"><i class="ediv_btn_icon ediv_btn_icon--restore"></i></span>
@@ -62,6 +67,7 @@ export default {
       dirty: false,
       maxZ: 2,
       viewport: { w: 0, h: 0 },
+      windowOrder: [],  // 按固定顺序记录窗口ID
     }
   },
   computed: {
@@ -92,6 +98,14 @@ export default {
         list.push({ ...item, _id: id, _source: 'dock' })
       }
       return list
+    },
+    sortedDisplayList() {
+      // 按 windowOrder 顺序排列，非最小化窗口
+      const ids = this.windowOrder.filter(id => this.draglist[id] && !this.draglist[id].minimized)
+      return ids.map(id => [id, this.draglist[id]])
+    },
+    topWindowTotal() {
+      return this.windowOrder.filter(id => this.draglist[id] && !this.draglist[id].minimized).length
     },
   },
   created() {
@@ -198,7 +212,12 @@ export default {
       evui.maximized = false
       evui.z = ++this.maxZ
       evui.active = true
+      // 取消其他窗口的激活状态
+      for (const wid in this.draglist) {
+        if (wid !== id) this.draglist[wid].active = false
+      }
       this.draglist[id] = evui
+      if (!this.windowOrder.includes(id)) this.windowOrder.push(id)
       // 窗口数量超过 12 时，提示可能影响性能，且不进行 store 持久化
       if (Object.keys(this.draglist).length > 12) {
         this.$message.success(this.$t('evui_too_many_title'), this.$t('evui_too_many_msg'), 6)
@@ -326,6 +345,10 @@ export default {
       }
       const item = this.draglist[id]
       if (!item) return
+      // 取消其他窗口的激活状态
+      for (const wid in this.draglist) {
+        if (wid !== id) this.draglist[wid].active = false
+      }
       item.minimized = false
       const wasMaximized = item.prev && item.prev.maximized
       if (item.prev && !item.maximized) {
@@ -351,6 +374,7 @@ export default {
           this.$wsrecv.send(id, 'close')
         }
         delete this.draglist[id]
+        this.windowOrder = this.windowOrder.filter(wid => wid !== id)
         this.markDirty()
         return
       }
@@ -364,6 +388,39 @@ export default {
       if (this.$wsrecv) {
         this.$wsrecv.send(id, this.draglist[id].cbdata)
       }
+    },
+    evSwitchWindow(direction) {
+      const order = this.windowOrder.filter(id => this.draglist[id] && !this.draglist[id].minimized)
+      if (order.length <= 1) return
+      // 找到当前激活窗口，找不到则用第一个
+      let activeId = order.find(id => this.draglist[id]?.active)
+      if (!activeId) activeId = order[0]
+      const curIdx = order.indexOf(activeId)
+      // 计算下一个窗口 ID（prev 上一个，next 下一个，循环）
+      let nextIdx
+      if (direction === 'prev') {
+        nextIdx = curIdx > 0 ? curIdx - 1 : order.length - 1
+      } else {
+        nextIdx = curIdx < order.length - 1 ? curIdx + 1 : 0
+      }
+      const nextId = order[nextIdx]
+      if (nextId === activeId) return
+      // 检查是否有全屏窗口
+      const maximizedId = order.find(id => this.draglist[id].maximized)
+      // 切换激活状态
+      this.draglist[activeId].active = false
+      // 新激活窗口设为最高 z，全屏窗口重置为 100（确保在 dock 之上）
+      this.draglist[nextId].z = maximizedId ? 101 : Math.max(++this.maxZ, 100)
+      this.draglist[nextId].active = true
+      if (maximizedId && maximizedId !== nextId) {
+        this.draglist[maximizedId].z = 100
+      }
+      this.markDirty()
+    },
+    getWindowIndex(drid) {
+      const order = this.windowOrder.filter(id => this.draglist[id] && !this.draglist[id].minimized)
+      const idx = order.indexOf(drid)
+      return idx === -1 ? 0 : idx + 1
     },
     evDelegate(event, id){
       const method = event && event.target.dataset.method

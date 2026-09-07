@@ -1101,6 +1101,49 @@ noscript {
   opacity: 1;
 }
 
+.ediv_title--arrows {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 8px;
+  gap: 2px;
+}
+
+.ediv_title--arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.65;
+  transition: opacity .15s, background .15s;
+  color: var(--main-fc);
+}
+
+.ediv_title--arrow:hover {
+  opacity: 1;
+  background: rgba(255,255,255,0.15);
+}
+
+.ediv_title--counter {
+  display: inline-block;
+  min-width: 32px;
+  text-align: center;
+  font-size: 12px;
+  font-family: var(--font-num, monospace);
+  opacity: 0.8;
+  cursor: default;
+}
+
+.ediv--maximized .ediv_title--arrows {
+  pointer-events: auto;
+}
+
+.ediv--maximized .ediv_title--arrow {
+  pointer-events: auto;
+}
+
 .ediv--maximized {
   position: fixed !important;
   top: 0 !important;
@@ -1108,7 +1151,7 @@ noscript {
   transform: none !important;
   width: 100vw !important;
   height: 100vh !important;
-  z-index: 100 !important;
+  z-index: 100;
   border-radius: 0;
 }
 
