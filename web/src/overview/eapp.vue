@@ -172,7 +172,26 @@ export default {
         this.logs.unshift(`[${this.$logHead('eapp notify')}][${this.$sTime(null, 1)}] 执行 EFH: ${ app.target }`)
         break
       case 'url':
-        this.$uApi.open(app.target)
+        this.$evui({
+          id: 'eapp_url_' + app.hash,
+          title: app.name,
+          maximized: true,
+          width: 800,
+          height: 600,
+          resizable: true,
+          draggable: true,
+          style: {
+            content: 'padding: 0; height: 100%;'
+          },
+          content: `<div style="display:flex;flex-direction:column;height:100%;"><div style="padding:8px;background:var(--secd-bk);border-bottom:1px solid var(--tras-bk);display:flex;align-items:center;justify-content:center;font-size:14px;"><span data-method="urlClick" style="cursor:pointer;word-break:break-all;text-decoration:underline;">${this.$uStr.escapeHtml(app.target)}</span></div><iframe src="${this.$uStr.escapeHtml(app.target)}" style="flex:1;width:100%;border:0;background:#fff;"></iframe></div>`,
+          methods: {
+            urlClick() {
+              if (confirm('即将打开网址 ' + app.target)) {
+                window.open(app.target, '_blank', 'noreferrer')
+              }
+            }
+          }
+        })
         this.logs.unshift(`[${this.$logHead('eapp notify')}][${this.$sTime(null, 1)}] 打开网址: ${ app.target }`)
         break
       case 'eval':
