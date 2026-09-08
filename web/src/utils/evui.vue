@@ -1,7 +1,7 @@
 ﻿<template>
   <div class="evui">
-    <VueDragResize v-for="(ediv, drid) in displayList" :key="drid" className="ediv" dragHandle=".ediv_title--name" :parent="true" :prevent-deactivation="false" :active="ediv.active" :w="ediv.width" :h="ediv.height" :x="ediv.left" :y="ediv.top" :z="ediv.z" :resizable="ediv.resizable" :draggable="ediv.draggable" :maxWidth="evMaxW" :maxHeight="evMaxH" :handles="['tl','tr','bl','br']" :lock-aspect-ratio="false" :class="{ 'ediv--minimized': ediv.minimized, 'ediv--maximized': ediv.maximized && !ediv.minimized }" @deactivated="ediv.z=1" @activated="ediv.maximized ? ediv.z=100 : (ediv.z=2)" @resizeStop="(...args) => updateVal(args, drid)" @dragStop="(...args) => updateVal(args, drid)">
-      <h3 class="ediv_title" :style="ediv.style.title" @click="ediv.maximized ? null : (ediv.z=Math.max(ediv.z, 100))">
+    <VueDragResize v-for="(ediv, drid) in displayList" :key="drid" className="ediv" dragHandle=".ediv_title--name" :parent="true" :prevent-deactivation="false" :active="ediv.active" :w="ediv.width" :h="ediv.height" :x="ediv.left" :y="ediv.top" :z="ediv.z" :resizable="ediv.active ? ediv.resizable : false" :draggable="ediv.draggable" :maxWidth="evMaxW" :maxHeight="evMaxH" :handles="['tl','tr','bl','br']" :lock-aspect-ratio="false" :class="{ 'ediv--minimized': ediv.minimized, 'ediv--maximized': ediv.maximized && !ediv.minimized, 'ediv--inactive': !ediv.active }" @deactivated="ediv.z=1" @activated="ediv.maximized ? ediv.z=100 : (ediv.z=2)" @resizeStop="(...args) => updateVal(args, drid)" @dragStop="(...args) => updateVal(args, drid)">
+      <h3 class="ediv_title" :style="ediv.style.title" @click="ediv.maximized ? null : (ediv.z=Math.max(ediv.z, 100), evActivate(drid))">
         <span class="ediv_title--arrows" v-if="sortedDisplayList.length > 1" @click.stop>
           <span class="ediv_title--arrow ediv_title--arrowprev" @click.stop="evSwitchWindow('prev')" :title="'切换到上一个窗口'"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg></span>
           <span class="ediv_title--counter">{{ getWindowIndex(drid) }}/{{ topWindowTotal }}</span>
@@ -186,6 +186,12 @@ export default {
       }
       Object.assign(this.draglist[drid], newval)
       this.markDirty()
+    },
+    evActivate(id){
+      for (const wid in this.draglist) {
+        if (wid !== id) this.draglist[wid].active = false
+      }
+      if (this.draglist[id]) this.draglist[id].active = true
     },
     neweu(evui = {}){
       let id = evui.id || this.$uStr.euid()

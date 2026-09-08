@@ -987,6 +987,14 @@ noscript {
   transform: scale(0.08);
 }
 
+.ediv.ediv--inactive .ediv_title {
+  pointer-events: auto;
+}
+
+.ediv.ediv--inactive {
+  pointer-events: none;
+}
+
 .ediv.dragging,
 .ediv.resizing {
   transition: none;
