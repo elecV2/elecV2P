@@ -201,14 +201,22 @@ export default {
       const vw = document.documentElement.clientWidth || document.body.clientWidth || window.innerWidth
       const vh = document.documentElement.clientHeight || document.body.clientHeight || window.innerHeight
       const defW = Number(evui.width || 800)
-      const defH = Number(evui.height || 460)
-      if (evui.width == null || defW > vw) evui.width = Math.max(240, Math.min(defW, vw))
-      if (evui.height == null || defH > vh) evui.height = Math.max(160, Math.min(defH, vh))
-      evui.top = evui.top || (vh - evui.height)/2
-      evui.left = evui.left || (vw - evui.width)/2
+      const defH = evui.height === 'auto' ? 'auto' : Number(evui.height || 460)
+      if (evui.width == null || defW === 'auto' ? false : defW > vw) evui.width = Math.max(240, Math.min(defW, vw))
+      if (evui.height === 'auto') {
+        // 自适应高度：保持 auto，不强制设为固定值
+        evui.height = 'auto'
+      } else if (evui.height == null || defH > vh) {
+        evui.height = Math.max(160, Math.min(defH, vh))
+      }
+      const autoH = evui.height === 'auto'
+      const hNum = autoH ? 320 : evui.height
+      const wNum = evui.width === 'auto' ? 600 : evui.width
+      evui.top = evui.top || (vh - hNum)/2
+      evui.left = evui.left || (vw - wNum)/2
       if (evui.top < 0) evui.top = 0
       if (evui.left < 0) evui.left = 0
-      if (evui.top + evui.height > vh) evui.top = Math.max(0, vh - evui.height)
+      if (!autoH && evui.top + evui.height > vh) evui.top = Math.max(0, vh - evui.height)
       if (evui.left + evui.width > vw) evui.left = Math.max(0, vw - evui.width)
       if (evui.content) evui.content = this.$sString(evui.content)
       if (evui.cbdata) evui.cbdata = this.$sString(evui.cbdata)

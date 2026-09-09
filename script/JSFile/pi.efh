@@ -1423,9 +1423,11 @@
       deleteLocalSession(id) {
         if (this.deleting[id]) return
         const self = this
+        const wasCurrent = self.sessionId === id
+        if (wasCurrent && !confirm('Delete the current session?')) return
         this.deleting[id] = true
         this.fetchFend('delete_session', { id: id }, 10000).then(() => {
-          if (self.sessionId === id) self.sessionId = ''
+          if (wasCurrent) self.newSession()
           self.loadSessions()
           self.showNotify('Session deleted', 'success')
         }).catch((e) => {
@@ -1435,10 +1437,12 @@
       deleteOCSession(id) {
         if (this.deleting[id]) return
         const self = this
+        const wasCurrent = self.sessionId === id
+        if (wasCurrent && !confirm('Delete the current session?')) return
         this.deleting[id] = true
         this.fetchFend('pi_delete_session', { id: id }, 10000).then((data) => {
           if (data.ok) {
-            if (self.sessionId === id) self.sessionId = ''
+            if (wasCurrent) self.newSession()
             self.loadSessions()
             self.showNotify('Session deleted', 'success')
           } else {

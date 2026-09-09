@@ -136,7 +136,7 @@ export default {
         id: eid,
         title: app.name + ' - ' + app.type.toUpperCase(),
         width: 600,
-        height: null,
+        height: 'auto',
         style: {
           content: 'margin: .3em; font-family: var(--font-fm);'
         },
@@ -237,7 +237,7 @@ export default {
         id: 'eapp_new',
         title: app.hash ? this.$t('edit') + ' EAPP - ' + app.name : this.$t('new') + ' EAPP',
         width: 600,
-        height: null,
+        height: 'auto',
         style: {
           content: 'margin: .3em; font-family: var(--font-fm);'
         },
