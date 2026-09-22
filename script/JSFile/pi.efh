@@ -823,7 +823,7 @@
         <div v-for="(p, pi) in m.parts" :key="pi">
           <div v-if="p.t === 'ref'" :class="['ref', p.cls || refClass(p.c), p.running ? 'generating' : '']" :style="p.cls === 'reasoning' && p.body ? 'cursor: pointer;' : ''" @click="p.cls === 'reasoning' && p.body ? (p.open = p.open === undefined ? false : !p.open) : null">{{ p.c }}<span v-if="p.running" class="run-dot"></span></div>
           <div v-if="p.t === 'ref' && p.cls === 'reasoning' && p.body && p.open !== false" class="reasoning-body" @scroll="reasoningScroll($event)">{{ p.body }}</div>
-          <pre v-else-if="p.t === 'out'" class="tool-out">{{ p.c }}</pre>
+          <pre v-else-if="p.t === 'out'" class="tool-out" v-html="renderOut(p.c)"></pre>
           <template v-else-if="p.t === 'text'">
             <div v-for="(v, vi) in mdViews(p, m.streaming)" :key="vi" class="stream-par" :class="p.cls || ''">
               <pre v-if="v.plain" class="stream-text">{{ v.text }}</pre>
@@ -889,6 +889,90 @@
   const BLOCK_CACHE_MAX = 400
   const STREAM_PARSE_MAX = 4000
 
+  // ANSI 转 HTML，逻辑同 utils/ansi.js（供工具输出带色渲染）
+  const ANSI_MAX = 500000
+  const ANSI_COLORS = [
+    '#0c0c0c', '#c50f1f', '#13a10e', '#c19c00', '#0037da', '#881798', '#3a96dd', '#cccccc',
+    '#767676', '#e74856', '#16c60c', '#f9f1a5', '#3b78ff', '#b4009e', '#61d6d6', '#f2f2f2',
+  ]
+  const ANSI_C256 = ['00', '5f', '87', 'af', 'd7', 'ff']
+  for (let x = 16; x < 232; x++) {
+    ANSI_COLORS.push((x - 16).toString(6).padStart(3, '0').split('').reduce((a, c) => a + ANSI_C256[c], '#'))
+  }
+  ANSI_COLORS.push.apply(ANSI_COLORS, ['#080808', '#121212', '#1c1c1c', '#262626', '#303030', '#3a3a3a', '#444444', '#4e4e4e', '#585858', '#626262', '#6c6c6c', '#767676', '#808080', '#8a8a8a', '#949494', '#9e9e9e', '#a8a8a8', '#b2b2b2', '#bcbcbc', '#c6c6c6', '#d0d0d0', '#dadada', '#e4e4e4', '#eeeeee'])
+  const ANSI_MAP = new Map([
+    ['0', ''], ['1', 'font-weight:bold;'], ['2', 'opacity:.5;'], ['3', 'font-style:italic;'],
+    ['4', 'text-decoration:underline;'], ['5', ''], ['7', 'color:#0c0c0c;background-color:#767676;'],
+    ['8', 'display:none;'], ['9', 'text-decoration:line-through;'],
+    ['30', 'color:' + ANSI_COLORS[0] + ';'], ['90', 'color:' + ANSI_COLORS[8] + ';'],
+    ['31', 'color:' + ANSI_COLORS[1] + ';'], ['91', 'color:' + ANSI_COLORS[9] + ';'],
+    ['32', 'color:' + ANSI_COLORS[2] + ';'], ['92', 'color:' + ANSI_COLORS[10] + ';'],
+    ['33', 'color:' + ANSI_COLORS[3] + ';'], ['93', 'color:' + ANSI_COLORS[11] + ';'],
+    ['34', 'color:' + ANSI_COLORS[4] + ';'], ['94', 'color:' + ANSI_COLORS[12] + ';'],
+    ['35', 'color:' + ANSI_COLORS[5] + ';'], ['95', 'color:' + ANSI_COLORS[13] + ';'],
+    ['36', 'color:' + ANSI_COLORS[6] + ';'], ['96', 'color:' + ANSI_COLORS[14] + ';'],
+    ['37', 'color:' + ANSI_COLORS[7] + ';'], ['97', 'color:' + ANSI_COLORS[15] + ';'],
+    ['40', 'background-color:' + ANSI_COLORS[0] + ';'], ['100', 'background-color:' + ANSI_COLORS[8] + ';'],
+    ['41', 'background-color:' + ANSI_COLORS[1] + ';'], ['101', 'background-color:' + ANSI_COLORS[9] + ';'],
+    ['42', 'background-color:' + ANSI_COLORS[2] + ';'], ['102', 'background-color:' + ANSI_COLORS[10] + ';'],
+    ['43', 'background-color:' + ANSI_COLORS[3] + ';'], ['103', 'background-color:' + ANSI_COLORS[11] + ';'],
+    ['44', 'background-color:' + ANSI_COLORS[4] + ';'], ['104', 'background-color:' + ANSI_COLORS[12] + ';'],
+    ['45', 'background-color:' + ANSI_COLORS[5] + ';'], ['105', 'background-color:' + ANSI_COLORS[13] + ';'],
+    ['46', 'background-color:' + ANSI_COLORS[6] + ';'], ['106', 'background-color:' + ANSI_COLORS[14] + ';'],
+    ['47', 'background-color:' + ANSI_COLORS[7] + ';'], ['107', 'background-color:' + ANSI_COLORS[15] + ';'],
+  ])
+  const ANSI_CLOSE = new Set(['', '21', '22', '23', '24', '25', '27', '28', '29', '39', '49'])
+  const ANSI_TEST_RE = /(?:(?:\u001b\[)|\u009b)(?:(?:[0-9]{1,3})?(?:(?:;[0-9]{0,3})*)?[A-M|f-m])|\u001b[A-M]/
+  const ANSI_SEQ_RE = /\u001b\[([\d;]*)([A-M|f-m])/g
+  const ansiStyle = (strcode) => {
+    if (!strcode) return ''
+    const codes = String(strcode).split(';')
+    let res = ''
+    for (let i = 0; i < codes.length; i++) {
+      const code = codes[i]
+      if (ANSI_MAP.has(code)) { res += ANSI_MAP.get(code); continue }
+      if (code === '38') {
+        if (codes[i + 1] === '5' && codes[i + 2]) { res += 'color:' + ANSI_COLORS[Number(codes[i + 2])] + ';'; i += 2 }
+        else if (codes[i + 1] === '2' && codes[i + 2] && codes[i + 3] && codes[i + 4]) { res += 'color:rgb(' + Number(codes[i + 2]) + ',' + Number(codes[i + 3]) + ',' + Number(codes[i + 4]) + ');'; i += 4 }
+        continue
+      }
+      if (code === '48') {
+        if (codes[i + 1] === '5' && codes[i + 2]) { res += 'background-color:' + ANSI_COLORS[Number(codes[i + 2])] + ';'; i += 2 }
+        else if (codes[i + 1] === '2' && codes[i + 2] && codes[i + 3] && codes[i + 4]) { res += 'background-color:rgb(' + Number(codes[i + 2]) + ',' + Number(codes[i + 3]) + ',' + Number(codes[i + 4]) + ');'; i += 4 }
+        continue
+      }
+    }
+    return res
+  }
+  const ansiHtml = (str) => {
+    str = String(str)
+    if (!ANSI_TEST_RE.test(str)) return str
+    let openTags = 0
+    let ret = str.replace(ANSI_SEQ_RE, (m, m1, m2) => {
+      if (m2 !== 'm') return ''
+      if (m1 === '0') {
+        if (openTags > 0) { const ct = '</span>'.repeat(openTags); openTags = 0; return ct }
+        return ''
+      }
+      if (ANSI_CLOSE.has(m1)) {
+        if (openTags > 0) { openTags--; return '</span>' }
+        return ''
+      }
+      openTags++
+      if (ANSI_MAP.has(m1)) return '<span style="' + ANSI_MAP.get(m1) + '">'
+      const st = ansiStyle(m1)
+      if (st) return '<span style="' + st + '">'
+      openTags--
+      return ''
+    })
+    if (openTags > 0) ret += '</span>'.repeat(openTags)
+    return ret
+  }
+  const hasAnsi = (c) => { return /[\u001b\u009b]/.test(String(c)) }
+  const stripAnsiJs = (c) => {
+    return String(c).replace(/\u001b\[[0-9;]*[A-Za-z]/g, '').replace(/\u001b\][^\x07]*(\x07|\x1b\\)/g, '').replace(/[\u001b\u009b]/g, '').replace(/\r/g, '')
+  }
+
   const app = Vue.createApp({
     data() {
       return {
@@ -916,7 +1000,7 @@
         wfTips: [
           { icon: '◈', name: '了解项目', desc: ' — 项目简介 · 功能介绍及使用场景', text: '简单介绍一下本项目（elecV2P）主要功能及使用场景，以及如何通过网络隧道远程访问本地服务' },
           { icon: '⏱', name: '定时任务', desc: ' — 写脚本 · 注册 cron 任务', text: '写一个 JS 脚本保存到 script/JSFile/，用 $feed 发送通知，并说明如何在 TASK 里把它配置成每天早上 8 点运行的定时任务' },
-          { icon: '❖', name: 'EFH应用', desc: ' — Vue 前端 + favend 后端', text: '创建一个新的 .efh 应用：Vue 3 前端页面 + script favend 后端接口，实现一个简单备忘录，数据用 $store 保存' },
+          { icon: '❖', name: 'EFH应用', desc: ' — Vue 前端 + favend 后端', text: '创建一个新的 .efh 应用：Vue 3 前端页面 + script favend 后端接口，实现一个markdown在线编辑器，数据使用原生的.md文件，保存到efss目录下' },
           { icon: '⚑', name: '排查问题', desc: ' — 贴上报错 · 定位并修复', text: '帮我分析下面这段报错的原因，定位到具体代码并给出修复方案：' },
           { icon: '⛨', name: 'MITM解密', desc: ' — 根证书安装 · HTTPS 主机解密', text: '讲解 elecV2P 的 MITM 机制和完整配置步骤：如何生成并安装根 CA 证书（rootCA），如何在 script/Lists/mitmhost.list 里添加需要解密的 HTTPS 主机，以及开启后哪些请求能被拦截修改' },
           { icon: '⚙', name: '规则配置', desc: ' — RULES/REWRITE · 重写、阻断、跳转', text: '帮我写网络请求修改规则：屏蔽某广告域名的请求，并把另一个 URL 的响应重写为本地 JS 脚本处理，保存到对应列表文件，同时说明 RULES（default.list）和 REWRITE（rewrite.list）的格式区别' }
@@ -976,6 +1060,12 @@
     },
     methods: {
       esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') },
+      renderOut(c) {
+        const t = String(c == null ? '' : c)
+        if (!hasAnsi(t)) return this.esc(t)
+        if (t.length > ANSI_MAX) return this.esc(stripAnsiJs(t))
+        return ansiHtml(this.esc(t))
+      },
       fmtTime(ts) { if (!ts) return ''; try { return new Date(ts).toLocaleString() } catch(e) { return '' } },
       fmtK(n) {
         n = Number(n) || 0
