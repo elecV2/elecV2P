@@ -2,11 +2,11 @@
   <div class="storemanage" :class="{ 'storemanage--collapsed': collapse }">
     <h2 class="title">
       <span @click="storeGet" class="icon cursor title_sync" title="更新列表" v-html="icon.sync"></span>
-      <span class="title_main" title="ctrl+f 搜索">store/cookie {{ $t('persistence') }} - {{ Object.keys(store).length }}</span>
+      <span class="title_main" title="ctrl+f 搜索">储存{{ $t('persistence') }} - {{ Object.keys(store).length }}</span>
       <span @click="collapse=!collapse" class="title_collapse" :class="{ 'title_collapse--collapsed': collapse }"></span>
     </h2>
     <ul class="storelists" @click.prevent="storeOp($event)">
-      <li v-for="key in storeshow" :key="key" class="storelists_item">
+      <li v-for="key in storeshow" :key="key" class="storelists_item" :class="{ 'storelists_item--highlight': edkey && key === edkey }">
         <span :data-edit="key">{{ key }}</span>
         <span class="item_delete" :data-delete="key">X</span>
       </li>
@@ -74,23 +74,34 @@ export default {
     }
   },
   computed:{
+    hasExactMatch(){
+      return this.edkey && this.store.indexOf(this.edkey) !== -1
+    },
     restnum(){
       let snum = this.shownum
-      if (snum === -1 || snum >= this.store.length) {
+      if (this.hasExactMatch) {
         return 0
       }
-      return this.store.length - snum
+      let list = this.edkey ? this.store.filter(k=>{
+        try { return new RegExp(this.edkey, 'i').test(k) } catch(e) { return true }
+      }) : this.store
+      if (snum === -1 || snum >= list.length) {
+        return 0
+      }
+      return list.length - snum
     },
     storeshow(){
       let snum = this.shownum
-      if (snum === -1 || snum >= this.store.length) {
+      if (this.hasExactMatch) {
         return this.store
       }
-      let i = 0, fshow = []
-      while (i++ < snum) {
-        fshow.push(this.store[i])
+      let list = this.edkey ? this.store.filter(k=>{
+        try { return new RegExp(this.edkey, 'i').test(k) } catch(e) { return true }
+      }) : this.store
+      if (snum === -1 || snum >= list.length) {
+        return list
       }
-      return fshow
+      return list.slice(0, snum)
     }
   },
   created(){
@@ -105,7 +116,7 @@ export default {
         this.logs.unshift(`[${this.$logHead('storemanage info')}][${this.$sTime(null, 1)}] 成功获取 store 常量 ${this.store.length}`)
       }).catch(e=>{
         this.$message.error('获取 store 常量失败', e.message)
-        this.logs.unshift(`[${this.$logHead('storemanage error')}][${this.$sTime(null, 1)}] 获取 store/cookie 常量失败 ${e.message}`)
+        this.logs.unshift(`[${this.$logHead('storemanage error')}][${this.$sTime(null, 1)}] 获取 储存常量 失败 ${e.message}`)
         console.error('获取 store 常量失败', e)
       }).finally(hideloading)
     },
@@ -395,6 +406,12 @@ export default {
 .storelists_item--showrest {
   padding-right: 1em;
   background: var(--secd-fc);
+}
+
+.storelists_item--highlight {
+  background: var(--icon-bk);
+  color: var(--main-cl);
+  font-weight: bold;
 }
 
 .editor_textarea {

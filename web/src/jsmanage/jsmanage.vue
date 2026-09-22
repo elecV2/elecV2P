@@ -7,7 +7,7 @@
       <div class="title--radius" @keyup.esc.prevent.stop.exact="menu={}">
         <h4 class="title title--radius">
           <span class="icon cursor title_sync" @click="getJSlist()" title="更新列表" v-html="icon.sync"></span>
-          <span class="title_main" title="当前服务器上存在的本地脚本文件数量">{{ $ta('script', 'files') }} - {{ jslists.length }}</span>
+          <span class="title_main" title="当前服务器上存在的本地脚本文件数量">{{ $ta('script', 'file') }} - {{ jslists.length }}</span>
           <span class="title_arrow" :class="{ 'title_arrow--up': collapse.titlearrow }" @click.prevent.self="collapse.titlearrow=!collapse.titlearrow"></span>
         </h4>
         <div class="uploadjs" v-show="collapse.titlearrow">
