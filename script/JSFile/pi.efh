@@ -823,7 +823,7 @@
         <div v-for="(p, pi) in m.parts" :key="pi">
           <div v-if="p.t === 'ref'" :class="['ref', p.cls || refClass(p.c), p.running ? 'generating' : '']" :style="p.cls === 'reasoning' && p.body ? 'cursor: pointer;' : ''" @click="p.cls === 'reasoning' && p.body ? (p.open = p.open === undefined ? false : !p.open) : null">{{ p.c }}<span v-if="p.running" class="run-dot"></span></div>
           <div v-if="p.t === 'ref' && p.cls === 'reasoning' && p.body && p.open !== false" class="reasoning-body" @scroll="reasoningScroll($event)">{{ p.body }}</div>
-          <pre v-else-if="p.t === 'out'" class="tool-out" v-html="renderOut(p.c)"></pre>
+          <pre v-else-if="p.t === 'out'" class="tool-out" v-html="renderOutPart(p)"></pre>
           <template v-else-if="p.t === 'text'">
             <div v-for="(v, vi) in mdViews(p, m.streaming)" :key="vi" class="stream-par" :class="p.cls || ''">
               <pre v-if="v.plain" class="stream-text">{{ v.text }}</pre>
@@ -888,6 +888,8 @@
   const blockCache = new Map()
   const BLOCK_CACHE_MAX = 400
   const STREAM_PARSE_MAX = 4000
+  const partViewCache = new WeakMap()
+  const outRenderCache = new WeakMap()
 
   // ANSI 转 HTML，逻辑同 utils/ansi.js（供工具输出带色渲染）
   const ANSI_MAX = 500000
@@ -1066,6 +1068,21 @@
         if (t.length > ANSI_MAX) return this.esc(stripAnsiJs(t))
         return ansiHtml(this.esc(t))
       },
+      renderOutPart(p) {
+        // 按 part 缓存：内容未变直接复用；纯追加时只转义新增片段再拼接，避免整段重跑 ANSI/转义
+        const c = String(p.c == null ? '' : p.c)
+        const cached = outRenderCache.get(p)
+        if (cached && cached.src === c) return cached.html
+        let html
+        if (cached && c.length > cached.src.length && c.indexOf(cached.src) === 0 &&
+            !hasAnsi(cached.src) && !hasAnsi(c.slice(cached.src.length))) {
+          html = cached.html + this.esc(c.slice(cached.src.length))
+        } else {
+          html = this.renderOut(c)
+        }
+        outRenderCache.set(p, { src: c, html: html })
+        return html
+      },
       fmtTime(ts) { if (!ts) return ''; try { return new Date(ts).toLocaleString() } catch(e) { return '' } },
       fmtK(n) {
         n = Number(n) || 0
@@ -1139,9 +1156,7 @@
         }
         return html
       },
-      mdViews(p, streaming) {
-        if (!p || p.t !== 'text') return []
-        const blocks = this.mdBlocks(p.c)
+      buildMdViews(blocks, streaming) {
         const views = []
         for (let i = 0; i < blocks.length; i++) {
           const blk = blocks[i]
@@ -1151,6 +1166,30 @@
           }
           views.push({ text: blk, html: plain ? null : this.cachedMd(blk), plain: plain })
         }
+        return views
+      },
+      mdViews(p, streaming) {
+        if (!p || p.t !== 'text') return []
+        const c = (p.c || '').replace(/\r\n/g, '\n')
+        // 按 part 缓存：内容/streaming 未变直接复用，避免每次重渲都拆块解析全部历史消息
+        const cached = partViewCache.get(p)
+        if (cached && cached.src === c && cached.streaming === streaming) return cached.views
+        let blocks
+        // 流式追加场景：仅最后一块可能变化，复用前面所有块，只对尾部重新拆块
+        if (cached && cached.streaming && streaming && c.length > cached.src.length && c.indexOf(cached.src) === 0 && cached.blocks.length) {
+          const lastBlk = cached.blocks[cached.blocks.length - 1]
+          const tailStart = cached.src.lastIndexOf(lastBlk)
+          if (tailStart >= 0) {
+            const tailBlocks = this.mdBlocks(c.slice(tailStart))
+            blocks = cached.blocks.slice(0, -1).concat(tailBlocks)
+          } else {
+            blocks = this.mdBlocks(c)
+          }
+        } else {
+          blocks = this.mdBlocks(c)
+        }
+        const views = this.buildMdViews(blocks, streaming)
+        partViewCache.set(p, { src: c, streaming: streaming, blocks: blocks, views: views })
         return views
       },
       refClass(c) {
@@ -2103,13 +2142,19 @@
         })
       },
       scrollBottom() {
+        // rAF 节流：事件洪水时多帧内的滚动请求合并为一次，避免每条消息强制 reflow
+        if (this._sbRaf) return
         const self = this
-        this.$nextTick(() => {
+        this._sbRaf = requestAnimationFrame(() => {
+          self._sbRaf = null
           const el = self.$refs.messagesEl
-          if (el) {
-            el.scrollTop = el.scrollHeight
-            const tos = el.querySelectorAll('.tool-out')
-            for (let i = 0; i < tos.length; i++) tos[i].scrollTop = tos[i].scrollHeight
+          if (!el) return
+          el.scrollTop = el.scrollHeight
+          const tos = el.querySelectorAll('.tool-out')
+          if (tos.length) {
+            // 只滚最后一个工具输出块，不再遍历全部
+            const last = tos[tos.length - 1]
+            last.scrollTop = last.scrollHeight
           }
         })
       },
@@ -2241,8 +2286,9 @@
           if (reasonBuf) {
             if (curReason) curReason.body = (curReason.body || '') + reasonBuf
             else {
-              curReason = { t: 'ref', c: '✱ reasoning', cls: 'reasoning', body: reasonBuf, reasonBody: true }
-              el.parts.push(curReason)
+              el.parts.push({ t: 'ref', c: '✱ reasoning', cls: 'reasoning', body: reasonBuf, reasonBody: true })
+              // 从响应式数组取回 proxy，否则后续直接改 body 不会触发更新
+              curReason = el.parts[el.parts.length - 1]
             }
             reasonBuf = ''
           }
@@ -2253,12 +2299,13 @@
           if (reasonFlush) { clearTimeout(reasonFlush); reasonFlush = null }
           if (!reasonBuf) return
           if (!curReason || curReason.closed) {
-            curReason = { t: 'ref', c: '✱ reasoning', cls: 'reasoning', body: '', reasonBody: true }
-            el.parts.push(curReason)
+            el.parts.push({ t: 'ref', c: '✱ reasoning', cls: 'reasoning', body: '', reasonBody: true })
+            curReason = el.parts[el.parts.length - 1]
           }
           curReason.body = (curReason.body || '') + reasonBuf
           reasonBuf = ''
           self.scrollReasoningBottom()
+          self.scrollBottom()
         }
         const flushText = () => {
           flushReasoning()
@@ -2271,6 +2318,7 @@
             el.parts.push({ t: 'text', c: textBuf })
           }
           textBuf = ''
+          self.scrollBottom()
         }
 
         const onMsg = (data) => {
@@ -2479,6 +2527,7 @@
 
         this.fetchFend('start', { prompt: prompt, runId: runId, session: this.sessionId, model: this.currentModel }, 120000).then((data) => {
           if (!data.ok) {
+            flushText()
             el.errored = true; el.streaming = false
             el.parts = [{ t: 'text', c: 'Error: ' + (data.error || 'failed to start'), cls: 'err-text' }]
             self.busy = false
