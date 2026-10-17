@@ -2163,9 +2163,9 @@
         const self = this
         let prompt = this.inputText.trim()
         if (!prompt) return
-        if (prompt.length > 1200) {
-          prompt = prompt.slice(0, 1200)
-          this.showNotify('Message exceeds 1200 chars, truncated', 'error')
+        if (prompt.length > 5120) {
+          prompt = prompt.slice(0, 5120)
+          this.showNotify('Message exceeds 5120 chars, truncated', 'error')
         }
         this.cmdOpen = false
         this.cmdIdx = -1
@@ -2278,9 +2278,13 @@
 
         let textBuf = ''
         let textFlush = null
+        let outBuf = ''
+        let outFlush = null
         let reasonBuf = ''
         let reasonFlush = null
         let curReason = null // 当前打开的 reasoning 块（HTML ref part）
+        let curRunning = null // 当前点亮运行指示灯的 ref part
+        let curRetrying = null // 当前处于 retrying 动画的 ref part
         // 收尾当前 reasoning 块：把剩余缓冲写入它，标记关闭，后续内容另起新块
         const closeReason = () => {
           if (reasonBuf) {
@@ -2307,7 +2311,17 @@
           self.scrollReasoningBottom()
           self.scrollBottom()
         }
+        const flushOut = () => {
+          if (outFlush) { clearTimeout(outFlush); outFlush = null }
+          if (!outBuf) return
+          const lastOut = el.parts[el.parts.length - 1]
+          if (lastOut && lastOut.t === 'out') lastOut.c += outBuf
+          else el.parts.push({ t: 'out', c: outBuf })
+          outBuf = ''
+          self.scrollBottom()
+        }
         const flushText = () => {
+          flushOut()
           flushReasoning()
           if (textFlush) { clearTimeout(textFlush); textFlush = null }
           if (!textBuf) return
@@ -3923,7 +3937,7 @@ $fend('start', (data) => {
   if (!data || !data.prompt) return { error: 'prompt is required' }
   const runId = data.runId || Date.now() + '-' + Math.random().toString(36).slice(2, 8)
   const cwd = getWorkDir()
-  const prompt = String(data.prompt).slice(0, 1200)
+  const prompt = String(data.prompt).slice(0, 5120)
   const sessionId = data.session || ''
   const modelStr = (data.model || '').replace(/\r/g, '')
 
