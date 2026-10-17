@@ -195,6 +195,10 @@ export default {
     },
     neweu(evui = {}){
       let id = evui.id || this.$uStr.euid()
+      if (this.docklist[id]) {
+        delete this.docklist[id]
+        this.markDirty()
+      }
       const reqMaximized = !!evui.maximized
       evui = { ...this.init, ...evui }
       // 移动端按可视区域 clamp 宽高，避免窗口溢出屏幕（vue-draggable-resizable 的内联 width/height 优先级高于 .ediv { max-width:100% }）
@@ -246,6 +250,7 @@ export default {
       item.resizable = false
       item.draggable = false
       item.maximized = true
+      item.z = 100
     },
     evRestoreMaximized(id) {
       const item = this.draglist[id]
