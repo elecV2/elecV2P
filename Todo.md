@@ -18,6 +18,15 @@
 <h3 style="font-size: 24px;text-align: center;border-bottom: 1px solid;color: white;padding: 6px;margin-bottom: 0;">Done</h3>
 <pre style="margin-bottom: 0;white-space: pre-line;word-break: break-word;margin: 0;padding: 6px 10px;text-align: left;display: flex;">
 - [x] evui 窗口移动端显示优化
+- [x] evui 窗口最大化/小化修复
+- [x] pi.efh 交互显示优化
+- [x] ansi 字符显示优化
+- [x] 脚本管理页面部分显示优化
+- [x] 界面交互及显示优化
+- [x] 多 evui 弹窗交互调整
+- [x] eapp 打开网址通过 evui 弹窗
+- [x] evui 放大缩小保留最小高宽
+- [x] evui 窗口增加切换箭头
 - [x] evui 弹窗最小化/最大化
 - [x] 首页增加Pi-Agent/Opencode应用
 - [x] RULES 默认不对 body 进行匹配
