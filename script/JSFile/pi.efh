@@ -239,6 +239,12 @@
     }
     .msg .stream-text { white-space: pre-wrap; word-break: break-word; line-height: 1.7; }
     .cursor { display: inline-block; width: 7px; height: 16px; background: var(--ac); animation: blink .7s infinite; vertical-align: text-bottom; margin-left: 2px; }
+    .prompt-timeline { position: fixed; right: 30px; top: 50%; transform: translateY(-50%); width: auto; pointer-events: none; z-index: 100; }
+    .prompt-timeline .timeline-inner { position: relative; width: 100%; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; padding: 12px 0; }
+    .prompt-timeline .line-item { position: relative; width: 100px; height: 2px; background: var(--ac); border-radius: 50%; cursor: pointer; pointer-events: auto; transition: background .15s, height .15s, width .15s, border-radius .15s; opacity: 1; box-shadow: 0 0 3px rgba(88,166,255,0.5); margin-bottom: 2px; }
+    .prompt-timeline .line-item:hover { background: var(--ac); height: 8px; width: 120px; box-shadow: 0 0 8px rgba(88,166,255,0.8); border-radius: 4px; }
+    .prompt-timeline .line-item .tip { position: absolute; right: 105%; top: 50%; transform: translateY(-50%); white-space: nowrap; font-size: 14px; font-weight: 500; color: var(--fc); background: var(--bk2); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--bd); opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 200; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+    .prompt-timeline .line-item:hover .tip { opacity: 1; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
     .reasoning { margin-bottom: 8px; }
     .reasoning summary {
@@ -817,7 +823,7 @@
         </div>
       </div>
     </div>
-    <div v-for="(m, mi) in messages" :key="mi" :class="['msg', m.role]">
+    <div v-for="(m, mi) in messages" :key="mi" :class="['msg', m.role]" :data-msg-index="mi">
       <template v-if="m.role === 'user'"><pre style="margin:0;font-family:inherit;font-size:inherit;line-height:1.7;white-space:pre-wrap;word-break:break-word;background:none;border:none;padding:0;color:inherit;">{{ m.content }}</pre></template>
       <template v-else>
         <div v-for="(p, pi) in m.parts" :key="pi">
@@ -836,6 +842,15 @@
       </template>
     </div>
     </template>
+    <div class="prompt-timeline" v-if="timelineLines.length >= 3">
+      <div class="timeline-inner">
+        <div v-for="line in timelineLines" :key="line.msgIndex"
+             class="line-item"
+             @click="jumpToPrompt(line.msgIndex)">
+          <span class="tip">{{ line.prompt }}</span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="todo-panel" v-if="todos.length">
@@ -1041,6 +1056,7 @@
         customOpen: false, customBusy: false, customEditing: false, customFetchBusy: false,
         customForm: { name: '', baseUrl: '', apiKey: '', api: 'openai-completions', models: '' },
         modelFilter: '', modelNavIdx: 0,
+        timelineLines: [],
         wfTips: [
           { icon: '◈', name: '了解项目', desc: ' — 项目简介 · 功能介绍及使用场景', text: '简单介绍一下本项目（elecV2P）主要功能及使用场景，以及如何通过网络隧道远程访问本地服务' },
           { icon: '⏱', name: '定时任务', desc: ' — 写脚本 · 注册 cron 任务', text: '写一个 JS 脚本保存到 script/JSFile/，用 $feed 发送通知，并说明如何在 TASK 里把它配置成每天早上 8 点运行的定时任务' },
@@ -2979,6 +2995,48 @@
           self.ctxPct = Math.round((self.ctxUsed || 0) / self.ctxLimit * 1000) / 10
         }).catch(() => {})
       },
+      truncatePrompt(text, len) {
+        const t = String(text || '').trim()
+        if (t.length <= len) return t
+        return t.slice(0, len) + '…'
+      },
+      updateTimeline() {
+        const self = this
+        this.$nextTick(() => {
+          const container = self.$refs.messagesEl
+          if (!container) { self.timelineLines = []; return }
+          const userMsgEls = container.querySelectorAll('.msg.user')
+          const lines = []
+          userMsgEls.forEach((el) => {
+            const msgIndex = parseInt(el.getAttribute('data-msg-index') || '-1', 10)
+            if (msgIndex < 0) return
+            const msg = self.messages[msgIndex]
+            if (!msg || msg.role !== 'user') return
+            const top = el.offsetTop || 0
+            lines.push({ msgIndex: msgIndex, prompt: self.truncatePrompt(msg.content, 45), top: top })
+          })
+          self.timelineLines = lines
+        })
+      },
+      jumpToPrompt(msgIndex) {
+        const container = this.$refs.messagesEl
+        if (!container) return
+        const msgEls = container.querySelectorAll('.msg')
+        if (msgIndex >= 0 && msgIndex < msgEls.length) {
+          const target = msgEls[msgIndex]
+          if (target) {
+            target.scrollIntoView({ behavior: 'auto', block: 'start' })
+          }
+        }
+      },
+    },
+    watch: {
+      messages: {
+        handler() {
+          this.$nextTick(() => this.updateTimeline())
+        },
+        deep: true
+      }
     },
     mounted() {
       const self = this
