@@ -116,6 +116,11 @@
       .ctx-bar { display: none; }
       .ctx-num { font-size: 9px; }
       .header .compact-btn { padding: 2px 6px; font-size: 10px; flex-shrink: 0; }
+      .prompt-timeline { right: 8px; }
+      .prompt-timeline .timeline-inner { gap: 5px; padding: 8px 0; }
+      .prompt-timeline .line-item { width: 36px; height: 2px; }
+      .prompt-timeline .line-item:hover { width: 48px; height: 6px; }
+      .prompt-timeline .line-item .tip { font-size: 12px; padding: 3px 8px; max-width: 50vw; }
     }
     .dropdown {
       position: absolute; top: 100%; left: 0; margin-top: 4px;
@@ -239,11 +244,11 @@
     }
     .msg .stream-text { white-space: pre-wrap; word-break: break-word; line-height: 1.7; }
     .cursor { display: inline-block; width: 7px; height: 16px; background: var(--ac); animation: blink .7s infinite; vertical-align: text-bottom; margin-left: 2px; }
-    .prompt-timeline { position: fixed; right: 30px; top: 50%; transform: translateY(-50%); width: auto; pointer-events: none; z-index: 100; }
+    .prompt-timeline { position: fixed; right: 24px; top: 50%; transform: translateY(-50%); width: auto; pointer-events: none; z-index: 100; }
     .prompt-timeline .timeline-inner { position: relative; width: 100%; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; padding: 12px 0; }
-    .prompt-timeline .line-item { position: relative; width: 100px; height: 2px; background: var(--ac); border-radius: 50%; cursor: pointer; pointer-events: auto; transition: background .15s, height .15s, width .15s, border-radius .15s; opacity: 1; box-shadow: 0 0 3px rgba(88,166,255,0.5); margin-bottom: 2px; }
-    .prompt-timeline .line-item:hover { background: var(--ac); height: 8px; width: 120px; box-shadow: 0 0 8px rgba(88,166,255,0.8); border-radius: 4px; }
-    .prompt-timeline .line-item .tip { position: absolute; right: 105%; top: 50%; transform: translateY(-50%); white-space: nowrap; font-size: 14px; font-weight: 500; color: var(--fc); background: var(--bk2); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--bd); opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 200; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+    .prompt-timeline .line-item { position: relative; width: clamp(48px, 10vw, 100px); height: 2px; background: var(--ac); border-radius: 999px; cursor: pointer; pointer-events: auto; transition: background .15s, height .15s, width .15s, border-radius .15s; opacity: 1; box-shadow: 0 0 3px rgba(88,166,255,0.5); margin-bottom: 2px; }
+    .prompt-timeline .line-item:hover { background: var(--ac); height: 8px; width: clamp(60px, 13vw, 120px); box-shadow: 0 0 8px rgba(88,166,255,0.8); border-radius: 999px; }
+    .prompt-timeline .line-item .tip { position: absolute; right: 105%; top: 50%; transform: translateY(-50%); white-space: nowrap; font-size: 14px; font-weight: 500; color: var(--fc); background: var(--bk2); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--bd); opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 200; box-shadow: 0 2px 8px rgba(0,0,0,0.3); max-width: 60vw; overflow: hidden; text-overflow: ellipsis; }
     .prompt-timeline .line-item:hover .tip { opacity: 1; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
     .reasoning { margin-bottom: 8px; }
@@ -388,18 +393,34 @@
       background: transparent; border-top: 1px solid var(--bd); flex-shrink: 0;
     }
     .input-bar textarea {
-      flex: 1; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--bd);
+      flex: 1; padding: 8px 46px 8px 14px; border-radius: 8px; border: 1px solid var(--bd);
       background: transparent; color: var(--fc); font-family: inherit; font-size: 16px;
       resize: none; outline: none; min-height: 40px; max-height: 160px; line-height: 1.25; overflow-y: hidden; overflow-x: hidden;
     }
     .input-bar textarea::placeholder { color: var(--fc3); }
     .input-bar textarea:focus { border-color: var(--ac); }
+    .input-wrap { position: relative; flex: 1; display: flex; min-width: 0; }
     .input-bar button {
       padding: 0 18px; border: none; border-radius: 8px;
       background: var(--ac); color: #000; font-weight: bold; font-size: 14px;
       cursor: pointer; flex-shrink: 0;
     }
     .input-bar button:disabled { opacity: .4; cursor: not-allowed; }
+    .input-bar .mic-btn {
+      position: absolute; right: 6px; bottom: 6px; width: 28px; height: 28px; padding: 0;
+      display: flex; align-items: center; justify-content: center;
+      border: none; border-radius: 6px; background: transparent; color: var(--fc3);
+      font-weight: normal; font-size: 14px; line-height: 1; cursor: pointer;
+    }
+    .input-bar .mic-btn:hover:not(:disabled) { color: var(--fc); background: var(--bk3); }
+    .input-bar .mic-btn.rec { color: var(--del); background: rgba(248,81,73,.12); animation: pulse 1s infinite; }
+    .msg .speak-btn {
+      display: inline-flex; align-items: center; gap: 4px; margin-top: 8px;
+      padding: 2px 10px; border-radius: 6px; border: 1px solid var(--bd);
+      background: transparent; color: var(--fc2); font-size: 11px; cursor: pointer;
+    }
+    .msg .speak-btn:hover { border-color: var(--fc3); color: var(--fc); }
+    .msg .speak-btn.on { border-color: rgba(88,166,255,.6); color: var(--ac); background: rgba(88,166,255,.10); }
     .cmd-wrap { position: relative; flex-shrink: 0; }
     .cmd-dropdown {
       position: absolute; left: 16px; right: 16px; bottom: calc(100% + 4px);
@@ -838,6 +859,10 @@
           </template>
         </div>
         <span class="cursor" v-if="m.streaming"></span>
+        <button v-if="!m.streaming && hasSpeech(m)" class="speak-btn" :class="{ on: speakingIdx === mi }"
+                @click="toggleSpeak(m, mi)" :title="speakingIdx === mi ? '停止朗读' : '朗读最后结论'">
+          {{ speakingIdx === mi ? '⏹ 停止' : '🔊 朗读' }}
+        </button>
         <div class="meta" :class="m.errored ? 'err' : 'ok'" v-if="m.meta">{{ m.meta }}</div>
       </template>
     </div>
@@ -889,7 +914,14 @@
       </div>
     </div>
     <div class="input-bar">
-      <textarea ref="inputEl" rows="1" placeholder="Type a message... (Enter to send, Ctrl+Enter for newline)" v-model="inputText" @input="onInput" @keydown="onKey"></textarea>
+      <div class="input-wrap">
+        <textarea ref="inputEl" rows="1" placeholder="Type a message... (Enter to send, Ctrl+Enter for newline)" v-model="inputText" @input="onInput" @keydown="onKey"></textarea>
+        <button class="mic-btn" :class="{ rec: recording }" @click="toggleRec()"
+                :title="recording ? '停止语音输入' : '语音输入'">
+          <svg v-if="!recording" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0"/><line x1="12" y1="17.5" x2="12" y2="21"/></svg>
+          <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg>
+        </button>
+      </div>
       <button v-if="busy" @click="stop()">Stop</button>
       <button @click="send()" :disabled="busy">Send</button>
     </div>
@@ -1057,6 +1089,8 @@
         customForm: { name: '', baseUrl: '', apiKey: '', api: 'openai-completions', models: '' },
         modelFilter: '', modelNavIdx: 0,
         timelineLines: [],
+        speakingIdx: -1, recording: false, recBase: '',
+        ttsSupported: !!(window.speechSynthesis && window.SpeechSynthesisUtterance),
         wfTips: [
           { icon: '◈', name: '了解项目', desc: ' — 项目简介 · 功能介绍及使用场景', text: '简单介绍一下本项目（elecV2P）主要功能及使用场景，以及如何通过网络隧道远程访问本地服务' },
           { icon: '⏱', name: '定时任务', desc: ' — 写脚本 · 注册 cron 任务', text: '写一个 JS 脚本保存到 script/JSFile/，用 $feed 发送通知，并说明如何在 TASK 里把它配置成每天早上 8 点运行的定时任务' },
@@ -1600,6 +1634,8 @@
         this.loadProviders().catch(() => {})
       },
       selectSession(id) {
+        this.stopSpeak()
+        if (this.recording) this.stopRec()
         const prev = this.sessionId
         this.sessionId = id
         localStorage.setItem('aichat_pi_last_session', id)
@@ -1668,6 +1704,261 @@
         } else {
           this.cmdOpen = false
         }
+      },
+      // ===== 朗读（TTS，浏览器内置 speechSynthesis）=====
+      // 取 message 里“最后一段连续的 text 块”作为结论（工具调用/思考之后的那段），否则退回最后一个 text 块
+      speechText(m) {
+        if (!m || !m.parts || !m.parts.length) return ''
+        const texts = m.parts.filter((p) => p.t === 'text' && p.c)
+        if (!texts.length) return ''
+        const tail = []
+        for (let i = m.parts.length - 1; i >= 0; i--) {
+          const p = m.parts[i]
+          if (p.t !== 'text') break
+          if (p.c) tail.unshift(p.c)
+        }
+        const raw = tail.length ? tail.join('\n') : texts[texts.length - 1].c
+        return String(raw)
+          .replace(/```[\s\S]*?```/g, '\n')                  // 代码块整段不读
+          .replace(/`[^`]*`/g, '')                           // 行内代码（命令/标识符）不读
+          .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')            // 图片
+          .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')          // 链接只读文字
+          .replace(/https?:\/\/\S+/g, ' ')
+          .replace(/^[ \t]{0,3}(#{1,6}|>)[ \t]*/gm, '')        // 标题/引用符号
+          .replace(/^[ \t]*([-*+]|\d+[.)])[ \t]+/gm, '')       // 列表符号（保留内容）
+          .replace(/^[ \t]*\|?[ \t:|-]+\|[ \t:|-]*$/gm, '')    // 表格分隔行
+          .replace(/[ \t]*\|[ \t]*/g, '，')                  // 表格单元格之间停顿
+          .replace(/[*_~]/g, '')
+          .replace(/\s*(->|=>)\s*/g, '，')                     // 箭头不念“右箭头”
+          .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}]/gu, ' ') // emoji/符号
+          .replace(/[ \t]+/g, ' ')
+          .split('\n')
+          .map((line) => {
+            const t = line.trim()
+              .replace(/^[，、。；：,;:]+/, '')
+              .replace(/[，、]{2,}/g, '，')                    // 连续逗号（表格/代码留下的）合并
+              .replace(/[，、；：,;:]+([。！？!?…])/g, '$1')      // “，。”这种叠标点去掉
+              .replace(/[ \t]+([。！？!?…])/g, '$1')             // 标点前不留空格（念起来才有停顿）
+              .replace(/[，、；：,;:]+$/, '')
+            if (!t) return ''
+            // 行尾没句号时补一个，给语音一个自然停顿（否则连成一口气）
+            return /[。！？!?…]$/.test(t) ? t : t + '。'
+          })
+          .filter(Boolean)
+          .join('\n')
+      },
+      hasSpeech(m) {
+        // 只做轻量判断，避免每次渲染都跑一遍正则（真正的文本在点击时才提取）
+        if (!this.ttsSupported || !m || !m.parts) return false
+        return m.parts.some((p) => p.t === 'text' && p.c && p.c.trim())
+      },
+      // 音色“自然度”评分：带 Natural/Neural/Online/Enhanced 的音色机械感最低
+      voiceScore(v) {
+        const s = ((v.name || '') + ' ' + (v.lang || '')).toLowerCase()
+        let n = 0
+        if (/zh[-_]?(cn|hans)|cmn|中文/.test(s)) n += 12
+        else if (/zh|chinese/.test(s)) n += 6
+        if (/natural|neural|online|premium|enhanced/.test(s)) n += 8
+        if (/terra|flo|xiaoxiao|xiaoyi|yunxi|yunyang|tingting|ting-ting|婷婷|lili|丽丽|meijia|美佳|sinji|善怡|yu-?shu|雨舒|huihui|yaoyao|kangkang|google/.test(s)) n += 4
+        if (/compact|espeak|eloquence|albert|bad news|bahh|boing|bubbles|whisper/.test(s)) n -= 20
+        if (v.default) n += 1
+        return n
+      },
+      listVoices() {
+        const synth = window.speechSynthesis
+        if (!synth) return []
+        const seen = {}
+        return (synth.getVoices() || []).filter((v) => {
+          const k = (v.name || '') + '|' + (v.lang || '')
+          if (seen[k]) return false
+          seen[k] = 1
+          return true
+        }).sort((a, b) => this.voiceScore(b) - this.voiceScore(a))
+      },
+      pickVoice() {
+        const voices = this.listVoices()
+        if (!voices.length) return null
+        let want = ''
+        try { want = localStorage.getItem('pi_voice_name') || '' } catch (e) {}
+        if (want) {
+          const hit = voices.find((v) => (v.name || '') === want)
+          if (hit) return hit
+        }
+        return voices[0]           // 已按自然度排好
+      },
+      speechRate() {
+        let r = 1
+        try { r = parseFloat(localStorage.getItem('pi_voice_rate')) || 1 } catch (e) {}
+        return Math.min(Math.max(r, 0.5), 2)
+      },
+      // /voice         列出可用音色
+      // /voice 3       切换到第 3 个音色
+      // /voice rate 1.1 调整语速（0.5~2，默认 1）
+      handleVoiceCmd(arg) {
+        const synth = window.speechSynthesis
+        if (!synth) return this.showNotify('当前浏览器不支持朗读', 'error')
+        const voices = this.listVoices()
+        if (!voices.length) {
+          try { synth.getVoices() } catch (e) {}
+          return this.showNotify('音色列表还在加载，稍后再试一次', 'error')
+        }
+        const zh = voices.filter((v) => /zh|chinese|中文/i.test((v.lang || '') + ' ' + (v.name || '')))
+        const list = (zh.length ? zh : voices).slice(0, 10)
+        const cur = this.pickVoice()
+        if (!arg) {
+          const lines = list.map((v, i) => (cur && v.name === cur.name ? '✓ ' : '· ') + (i + 1) + '. ' + v.name + '  (' + v.lang + ')')
+          const md = '**可选的朗读音色** — 输入 `/voice 序号` 切换，`/voice rate 1.1` 调语速\n\n' + lines.join('\n')
+            + '\n\n当前语速：' + this.speechRate()
+            + '\n\n> 机械感最低的是名字带 **Natural / Neural / Online / 自然** 的音色。macOS 可在「系统设置 → 辅助功能 → 朗读内容 → 系统声音 → 管理声音」下载“婷婷（增强）”等高品质声音；Windows / Edge 直接就有“Xiaoxiao Online (Natural)”这类神经音色。'
+          this.messages.push({ role: 'assistant', parts: [{ t: 'text', c: md }], streaming: false })
+          this.$nextTick(() => { this.scrollBottom() })
+          return
+        }
+        if (/^rate\b/i.test(arg)) {
+          const n = parseFloat(arg.replace(/^rate\s*/i, ''))
+          if (!(n >= 0.5 && n <= 2)) return this.showNotify('语速范围 0.5 ~ 2', 'error')
+          try { localStorage.setItem('pi_voice_rate', String(n)) } catch (e) {}
+          return this.showNotify('语速已设为 ' + n, 'success')
+        }
+        const idx = parseInt(arg, 10)
+        const v = (idx > 0 && list[idx - 1]) || voices.find((x) => (x.name || '').toLowerCase() === arg.toLowerCase())
+        if (!v) return this.showNotify('没有找到音色: ' + arg, 'error')
+        try { localStorage.setItem('pi_voice_name', v.name) } catch (e) {}
+        this.showNotify('朗读音色: ' + v.name, 'success')
+        this.stopSpeak()
+        const u = new SpeechSynthesisUtterance('你好，这是' + v.name + '的朗读效果。')
+        u.voice = v
+        u.lang = v.lang || 'zh-CN'
+        u.rate = this.speechRate()
+        try { synth.speak(u) } catch (e) {}
+      },
+      // 按句切块：碎句先合并（太碎会一顿一顿），过长再硬切（Chrome 长句会被截断）
+      splitSpeech(text) {
+        const out = []
+        const push = (line) => {
+          const sentences = String(line).match(/[^。！？；.!?;]+[。！？；.!?;]*/g) || []
+          let buf = ''
+          sentences.forEach((raw) => {
+            const s = raw.trim()
+            if (!s) return
+            if (buf && buf.length + s.length > 64) { out.push(buf); buf = '' }
+            buf += s
+            while (buf.length > 110) { out.push(buf.slice(0, 110)); buf = buf.slice(110) }
+          })
+          if (buf) out.push(buf)
+        }
+        String(text).split('\n').forEach(push)
+        return out.filter((s) => s.replace(/[\s，。！？；,.!?;]/g, '').length > 0)
+      },
+      toggleSpeak(m, mi) {
+        if (!window.speechSynthesis) return this.showNotify('当前浏览器不支持朗读', 'error')
+        if (this.speakingIdx === mi) return this.stopSpeak()
+        const text = this.speechText(m)
+        if (!text) return this.showNotify('没有可朗读的内容', 'error')
+        this.stopSpeak()
+        const synth = window.speechSynthesis
+        const chunks = this.splitSpeech(text)
+        const voice = this.pickVoice()
+        const rate = this.speechRate()
+        const self = this
+        this.speakingIdx = mi
+        let i = 0
+        const next = () => {
+          if (self.speakingIdx !== mi) return          // 已被停止/切换
+          if (i >= chunks.length) { self.speakingIdx = -1; return }
+          const u = new SpeechSynthesisUtterance(chunks[i++])
+          u.lang = (voice && voice.lang) || 'zh-CN'
+          u.rate = rate
+          u.pitch = 1
+          u.volume = 1
+          if (voice) u.voice = voice
+          // 句间留一点空隙，听感更像真人换气
+          u.onend = () => { if (self.speakingIdx === mi) setTimeout(next, 90) }
+          u.onerror = () => { if (self.speakingIdx === mi) setTimeout(next, 90) }
+          try { synth.speak(u) } catch (e) { self.speakingIdx = -1 }
+        }
+        next()
+      },
+      stopSpeak() {
+        this.speakingIdx = -1
+        try { window.speechSynthesis && window.speechSynthesis.cancel() } catch (e) {}
+      },
+      // ===== 语音输入（STT，浏览器内置 webkitSpeechRecognition）=====
+      toggleRec() {
+        if (this.recording) return this.stopRec()
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+        if (!SR) return this.showNotify('当前浏览器不支持语音识别（试试 Chrome / Edge）', 'error')
+        const host = location.hostname
+        const isLocal = host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host === '::1'
+        if (!window.isSecureContext && !isLocal) {
+          return this.showNotify('麦克风不可用：当前页面 ' + location.protocol + '//' + location.host + ' 不是安全上下文，浏览器只允许在 https 或 localhost 下录音。① 在 script/Lists/config.json 的 webUI 里加 "tls": { "enable": true }，重启后用 https 访问；② 或本机用 http://localhost:端口；③ 或用带 https 的隧道地址', 'error')
+        }
+        const self = this
+        this.probeMic().then(() => self.startRec(SR)).catch((e) => {
+          const name = (e && e.name) || 'Error'
+          const msg = name === 'NotAllowedError' ? '麦克风权限被拒绝：点地址栏左侧图标 → 麦克风 → 允许，然后刷新页面；macOS 还需在「系统设置 → 隐私与安全性 → 麦克风」给浏览器授权'
+            : name === 'NotFoundError' || name === 'DevicesNotFoundError' ? '没有找到麦克风设备'
+            : name === 'NotReadableError' ? '麦克风被其他程序占用（关掉录音/会议软件再试）'
+            : name === 'InsecureContext' ? '麦克风不可用：' + e.message + '（需要用 https 或 localhost 打开）'
+            : '麦克风打开失败: ' + name + ' ' + ((e && e.message) || '')
+          self.showNotify(msg, 'error')
+        })
+      },
+      // 先走 getUserMedia 触发浏览器标准权限弹窗，能拿到比 SpeechRecognition 更准确的失败原因
+      probeMic() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          const err = new Error('navigator.mediaDevices 不可用')
+          err.name = 'InsecureContext'
+          return Promise.reject(err)
+        }
+        return navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+          (stream.getTracks() || []).forEach((t) => { try { t.stop() } catch (e) {} })
+          return true
+        })
+      },
+      startRec(SR) {
+        let rec
+        try { rec = new SR() } catch (e) { return this.showNotify('语音识别启动失败: ' + e.message, 'error') }
+        let lang = 'zh-CN'
+        try { lang = localStorage.getItem('pi_voice_lang') || navigator.language || 'zh-CN' } catch (e) {}
+        rec.lang = lang
+        rec.continuous = false
+        rec.interimResults = true
+        rec.maxAlternatives = 1
+        const self = this
+        this.recBase = this.inputText ? this.inputText.replace(/\s*$/, ' ') : ''
+        rec.onresult = (e) => {
+          let out = ''
+          for (let i = e.resultIndex || 0; i < e.results.length; i++) out += e.results[i][0].transcript
+          self.inputText = self.recBase + out
+          self.$nextTick(() => { self.autosize() })
+        }
+        rec.onerror = (e) => {
+          const code = (e && e.error) || 'unknown'
+          const msg = code === 'not-allowed' || code === 'service-not-allowed' ? '麦克风权限被拒：检查地址栏麦克风权限' 
+            : code === 'network' ? '语音服务不可用（浏览器需联网，国内 Chrome 常失败）'
+            : code === 'no-speech' ? '没有检测到语音'
+            : '语音识别出错: ' + code
+          self.showNotify(msg, 'error')
+          self.recording = false
+        }
+        rec.onend = () => {
+          self.recording = false
+          self._rec = null
+          self.$nextTick(() => {
+            self.autosize()
+            const el = self.$refs.inputEl
+            if (el && el.focus) el.focus()
+          })
+        }
+        try { rec.start() } catch (e) { return this.showNotify('语音识别启动失败: ' + e.message, 'error') }
+        this._rec = rec
+        this.recording = true
+      },
+      stopRec() {
+        this.recording = false
+        try { this._rec && this._rec.stop() } catch (e) {}
+        this._rec = null
       },
       pickCmd(c) {
         this.inputText = '/' + c.name + ' '
@@ -2232,6 +2523,8 @@
       },
       send() {
         if (this.busy) return
+        if (this.recording) this.stopRec()
+        this.stopSpeak()
         const self = this
         let prompt = this.inputText.trim()
         if (!prompt) return
@@ -2317,17 +2610,24 @@
           this.$nextTick(() => { self.autosize() })
           return
         }
+        const voiceMatch = prompt.match(/^\/voice\s*(.*)/i)
+        if (voiceMatch) {
+          this.inputText = ''
+          this.$nextTick(() => { self.autosize() })
+          this.handleVoiceCmd((voiceMatch[1] || '').trim())
+          return
+        }
         if (/^\/help\s*$/.test(prompt)) {
           this.inputText = ''
           this.$nextTick(() => { self.autosize() })
           const cmds = (this.commands || [])
           const cmdLines = cmds.map((c) => `• /${c.name}  —  ${c.description}`).join('  \n  ')
-          const extra = `\n\n💡  小提示：\n  /new  开启新 session（保留当前不重置）\n  /clear  清空前端显示（不切 session）\n  /session  打开左侧历史面板，方向键选中，Enter 载入\n  /model  切换模型（可带参数或不带参数）\n  /theme  打开主题选择弹窗（可带参数直接应用）\n  /compact  压缩上下文节省 token`
+          const extra = `\n\n💡  小提示：\n  /new  开启新 session（保留当前不重置）\n  /clear  清空前端显示（不切 session）\n  /session  打开左侧历史面板，方向键选中，Enter 载入\n  /model  切换模型（可带参数或不带参数）\n  /theme  打开主题选择弹窗（可带参数直接应用）\n  /voice  列出/切换朗读音色（/voice 3 、 /voice rate 1.1）\n  /compact  压缩上下文节省 token`
           this.messages.push({ role: 'assistant', parts: [{ t: 'text', c: (cmdLines || 'No commands') + extra }], streaming: false })
           this.$nextTick(() => { this.scrollBottom() })
           return
         }
-        if (/^\/(new|clear|session|model|theme|help)\b/.test(prompt)) {
+        if (/^\/(new|clear|session|model|theme|voice|help)\b/.test(prompt)) {
           // known command with no further match above; drop the text and ignore
           this.inputText = ''
           this.$nextTick(() => { self.autosize() })
@@ -2731,6 +3031,7 @@
       },
       clearChat() {
         // 只清空前端的显示内容，不开启新 session
+        this.stopSpeak()
         this.messages = []
         this.qEl = null
         this.question = null
@@ -3077,7 +3378,19 @@
       mainEs.onerror = () => {}
       this.$nextTick(() => { const el = self.$refs.inputEl; if (el && el.focus) el.focus() })
 
+      // 提前触发一次 voice 列表加载（首次 getVoices() 在部分浏览器为空）
+      if (window.speechSynthesis) {
+        try {
+          window.speechSynthesis.getVoices()
+          window.speechSynthesis.onvoiceschanged = () => { try { window.speechSynthesis.getVoices() } catch (e) {} }
+        } catch (e) {}
+      }
+
       this.startInstall()
+    },
+    beforeUnmount() {
+      this.stopSpeak()
+      this.stopRec()
     }
   })
 
