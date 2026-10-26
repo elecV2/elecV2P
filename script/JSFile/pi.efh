@@ -415,12 +415,15 @@
     .input-bar .mic-btn:hover:not(:disabled) { color: var(--fc); background: var(--bk3); }
     .input-bar .mic-btn.rec { color: var(--del); background: rgba(248,81,73,.12); animation: pulse 1s infinite; }
     .msg .speak-btn {
-      display: inline-flex; align-items: center; gap: 4px; margin-top: 8px;
-      padding: 2px 10px; border-radius: 6px; border: 1px solid var(--bd);
-      background: transparent; color: var(--fc2); font-size: 11px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; margin-top: 6px; padding: 0;
+      border: none; border-radius: 5px; background: transparent;
+      color: var(--fc3); cursor: pointer; vertical-align: middle;
+      opacity: .55; transition: opacity .15s, color .15s, background .15s;
     }
-    .msg .speak-btn:hover { border-color: var(--fc3); color: var(--fc); }
-    .msg .speak-btn.on { border-color: rgba(88,166,255,.6); color: var(--ac); background: rgba(88,166,255,.10); }
+    .msg:hover .speak-btn { opacity: 1; }
+    .msg .speak-btn:hover { color: var(--fc); background: var(--bk3); }
+    .msg .speak-btn.on { color: var(--ac); opacity: 1; }
     .cmd-wrap { position: relative; flex-shrink: 0; }
     .cmd-dropdown {
       position: absolute; left: 16px; right: 16px; bottom: calc(100% + 4px);
@@ -861,7 +864,8 @@
         <span class="cursor" v-if="m.streaming"></span>
         <button v-if="!m.streaming && hasSpeech(m)" class="speak-btn" :class="{ on: speakingIdx === mi }"
                 @click="toggleSpeak(m, mi)" :title="speakingIdx === mi ? '停止朗读' : '朗读最后结论'">
-          {{ speakingIdx === mi ? '⏹ 停止' : '🔊 朗读' }}
+          <svg v-if="speakingIdx !== mi" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z"/><path d="M16.5 9.2a4 4 0 0 1 0 5.6"/><path d="M19.2 6.6a7.6 7.6 0 0 1 0 10.8"/></svg>
+          <svg v-else width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg>
         </button>
         <div class="meta" :class="m.errored ? 'err' : 'ok'" v-if="m.meta">{{ m.meta }}</div>
       </template>
