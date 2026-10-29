@@ -353,6 +353,7 @@ export default {
       item.minimized = true
       item.active = false
       this.markDirty()
+      this.persistAll()
     },
     evRestoreMinimized(id){
       // 先判断来源

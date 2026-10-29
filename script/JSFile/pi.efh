@@ -122,6 +122,13 @@
       .prompt-timeline .line-item:hover { width: 48px; height: 6px; }
       .prompt-timeline .line-item .tip { font-size: 12px; padding: 3px 8px; max-width: 50vw; }
     }
+    @media (max-width: 640px) {
+      .provider-panel { padding: 12px; }
+      .provider-card { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .provider-card .pc-key { max-width: none; width: 100%; }
+      .provider-card .pc-name { width: 100%; }
+      .provider-card .pc-btn, .provider-card .pc-del { width: 100%; justify-content: center; }
+    }
     .dropdown {
       position: absolute; top: 100%; left: 0; margin-top: 4px;
       background: var(--bk2); background: color-mix(in srgb, var(--bk2) 32%, transparent);
@@ -499,7 +506,7 @@
     .provider-card.active { border-color: var(--ac); background: rgba(88,166,255,.08); }
     .provider-card .pc-info { flex: 1; min-width: 0; cursor: pointer; }
     .provider-card .pc-info:hover .pc-name { color: var(--ac); }
-    .provider-card .pc-name { font-size: 14px; color: var(--fc); font-weight: bold; }
+    .provider-card .pc-name { font-size: 14px; color: var(--fc); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .provider-card .pc-desc { font-size: 11px; color: var(--fc2); word-break: break-all; }
     .provider-card .pc-key {
       flex: 1; max-width: 190px; padding: 6px 9px; border-radius: 6px;

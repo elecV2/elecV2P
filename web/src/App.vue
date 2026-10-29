@@ -313,9 +313,10 @@ export default {
         y: touch ? touch.clientY : event.clientY
       }
       const btnRect = this.$el.querySelector('.pi-efh-btn').getBoundingClientRect()
+      const rootRect = this.$el.getBoundingClientRect()
       this.piEfhPosition = {
-        left: btnRect.left,
-        top: btnRect.top,
+        right: Math.round(rootRect.width - btnRect.right),
+        bottom: Math.round(rootRect.height - btnRect.bottom),
         width: btnRect.width,
         height: btnRect.height
       }
@@ -337,14 +338,13 @@ export default {
       event.preventDefault()
       const root = this.$el
       const rootRect = root.getBoundingClientRect()
-      let newLeft = this.piEfhPosition.left + dx
-      let newTop = this.piEfhPosition.top + dy
-      newLeft = Math.max(0, Math.min(newLeft, rootRect.width - this.piEfhPosition.width))
-      newTop = Math.max(0, Math.min(newTop, rootRect.height - this.piEfhPosition.height))
-      root.style.setProperty('--pi-efh-right', 'auto')
-      root.style.setProperty('--pi-efh-bottom', 'auto')
-      root.style.setProperty('--pi-efh-left', newLeft + 'px')
-      root.style.setProperty('--pi-efh-top', newTop + 'px')
+      const btnRect = this.piEfhPosition
+      const newRight = Math.max(20, btnRect.right - dx)
+      const newBottom = Math.max(20, btnRect.bottom - dy)
+      root.style.setProperty('--pi-efh-left', 'auto')
+      root.style.setProperty('--pi-efh-top', 'auto')
+      root.style.setProperty('--pi-efh-right', newRight + 'px')
+      root.style.setProperty('--pi-efh-bottom', newBottom + 'px')
     },
     dragEnd(){
       if (!this.piEfhDragging) return
@@ -355,10 +355,12 @@ export default {
       document.removeEventListener('touchend', this.dragEnd)
       if (this.piEfhPosition) {
         const btnRect = this.$el.querySelector('.pi-efh-btn').getBoundingClientRect()
+        const rootW = this.$el.getBoundingClientRect().width
+        const rootH = this.$el.getBoundingClientRect().height
         try {
           localStorage.setItem('piEfhPosition', JSON.stringify({
-            left: btnRect.left,
-            top: btnRect.top
+            right: Math.round(rootW - btnRect.right),
+            bottom: Math.round(rootH - btnRect.bottom)
           }))
         } catch(e) {}
       }
@@ -372,11 +374,11 @@ export default {
         if (s) stored = JSON.parse(s)
       } catch(e) {}
       const root = this.$el
-      if (stored && stored.left !== undefined && stored.top !== undefined) {
-        root.style.setProperty('--pi-efh-left', stored.left + 'px')
-        root.style.setProperty('--pi-efh-top', stored.top + 'px')
-        root.style.setProperty('--pi-efh-right', 'auto')
-        root.style.setProperty('--pi-efh-bottom', 'auto')
+      if (stored && stored.right !== undefined && stored.bottom !== undefined) {
+        root.style.setProperty('--pi-efh-left', 'auto')
+        root.style.setProperty('--pi-efh-top', 'auto')
+        root.style.setProperty('--pi-efh-right', stored.right + 'px')
+        root.style.setProperty('--pi-efh-bottom', stored.bottom + 'px')
       }
     },
   },
@@ -561,8 +563,6 @@ export default {
   position: fixed;
   bottom: var(--pi-efh-bottom, calc(20px + env(safe-area-inset-bottom, 0px)));
   right: var(--pi-efh-right, calc(20px + env(safe-area-inset-right, 0px)));
-  left: var(--pi-efh-left, auto);
-  top: var(--pi-efh-top, auto);
   width: 48px;
   height: 48px;
   background: var(--main-bk);
