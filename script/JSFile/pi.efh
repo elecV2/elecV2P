@@ -484,7 +484,7 @@
       flex-direction: column; gap: 16px; padding: 20px;
     }
     .provider-panel {
-      width: min(560px, 94vw); max-height: 86vh; overflow-y: auto;
+      width: min(680px, 94vw); max-height: 86vh; overflow-y: auto;
       background: transparent; border: 1px solid var(--bd); border-radius: 12px;
       padding: 22px; display: flex; flex-direction: column; gap: 10px;
       position: relative;
@@ -504,6 +504,10 @@
     }
     .provider-card:hover { border-color: var(--fc3); }
     .provider-card.active { border-color: var(--ac); background: rgba(88,166,255,.08); }
+    .provider-card.hidden { border-color: var(--fc3); background: var(--bk); opacity: .6; }
+    .provider-card.hidden .pc-name { color: var(--fc2); }
+    .provider-card.hidden .pc-desc { color: var(--fc3); }
+    .provider-card.hidden .pc-key { background: var(--bk2); color: var(--fc2); }
     .provider-card .pc-info { flex: 1; min-width: 0; cursor: pointer; }
     .provider-card .pc-info:hover .pc-name { color: var(--ac); }
     .provider-card .pc-name { font-size: 14px; color: var(--fc); font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -530,7 +534,31 @@
     }
     .provider-card .pc-del:hover { border-color: var(--del); color: var(--del); background: rgba(248,81,73,.10); }
     .provider-card .pc-del:disabled { opacity: .5; cursor: not-allowed; }
+    .provider-card .pc-enable {
+      height: 30px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center;
+      border: 1px solid var(--ok); border-radius: 6px;
+      background: transparent; color: var(--ok); font-size: 12px; cursor: pointer;
+      white-space: nowrap; margin-left: 4px;
+    }
+    .provider-card .pc-enable:hover { background: rgba(63,185,80,.15); border-color: var(--ok); color: var(--ok); }
+    .provider-card .pc-enable:disabled { opacity: .5; cursor: not-allowed; }
     .provider-card .pc-omni-status { font-size: 11px; color: var(--fc2); white-space: nowrap; }
+    .confirm-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center;
+    }
+    .confirm-panel {
+      background: var(--bk2); border: 1px solid var(--bd); border-radius: 12px;
+      padding: 20px 24px; min-width: 300px; box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    }
+    .confirm-title { font-size: 15px; color: var(--ac); font-weight: bold; margin-bottom: 8px; }
+    .confirm-msg { font-size: 13px; color: var(--fc2); margin-bottom: 16px; }
+    .confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .confirm-btn { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--bd); background: var(--bk3); color: var(--fc); font-size: 13px; cursor: pointer; }
+    .confirm-btn:hover { border-color: var(--ac); color: var(--ac); }
+    .confirm-btn.delete { border-color: var(--del); color: var(--del); }
+    .confirm-btn.delete:hover { background: rgba(248,81,73,.15); }
+    .confirm-btn.cancel { opacity: .7; }
     .provider-add {
       margin-top: 6px; padding: 10px 12px; border: 1px dashed var(--bd); border-radius: 10px;
       background: transparent; color: var(--ac); font-size: 13px; cursor: pointer;
@@ -658,20 +686,36 @@
     </div>
   </div>
 
+  <!-- Confirm delete or hide provider dialog -->
+  <div class="confirm-overlay" v-if="delHideConfirm.show" @click.self="delHideConfirm.show=false">
+    <div class="confirm-panel">
+      <div class="confirm-title">Provider: {{ delHideConfirm.provider.name }}</div>
+      <div class="confirm-msg">Choose an action:</div>
+      <div class="confirm-actions">
+        <button class="confirm-btn hide" @click="execDelHide('hide')">✕ Hide</button>
+        <button class="confirm-btn delete" @click="execDelHide('delete')">🗑 Delete</button>
+        <button class="confirm-btn cancel" @click="delHideConfirm.show=false">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <div class="provider-overlay" v-if="!installOverlay && !omniOverlay && providerOverlay">
     <div class="provider-panel">
       <button class="pp-close" @click="providerOverlay=false" title="Close">×</button>
       <div class="pp-title">Choose model provider</div>
       <div class="pp-sub">Enter an API key for the provider, or start use OmniRoute. Selection is saved for next time.</div>
-      <div class="provider-card" v-for="p in providerList" :key="p.name" :class="{active: p.current}">
+      <template v-for="p in sortedProviders" :key="p.name">
+        <div class="provider-card" :class="{active: p.current, hidden: p.hidden}">
         <div class="pc-info" @click="editProvider(p)" title="Edit provider settings">
           <div class="pc-name">{{ p.name }}</div>
           <div class="pc-desc">{{ p.baseUrl }}</div>
         </div>
         <input class="pc-key" v-model="providerKeys[p.name]" :placeholder="p.keySet ? 'key saved · re-enter to change' : 'API key'" type="password">
-        <button class="pc-btn" :class="{used: p.current}" :disabled="providerBusy" @click="useProvider(p.name)">{{ p.current ? 'current' : 'use' }}</button>
-        <button class="pc-del" :disabled="providerBusy || p.current" :title="p.current ? 'Cannot delete the current provider' : 'Delete provider'" @click="deleteProvider(p.name)">×</button>
+        <button class="pc-btn" :class="{used: p.current}" :disabled="providerBusy || p.hidden" @click="useProvider(p.name)">{{ p.current ? 'current' : 'use' }}</button>
+        <button v-if="!p.hidden" class="pc-del" :disabled="providerBusy || p.current" :title="p.current ? 'Cannot delete the current provider' : 'Delete or hide provider'" @click="confirmDeleteOrHide(p.name)">×</button>
+        <button v-else class="pc-enable" :disabled="providerBusy" @click="toggleProviderHidden(p.name)" title="Show provider">✓ Enable</button>
       </div>
+      </template>
       <div class="provider-card" :class="{active: omniCurrent}">
         <div class="pc-info">
           <div class="pc-name">OmniRoute</div>
@@ -1090,7 +1134,8 @@
         question: null, qSel: [], qCustom: [], qSubmitting: false, qEl: null,
         workspace: '', wsBusy: false,
         sseMain: null, mainReady: false, sseHandlers: {}, switching: false,
-        providerOverlay: false, providerList: [], providerKeys: {}, providerBusy: false,
+        providerOverlay: false, providerList: [], providerKeys: {}, providerHidden: {}, providerBusy: false,
+        delHideConfirm: { show: false, name: '', provider: null },
         scrollPending: false,
         currentProvider: '', provSeq: 0,
         omniCurrent: false, omniStatus: 'checking…', omniRunning: false,
@@ -1132,9 +1177,10 @@
       },
       filteredModels() {
         const list = this.cleanModels
-        if (!this.modelFilter) return list
+        const models = list.filter((m) => !this.providerHidden[m.split('/')[0]])
+        if (!this.modelFilter) return models
         const q = this.modelFilter.toLowerCase()
-        return list.filter((m) => m.toLowerCase().indexOf(q) >= 0)
+        return models.filter((m) => m.toLowerCase().indexOf(q) >= 0)
       },
       cmdFiltered() {
         if (!this.cmdOpen) return []
@@ -1143,6 +1189,11 @@
           return !q || c.name.toLowerCase().indexOf(q) === 0 || c.description.toLowerCase().indexOf(q) === 0
         })
         return out.slice(0, 8)
+      },
+      sortedProviders() {
+        const visible = this.providerList.filter((p) => !p.hidden)
+        const hidden = this.providerList.filter((p) => p.hidden)
+        return [...visible, ...hidden]
       },
       themeItems() {
         const items = [{ label: '默认主题', desc: 'Pi 的原始深色主题', theme: null }]
@@ -1990,7 +2041,14 @@
         const seq = ++this.provSeq
         return this.fetchFend('providers', { model: this.currentModel }, 10000).then((data) => {
           if (seq !== this.provSeq) return data || {}
-          if (data && Array.isArray(data.providers)) self.providerList = data.providers
+          if (data && Array.isArray(data.providers)) {
+            self.providerList = data.providers
+            // Sync providerHidden from backend response
+            data.providers.forEach(p => {
+              if (p.hidden) self.providerHidden[p.name] = true
+              else if (self.providerHidden[p.name]) delete self.providerHidden[p.name]
+            })
+          }
           self.omniCurrent = !!(data && data.omniCurrent)
           self.omniStatus = data && data.omniStatus ? data.omniStatus : 'offline'
           self.omniRunning = !!(data && data.omniRunning)
@@ -2150,6 +2208,51 @@
           return false
         }
         return true
+      },
+      confirmDeleteOrHide(name) {
+        const p = this.providerList.find((x) => x.name === name)
+        if (!p) return
+        this.delHideConfirm = { show: true, name: name, provider: p }
+      },
+      execDelHide(action) {
+        const { name, provider } = this.delHideConfirm
+        this.delHideConfirm.show = false
+        if (!name || !provider) return
+        if (action === 'hide') {
+          this.toggleProviderHidden(name)
+        } else if (action === 'delete') {
+          this.deleteProvider(name)
+        }
+      },
+      toggleProviderHidden(name) {
+        const self = this
+        const p = self.providerList.find((x) => x.name === name)
+        if (!p) return
+        self.providerBusy = true
+        self.fetchFend('provider_toggle_hidden', { name: name }, 10000).then((data) => {
+          self.providerBusy = false
+          if (data && data.ok) {
+            self.providerHidden[name] = data.hidden
+            // Immediately update local provider object for instant UI feedback
+            const localProvider = self.providerList.find((x) => x.name === name)
+            if (localProvider) localProvider.hidden = data.hidden
+            if (data.hidden) {
+              self.showNotify('Provider ' + name + ' hidden', 'success')
+              if (self.currentProvider === name && self.providerList.length > 1) {
+                const next = self.providerList.find((x) => !self.providerHidden[x.name] && x.name !== 'omniroute')
+                if (next) self.useProvider(next.name)
+              }
+            } else {
+              self.showNotify('Provider ' + name + ' shown', 'success')
+            }
+            self.loadProviders().catch(() => {})
+          } else {
+            self.showNotify('Failed: ' + ((data && data.error) || 'unknown'), 'error')
+          }
+        }).catch((e) => {
+          self.providerBusy = false
+          self.showNotify('Failed: ' + e.message, 'error')
+        })
       },
       useProvider(name) {
         const self = this
@@ -2401,6 +2504,8 @@
           self.providerBusy = false
           if (data && data.ok) {
             self.showNotify('Provider ' + name + ' deleted', 'success')
+            // Clean up hidden state
+            if (self.providerHidden[name]) delete self.providerHidden[name]
             self.loadProviders().catch(() => {})
           } else {
             self.showNotify('Failed: ' + ((data && data.error) || 'unknown'), 'error')
@@ -3900,18 +4005,19 @@ $fend('providers', (data) => {
   const hidden = ((st.hiddenProviders) || []).filter((x) => typeof x === 'string')
   const list = []
   for (const p of PROVIDER_PRESETS) {
-    if (hidden.indexOf(p.name) >= 0) continue
+    const isHidden = hidden.indexOf(p.name) >= 0
     const existing = (mj.providers || {})[p.name] || {}
     const hasKey = !!(existing.apiKey && String(existing.apiKey) !== '' && !/^\$/.test(String(existing.apiKey)))
     const presetModels = (existing.models && existing.models.length) ? existing.models : p.models
-    list.push({ name: p.name, baseUrl: existing.baseUrl || p.baseUrl, api: existing.api || p.api, hasKey: hasKey, keySet: !!existing.apiKey, current: eff === p.name, custom: false, overridden: !!(existing.models && existing.models.length), models: presetModels.map((m) => (m && m.id) || '').filter(Boolean) })
+    list.push({ name: p.name, baseUrl: existing.baseUrl || p.baseUrl, api: existing.api || p.api, hasKey: hasKey, keySet: !!existing.apiKey, current: eff === p.name, custom: false, overridden: !!(existing.models && existing.models.length), hidden: isHidden, models: presetModels.map((m) => (m && m.id) || '').filter(Boolean) })
   }
   for (const key in (mj.providers || {})) {
     if (key === 'omniroute') continue
     if (PROVIDER_PRESETS.find((p) => p.name === key)) continue
+    const isHidden = hidden.indexOf(key) >= 0
     const existing = mj.providers[key] || {}
     const hasKey = !!(existing.apiKey && String(existing.apiKey) !== '' && !/^\$/.test(String(existing.apiKey)))
-    list.push({ name: key, baseUrl: existing.baseUrl || '', api: existing.api || 'openai-completions', hasKey: hasKey, keySet: !!existing.apiKey, current: eff === key, custom: true, models: (existing.models || []).map((m) => (m && m.id) || '').filter(Boolean) })
+    list.push({ name: key, baseUrl: existing.baseUrl || '', api: existing.api || 'openai-completions', hasKey: hasKey, keySet: !!existing.apiKey, current: eff === key, custom: true, hidden: isHidden, models: (existing.models || []).map((m) => (m && m.id) || '').filter(Boolean) })
   }
   let omniCurrent = eff === 'omniroute'
   let omniStatus = 'disabled'
@@ -4068,6 +4174,29 @@ $fend('provider_custom_save', (data) => {
   }
 })
 
+$fend('provider_toggle_hidden', (data) => {
+  const name = data && data.name ? String(data.name).trim() : ''
+  if (!name) return { ok: false, error: 'provider name required' }
+  if (name === 'omniroute') return { ok: false, error: 'omniroute cannot be hidden' }
+  try {
+    const st = readSettingsJson()
+    if (!st.hiddenProviders) st.hiddenProviders = []
+    const idx = st.hiddenProviders.indexOf(name)
+    let hidden
+    if (idx >= 0) {
+      st.hiddenProviders.splice(idx, 1)
+      hidden = false
+    } else {
+      st.hiddenProviders.push(name)
+      hidden = true
+    }
+    writeFileJson(SETTINGS_FILE(), st)
+    return { ok: true, hidden: hidden }
+  } catch(e) {
+    return { ok: false, error: e.message }
+  }
+})
+
 $fend('provider_delete', (data) => {
   const name = data && data.name ? String(data.name).trim() : ''
   if (!name) return { ok: false, error: 'provider name required' }
@@ -4157,32 +4286,80 @@ $fend('models', async () => {
 })
 
 const ctxLimitMem = {}
+const CTX_STORE_KEY = 'pi_ctxlimit'
+const LEGACY_PREFIX = 'pi_ctxlimit_'
+let ctxStoreCache = null
+const ctxStoreRead = () => {
+  if (ctxStoreCache) return ctxStoreCache
+  let obj = {}
+  try {
+    const raw = $store.get(CTX_STORE_KEY)
+    if (raw) { const p = JSON.parse(raw); if (p && typeof p === 'object') obj = p }
+  } catch(e) {}
+  // one-time migration: fold legacy pi_ctxlimit_<provider>_<model> files into the merged map and delete them
+  let migrated = false
+  try {
+    const storeDir = path.join(__dirname, '..', 'Store')
+    for (const f of fs.readdirSync(storeDir)) {
+      if (f.indexOf(LEGACY_PREFIX) !== 0 || f === CTX_STORE_KEY) continue
+      const k = f.slice(LEGACY_PREFIX.length)
+      const v = Number($store.get(f))
+      if (v > 0 && obj[k] === undefined) { obj[k] = v; migrated = true }
+      try { fs.unlinkSync(path.join(storeDir, f)) } catch(e) {}
+    }
+  } catch(e) {}
+  if (migrated) { try { $store.set(CTX_STORE_KEY, JSON.stringify(obj)) } catch(e) {} }
+  ctxStoreCache = obj
+  return obj
+}
+const ctxStoreWrite = (key, val) => {
+  const obj = ctxStoreRead()
+  obj[key] = val
+  ctxStoreCache = obj
+  try { $store.set(CTX_STORE_KEY, JSON.stringify(obj)) } catch(e) {}
+}
 const getCtxLimit = (modelStr) => {
   return new Promise((resolve) => {
     const pm = parseModel(modelStr)
     if (!pm.model || !pm.provider) return resolve(0)
     const memKey = pm.provider + '/' + pm.model
     if (ctxLimitMem[memKey] > 0) return resolve(ctxLimitMem[memKey])
-    const cacheKey = 'pi_ctxlimit_' + pm.provider + '_' + pm.model
+    const storeKey = pm.provider + '_' + pm.model
     try {
-      const cached = Number($store.get(cacheKey))
+      const cached = Number(ctxStoreRead()[storeKey])
       if (cached > 0) { ctxLimitMem[memKey] = cached; return resolve(cached) }
     } catch(e) {}
     let limit = 0
+    let fromConf = false
     try {
       const mj = readModelsJson()
       const conf = mj && mj.providers && mj.providers[pm.provider]
       const mods = (conf && conf.models) || []
       for (const m of mods) {
-        if (m && m.id === pm.model && m.contextWindow) { limit = m.contextWindow; break }
+        if (m && m.id === pm.model && m.contextWindow) { limit = m.contextWindow; fromConf = true; break }
       }
     } catch(e) {}
-    if (limit) {
-      ctxLimitMem[memKey] = limit
-      try { $store.set(cacheKey, String(limit)) } catch(e2) {}
+    if (!limit) {
+      // models.json 未显式配置时的兜底：本地模型 32k，其余与 pi 默认的 128k 一致
+      limit = isLocalProvider(pm.provider) ? 32768 : 128000
+    }
+    ctxLimitMem[memKey] = limit
+    if (fromConf) {
+      try { ctxStoreWrite(storeKey, limit) } catch(e2) {}
     }
     resolve(limit)
   })
+}
+
+// 判断 provider 是否为本地模型（llama/ollama 或 baseUrl 指向本机）
+const isLocalProvider = (providerName) => {
+  if (/^(llama|ollama)$/i.test(providerName || '')) return true
+  try {
+    const mj = readModelsJson()
+    const conf = mj && mj.providers && mj.providers[providerName]
+    const base = conf && conf.baseUrl ? String(conf.baseUrl).replace(/\/+$/, '') : ''
+    return /^https?:\/\/(127\.0\.0\.1|localhost|::1|\[::1\])/i.test(base)
+  } catch(e) { return false }
 }
 
 $fend('ctxinfo', (data) => {
