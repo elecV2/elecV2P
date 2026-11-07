@@ -24,7 +24,7 @@
   },
   "CONFIG_RUNJS": {
     "timeout": 5000,
-    "intervals": 86400,
+    "intervals": 0,
     "numtofeed": 50,
     "jslogfile": true,
     "eaxioslog": false,
