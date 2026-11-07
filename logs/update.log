@@ -1,4 +1,9 @@
-<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.8.5)
+<a href='https://github.com/elecV2/elecV2P' target='_blank'>elecV2P</a> 重要更新日志: (最新版本 v3.8.6)
+
+v3.8.6  2026-10-30
+  • pi.efh 交互显示及ANSI渲染优化
+  • evui 增加窗口切换逻辑及交互优化
+  • eapp 打开网址通过evui弹窗打开
 
 v3.8.5  2026-09-05
   • 首页增加默认Pi-Aent和opencode应用
