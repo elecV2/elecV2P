@@ -2330,10 +2330,21 @@
           if (data && data.ok && Array.isArray(data.models)) {
             if (data.models.length) {
               self.customForm.models = data.models.join(', ')
-              const removed = data.removed ? (' · ' + data.removed + ' unavailable removed') : ''
-              self.showNotify('Fetched ' + data.models.length + ' models' + removed, 'success')
+              let removedMsg = ''
+              const removedList = Array.isArray(data.removed) ? data.removed : []
+              if (removedList.length) {
+                const parts = removedList.map(r => `${r.id}(${r.reason || 'HTTP ' + (r.status || '?')})`).join(', ')
+                removedMsg = ' · ' + removedList.length + ' unavailable removed: ' + parts
+              }
+              self.showNotify('Fetched ' + data.models.length + ' models' + removedMsg, 'success')
             } else {
-              self.showNotify('Provider returned an empty model list')
+              let removedMsg = ''
+              const removedList = Array.isArray(data.removed) ? data.removed : []
+              if (removedList.length) {
+                const parts = removedList.map(r => `${r.id}(${r.reason || 'HTTP ' + (r.status || '?')})`).join(', ')
+                removedMsg = ' · ' + removedList.length + ' unavailable: ' + parts
+              }
+              self.showNotify('Provider returned an empty model list' + removedMsg)
             }
           } else {
             self.showNotify('Fetch failed: ' + ((data && data.error) || 'unknown'), 'error')
@@ -3065,8 +3076,18 @@
         const compactId = 'compact-' + Date.now()
         this.compacting = true
         this.compactElapsed = 0
+        this.compactMsgIdx = -1
         if (this.compactTimer) clearInterval(this.compactTimer)
-        this.compactTimer = setInterval(() => { self.compactElapsed++ }, 1000)
+        this.compactTimer = setInterval(() => {
+          self.compactElapsed += 1
+          if (self.compactMsgIdx >= 0 && self.messages[self.compactMsgIdx]) {
+            const m = self.messages[self.compactMsgIdx]
+            const base = '↻ Compacting context...'
+            const txt = base + ' ' + self.compactElapsed + 's'
+            if (m.parts && m.parts[0]) m.parts[0].c = txt
+            self.scrollBottom()
+          }
+        }, 1000)
         // SSE handler for compact events
         const onMsg = (data) => {
           if (!data) return
@@ -3088,20 +3109,51 @@
                 parts: [{ t: 'text', c: '↻ Compacting context...', cls: 'compact-msg' }],
                 streaming: false
               })
+              self.compactMsgIdx = self.messages.length - 1
               self.scrollBottom()
               return
             }
             if (data.type === 'compaction_end') {
               const r = data.result || {}
-              const lines = []
-              if (r.summary) lines.push('Summary: ' + r.summary)
-              if (r.tokensBefore !== undefined) lines.push('Before: ~' + r.tokensBefore + ' tokens')
-              if (r.estimatedTokensAfter !== undefined) lines.push('After: ~' + r.estimatedTokensAfter + ' tokens')
-              if (r.usage) lines.push('Usage: ' + JSON.stringify(r.usage))
-              const msg = lines.join('\n') || 'Compaction finished'
+              const parts = []
+              parts.push('↻ Compaction complete')
+              if (r.tokensBefore !== undefined || r.estimatedTokensAfter !== undefined) {
+                parts.push('📊 Tokens')
+                const before = r.tokensBefore ?? r.tokens_before ?? 0
+                const after = r.estimatedTokensAfter ?? r.estimated_tokens_after ?? 0
+                const fmt = n => Number(n).toLocaleString()
+                parts.push(`  Before: ${fmt(before)}`)
+                parts.push(`  After:  ${fmt(after)}`)
+                if (before && after) {
+                  const reduced = before - after
+                  const pct = Math.max(0, Math.round((reduced / before) * 1000) / 10)
+                  parts.push(`  Reduced: ${fmt(reduced)}  ↓ ${pct}%`)
+                }
+              }
+              if (r.usage) {
+                parts.push('💰 Usage')
+                const u = r.usage
+                const fmt = n => (n ?? 0).toLocaleString()
+                if (u.input !== undefined) parts.push(`  Input: ${fmt(u.input)}`)
+                if (u.output !== undefined) parts.push(`  Output: ${fmt(u.output)}`)
+                if (u.totalTokens !== undefined) parts.push(`  Total: ${fmt(u.totalTokens)}`)
+                if (u.cacheRead !== undefined) parts.push(`  Cache read: ${fmt(u.cacheRead)}`)
+                if (u.cacheWrite !== undefined) parts.push(`  Cache write: ${fmt(u.cacheWrite)}`)
+                if (u.reasoning !== undefined) parts.push(`  Reasoning: ${fmt(u.reasoning)}`)
+                const cost = u.cost
+                if (cost && typeof cost === 'object') {
+                  const total = cost.total ?? cost.totalFromProvider ?? 0
+                  if (total) parts.push(`  Cost: $${Number(total).toFixed(4)}`)
+                }
+              }
+              if (r.summary) {
+                parts.push('📌 Summary')
+                parts.push('  ' + String(r.summary).slice(0, 800))
+              }
+              const msg = '<pre style="white-space:pre-wrap">' + parts.join('\n') + '</pre>'
               self.messages.push({
                 role: 'assistant',
-                parts: [{ t: 'text', c: '↻ ' + msg }],
+                parts: [{ t: 'text', c: msg }],
                 streaming: false
               })
               self.scrollBottom()
@@ -3110,6 +3162,7 @@
             if (data.type === 'compact_done') {
               self.compacting = false
               if (self.compactTimer) { clearInterval(self.compactTimer); self.compactTimer = null }
+              self.compactMsgIdx = -1
               const r = data.result || {}
               if (r.estimatedTokensAfter) {
                 self.ctxUsed = r.estimatedTokensAfter
@@ -3125,13 +3178,14 @@
             if (data.type === 'error') {
               self.compacting = false
               if (self.compactTimer) { clearInterval(self.compactTimer); self.compactTimer = null }
+              self.compactMsgIdx = -1
               self.showNotify('Compact failed: ' + (data.message || data.error || 'unknown'), 'error')
               return
             }
           } catch(e) {}
         }
         this.sseHandlers[compactId] = onMsg
-        this.fetchFend('compact', { runId: compactId, session: sid, model: this.currentModel }, 180000).then((data) => {
+        this.fetchFend('compact', { runId: compactId, session: sid, model: this.currentModel }, 600000).then((data) => {
           if (!data || data.ok === false) {
             onMsg({ type: 'error', message: (data && (data.error || data.message)) || 'compact failed' })
           }
@@ -3581,6 +3635,12 @@ const filterDeadModels = (api, baseUrl, apiKey, providerName, ids) => {
     return Promise.resolve({ ids: ids, removed: [] })
   }
   const root = String(baseUrl || '').replace(/\/+$/, '')
+  // 本地提供商通常不支持 GET /models/{id}，直接跳过死亡探测避免误杀
+  const isLocalHost = /^https?:\/\/(127\.0\.0\.1|localhost|::1|\[::1\])/i.test(root)
+  const isLocalProvider = /^(llama|ollama)$/i.test(providerName || '')
+  if (isLocalHost || isLocalProvider) {
+    return Promise.resolve({ ids: ids, removed: [] })
+  }
   const headers = apiKey ? { authorization: 'Bearer ' + apiKey } : {}
   const deadline = Date.now() + 45000
   const CONC = 8
@@ -3590,8 +3650,10 @@ const filterDeadModels = (api, baseUrl, apiKey, providerName, ids) => {
     return Promise.all(batch.map((id) => {
       const enc = String(id).split('/').map(encodeURIComponent).join('/')
       return fetchProviderStatus(root + '/models/' + enc, headers, 6000).then((r) => {
-        return { id: id, state: isDeadModelStatus(r.status) ? 'dead' : (r.status === 200 ? 'alive' : 'unknown') }
-      }).catch(() => { return { id: id, state: 'unknown' } })
+        const dead = isDeadModelStatus(r.status)
+        const state = dead ? 'dead' : (r.status === 200 ? 'alive' : 'unknown')
+        return { id, status: r.status, state, reason: dead ? ('HTTP ' + r.status) : (r.status === 200 ? 'ok' : ('HTTP ' + r.status)) }
+      }).catch((e) => { return { id, status: 0, state: 'unknown', reason: 'error: ' + (e && e.message ? e.message : 'network') } })
     }))
   }
   let chain = Promise.resolve()
@@ -3602,16 +3664,17 @@ const filterDeadModels = (api, baseUrl, apiKey, providerName, ids) => {
       return runBatch(batch)
     }).then((results) => {
       for (const r of results) {
-        if (r.state === 'dead') removed.push(r.id)
+        if (r.state === 'dead') removed.push({ id: r.id, status: r.status, reason: r.reason })
         else alive.push(r.id)
       }
     })
   }
   return chain.then(() => {
     if (providerName) {
-      const fullKeys = removed.map((id) => providerName + '/' + id)
+      const removedIds = removed.map((r) => r.id)
+      const fullKeys = removedIds.map((id) => providerName + '/' + id)
       if (fullKeys.length) markBadModels(fullKeys)
-      reviveBadModels(alive.filter((id) => !removed.includes(id)).map((id) => providerName + '/' + id))
+      reviveBadModels(alive.filter((id) => !removedIds.includes(id)).map((id) => providerName + '/' + id))
     }
     return { ids: alive, removed: removed }
   })
@@ -3818,7 +3881,7 @@ $fend('provider_fetch_models', (data) => {
     }
   }
   return fetchModelsForApi(api, baseUrl, apiKey, name).then((res) => {
-    return { ok: true, models: dedupeList(res.ids), removed: (res.removed || []).length }
+    return { ok: true, models: dedupeList(res.ids), removed: res.removed || [] }
   }).catch((e) => {
     return { ok: false, error: e.message || String(e) }
   })
@@ -5087,9 +5150,9 @@ $fend('compact', (data) => {
     const kickWatchdog = () => {
       if (watchdog) clearTimeout(watchdog)
       watchdog = setTimeout(() => {
-        send('error', { message: 'compact timeout (180s)' })
+        send('error', { message: 'compact timeout (600s)' })
         finish({ ok: false, error: 'timeout' })
-      }, 180000)
+      }, 600000)
     }
     let watchdog = null
     let compactResult = null
