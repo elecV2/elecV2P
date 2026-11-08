@@ -17,7 +17,7 @@
       <div class="eapp_item eapp_item--edit">
         <div class="eapp_edit_row">
           <button v-if="!bEdit" class="elecBtn elecBtn--h36 elecBtn--narrow bk_main_bk" :title="$t('neweapp')" @click.prevent="epEdit()">＋</button>
-          <button v-if="!bEdit" class="elecBtn elecBtn--h36 elecBtn--narrow" :class="{ 'bk_main_bk': !bFull }" :title="bFull ? $t('exit_fullscreen') : $t('fullscreen')" @click.prevent="bFull=!bFull">{{ bFull ? '✕' : '⛶' }}</button>
+          <button v-if="!bEdit" class="elecBtn elecBtn--h36 elecBtn--narrow" :class="{ 'bk_main_bk': !bFull }" :title="bFull ? $t('exit_fullscreen') : $t('fullscreen')" @click.prevent="bFull=!bFull">{{ bFull ? '_' : '⛶' }}</button>
           <select v-else class="elecBtn elecBtn--h36 minw100" v-model.number="eapp.logo_type" :title="$t('choose')+' LOGO '+$t('style')">
             <option value="1" selected>{{ $t('style') }} 1</option>
             <option value="2">{{ $t('style') }} 2</option>

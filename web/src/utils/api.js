@@ -440,8 +440,7 @@ function evalRun(code = '') {
     return msg
   }
   try {
-    const meval = eval
-    return meval(code)
+    return (void 0, eval)(code)
   } catch(e) {
     console.error('evalRun fail', e)
     return e.message
