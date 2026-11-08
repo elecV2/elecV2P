@@ -145,6 +145,7 @@
     .dropdown .d-item {
       padding: 7px 12px; cursor: pointer; border-bottom: 1px solid var(--bd);
       transition: background .15s;
+      display: flex; align-items: center; justify-content: space-between;
     }
     .dropdown .d-item:last-child { border-bottom: none; }
     .dropdown .d-item:hover { background: var(--bk3); background: color-mix(in srgb, var(--bk3) 55%, transparent); }
@@ -156,6 +157,27 @@
     .dropdown .d-more:hover { background: var(--bk3); background: color-mix(in srgb, var(--bk3) 55%, transparent); }
     .dropdown .d-foot { position: relative; padding: 7px 12px; text-align: center; font-size: 11px; color: var(--fc3); border-top: 1px solid var(--bd); background: transparent; }
     .dropdown .d-list { overflow-y: auto; flex: 1; min-height: 0; }
+    .model-star {
+      margin-left: 8px;
+      margin-top: 2px;
+      color: #ccc;
+      font-size: 14px;
+      transition: color .2s;
+      flex-shrink: 0;
+      background: transparent;
+      border: 1px solid #444;
+      border-radius: 4px;
+      padding: 2px 6px;
+      cursor: pointer;
+    }
+    .model-star:hover {
+      border-color: #666;
+    }
+    .model-star.fav-active {
+      color: #ffd700;
+      border-color: #ffd700;
+      background: rgba(255,215,0,.15);
+    }
     .messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
     .welcome { color: var(--fc2); text-align: center; margin: auto; font-size: 15px; line-height: 1.9; max-width: 560px; width: 100%; padding: 16px; }
     .welcome b { color: var(--ac); }
@@ -866,6 +888,7 @@
         <div class="d-list">
           <div v-for="(m, mi) in filteredModels" :key="m" :class="['d-item', {active: m===currentModel, nav: mi===modelNavIdx}]" @click="selectModel(m)" @mouseenter="modelNavIdx = mi">
             <div class="d-title">{{ m }}</div>
+            <button class="model-star" @click.stop="toggleFavoriteModel(m)" :title="isFavoriteModel(m) ? 'Remove from favorites' : 'Add to favorites'" :class="{'fav-active': isFavoriteModel(m)}">{{ isFavoriteModel(m) ? '★' : '☆' }}</button>
           </div>
         </div>
         <div class="d-foot" v-if="models.length">{{ models.length }} 个可用模型</div>
@@ -1115,8 +1138,6 @@
     if (!value.includes('\u001B') && !value.includes('\u009B')) return value
     return value.replace(ansiRegex, '')
   }
-  const stripAnsiJs = stripAnsi
-
   const hasAnsi = (c) => { return /[\u001b\u009b]/.test(String(c)) }
 
   const app = Vue.createApp({
@@ -1126,11 +1147,11 @@
         deleting: {}, messages: [], inputText: '', todos: [], runId: '',
         commands: [], cmdOpen: false, cmdIdx: -1,
         histList: [], histIdx: -1, histDraft: '',
-        sessionPanelOpen: false, sessionNavIdx: 0, sessionNavList: [], dropdown: '',
+        sessionPanelOpen: false, sessionNavIdx: 0, dropdown: '',
         notifyMsg: '', notifyShow: false, notifyType: 'error', loading: false,
         piVersion: '', installOverlay: true, installErr: '', installProgress: 'This may take a minute', installLog: [], installCmd: '', installEs: null, installBusy: false,
         ctxUsed: 0, ctxLimit: 0, ctxPct: 0, ctxModel: '',
-        compacting: false, compactRunId: '', compactElapsed: 0, compactTimer: null,
+        compacting: false, compactElapsed: 0, compactTimer: null,
         question: null, qSel: [], qCustom: [], qSubmitting: false, qEl: null,
         workspace: '', wsBusy: false,
         sseMain: null, mainReady: false, sseHandlers: {}, switching: false,
@@ -1144,6 +1165,9 @@
         customOpen: false, customBusy: false, customEditing: false, customFetchBusy: false,
         customForm: { name: '', baseUrl: '', apiKey: '', api: 'openai-completions', models: '' },
         modelFilter: '', modelNavIdx: 0,
+        favoriteModels: [],
+        suppressSort: false,
+        modelListSorted: [],
         timelineLines: [],
         speakingIdx: -1, recording: false, recBase: '',
         ttsSupported: !!(window.speechSynthesis && window.SpeechSynthesisUtterance),
@@ -1177,7 +1201,11 @@
       },
       filteredModels() {
         const list = this.cleanModels
-        const models = list.filter((m) => !this.providerHidden[m.split('/')[0]])
+        let models = list.filter((m) => !this.providerHidden[m.split('/')[0]])
+        // When model dropdown is open, use pre-sorted modelListSorted (favorites first)
+        if (this.dropdown === 'model' && this.modelListSorted.length > 0) {
+          models = this.modelListSorted
+        }
         if (!this.modelFilter) return models
         const q = this.modelFilter.toLowerCase()
         return models.filter((m) => m.toLowerCase().indexOf(q) >= 0)
@@ -1212,9 +1240,12 @@
       },
       ctxStyle() {
         return { width: Math.min(100, this.ctxPct) + '%' }
-      }
+      },
     },
     methods: {
+      isFavoriteModel(m) {
+        return this.favoriteModels.includes(m)
+      },
       esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') },
       renderDiff(t) {
         const lines = String(t).split('\n')
@@ -1399,6 +1430,17 @@
         this.dropdown = this.dropdown === which ? '' : which
         if (this.dropdown === 'model') {
           this.modelNavIdx = 0
+          // Pre-sort models: favorites first, then alphabetical (only once on open)
+          const list = this.cleanModels.filter((m) => !this.providerHidden[m.split('/')[0]])
+          const fav = new Set(this.favoriteModels)
+          this.modelListSorted = list.sort((a, b) => {
+            const aFav = fav.has(a)
+            const bFav = fav.has(b)
+            if (aFav && !bFav) return -1
+            if (!aFav && bFav) return 1
+            return a.localeCompare(b)
+          })
+          this.suppressSort = false
           // 打开模型列表时，自动滚动到当前使用的模型
           this.$nextTick(() => {
             this.scrollToCurrentModel()
@@ -1648,6 +1690,10 @@
         ]).then((results) => {
           self.models = (results[1] && results[1].models) || []
           self.pinnedSessions = (results[0] && results[0].pinned) || []
+          // Load favorite models in background (non-blocking)
+          self.fetchFend('store_get', { key: 'pi_favorite_models' }).then(stored => {
+            self.favoriteModels = Array.isArray(stored) ? stored : (stored ? JSON.parse(stored) : [])
+          }).catch(() => { self.favoriteModels = [] })
           return self.fetchFend('pi_sessions', {}, 8000).catch((e) => { self.showNotify('pi sessions: ' + e.message, 'error'); return { sessions: [] } })
         }).then((oc) => {
           if (oc && oc.sessions) self.sessions = oc.sessions
@@ -2253,6 +2299,21 @@
           self.providerBusy = false
           self.showNotify('Failed: ' + e.message, 'error')
         })
+      },
+      toggleFavoriteModel(model) {
+        const idx = this.favoriteModels.indexOf(model)
+        if (idx >= 0) {
+          this.favoriteModels.splice(idx, 1)
+          this.showNotify('Removed from favorites: ' + model, 'success')
+        } else {
+          this.favoriteModels.push(model)
+          this.showNotify('Added to favorites: ' + model, 'success')
+        }
+        // Block re-sort until dropdown is reopened
+        this.suppressSort = true
+        // Save to backend via Fend
+        this.fetchFend('store_set', { key: 'pi_favorite_models', value: JSON.stringify(this.favoriteModels) })
+          .catch(e => this.showNotify('Store set failed: ' + e.message, 'error'))
       },
       useProvider(name) {
         const self = this
@@ -4595,6 +4656,29 @@ $fend('workspace_set', (data) => {
   }
   setWorkDir(d)
   return { ok: true, cwd: d }
+})
+
+$fend('store_get', (data) => {
+  const key = data && data.key ? String(data.key).trim() : ''
+  if (!key) return []
+  try {
+    const val = $store.get(key)
+    return val ? val : []
+  } catch(e) {
+    return []
+  }
+})
+
+$fend('store_set', (data) => {
+  const key = data && data.key ? String(data.key).trim() : ''
+  const value = data && data.value !== undefined ? data.value : ''
+  if (!key) return { ok: false, error: 'key required' }
+  try {
+    $store.set(key, value)
+    return { ok: true }
+  } catch(e) {
+    return { ok: false, error: e.message }
+  }
 })
 
 $fend('commands', () => {
