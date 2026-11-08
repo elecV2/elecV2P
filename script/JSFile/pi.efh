@@ -117,10 +117,11 @@
       .ctx-num { font-size: 9px; }
       .header .compact-btn { padding: 2px 6px; font-size: 10px; flex-shrink: 0; }
       .prompt-timeline { right: 8px; }
-      .prompt-timeline .timeline-inner { gap: 5px; padding: 8px 0; }
-      .prompt-timeline .line-item { width: 36px; height: 2px; }
-      .prompt-timeline .line-item:hover { width: 48px; height: 6px; }
-      .prompt-timeline .line-item .tip { font-size: 12px; padding: 3px 8px; max-width: 50vw; }
+      .prompt-timeline .timeline-inner { gap: 0; padding: 8px 0; }
+      .prompt-timeline .line-item { width: 18px; height: 10px; /* 2px可见条 + 上下各4px透明交互区 */ }
+      .prompt-timeline .line-item::before { content: ''; position: absolute; right: 0; top: 4px; width: 18px; height: 2px; background: var(--ac); border-radius: 999px; transition: height .15s, width .15s; }
+      .prompt-timeline .line-item:hover::before { height: 4px; width: 24px; }
+      .prompt-timeline .line-item .tip { font-size: 12px; padding: 4px 10px; max-width: 50vw; min-width: 220px; white-space: normal; word-break: break-word; line-height: 1.4; overflow: visible; }
     }
     @media (max-width: 640px) {
       .provider-panel { padding: 12px; }
@@ -274,10 +275,11 @@
     .msg .stream-text { white-space: pre-wrap; word-break: break-word; line-height: 1.7; }
     .cursor { display: inline-block; width: 7px; height: 16px; background: var(--ac); animation: blink .7s infinite; vertical-align: text-bottom; margin-left: 2px; }
     .prompt-timeline { position: fixed; right: 24px; top: 50%; transform: translateY(-50%); width: auto; pointer-events: none; z-index: 100; }
-    .prompt-timeline .timeline-inner { position: relative; width: 100%; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; padding: 12px 0; }
-    .prompt-timeline .line-item { position: relative; width: clamp(48px, 10vw, 100px); height: 2px; background: var(--ac); border-radius: 999px; cursor: pointer; pointer-events: auto; transition: background .15s, height .15s, width .15s, border-radius .15s; opacity: 1; box-shadow: 0 0 3px rgba(88,166,255,0.5); margin-bottom: 2px; }
-    .prompt-timeline .line-item:hover { background: var(--ac); height: 8px; width: clamp(60px, 13vw, 120px); box-shadow: 0 0 8px rgba(88,166,255,0.8); border-radius: 999px; }
-    .prompt-timeline .line-item .tip { position: absolute; right: 105%; top: 50%; transform: translateY(-50%); white-space: nowrap; font-size: 14px; font-weight: 500; color: var(--fc); background: var(--bk2); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--bd); opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 200; box-shadow: 0 2px 8px rgba(0,0,0,0.3); max-width: 60vw; overflow: hidden; text-overflow: ellipsis; }
+    .prompt-timeline .timeline-inner { position: relative; width: 100%; display: flex; flex-direction: column; align-items: flex-end; gap: 0; padding: 12px 0; }
+    .prompt-timeline .line-item { position: relative; width: clamp(24px, 5vw, 50px); height: 10px; /* 2px可见条 + 上下各4px透明交互区 */ cursor: pointer; pointer-events: auto; transition: background .15s; opacity: 1; }
+    .prompt-timeline .line-item::before { content: ''; position: absolute; right: 0; top: 4px; width: clamp(24px, 5vw, 50px); height: 2px; background: var(--ac); border-radius: 999px; box-shadow: 0 0 3px rgba(88,166,255,0.5); transition: height .15s, width .15s, box-shadow .15s; }
+    .prompt-timeline .line-item:hover::before { height: 4px; width: clamp(30px, 6.5vw, 60px); box-shadow: 0 0 8px rgba(88,166,255,0.8); }
+    .prompt-timeline .line-item .tip { position: absolute; right: calc(100% + 16px); top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 500; color: var(--fc); background: var(--bk2); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--bd); opacity: 0; pointer-events: none; transition: opacity .15s; z-index: 200; box-shadow: 0 2px 8px rgba(0,0,0,0.3); max-width: 60vw; min-width: 280px; white-space: normal; word-break: break-word; line-height: 1.5; overflow: visible; }
     .prompt-timeline .line-item:hover .tip { opacity: 1; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
     .reasoning { margin-bottom: 8px; }
