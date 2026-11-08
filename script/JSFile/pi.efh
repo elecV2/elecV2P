@@ -556,14 +556,15 @@
     }
     .provider-card .pc-del:hover { border-color: var(--del); color: var(--del); background: rgba(248,81,73,.10); }
     .provider-card .pc-del:disabled { opacity: .5; cursor: not-allowed; }
-    .provider-card .pc-enable {
-      height: 30px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center;
+    .provider-card .pc-eye {
+      height: 30px; width: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center;
       border: 1px solid var(--ok); border-radius: 6px;
-      background: transparent; color: var(--ok); font-size: 12px; cursor: pointer;
-      white-space: nowrap; margin-left: 4px;
+      background: transparent; color: var(--ok); cursor: pointer;
+      margin-left: 4px;
     }
-    .provider-card .pc-enable:hover { background: rgba(63,185,80,.15); border-color: var(--ok); color: var(--ok); }
-    .provider-card .pc-enable:disabled { opacity: .5; cursor: not-allowed; }
+    .provider-card .pc-eye:hover { background: rgba(63,185,80,.15); border-color: var(--ok); color: var(--ok); }
+    .provider-card .pc-eye:disabled { opacity: .5; cursor: not-allowed; }
+    .provider-card .pc-eye svg { width: 16px; height: 16px; }
     .provider-card .pc-omni-status { font-size: 11px; color: var(--fc2); white-space: nowrap; }
     .confirm-overlay {
       position: fixed; inset: 0; z-index: 9999;
@@ -576,11 +577,13 @@
     .confirm-title { font-size: 15px; color: var(--ac); font-weight: bold; margin-bottom: 8px; }
     .confirm-msg { font-size: 13px; color: var(--fc2); margin-bottom: 16px; }
     .confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
-    .confirm-btn { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--bd); background: var(--bk3); color: var(--fc); font-size: 13px; cursor: pointer; }
-    .confirm-btn:hover { border-color: var(--ac); color: var(--ac); }
-    .confirm-btn.delete { border-color: var(--del); color: var(--del); }
-    .confirm-btn.delete:hover { background: rgba(248,81,73,.15); }
-    .confirm-btn.cancel { opacity: .7; }
+    .confirm-btn { padding: 8px 16px; border-radius: 6px; border: none; font-size: 13px; cursor: pointer; transition: all .15s; }
+    .confirm-btn.hide { background: rgba(88,166,255,.15); color: var(--ac); }
+    .confirm-btn.hide:hover { background: rgba(88,166,255,.25); }
+    .confirm-btn.delete { background: rgba(248,81,73,.15); color: var(--del); }
+    .confirm-btn.delete:hover { background: rgba(248,81,73,.25); }
+    .confirm-btn.cancel { background: var(--bk3); color: var(--fc2); }
+    .confirm-btn.cancel:hover { background: var(--bk4); color: var(--fc); }
     .provider-add {
       margin-top: 6px; padding: 10px 12px; border: 1px dashed var(--bd); border-radius: 10px;
       background: transparent; color: var(--ac); font-size: 13px; cursor: pointer;
@@ -715,7 +718,7 @@
       <div class="confirm-msg">Choose an action:</div>
       <div class="confirm-actions">
         <button class="confirm-btn hide" @click="execDelHide('hide')">✕ Hide</button>
-        <button class="confirm-btn delete" @click="execDelHide('delete')">🗑 Delete</button>
+        <button v-if="delHideConfirm.provider.name !== 'omniroute'" class="confirm-btn delete" @click="execDelHide('delete')">🗑 Delete</button>
         <button class="confirm-btn cancel" @click="delHideConfirm.show=false">Cancel</button>
       </div>
     </div>
@@ -735,15 +738,17 @@
         <input class="pc-key" v-model="providerKeys[p.name]" :placeholder="p.keySet ? 'key saved · re-enter to change' : 'API key'" type="password">
         <button class="pc-btn" :class="{used: p.current}" :disabled="providerBusy || p.hidden" @click="useProvider(p.name)">{{ p.current ? 'current' : 'use' }}</button>
         <button v-if="!p.hidden" class="pc-del" :disabled="providerBusy || p.current" :title="p.current ? 'Cannot delete the current provider' : 'Delete or hide provider'" @click="confirmDeleteOrHide(p.name)">×</button>
-        <button v-else class="pc-enable" :disabled="providerBusy" @click="toggleProviderHidden(p.name)" title="Show provider">✓ Enable</button>
+        <button v-else class="pc-eye" :disabled="providerBusy" @click="toggleProviderHidden(p.name)" title="Show provider"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
       </div>
       </template>
-      <div class="provider-card" :class="{active: omniCurrent}">
+      <div class="provider-card" :class="{active: omniCurrent, hidden: providerHidden['omniroute']}">
         <div class="pc-info">
           <div class="pc-name">OmniRoute</div>
           <div class="pc-desc">{{ omniStatus }}</div>
         </div>
-        <button class="pc-btn" :class="{used: omniCurrent}" :disabled="providerBusy" @click="useOmniRoute">{{ omniCurrent ? 'current' : 'enable' }}</button>
+        <button class="pc-btn" :class="{used: omniCurrent}" :disabled="providerBusy || providerHidden['omniroute']" @click="useOmniRoute">{{ omniCurrent ? 'current' : 'enable' }}</button>
+        <button v-if="!providerHidden['omniroute']" class="pc-del" :disabled="providerBusy || omniCurrent" :title="omniCurrent ? 'Cannot disable the current provider' : 'Disable OmniRoute'" @click="confirmDeleteOrHide('omniroute')">×</button>
+        <button v-else class="pc-eye" :disabled="providerBusy" @click="toggleProviderHidden('omniroute')" title="Show OmniRoute"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
       </div>
       <button class="provider-add" @click="openCustomProvider" :disabled="providerBusy">＋ custom provider</button>
     </div>
@@ -891,7 +896,7 @@
             <button class="model-star" @click.stop="toggleFavoriteModel(m)" :title="isFavoriteModel(m) ? 'Remove from favorites' : 'Add to favorites'" :class="{'fav-active': isFavoriteModel(m)}">{{ isFavoriteModel(m) ? '★' : '☆' }}</button>
           </div>
         </div>
-        <div class="d-foot" v-if="models.length">{{ models.length }} 个可用模型</div>
+        <div class="d-foot" v-if="models.length">{{ filteredModels.length }} / {{ models.length }} 个模型</div>
       </div>
     </span>
     <button class="theme-btn" @click.stop="showThemeSelector" :title="'Sync with elecV2P theme · current: ' + (currentTheme ? currentTheme.name || 'custom' : 'default')">
@@ -2098,6 +2103,9 @@
           self.omniCurrent = !!(data && data.omniCurrent)
           self.omniStatus = data && data.omniStatus ? data.omniStatus : 'offline'
           self.omniRunning = !!(data && data.omniRunning)
+          // Sync OmniRoute hidden state
+          if (data.omniHidden) self.providerHidden['omniroute'] = true
+          else if (self.providerHidden['omniroute']) delete self.providerHidden['omniroute']
           const cur = (self.providerList || []).find((p) => p.current)
           self.currentProvider = self.omniCurrent ? 'omniroute' : (cur ? cur.name : '')
           return data || {}
@@ -2256,7 +2264,11 @@
         return true
       },
       confirmDeleteOrHide(name) {
-        const p = this.providerList.find((x) => x.name === name)
+        let p = this.providerList.find((x) => x.name === name)
+        // OmniRoute is not in providerList, create a minimal object
+        if (!p && name === 'omniroute') {
+          p = { name: 'omniroute', current: this.omniCurrent }
+        }
         if (!p) return
         this.delHideConfirm = { show: true, name: name, provider: p }
       },
@@ -2272,8 +2284,11 @@
       },
       toggleProviderHidden(name) {
         const self = this
-        const p = self.providerList.find((x) => x.name === name)
-        if (!p) return
+        // OmniRoute is not in providerList, skip the check
+        if (name !== 'omniroute') {
+          const p = self.providerList.find((x) => x.name === name)
+          if (!p) return
+        }
         self.providerBusy = true
         self.fetchFend('provider_toggle_hidden', { name: name }, 10000).then((data) => {
           self.providerBusy = false
@@ -3746,9 +3761,15 @@ const readBadModels = () => {
 const markBadModels = (keys) => {
   const list = Array.isArray(keys) ? keys : [keys]
   if (!list.length) return false
+  // Skip models that are in favorites
+  const favRaw = $store.get('pi_favorite_models')
+  const favorites = favRaw ? (Array.isArray(favRaw) ? favRaw : JSON.parse(favRaw)) : []
+  const favSet = new Set(favorites)
   const bad = readBadModels()
   let changed = false
-  for (const k of list) { if (k && !bad[k]) { bad[k] = Date.now(); changed = true } }
+  for (const k of list) {
+    if (k && !bad[k] && !favSet.has(k)) { bad[k] = Date.now(); changed = true }
+  }
   if (changed) { try { $store.set(BAD_MODELS_KEY, JSON.stringify(bad)) } catch(e) {} }
   return changed
 }
@@ -4093,8 +4114,10 @@ $fend('providers', (data) => {
       } else {
         if (omniStatus.indexOf('enabled') >= 0) omniStatus = 'default but not running'
       }
-      resolve({ ok: true, providers: list, omniCurrent: omniCurrent, omniStatus: omniStatus, hasOmniConfig: !!(mj.providers || {}).omniroute, omniRunning: running })
-    }).catch(() => { resolve({ ok: true, providers: list, omniCurrent: omniCurrent, omniStatus: omniStatus, hasOmniConfig: !!(mj.providers || {}).omniroute, omniRunning: false }) })
+      const omniHidden = hidden.indexOf('omniroute') >= 0
+      resolve({ ok: true, providers: list, omniCurrent: omniCurrent, omniStatus: omniStatus, hasOmniConfig: !!(mj.providers || {}).omniroute, omniRunning: running, omniHidden: omniHidden })
+    }).catch(() => { const omniHidden = hidden.indexOf('omniroute') >= 0
+      resolve({ ok: true, providers: list, omniCurrent: omniCurrent, omniStatus: omniStatus, hasOmniConfig: !!(mj.providers || {}).omniroute, omniRunning: false, omniHidden: omniHidden }) })
   })
 })
 
@@ -4238,7 +4261,6 @@ $fend('provider_custom_save', (data) => {
 $fend('provider_toggle_hidden', (data) => {
   const name = data && data.name ? String(data.name).trim() : ''
   if (!name) return { ok: false, error: 'provider name required' }
-  if (name === 'omniroute') return { ok: false, error: 'omniroute cannot be hidden' }
   try {
     const st = readSettingsJson()
     if (!st.hiddenProviders) st.hiddenProviders = []
@@ -4838,6 +4860,7 @@ $fend('start', (data) => {
     if (aliveTimer) clearInterval(aliveTimer)
     if (toolHeartbeat) clearInterval(toolHeartbeat)
     try { delete runProcs[runId] } catch(e) {} try { $cache.delete('pi_run_' + runId) } catch(e) {}
+    try { $cache.delete('pi_stop_' + runId) } catch(e) {}
     // watchdog 超时结束时 pi 可能仍在运行，需要杀掉，否则会继续写 session
     if (payload && payload.timeout) killTree(proc)
     send('done', Object.assign({ steps: stepCount }, payload || {}, payload.tokens ? { tokens: normTokens(payload.tokens) } : {}))
@@ -4849,6 +4872,7 @@ $fend('start', (data) => {
     if (aliveTimer) clearInterval(aliveTimer)
     if (toolHeartbeat) clearInterval(toolHeartbeat)
     try { delete runProcs[runId] } catch(e) {} try { $cache.delete('pi_run_' + runId) } catch(e) {}
+    try { $cache.delete('pi_stop_' + runId) } catch(e) {}
     killTree(proc)
     send('error', { content: msg })
   }
@@ -5070,7 +5094,7 @@ $fend('start', (data) => {
     return list
   }
   const switchToNextModel = (etxt, reason) => {
-    if (retrying) return false
+    if (retrying || isStopped()) return false
     if (switchLeft <= 0) {
       // switch budget exhausted — no further auto-switch attempt is possible, the run stops
       // (no model is actually switched here; the old message claiming "model switched" was misleading)
@@ -5151,7 +5175,7 @@ $fend('start', (data) => {
   // single decision point for every model error (message_end, error/session_error events, exit path).
   // Guarantees retry -> switch -> fail ordering and never bails out while a relaunch is pending.
   const handleModelError = (etxt) => {
-    if (!etxt) return
+    if (!etxt || isStopped()) return
     lastErrText = etxt
     lastErrAt = Date.now()
     const errLine = String(etxt).split('\n')[0].slice(0, 200)
@@ -5209,7 +5233,7 @@ $fend('start', (data) => {
   }
   // unified end-of-run: recover (switch model) when the run died with error signs but produced no output
   const endRun = (code, via) => {
-    if (streamEnded || retrying || pronBreaking) return
+    if (streamEnded || retrying || pronBreaking || isStopped()) return
     const errHint = autoRetryCount > 0 || !!lastErrText || /error|fail|unavailable|overload|refused|timeout|econn|exceed/i.test(stderrTail)
     if (!errHint) {
       if (code !== 0) fail('pi exited with code ' + code)
@@ -5336,8 +5360,9 @@ $fend('start', (data) => {
   }
 
   let pronBreaking = false
+  const isStopped = () => $cache.get('pi_stop_' + runId)
   const relaunch = () => {
-    if (streamEnded) return
+    if (streamEnded || isStopped()) return
     pronBreaking = true
     killTree(proc)
     try { delete runProcs[runId] } catch(e) {} try { $cache.delete('pi_run_' + runId) } catch(e) {}
@@ -5345,7 +5370,7 @@ $fend('start', (data) => {
     if (toolHeartbeat) { clearInterval(toolHeartbeat); toolHeartbeat = null }
     setTimeout(() => {
       pronBreaking = false
-      if (streamEnded) return
+      if (streamEnded || isStopped()) return
       retrying = false
       lastErrKey = ''   // a new attempt is a fresh event, never deduped against the previous one
       spawnProcess()
@@ -5365,6 +5390,8 @@ $fend('stop', async (data) => {
     try { delete runProcs[data.runId] } catch(e) {}
     try { $cache.delete('pi_run_' + data.runId) } catch(e) {}
     try { $cache.delete('pi_compact_' + data.runId) } catch(e) {}
+    // Signal the running handler to stop retrying
+    try { $cache.set('pi_stop_' + data.runId, '1') } catch(e) {}
     return { ok: true, mode: 'run' }
   }
   return { ok: false, error: 'no active run' }
